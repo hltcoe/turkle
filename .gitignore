@@ -1,0 +1,4 @@
+*.pyc
+venv
+*.sqlite3
+.ropeproject
