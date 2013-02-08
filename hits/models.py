@@ -5,11 +5,13 @@ from jsonfield import JSONField
 class Hit(models.Model):
     """ Human Intelligence Task
     """
-    title = models.CharField(max_length=100)
-    description = models.TextField()
-    awsmturk_template = models.ForeignKey('AwsMTurkTemplate')
-    awsmturk_template_values = JSONField()
+    template = models.ForeignKey('AwsMTurkTemplate')
+    template_values = JSONField()
 
+    def __unicode__(self):
+       return '{}:{}'.format(self.template.title, self.id)
 
 class AwsMTurkTemplate(models.Model):
+    title = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
     template = models.TextField()

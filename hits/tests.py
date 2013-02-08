@@ -1,9 +1,15 @@
 from django.test import TestCase
+from models import Hit, AwsMTurkTemplate
 
 
 class TestHit(TestCase):
+
     def test_new_hit(self):
         """
-        Tests that a new Hit can exist
+        unicode() should be the template's title followed by :id of the hit.
         """
-        self.assertEqual(2, 1 + 1)
+        es_tweets = AwsMTurkTemplate(title='spanish tweets', template='None')
+        es_tweets.save()
+        hit = Hit(template=es_tweets, template_values='{}')
+        hit.save()
+        self.assertEqual('spanish tweets:1', unicode(hit))
