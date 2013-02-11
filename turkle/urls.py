@@ -6,12 +6,18 @@ admin.autodiscover()
 
 urlpatterns = patterns('',
     # Examples:
-    # url(r'^$', 'turkle_django.views.home', name='home'),
-    # url(r'^turkle_django/', include('turkle_django.foo.urls')),
+    url(r'^$', 'turkle.views.home', name='home'),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
-    # Uncomment the next line to enable the admin:
+    url(r'^hits/', include('hits.urls')),
+
+    # Welcome pages
+    #url(r'^welcome/$')
+    #url(r'^welcome?variant=worker/$')
+    #url(r'^welcome?variant=requester/$')
+
     url(r'^admin/', include(admin.site.urls)),
+
 )

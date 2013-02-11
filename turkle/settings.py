@@ -1,4 +1,4 @@
-# Django settings for turkle_django project.
+# Django settings for turkle project.
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -97,15 +97,16 @@ MIDDLEWARE_CLASSES = (
     # 'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'turkle_django.urls'
+ROOT_URLCONF = 'turkle.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
-WSGI_APPLICATION = 'turkle_django.wsgi.application'
+WSGI_APPLICATION = 'turkle.wsgi.application'
 
 TEMPLATE_DIRS = (
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
     # Always use forward slashes, even on Windows.
     # Don't forget to use absolute paths, not relative paths.
+    "/Users/orluke/workspace/mturk/turkle/templates"
 )
 
 INSTALLED_APPS = (

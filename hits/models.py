@@ -15,3 +15,6 @@ class AwsMTurkTemplate(models.Model):
     title = models.CharField(max_length=100)
     description = models.TextField(blank=True)
     template = models.TextField()
+
+    def __unicode__(self):
+       return '{} template'.format(self.title)

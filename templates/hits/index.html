@@ -1,0 +1,9 @@
+{% if latest_hit_list %}
+    <ul>
+    {% for hit in latest_hit_list %}
+        <li><a href="/hits/{{ hit.id }}/">{{ hit.template.title }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No hits are available.</p>
+{% endif %}
