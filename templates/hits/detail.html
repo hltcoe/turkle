@@ -4,5 +4,6 @@
 
 <form action="/hits/{{ hit.id }}/submission/" method="post">
 {% csrf_token %}
-{% autoescape off %}{{ hit.form() }}{% endautoescape %}
+{% autoescape off %}{{ hit.generate_form }}{% endautoescape %}
+<input type="submit" value="Submit" />
 </form>

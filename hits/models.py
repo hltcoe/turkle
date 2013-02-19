@@ -16,7 +16,16 @@ class Hit(models.Model):
        return 'HIT id:{}'.format(self.id)
 
     def generate_form(self):
-        pass
+        fields = self.input_csv_fields.split(',')
+        values = self.input_csv_values.split(',')
+        fields_vals_map = {k: v for k, v in zip(fields, values)}
+        result = self.form.form
+        for field in fields:
+            result = result.replace(
+                    r'${' + field + r'}',
+                    fields_vals_map[field]
+            )
+        return result
 
     def result_to_dict(self):
         result = {}
