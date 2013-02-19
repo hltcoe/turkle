@@ -1,0 +1,8 @@
+<h1>You're working on HIT {{ hit.id }}</h1>
+
+{% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
+<form action="/hits/{{ hit.id }}/submission/" method="post">
+{% csrf_token %}
+{% autoescape off %}{{ hit.form() }}{% endautoescape %}
+</form>

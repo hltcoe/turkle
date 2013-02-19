@@ -1,9 +1,20 @@
-{% if latest_hit_list %}
+<h1>Unfinished HITs</h1>
+{% if unfinished_hit_list %}
     <ul>
-    {% for hit in latest_hit_list %}
-        <li><a href="/hits/{{ hit.id }}/">{{ hit.template.title }}</a></li>
+    {% for hit in unfinished_hit_list %}
+    <li><a href="/hits/{{ hit.id }}/">HIT {{ hit.id }}</a></li>
     {% endfor %}
     </ul>
 {% else %}
-    <p>No hits are available.</p>
+    <p>No HITs are available.</p>
+{% endif %}
+<h1>Finished HITs</h1>
+{% if finished_hit_list %}
+    <ul>
+    {% for hit in finished_hit_list %}
+    <li><a href="/hits/{{ hit.id }}/">HIT {{ hit.id }}</a></li>
+    {% endfor %}
+    </ul>
+{% else %}
+    <p>No HITs are available.</p>
 {% endif %}

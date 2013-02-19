@@ -1,20 +1,34 @@
 from django.db import models
-from jsonfield import JSONField
 
 
 class Hit(models.Model):
     """ Human Intelligence Task
     """
-    template = models.ForeignKey('AwsMTurkTemplate')
-    template_values = JSONField()
+    source_file = models.TextField()
+    source_line = models.IntegerField()
+    completed = models.BooleanField(default=False)
+    form = models.ForeignKey('HitTemplate')
+    input_csv_fields = models.TextField()
+    input_csv_values = models.TextField()
+    answers = models.TextField(blank=True)
 
     def __unicode__(self):
-       return '{}:{}'.format(self.template.title, self.id)
+       return 'HIT id:{}'.format(self.id)
 
-class AwsMTurkTemplate(models.Model):
-    title = models.CharField(max_length=100)
-    description = models.TextField(blank=True)
-    template = models.TextField()
+    def generate_form(self):
+        pass
+
+    def result_to_dict(self):
+        result = {}
+        for kv in self.answers.split('&'):
+            k, v = kv.split('=')
+            result["Answer." + k] = v
+        return result
+
+
+class HitTemplate(models.Model):
+    source_file = models.TextField()
+    form = models.TextField()
 
     def __unicode__(self):
-       return '{} template'.format(self.title)
+       return 'HIT Template: {}'.format(self.source_file)

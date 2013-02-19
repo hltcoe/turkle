@@ -1,5 +1,5 @@
-from hits.models import Hit, AwsMTurkTemplate
+from hits.models import Hit, HitTemplate
 from django.contrib import admin
 
 admin.site.register(Hit)
-admin.site.register(AwsMTurkTemplate)
+admin.site.register(HitTemplate)
