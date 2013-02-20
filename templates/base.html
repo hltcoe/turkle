@@ -1,0 +1,28 @@
+<html>
+  <head>
+    <title>LMTurk</title>
+    {% load staticfiles %}
+    <link href="{% static "css/common.css" %}" rel="stylesheet" type="text/css"/>
+  </head>
+  <body>
+    <a
+      style="
+        color: gray;
+        text-align: center;
+        font-color: 40px;
+        font-size: 40px;
+        font-family: 'Open Sans Light', sans-serif;
+        margin-left: auto;
+        margin-right: auto;
+        a:link {text-decoration:none;};
+        a:visited {text-decoration:none;};
+        a:hover {text-decoration:none;};
+        a:active {text-decoration:none;};
+      "
+      href="/">
+      Local Mechanical Turk
+    </a>
+    {% block body %}
+    {% endblock %}
+  </body>
+</html>

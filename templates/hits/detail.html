@@ -1,4 +1,6 @@
-<h1>You're working on HIT {{ hit.id }}</h1>
+{% extends "base.html" %}
+{% block body %}
+<h1 style="color:red;"><em>You're working on HIT {{ hit.id }}</em></h1>
 
 {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 
@@ -7,3 +9,4 @@
 {% autoescape off %}{{ hit.generate_form }}{% endautoescape %}
 <input type="submit" value="Submit" />
 </form>
+{% endblock %}

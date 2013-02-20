@@ -1,3 +1,5 @@
+{% extends "base.html" %}
+{% block body %}
 <p>Welcome to this Local Mechanical Turk server!</p>
 <h1>Worker instructions</h1>
 <p>
@@ -16,3 +18,4 @@
   directory of this server's code repository and run the command:
   <pre>python manage.py dump_results RESULTS_CSV_FILE_PATH</pre>
 </p>
+{% endblock %}

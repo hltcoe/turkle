@@ -1,0 +1,24 @@
+/*
+  copied from www.mturk.com/css/mturk.css
+  we should  define  common sizes and common classes
+*/
+
+
+body, input, select, td, li, div, textarea, p {
+  font-size: 11px;
+  line-height: 14px;
+  font-family: verdana, arial, sans-serif;
+}
+
+body, input, select {
+  color: black;
+}
+
+body {
+  margin: 25px;
+    background-color:white;
+}
+
+form {
+  margin: 25px;
+}
