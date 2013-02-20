@@ -15,6 +15,7 @@ class TestModels(TestCase):
                 input_csv_fields="",
                 input_csv_values="",
         )
+        hit.answers="csrfmiddlewaretoken=7zxQ9Yyug6Nsnm4nLky9p8ObJwNipdu8&sentence_drop_1_verb1=blank&sentence_drop_1_verb2=blank&sentence_drop_1_verb3=blank&sentence_drop_1_verb4=blank&sentence_drop_1_verb5=blank&sentence_drop_1_verb6=blank&sentence_drop_1_verb7=blank&sentence_textbox_1_verb1=&sentence_textbox_1_verb2=&sentence_textbox_1_verb3=&sentence_textbox_1_verb4=&sentence_textbox_1_verb5=&sentence_textbox_1_verb6=&sentence_textbox_1_verb7=&sentence_drop_2_verb1=blank&sentence_drop_2_verb2=blank&sentence_drop_2_verb3=blank&sentence_drop_2_verb4=blank&sentence_textbox_2_verb1=&sentence_textbox_2_verb2=&sentence_textbox_2_verb3=&sentence_textbox_2_verb4=&sentence_drop_3_verb1=blank&sentence_textbox_3_verb1=&comment=+&submitit=Submit&userDisplayLanguage=&browserInfo=&ipAddress=&country=&city=&region="
         hit.save()
         self.hit = hit
 
@@ -24,13 +25,22 @@ class TestModels(TestCase):
         """
         self.assertEqual('HIT id:1', unicode(self.hit))
 
-    def test_result_to_dict(self):
+    def test_result_to_dict_Answer(self):
         hit = self.hit
-        hit.answers="csrfmiddlewaretoken=7zxQ9Yyug6Nsnm4nLky9p8ObJwNipdu8&sentence_drop_1_verb1=blank&sentence_drop_1_verb2=blank&sentence_drop_1_verb3=blank&sentence_drop_1_verb4=blank&sentence_drop_1_verb5=blank&sentence_drop_1_verb6=blank&sentence_drop_1_verb7=blank&sentence_textbox_1_verb1=&sentence_textbox_1_verb2=&sentence_textbox_1_verb3=&sentence_textbox_1_verb4=&sentence_textbox_1_verb5=&sentence_textbox_1_verb6=&sentence_textbox_1_verb7=&sentence_drop_2_verb1=blank&sentence_drop_2_verb2=blank&sentence_drop_2_verb3=blank&sentence_drop_2_verb4=blank&sentence_textbox_2_verb1=&sentence_textbox_2_verb2=&sentence_textbox_2_verb3=&sentence_textbox_2_verb4=&sentence_drop_3_verb1=blank&sentence_textbox_3_verb1=&comment=+&submitit=Submit&userDisplayLanguage=&browserInfo=&ipAddress=&country=&city=&region="
-        hit.save()
         self.assertEqual(
                 "blank",
-                hit.result_to_dict()['Answer.sentence_drop_1_verb1']
+                hit.results_to_dict()['sentence_drop_1_verb1']
+        )
+
+    def test_result_to_dict_ignore_csrfmiddlewaretoken(self):
+        with self.assertRaises(KeyError):
+            self.hit.results_to_dict()['Answer.csrfmiddlewaretoken']
+
+    def test_result_to_dict_should_include_inputs(self):
+        hit = self.hit
+        self.assertEqual(
+                "blank",
+                hit.results_to_dict()['sentence_drop_1_verb1']
         )
 
 

@@ -15,23 +15,27 @@ class Hit(models.Model):
     def __unicode__(self):
        return 'HIT id:{}'.format(self.id)
 
-    def generate_form(self):
+    def results_to_dict(self):
+        result = {}
+        for kv in self.answers.split('&'):
+            k, v = kv.split('=')
+            if k != 'csrfmiddlewaretoken':
+                result[k] = v
+        return result
+
+    def inputs_to_dict(self):
         fields = self.input_csv_fields.split(',')
         values = self.input_csv_values.split(',')
-        fields_vals_map = {k: v for k, v in zip(fields, values)}
+        return {k: v for k, v in zip(fields, values)}
+
+    def generate_form(self):
+        fields_vals_map = self.inputs_to_dict()
         result = self.form.form
-        for field in fields:
+        for field in fields_vals_map.keys():
             result = result.replace(
                     r'${' + field + r'}',
                     fields_vals_map[field]
             )
-        return result
-
-    def result_to_dict(self):
-        result = {}
-        for kv in self.answers.split('&'):
-            k, v = kv.split('=')
-            result["Answer." + k] = v
         return result
 
 
