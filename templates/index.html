@@ -1,1 +1,18 @@
-<p>Welcome to this Turkle server!</p>
+<p>Welcome to this Local Mechanical Turk server!</p>
+<h1>Worker instructions</h1>
+<p>
+  Here is the <a href="/hits">List of HITs</a>.
+</p>
+<h1>Requester instructions</h1>
+<h2>Publish HITs</h2>
+<p>
+  To publish new HITs, <tt>cd</tt> to the root directory of this
+  server's code repository and run the command:
+  <pre>python manage.py publish_HITs TEMPLATE_FILE_PATH CSV_FILE_PATH</pre>
+</p>
+<h2>Get results</h2>
+<p>
+  To get the results of the completed HITs, <tt>cd</tt> to the root
+  directory of this server's code repository and run the command:
+  <pre>python manage.py dump_results RESULTS_CSV_FILE_PATH</pre>
+</p>
