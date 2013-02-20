@@ -16,10 +16,11 @@ template from each row of values in the CSV file.
 ```bash
 git clone https://github.com/lukeorland/turkle.git
 cd turkle
-virtualenv --distribute venv
-source venv/bin/activate
-pip install -U distribute
-pip install -r requirements.txt
+```
+
+Make sure that the dependencies listed below are met, and then run the commands
+
+```bash
 python manage.py syncdb
 python manage.py runserver
 ```
@@ -29,4 +30,14 @@ along with the required eggs.
 
 ### Dependencies ###
 
-- the packages listed in `requirements.txt`
+- The packages listed in `requirements.txt`.
+  If the packages are not already installed in your environment, and you have
+  an internet connection, then you can run the following commands to install
+  the required Python packages.
+
+  ```bash
+  virtualenv --distribute venv
+  source venv/bin/activate
+  pip install -U distribute
+  pip install -r requirements.txt
+  ```
