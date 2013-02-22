@@ -1,3 +1,4 @@
+import json
 from django.http import HttpResponse
 from django.shortcuts import render_to_response, get_object_or_404
 from django.template import Context, loader, RequestContext
@@ -12,7 +13,6 @@ def hits_list_context(template, more_map={}):
                  **more_map
             )
     )
-
     return template.render(c)
 
 def index(request):
@@ -30,8 +30,7 @@ def results(request, hit_id):
 def submission(request, hit_id):
     h = get_object_or_404(Hit, pk=hit_id)
     h.completed = True
-    h.answers = str(request.body)
+    h.answers = json.dumps(request.POST)
     h.save()
-    # Show link to all HITs (hits/index.html)
     t = loader.get_template('hits/submission.html')
     return HttpResponse(hits_list_context(t, {'submitted_hit': h}))
