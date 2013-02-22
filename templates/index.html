@@ -16,6 +16,8 @@
 <p>
   To get the results of the completed HITs, <tt>cd</tt> to the root
   directory of this server's code repository and run the command:
-  <pre>python manage.py dump_results RESULTS_CSV_FILE_PATH</pre>
+  <pre>python manage.py dump_results RESULTS_TSV_FILE_PATH</pre>
+  This will save the results in a tab-delimited file with one result per line
+  and the field names in the first line.
 </p>
 {% endblock %}

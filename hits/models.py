@@ -1,3 +1,4 @@
+import json
 from django.db import models
 
 
@@ -17,8 +18,7 @@ class Hit(models.Model):
 
     def results_to_dict(self):
         result = {}
-        for kv in self.answers.split('&'):
-            k, v = kv.split('=')
+        for k, v in json.loads(self.answers, 'utf-8').items():
             if k != 'csrfmiddlewaretoken':
                 result[k] = v
         return result

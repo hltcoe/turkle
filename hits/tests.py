@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.test import TestCase
 from models import Hit, HitTemplate
+from management.commands.dump_results import results_data
 
 
 class TestModels(TestCase):
@@ -14,8 +15,26 @@ class TestModels(TestCase):
                 form=form,
                 input_csv_fields="",
                 input_csv_values="",
+                answers='{"comment": "\u221e", "userDisplayLanguage": "",'
+                '"sentence_textbox_3_verb1": "", "city": "",'
+                '"sentence_textbox_1_verb6": "", "sentence_textbox_1_verb7": "",'
+                '"sentence_textbox_1_verb4": "", "sentence_textbox_1_verb5": "",'
+                '"sentence_textbox_1_verb2": "", "sentence_textbox_1_verb3": "",'
+                '"sentence_textbox_1_verb1": "", "sentence_textbox_2_verb4": "",'
+                '"csrfmiddlewaretoken": "7zxQ9Yyug6Nsnm4nLky9p8ObJwNipdu8",'
+                '"sentence_drop_2_verb3": "blank", "sentence_drop_2_verb2":'
+                '"blank", "sentence_drop_2_verb1": "blank",'
+                '"sentence_textbox_2_verb1": "", "sentence_textbox_2_verb3": "",'
+                '"sentence_drop_2_verb4": "blank", "sentence_textbox_2_verb2":'
+                '"", "submitit": "Submit", "browserInfo": "",'
+                '"sentence_drop_1_verb1": "blank", "sentence_drop_1_verb2":'
+                '"blank", "sentence_drop_1_verb3": "blank",'
+                '"sentence_drop_1_verb4": "blank", "sentence_drop_1_verb5":'
+                '"blank", "sentence_drop_1_verb6": "blank",'
+                '"sentence_drop_1_verb7": "blank", "country": "",'
+                '"sentence_drop_3_verb1": "blank", "ipAddress": "", "region":""}',
+                completed=True,
         )
-        hit.answers="csrfmiddlewaretoken=7zxQ9Yyug6Nsnm4nLky9p8ObJwNipdu8&sentence_drop_1_verb1=blank&sentence_drop_1_verb2=blank&sentence_drop_1_verb3=blank&sentence_drop_1_verb4=blank&sentence_drop_1_verb5=blank&sentence_drop_1_verb6=blank&sentence_drop_1_verb7=blank&sentence_textbox_1_verb1=&sentence_textbox_1_verb2=&sentence_textbox_1_verb3=&sentence_textbox_1_verb4=&sentence_textbox_1_verb5=&sentence_textbox_1_verb6=&sentence_textbox_1_verb7=&sentence_drop_2_verb1=blank&sentence_drop_2_verb2=blank&sentence_drop_2_verb3=blank&sentence_drop_2_verb4=blank&sentence_textbox_2_verb1=&sentence_textbox_2_verb2=&sentence_textbox_2_verb3=&sentence_textbox_2_verb4=&sentence_drop_3_verb1=blank&sentence_textbox_3_verb1=&comment=+&submitit=Submit&userDisplayLanguage=&browserInfo=&ipAddress=&country=&city=&region="
         hit.save()
         self.hit = hit
 
@@ -28,7 +47,7 @@ class TestModels(TestCase):
     def test_result_to_dict_Answer(self):
         hit = self.hit
         self.assertEqual(
-                "blank",
+                'blank',
                 hit.results_to_dict()['sentence_drop_1_verb1']
         )
 
@@ -39,8 +58,24 @@ class TestModels(TestCase):
     def test_result_to_dict_should_include_inputs(self):
         hit = self.hit
         self.assertEqual(
-                "blank",
+                'blank',
                 hit.results_to_dict()['sentence_drop_1_verb1']
+        )
+
+    def test_result_to_dict_unicode(self):
+        hit = self.hit
+        self.assertEqual(
+                unicode('∞', encoding='utf-8'),
+                hit.results_to_dict()['comment']
+        )
+
+    def test_unicode_through_dump_results(self):
+        self.assertEqual(1, len(Hit.objects.filter(completed=True)))
+        _, rows = results_data(Hit.objects.filter(completed=True))
+        self.assertEqual(
+                unicode('∞', encoding='utf-8'),
+                #rows[0][u'Answer.comment'].encode('latin-1').decode('utf-8')
+                rows[0]['Answer.comment']
         )
 
 
