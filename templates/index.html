@@ -10,14 +10,22 @@
 <p>
   To publish new HITs, <tt>cd</tt> to the root directory of this
   server's code repository and run the command:
-  <pre>python manage.py publish_hits TEMPLATE_FILE_PATH CSV_FILE_PATH</pre>
+  <pre>  python manage.py publish_hits TEMPLATE_FILE_PATH CSV_FILE_PATH</pre>
+  with <tt>TEMPLATE_FILE_PATH</tt> replaced with the path to the HIT template
+  file and <tt>CSV_FILE_PATH</tt> replaced with the path to the CSV file
+  containing the data for the individual HITs.
 </p>
 <h2>Get results</h2>
 <p>
   To get the results of the completed HITs, <tt>cd</tt> to the root
   directory of this server's code repository and run the command:
-  <pre>python manage.py dump_results RESULTS_TSV_FILE_PATH</pre>
-  This will save the results in a tab-delimited file with one result per line
-  and the field names in the first line.
+  <pre>  python manage.py dump_results RESULTS_TSV_FILE_PATH</pre>
+  with <tt>RESULTS_TSV_FILE_PATH</tt> replaced with the desired path to where
+  the results will be saved. The format is:
+  <ul>
+    <li>a header row for the first line</li>
+    <li>one HIT result per line</li>
+    <li>values in each line are tab-delimited</li>
+  </ul>
 </p>
 {% endblock %}

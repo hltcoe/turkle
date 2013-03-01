@@ -58,6 +58,10 @@ repository and run the command:
 
     python manage.py publish_hits TEMPLATE_FILE_PATH CSV_FILE_PATH
 
+with `TEMPLATE_FILE_PATH` replaced with the path to the HIT template file and
+`CSV_FILE_PATH` replaced with the path to the CSV file containing the data for
+the individual HITs.
+
 ### Get results
 
 To get the results of the completed HITs, `cd` to the root directory of
@@ -65,5 +69,9 @@ this server's code repository and run the command:
 
     python manage.py dump_results RESULTS_TSV_FILE_PATH
 
-This will save the results in a tab-delimited file with one result per
-line and the field names in the first line.
+with `RESULTS_TSV_FILE_PATH` replaced with the desired path to where the
+results will be saved. The format is:
+
+* a header row for the first line
+* one HIT result per line
+* values in each line are tab-delimited
