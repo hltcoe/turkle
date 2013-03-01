@@ -41,3 +41,29 @@ along with the required eggs.
   pip install -U distribute
   pip install -r requirements.txt
   ```
+
+# Using it
+
+## Worker instructions
+
+Load the URL of the (perhaps [http://localhost:8000](http://localhost:8000)) in your browser. Click on
+**List of HITs**, and then start completing the Hits under the **Unfinished HITs**
+
+## Requester instructions
+
+### Publish HITs
+
+To publish new HITs, `cd` to the root directory of this server's code
+repository and run the command:
+
+    python manage.py publish_hits TEMPLATE_FILE_PATH CSV_FILE_PATH
+
+### Get results
+
+To get the results of the completed HITs, `cd` to the root directory of
+this server's code repository and run the command:
+
+    python manage.py dump_results RESULTS_TSV_FILE_PATH
+
+This will save the results in a tab-delimited file with one result per
+line and the field names in the first line.
