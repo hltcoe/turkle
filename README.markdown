@@ -44,8 +44,10 @@ along with the required eggs.
 
 ## Worker instructions
 
-Load the URL of the (perhaps [http://localhost:8000](http://localhost:8000)) in your browser. Click on
-**List of HITs**, and then start completing the Hits under the **Unfinished HITs**
+Load the URL of the tool (perhaps
+[http://localhost:8000](http://localhost:8000)) in your browser. Click on
+**List of HITs**, and then start completing the Hits under the **Unfinished
+HITs**
 
 ## Requester instructions
 
