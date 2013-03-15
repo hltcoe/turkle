@@ -24,8 +24,18 @@ class Hit(models.Model):
         return result
 
     def inputs_to_dict(self):
-        fields = self.input_csv_fields.split(',')
+        fields = self.input_csv_fields \
+                .replace('"', '') \
+                .split(',')
+        fields = [' '.join(f.split()) for f in fields]
         values = self.input_csv_values.split(',')
+        values = [' '.join(v.split()) for v in values]
+        values = [
+                v[1:-1]
+                if len(v) >= 2 and v[0] == '"' and v[-1] == '"'
+                else v
+                for v in values
+        ]
         return {k: v for k, v in zip(fields, values)}
 
     def generate_form(self):

@@ -94,7 +94,7 @@ class TestGenerateForm(TestCase):
             <td style="text-align: center; ">Marque <input type="checkbox" name="tweet0_notlang" /> si el mensaje no est&aacute; en espa&ntilde;ol.  Pase al siguiente Tweet.</td>
         </tr>
         <tr>
-            <td colspan="2" style="text-align: center; "><span style="font-family: 'Comic Sans MS'; ">${tweet0_before_entity} <span style="color: rgb(0, 0, 255); ">${tweet0_entity}</span> ${tweet0_after_entity}</span></td>
+            <td colspan="2" style="text-align: center; "><span style="font-family: 'Comic Sans MS'; ">${tweet0_before_entity}<span style="color: rgb(0, 0, 255); ">${tweet0_entity}</span>${tweet0_after_entity}</span></td>
         </tr>
         <tr>
             <td colspan="2">
@@ -148,7 +148,7 @@ class TestGenerateForm(TestCase):
             <td style="text-align: center; ">Marque <input type="checkbox" name="tweet0_notlang" /> si el mensaje no est&aacute; en espa&ntilde;ol.  Pase al siguiente Tweet.</td>
         </tr>
         <tr>
-            <td colspan="2" style="text-align: center; "><span style="font-family: 'Comic Sans MS'; "> Muy bien America ......... y lo siento mucho  <span style="color: rgb(0, 0, 255); ">SANTOS</span>  un muy buen rival</span></td>
+            <td colspan="2" style="text-align: center; "><span style="font-family: 'Comic Sans MS'; ">Muy bien America ......... y lo siento mucho<span style="color: rgb(0, 0, 255); ">SANTOS</span>un muy buen rival</span></td>
         </tr>
         <tr>
             <td colspan="2">
@@ -199,4 +199,22 @@ class TestGenerateForm(TestCase):
         hit.save()
         expect = """</select> con relaci&oacute;n a <span style="color: rgb(0, 0, 255);">SANTOS</span> en este mensaje.</p>"""
         actual = hit.generate_form()
+        self.assertEqual(expect, actual)
+
+    def test_quotes_in_csv_header_row(self):
+        hit_template = HitTemplate(
+                source_file="filepath",
+                form="""</select> con relaci&oacute;n a <span style="color: rgb(0, 0, 255);">${tweet0_entity}</span> en este mensaje.</p>"""
+        )
+        hit_template.save()
+        hit = Hit(
+                source_file="filepath",
+                source_line=1,
+                form=hit_template,
+                input_csv_fields='"tweet0_id", "tweet0_entity"',
+                input_csv_values='"906_control", " PF"',
+        )
+        hit.save()
+        expect = {'tweet0_id': '906_control', 'tweet0_entity': ' PF'}
+        actual = hit.inputs_to_dict()
         self.assertEqual(expect, actual)
