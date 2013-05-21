@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from io import BytesIO
+import json
 from django.test import TestCase
 from models import Hit, HitTemplate
 from management.commands.dump_results import results_data
@@ -235,6 +236,7 @@ class TestPublishHits(TestCase):
 
     def test_parse_csv_file(self):
         header, data_rows = parse_csv_file(self.csv_file)
+        rows = [row for row in data_rows]
         self.assertEqual(
             [u'h0', u'h1'],
             header
@@ -244,8 +246,32 @@ class TestPublishHits(TestCase):
                 [u'é0', u'ñ0'],
                 [u'é1, e1', u'ñ1'],
             ],
-            [row for row in data_rows]
+            rows
         )
+
+        hit = Hit(
+            source_file='',
+            source_line=0,
+            form=HitTemplate(form="<p></p>"),
+            input_csv_fields=json.dumps(
+                header,
+                ensure_ascii=False,
+                encoding='utf-8'
+            ),
+            input_csv_values=json.dumps(
+                rows[1],
+                ensure_ascii=False,
+                encoding='utf-8'
+            ),
+        )
+
+        expect = ["h0".decode('utf-8'), "h1".decode('utf-8')]
+        actual = json.loads(hit.input_csv_fields, encoding='utf-8')
+        self.assertEqual(expect, actual)
+
+        expect = ["é1, e1".decode('utf-8'), "ñ1".decode('utf-8')]
+        actual = json.loads(hit.input_csv_values, encoding='utf-8')
+        self.assertEqual(expect, actual)
 
     @unittest.skip('')
     def test_create_template_from_html_file(self):

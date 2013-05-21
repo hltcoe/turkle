@@ -51,8 +51,16 @@ class Command(BaseCommand):
                     source_file=template_file_path,
                     source_line=i + 1,
                     form=template,
-                    input_csv_fields=json.dumps(header),
-                    input_csv_values=json.dumps(row),
+                    input_csv_fields=json.dumps(
+                        header,
+                        ensure_ascii=False,
+                        encoding='utf-8'
+                    ),
+                    input_csv_values=json.dumps(
+                        row,
+                        ensure_ascii=False,
+                        encoding='utf-8'
+                    ),
                 )
                 hit.save()
                 i += 1
