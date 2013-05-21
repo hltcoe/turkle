@@ -9,11 +9,10 @@ def results_data(completed_hits):
     fieldnames = set()
     for hit in completed_hits:
         row = defaultdict(unicode)
-        for k, v in hit.inputs_to_dict().items():
-            #row[u'Input.' + k] = v.encode('latin-1').decode('utf-8')
-            row['Input.' + k] = v
-        for k, v in hit.results_to_dict().items():
-            row['Answer.' + k] = v
+        for k, v in hit.input_csv_fields.items():
+            row[u'Input.' + k] = v
+        for k, v in hit.answers.items():
+            row[u'Answer.' + k] = v
         for k in row.keys():
             fieldnames.add(k)
         rows.append(row)

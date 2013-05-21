@@ -30,7 +30,7 @@ def results(request, hit_id):
 def submission(request, hit_id):
     h = get_object_or_404(Hit, pk=hit_id)
     h.completed = True
-    h.answers = json.dumps(request.POST)
+    h.answers = dict(request.POST)
     h.save()
     t = loader.get_template('hits/submission.html')
     return HttpResponse(hits_list_context(t, {'submitted_hit': h}))

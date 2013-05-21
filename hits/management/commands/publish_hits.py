@@ -1,4 +1,3 @@
-import json
 import sys
 from django.core.management.base import BaseCommand, CommandError
 from hits.models import Hit, HitTemplate
@@ -9,7 +8,7 @@ from unicodecsv import reader as UnicodeReader
 
 def create_template_from_html_file(htmlfile, template_file_path):
     return HitTemplate(
-        form=htmlfile.read(),
+        form=htmlfile.read().decode('utf-8'),
         source_file=template_file_path
     )
 
@@ -51,16 +50,7 @@ class Command(BaseCommand):
                     source_file=template_file_path,
                     source_line=i + 1,
                     form=template,
-                    input_csv_fields=json.dumps(
-                        header,
-                        ensure_ascii=False,
-                        encoding='utf-8'
-                    ),
-                    input_csv_values=json.dumps(
-                        row,
-                        ensure_ascii=False,
-                        encoding='utf-8'
-                    ),
+                    input_csv_fields=dict(zip(header, row)),
                 )
                 hit.save()
                 i += 1

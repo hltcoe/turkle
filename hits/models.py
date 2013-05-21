@@ -1,5 +1,5 @@
-import json
 from django.db import models
+from jsonfield import JSONField
 
 
 class Hit(models.Model):
@@ -9,44 +9,26 @@ class Hit(models.Model):
     source_line = models.IntegerField()
     completed = models.BooleanField(default=False)
     form = models.ForeignKey('HitTemplate')
-    input_csv_fields = models.TextField()
-    input_csv_values = models.TextField()
-    answers = models.TextField(blank=True)
+    input_csv_fields = JSONField()
+    answers = JSONField(blank=True)
 
     def __unicode__(self):
-       return 'HIT id:{}'.format(self.id)
-
-    def results_to_dict(self):
-        result = {}
-        for k, v in json.loads(self.answers, 'utf-8').items():
-            if k != 'csrfmiddlewaretoken':
-                result[k] = v
-        return result
-
-    def inputs_to_dict(self):
-        fields = self.input_csv_fields \
-                .replace('"', '') \
-                .split(',')
-        fields = [' '.join(f.split()) for f in fields]
-        values = self.input_csv_values.split(',')
-        values = [' '.join(v.split()) for v in values]
-        values = [
-                v[1:-1]
-                if len(v) >= 2 and v[0] == '"' and v[-1] == '"'
-                else v
-                for v in values
-        ]
-        return {k: v for k, v in zip(fields, values)}
+        return 'HIT id:{}'.format(self.id)
 
     def generate_form(self):
-        fields_vals_map = self.inputs_to_dict()
         result = self.form.form
-        for field in fields_vals_map.keys():
+        for field in self.input_csv_fields.keys():
             result = result.replace(
-                    r'${' + field + r'}',
-                    fields_vals_map[field]
+                r'${' + field + r'}',
+                self.input_csv_fields[field]
             )
         return result
+
+    def save(self):
+        key_to_remove = 'csrfmiddlewaretoken'
+        if key_to_remove in self.answers:
+            del self.answers[key_to_remove]
+        super(Hit, self).save()
 
 
 class HitTemplate(models.Model):
@@ -54,4 +36,4 @@ class HitTemplate(models.Model):
     form = models.TextField()
 
     def __unicode__(self):
-       return 'HIT Template: {}'.format(self.source_file)
+        return 'HIT Template: {}'.format(self.source_file)
