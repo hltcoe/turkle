@@ -7,7 +7,7 @@ Mechanical Turk web GUI provided to requesters for creating HITs. Input CSV file
 also uploaded to create a HIT based on the template with each row of
 values in the CSV file.
 
-The results of the HITs completed by the workers can be downloaded as a TSV file.
+The results of the HITs completed by the workers can be exported in CSV files.
 
 # Installation ##
 
@@ -61,20 +61,25 @@ repository and run the command:
 
     python manage.py publish_hits <template_file_path> <csv_file_path>
 
-with `TEMPLATE_FILE_PATH` replaced with the path to the HIT template file and
-`CSV_FILE_PATH` replaced with the path to the CSV file containing the data for
-the individual HITs.
+with `<template_file_path>` replaced with the absolute path to the HIT template
+file and `<csv_file_path>` replaced with the path to the CSV file containing
+the data for the individual HITs.
 
 ### Get results
 
 To get the results of the completed HITs, `cd` to the root directory of
 this server's code repository and run the command:
 
-    python manage.py dump_results RESULTS_TSV_FILE_PATH
+    python manage.py dump_results <template_file_path> <results_csv_file_path>
 
-with `RESULTS_TSV_FILE_PATH` replaced with the desired path to where the
-results will be saved. The format is:
+with:
+- `<template_file_path>` replaced with the absolute path to where the template
+  file was located when the HITs were published. This argument acts as a filter
+  so that only completed HITs from the same template are dumped.
+- `<results_csv_file_path>` replaced with the desired path to where the
+  results will be saved. The format is:
 
+* UTF-8 encoding
 * a header row for the first line
 * one HIT result per line
-* values in each line are tab-delimited
+* values in each line are comma-delimited in the Excel style.
