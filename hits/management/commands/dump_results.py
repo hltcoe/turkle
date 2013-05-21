@@ -21,23 +21,28 @@ def results_data(completed_hits):
 
 class Command(BaseCommand):
 
-    args = '<poll_id poll_id ...>'
-    help = 'Closes the specified poll for voting'
+    args = '<results_tsv_file_path>'
+    help = 'Dumps results of the completed HITs to a CSV file'
 
     def handle(self, *args, **options):
         if len(args) != 1:
-            raise CommandError('usage: python manage.py dump_results RESULTS_TSV_FILE_PATH')
-        RESULTS_TSV_FILE_PATH, = args
+            raise CommandError(
+                'usage: python manage.py dump_results <results_tsv_file_path>'
+            )
+        results_tsv_file_path, = args
 
         completed_hits = Hit.objects.filter(completed=True)
         if not completed_hits.exists():
             sys.exit('There are no completed HITs.')
 
         fields, rows = results_data(completed_hits)
-        with open(RESULTS_TSV_FILE_PATH, 'wb') as fh:
+        with open(results_tsv_file_path, 'wb') as fh:
             fh.write('\t'.join(fields).encode('utf-8'))
             fh.write('\n')
             for row in rows:
-                line = '\t'.join([row[k].replace('\t', ' ') for k in fields]) \
-                        + '\n'
+                line = (
+                    '\t'.join(
+                        [row[k].replace('\t', ' ') for k in fields]
+                    ) + '\n'
+                )
                 fh.write(line.encode('utf-8'))

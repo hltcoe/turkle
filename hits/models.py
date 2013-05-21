@@ -3,7 +3,8 @@ from jsonfield import JSONField
 
 
 class Hit(models.Model):
-    """ Human Intelligence Task
+    """
+    Human Intelligence Task
     """
     source_file = models.TextField()
     source_line = models.IntegerField()
