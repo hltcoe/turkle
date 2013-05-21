@@ -16,7 +16,7 @@ class TestModels(TestCase):
             source_file="",
             source_line=1,
             form=form,
-            input_csv_fields={},
+            input_csv_fields={u'foo': u'bar'},
             answers={
                 u"comment": u"\u221e", u"userDisplayLanguage": u"",
                 u"sentence_textbox_3_verb1": u"", u"city": u"",
@@ -89,6 +89,10 @@ class TestModels(TestCase):
         self.assertEqual(
             '∞'.decode('utf-8'),
             rows[0]['Answer.comment']
+        )
+        self.assertEqual(
+            u'bar',
+            rows[0]['Input.foo']
         )
 
 
