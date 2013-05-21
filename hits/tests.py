@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
+from io import BytesIO
 from django.test import TestCase
 from models import Hit, HitTemplate
 from management.commands.dump_results import results_data
+from management.commands.publish_hits import parse_csv_file
+import unittest
 
 
 class TestModels(TestCase):
@@ -218,3 +221,32 @@ class TestGenerateForm(TestCase):
         expect = {'tweet0_id': '906_control', 'tweet0_entity': ' PF'}
         actual = hit.inputs_to_dict()
         self.assertEqual(expect, actual)
+
+
+class TestPublishHits(TestCase):
+
+    def setUp(self):
+        csv_text = (
+            u'h0,h1\r\n'
+            u'"é0",ñ0\r\n'
+            u'"é1, e1",ñ1'
+        )
+        self.csv_file = BytesIO(csv_text.encode('utf8'))
+
+    def test_parse_csv_file(self):
+        header, data_rows = parse_csv_file(self.csv_file)
+        self.assertEqual(
+            [u'h0', u'h1'],
+            header
+        )
+        self.assertEqual(
+            [
+                [u'é0', u'ñ0'],
+                [u'é1, e1', u'ñ1'],
+            ],
+            [row for row in data_rows]
+        )
+
+    @unittest.skip('')
+    def test_create_template_from_html_file(self):
+        pass

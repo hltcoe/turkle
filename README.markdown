@@ -59,7 +59,7 @@ HITs**
 To publish new HITs, `cd` to the root directory of this server's code
 repository and run the command:
 
-    python manage.py publish_hits TEMPLATE_FILE_PATH CSV_FILE_PATH
+    python manage.py publish_hits <template_file_path> <csv_file_path>
 
 with `TEMPLATE_FILE_PATH` replaced with the path to the HIT template file and
 `CSV_FILE_PATH` replaced with the path to the CSV file containing the data for
