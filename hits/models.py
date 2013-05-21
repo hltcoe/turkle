@@ -26,9 +26,8 @@ class Hit(models.Model):
         return result
 
     def save(self):
-        key_to_remove = 'csrfmiddlewaretoken'
-        if key_to_remove in self.answers:
-            del self.answers[key_to_remove]
+        if 'csrfmiddlewaretoken' in self.answers:
+            del self.answers['csrfmiddlewaretoken']
         super(Hit, self).save()
 
 
