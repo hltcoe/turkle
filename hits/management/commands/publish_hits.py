@@ -47,7 +47,7 @@ class Command(BaseCommand):
             i = 0
             for row in data_rows:
                 hit = Hit(
-                    source_file=template_file_path,
+                    source_file=csv_file_path,
                     source_line=i + 1,
                     form=template,
                     input_csv_fields=dict(zip(header, row)),
