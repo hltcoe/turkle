@@ -1,3 +1,4 @@
+import os
 import sys
 from django.core.management.base import BaseCommand, CommandError
 from hits.models import Hit, HitTemplate
@@ -6,11 +7,20 @@ from unicodecsv import reader as UnicodeReader
 #from csv import reader as UnicodeReader
 
 
-def create_template_from_html_file(htmlfile, template_file_path):
-    return HitTemplate(
-        form=htmlfile.read().decode('utf-8'),
-        source_file=template_file_path
+def get_or_create_template_from_html_file(htmlfile, template_file_path):
+    template_file_path = os.path.abspath(template_file_path)
+    name = template_file_path,
+    form = htmlfile.read().decode('utf-8'),
+
+    template, created = HitTemplate.objects.get_or_create(
+        name=name,
+        defaults={'form': form},
     )
+
+    if created:
+        template.save()
+
+    return template
 
 
 def parse_csv_file(fh):
@@ -38,8 +48,10 @@ class Command(BaseCommand):
         template_file_path, csv_file_path = args
 
         with open(template_file_path, 'rb') as fh:
-            template = create_template_from_html_file(fh, template_file_path)
-            template.save()
+            template = get_or_create_template_from_html_file(
+                fh,
+                template_file_path
+            )
 
         with open(csv_file_path, 'rb') as fh:
             sys.stderr.write('Creating HITs: ')
