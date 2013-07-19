@@ -1,0 +1,40 @@
+<p>
+<meta charset="utf-8">
+<table cellspacing="0" cellpadding="6" border="1">
+    <tbody>
+        <tr>
+            <td style="text-align: center; "><b>TWEET 1</b></td>
+            <td style="text-align: center; ">Marque <input type="checkbox" name="tweet0_notlang" /> si el mensaje no est&aacute; en espa&ntilde;ol.  Pase al siguiente Tweet.</td>
+        </tr>
+        <tr>
+            <td colspan="2" style="text-align: center; "><span style="font-family: 'Comic Sans MS'; ">${tweet0_before_entity}<span style="color: rgb(0, 0, 255); ">${tweet0_entity}</span>${tweet0_after_entity}</span></td>
+        </tr>
+        <tr>
+            <td colspan="2">
+            <p>1. La persona twitteando&nbsp;<select name="tweet0_sentiment" onchange="checkToAddWords0(this.value)">
+            <option value="">&nbsp;</option>
+            <option value="neutral">no expresa un sentimiento</option>
+            <option value="positive">expresa un sentimiento positivo</option>
+            <option value="negative">expresa un sentimiento negativo</option>
+            <option value="both">expresa a la vez un sentimiento positivo y un sentimiento negativo</option>
+            </select> con relaci&oacute;n a <span style="color: rgb(0, 0, 255);">${tweet0_entity}</span> en este mensaje.</p>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" id="tweet0_sureness">
+            <div id="tweet0_sure_expand" style="">
+            <p><span grey="">2.&nbsp;Elige su nivel de confianza&nbsp;... </span></p>
+            </div>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="2" id="tweet0_words">
+            <div id="tweet0_words_minimize" style="">
+            <p><span grey="">3. Para cada palabra a continuaci&oacute;n ...</span></p>
+            </div>
+            </td>
+        </tr>
+    </tbody>
+</table>
+</meta>
+</p>

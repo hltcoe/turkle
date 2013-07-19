@@ -6,11 +6,11 @@ class Hit(models.Model):
     """
     Human Intelligence Task
     """
-    source_file = models.TextField()
-    source_line = models.IntegerField()
     completed = models.BooleanField(default=False)
     form = models.ForeignKey('HitTemplate')
     input_csv_fields = JSONField()
+    source_file = models.TextField(blank=True)
+    source_line = models.IntegerField(blank=True)
     answers = JSONField(blank=True)
 
     def __unicode__(self):
@@ -32,8 +32,8 @@ class Hit(models.Model):
 
 
 class HitTemplate(models.Model):
-    source_file = models.TextField()
+    name = models.CharField(max_length=256, unique=True)
     form = models.TextField()
 
     def __unicode__(self):
-        return 'HIT Template: {}'.format(self.source_file)
+        return 'HIT Template: {}'.format(self.name)

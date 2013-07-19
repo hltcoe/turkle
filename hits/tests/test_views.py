@@ -1,10 +1,16 @@
-from django.test import Client, TestCase
+import django.test
 from django.core.handlers.wsgi import WSGIRequest
-from hits.models import Hit
-from views import submission
+from hits.models import Hit, HitTemplate
+from hits.views import submission
 
 
-class TestSubmission(TestCase):
+class TestSubmission(django.test.TestCase):
+
+    def setUp(self):
+        form = HitTemplate(name='foo', form='<p></p>')
+        form.save()
+        self.hit = Hit(form=form, source_line=0, input_csv_fields='{}')
+        self.hit.save()
 
     def test_0(self):
         post_request = RequestFactory().post(
@@ -22,7 +28,7 @@ class TestSubmission(TestCase):
 
 # This was grabbed from
 # http://djangosnippets.org/snippets/963/
-class RequestFactory(Client):
+class RequestFactory(django.test.Client):
     """
     Class that lets you create mock Request objects for use in testing.
 
