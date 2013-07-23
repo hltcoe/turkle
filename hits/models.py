@@ -9,8 +9,6 @@ class Hit(models.Model):
     completed = models.BooleanField(default=False)
     form = models.ForeignKey('HitTemplate')
     input_csv_fields = JSONField()
-    source_file = models.TextField(blank=True)
-    source_line = models.IntegerField(blank=True)
     answers = JSONField(blank=True)
 
     def __unicode__(self):
@@ -25,10 +23,10 @@ class Hit(models.Model):
             )
         return result
 
-    def save(self):
-        if 'csrfmiddlewaretoken' in self.answers:
-            del self.answers['csrfmiddlewaretoken']
-        super(Hit, self).save()
+    # def save(self):
+    #     if 'csrfmiddlewaretoken' in self.answers:
+    #         del self.answers['csrfmiddlewaretoken']
+    #     super(Hit, self).save()
 
 
 class HitTemplate(models.Model):

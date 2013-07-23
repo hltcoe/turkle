@@ -1,4 +1,7 @@
+import os
 import sys
+
+
 from django.core.management.base import BaseCommand, CommandError
 from django.core.exceptions import ObjectDoesNotExist
 from hits.models import HitTemplate
@@ -41,10 +44,12 @@ class Command(BaseCommand):
                 '<template_file_path> '
                 '<results_csv_file_path>'
             )
-        template_file_path, results_csv_file_path = args
+
+        # Get paths from args, and normalize them to absolute paths:
+        template_file_path, results_csv_file_path = map(os.path.abspath, args)
 
         try:
-            template = HitTemplate.objects.get(source_file=template_file_path)
+            template = HitTemplate.objects.get(name=template_file_path)
         except ObjectDoesNotExist:
             sys.exit('There is no matching <template_file_path>.')
 

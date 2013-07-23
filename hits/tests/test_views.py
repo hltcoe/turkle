@@ -9,7 +9,7 @@ class TestSubmission(django.test.TestCase):
     def setUp(self):
         form = HitTemplate(name='foo', form='<p></p>')
         form.save()
-        self.hit = Hit(form=form, source_line=0, input_csv_fields='{}')
+        self.hit = Hit(form=form, input_csv_fields='{}')
         self.hit.save()
 
     def test_0(self):
@@ -63,3 +63,9 @@ class RequestFactory(django.test.Client):
         environ.update(self.defaults)
         environ.update(request)
         return WSGIRequest(environ)
+
+
+__all__ = (
+    'RequestFactory',
+    'TestSubmission',
+)
