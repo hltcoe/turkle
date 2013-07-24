@@ -1,31 +1,62 @@
 {% extends "base.html" %}
 {% block body %}
-<p>Welcome to this Local Mechanical Turk server!</p>
-<h1>Worker instructions</h1>
-<p>
-  Here is the <a href="/hits">List of HITs</a>.
-</p>
-<h1>Requester instructions</h1>
-<h2>Publish HITs</h2>
-<p>
-  To publish new HITs, <tt>cd</tt> to the root directory of this
-  server's code repository and run the command:
-  <pre>  python manage.py publish_hits TEMPLATE_FILE_PATH CSV_FILE_PATH</pre>
-  with <tt>TEMPLATE_FILE_PATH</tt> replaced with the path to the HIT template
-  file and <tt>CSV_FILE_PATH</tt> replaced with the path to the CSV file
-  containing the data for the individual HITs.
-</p>
-<h2>Get results</h2>
-<p>
-  To get the results of the completed HITs, <tt>cd</tt> to the root
-  directory of this server's code repository and run the command:
-  <pre>  python manage.py dump_results RESULTS_TSV_FILE_PATH</pre>
-  with <tt>RESULTS_TSV_FILE_PATH</tt> replaced with the desired path to where
-  the results will be saved. The format is:
-  <ul>
-    <li>a header row for the first line</li>
-    <li>one HIT result per line</li>
-    <li>values in each line are tab-delimited</li>
-  </ul>
-</p>
+<table
+  cellspacing="0"
+  cellpadding="0"
+  width="100%"
+  border="0"
+  height="40px"
+>
+  <tbody><tr>
+    <td width="10%">&nbsp;</td>
+    <td width="40%">
+    </td>
+    <td width="40%">
+    </td>
+    <td width="10%">&nbsp;</td>
+  </tr></tbody>
+</table>
+
+<div style="margin-top:22px;" align="center">
+  <table>
+    <tbody><tr><td style="width:370px;vertical-align:top;float:right;padding-right:42px;">
+      <h1>Worker instructions</h1>
+      <p class="basefontsize">
+        HITs - <i>Human Intelligence Tasks</i> - are individual tasks that you work on.
+        Here is the <a href="/hits">List of HITs</a>.
+      </p>
+    </td>
+    <td style="width:400px;vertical-align:top;padding-left:42px;background-image: url(/images/intro/bg_gradient_separator.gif); background-repeat: no-repeat; height:401px;">
+      <h1>Requester instructions</h1>
+      <h2>Publish HITs</h2>
+      <p>
+        To publish new HITs, <tt>cd</tt> to the root directory of this
+        server's code repository and run the command:
+        <pre>  python manage.py publish_hits TEMPLATE_FILE_PATH CSV_FILE_PATH</pre>
+        with <tt>TEMPLATE_FILE_PATH</tt> replaced with the path to the HIT template
+        file and <tt>CSV_FILE_PATH</tt> replaced with the path to the CSV file
+        containing the data for the individual HITs.
+      </p>
+      <h2>Get results</h2>
+      <p>
+        To get the results of the completed HITs, <tt>cd</tt> to the root
+        directory of this server's code repository and run the command:
+        <pre>  python manage.py dump_results TEMPLATE_FILE_PATH RESULTS_TSV_FILE_PATH</pre>
+        with <tt>TEMPLATE_FILE_PATH</tt> replaced with the path to the HIT
+        template
+        and
+        with <tt>RESULTS_TSV_FILE_PATH</tt> replaced with the desired path to
+        where the results will be saved. The format is:
+        <ul>
+          <li>a header row for the first line</li>
+          <li>one HIT result per line</li>
+          <li>values in each line are tab-delimited</li>
+          <li>everything encoded in UTF-8.</li>
+        </ul>
+      </p>
+    </td>
+  </tr></tbody></table>
+</div>
+
+{# <a href="/mturk/welcome?variant=worker" id="lnkIntroWorker" style="color:#146eb4">learn more about being a  <b>Worker</b></a> #}
 {% endblock %}

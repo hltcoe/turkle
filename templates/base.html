@@ -5,23 +5,43 @@
     <link href="{% static "css/common.css" %}" rel="stylesheet" type="text/css"/>
   </head>
   <body>
-    <a
-      style="
-        color: gray;
-        text-align: center;
-        font-color: 40px;
-        font-size: 40px;
-        font-family: 'Open Sans Light', sans-serif;
-        margin-left: auto;
-        margin-right: auto;
-        a:link {text-decoration:none;};
-        a:visited {text-decoration:none;};
-        a:hover {text-decoration:none;};
-        a:active {text-decoration:none;};
-      "
-      href="/">
-      Local Mechanical Turk
-    </a>
+    <table
+      cellspacing="0"
+      cellpadding="0"
+      width="100%"
+      border="0"
+      height="40px"
+    >
+      <tbody><tr>
+        <td width="30%">&nbsp;</td>
+        <td class="centerText" width="40%">
+          <a
+            style="
+              color: gray;
+              font-color: 40;
+              font-size: 30px;
+              a:link {text-decoration:none;};
+              a:visited {text-decoration:none;};
+              a:hover {text-decoration:none;};
+              a:active {text-decoration:none;};
+            "
+            href="/"
+          >
+            Local Mechanical Turk
+          </a>
+        </td>
+        <td width="30%">&nbsp;</td>
+      </tr></tbody>
+    </table>
+    <div class="centerText">
+      <div id="subtabs">
+          <a href="/" class="nonboldsubnavclass">Introduction</a>
+          <span>&nbsp;|&nbsp;</span>
+          <a href="/hits" class="subnavclass">Work on HITs</a>
+          <span>&nbsp;|&nbsp;</span>
+          <a href="/manage_hits" class="subnavclass">Manage HITs</a>
+      </div>
+    </div>
     {% block body %}
     {% endblock %}
   </body>
