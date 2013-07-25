@@ -23,10 +23,10 @@ class Hit(models.Model):
             )
         return result
 
-    # def save(self):
-    #     if 'csrfmiddlewaretoken' in self.answers:
-    #         del self.answers['csrfmiddlewaretoken']
-    #     super(Hit, self).save()
+    def save(self):
+        if 'csrfmiddlewaretoken' in self.answers:
+            del self.answers['csrfmiddlewaretoken']
+        super(Hit, self).save()
 
 
 class HitTemplate(models.Model):
