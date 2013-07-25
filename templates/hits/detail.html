@@ -1,21 +1,16 @@
 {% extends "base.html" %}
 {% block body %}
-<h1 style="color:red; font-size:small">
-  <em>You're working on HIT {{ hit.id }},</em><br />
-</h1>
-<p style="color:red; font-size:small">
-  <em>which is derived from the template at</em><br />
-  <tt>{{ hit.form.source_file }}</tt><br />
-  <em>and line</em> <tt>{{ hit.source_line }}</tt>
-  <em> of the input CSV file at </em><br />
-  <tt>{{ hit.source_file }} .</tt><br />
-</p>
-
+<div>
+  <b>You're working on HIT:</b> {{ hit.id }}<br />
+  <b>which is derived from the template named:</b> {{ hit.form.name }}<br />
+  {% if hit.completed %}
+  <b>Your answers from the previous submission:</b> {{ hit.answers }}<br />
+  {% endif %}
+</div>
 {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
-
 <form action="/hits/{{ hit.id }}/submission/" method="post">
-{% csrf_token %}
-{% autoescape off %}{{ hit.generate_form }}{% endautoescape %}
-<input type="submit" value="Submit" />
+  {% csrf_token %}
+  {% autoescape off %}{{ hit.generate_form }}{% endautoescape %}
+  <input type="submit" value="Submit" />
 </form>
 {% endblock %}
