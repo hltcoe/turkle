@@ -59,7 +59,7 @@ class Command(BaseCommand):
                 if not row:
                     continue
                 hit = Hit(
-                    form=template,
+                    template=template,
                     input_csv_fields=dict(zip(header, row)),
                 )
                 hit.save()

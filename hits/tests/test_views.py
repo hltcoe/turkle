@@ -7,9 +7,9 @@ from hits.views import submission
 class TestSubmission(django.test.TestCase):
 
     def setUp(self):
-        form = HitTemplate(name='foo', form='<p></p>')
-        form.save()
-        self.hit = Hit(form=form, input_csv_fields='{}')
+        template = HitTemplate(name='foo', form='<p></p>')
+        template.save()
+        self.hit = Hit(template=template, input_csv_fields='{}')
         self.hit.save()
 
     def test_0(self):

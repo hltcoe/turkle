@@ -7,7 +7,7 @@ class Hit(models.Model):
     Human Intelligence Task
     """
     completed = models.BooleanField(default=False)
-    form = models.ForeignKey('HitTemplate')
+    template = models.ForeignKey('HitTemplate')
     input_csv_fields = JSONField()
     answers = JSONField(blank=True)
 
@@ -15,7 +15,7 @@ class Hit(models.Model):
         return 'HIT id:{}'.format(self.id)
 
     def generate_form(self):
-        result = self.form.form
+        result = self.template.form
         for field in self.input_csv_fields.keys():
             result = result.replace(
                 r'${' + field + r'}',
@@ -41,10 +41,10 @@ class Hit(models.Model):
         result = border % result
         return result
 
-    def save(self):
+    def save(self, *args, **kwargs):
         if 'csrfmiddlewaretoken' in self.answers:
             del self.answers['csrfmiddlewaretoken']
-        super(Hit, self).save()
+        super(Hit, self).save(*args, **kwargs)
 
 
 class HitTemplate(models.Model):

@@ -15,7 +15,7 @@ class TestModels(django.test.TestCase):
         form.save()
 
         hit = Hit(
-            form=form,
+            template=form,
             input_csv_fields={u'foo': u'bar'},
             answers={
                 u"comment": u"\u221e", u"userDisplayLanguage": u"",
@@ -96,7 +96,7 @@ class TestGenerateForm(django.test.TestCase):
         field_names = u"tweet0_id,tweet0_entity,tweet0_before_entity,tweet0_after_entity,tweet0_word0,tweet0_word1,tweet0_word2,tweet1_id,tweet1_entity,tweet1_before_entity,tweet1_after_entity,tweet1_word0,tweet1_word1,tweet1_word2,tweet2_id,tweet2_entity,tweet2_before_entity,tweet2_after_entity,tweet2_word0,tweet2_word1,tweet2_word2,tweet3_id,tweet3_entity,tweet3_before_entity,tweet3_after_entity,tweet3_word0,tweet3_word1,tweet3_word2,tweet4_id,tweet4_entity,tweet4_before_entity,tweet4_after_entity,tweet4_word0,tweet4_word1,tweet4_word2,tweet5_id,tweet5_entity,tweet5_before_entity,tweet5_after_entity,tweet5_word0,tweet5_word1,tweet5_word2",
         values = u"268,SANTOS, Muy bien America ......... y lo siento mucho , un muy buen rival,mucho,&nbsp;,&nbsp;,2472,GREGORY, Ah bueno , tampoco andes pidiendo ese tipo de milagros . @jcabrerac @CarlosCabreraR,bueno,&nbsp;,&nbsp;,478,ALEJANDRO, @aguillen19 &#44; un super abrazo mi querido , &#44; mis mejores deseos para este 2012 ... muakkk !,querido,&nbsp;,&nbsp;,906_control, PF, Acusan camioneros extorsiones de, : Transportistas acusaron que deben pagar entre 13 y 15 mil pesos a agentes que .. http://t.co/d8LUVvhP,acusaron,&nbsp;,&nbsp;,2793_control, CHICARO, Me gusta cuando chicharo hace su oracion es lo que lo hace especial .,&nbsp;,gusta,&nbsp;,&nbsp;,357,OSCAR WILDE&QUOT;, &quot; @ ifilosofia : Las pequeñas acciones de cada día son las que hacen o deshacen el carácter.&quot; , bueno !!!! Es así,bueno,&nbsp;,&nbsp;",
         self.hit = Hit(
-            form=self.hit_template,
+            template=self.hit_template,
             input_csv_fields=dict(zip(field_names, values))
         )
         self.hit.save()
@@ -115,7 +115,7 @@ class TestGenerateForm(django.test.TestCase):
         )
         hit_template.save()
         hit = Hit(
-            form=hit_template,
+            template=hit_template,
             input_csv_fields=dict(
                 zip(
                     [u"tweet0_id", u"tweet0_entity"],
@@ -124,7 +124,7 @@ class TestGenerateForm(django.test.TestCase):
             ),
         )
         hit.save()
-        expect = """</select> con relaci&oacute;n a <span style="color: rgb(0, 0, 255);">SANTOS</span> en este mensaje.</p>"""
+        expect = """<div style=" width:100%; border:2px solid black; margin-top:10px"><div style="width:100%; margin:10px"></select> con relaci&oacute;n a <span style="color: rgb(0, 0, 255);">SANTOS</span> en este mensaje.</p></div></div>"""
         actual = hit.generate_form()
         self.assertEqual(expect, actual)
 

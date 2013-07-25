@@ -2,7 +2,7 @@
 {% block body %}
 <div>
   <b>You're working on HIT:</b> {{ hit.id }}<br />
-  <b>which is derived from the template named:</b> {{ hit.form.name }}<br />
+  <b>which is derived from the template named:</b> {{ hit.template.name }}<br />
   {% if hit.completed %}
   <b>Your answers from the previous submission:</b> {{ hit.answers }}<br />
   {% endif %}

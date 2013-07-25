@@ -59,7 +59,7 @@ class TestPublishHitsMethods(django.test.TestCase):
         ht.save()
 
         hit = Hit.objects.create(
-            form=ht,
+            template=ht,
             input_csv_fields=dict(zip(header, rows[1])),
         )
 
