@@ -1,3 +1,4 @@
 Django
+django_nose
 unicodecsv
 jsonfield
