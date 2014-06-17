@@ -35,7 +35,7 @@ class Hit(models.Model):
             '%s'
             '</div>'
         )
-        margin = '<div style="width:100%%; margin:10px">%s</div>'
+        margin = '<div style="margin:10px">%s</div>'
 
         result = margin % result
         result = border % result
