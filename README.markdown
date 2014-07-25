@@ -37,9 +37,8 @@ along with the required eggs.
 
   ```bash
   cd /path/to/clone/of/turkle
-  virtualenv --distribute venv
+  virtualenv venv
   source venv/bin/activate
-  pip install -U distribute
   pip install -r requirements.txt
   ```
 
