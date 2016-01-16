@@ -41,16 +41,16 @@
       <p>
         To get the results of the completed HITs, <tt>cd</tt> to the root
         directory of this server's code repository and run the command:
-        <pre>  python manage.py dump_results TEMPLATE_FILE_PATH RESULTS_TSV_FILE_PATH</pre>
+        <pre>  python manage.py dump_results TEMPLATE_FILE_PATH RESULTS_CSV_FILE_PATH</pre>
         with <tt>TEMPLATE_FILE_PATH</tt> replaced with the path to the HIT
         template
         and
-        with <tt>RESULTS_TSV_FILE_PATH</tt> replaced with the desired path to
+        with <tt>RESULTS_CSV_FILE_PATH</tt> replaced with the desired path to
         where the results will be saved. The format is:
         <ul>
           <li>a header row for the first line</li>
           <li>one HIT result per line</li>
-          <li>values in each line are tab-delimited</li>
+          <li>values in each line are comma-delimited</li>
           <li>everything encoded in UTF-8.</li>
         </ul>
       </p>
