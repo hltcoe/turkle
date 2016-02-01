@@ -21,7 +21,7 @@ cd turkle
 Make sure that the dependencies listed below are met, and then run the commands
 
 ```bash
-python manage.py syncdb
+python manage.py migrate
 python manage.py runserver
 ```
 
