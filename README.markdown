@@ -14,7 +14,7 @@ The results of the HITs completed by the workers can be exported in CSV files.
 ## Initial setup ###
 
 ```bash
-git clone https://github.com/lukeorland/turkle.git
+git clone https://github.com/hltcoe/turkle.git
 cd turkle
 ```
 
