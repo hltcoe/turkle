@@ -28,7 +28,7 @@ docker pull hltcoe/turkle
 and start a container with an easy name, and mapping container port 8080 somewhere on the Docker host (e.g. 18080):
 
 ```bash
-docker run -d --name container_name -p 18080:8080 turkle
+docker run -d --name container_name -p 18080:8080 hltcoe/turkle
 ```
 
 Your annotator can now browse to that port on the Docker host.  To give them something to do, upload an Amazon Turk HIT template and data:
