@@ -34,7 +34,7 @@ docker run -d --name container_name -p 18080:8080 hltcoe/turkle
 Your annotator can now browse to that port on the Docker host.  To give them something to do, upload an Amazon Turk HIT template and data:
 
 ```bash
-scripts/upload_hit.sh container_name template.html data.csv
+scripts/upload_hit.sh container_name data.csv template.html
 ```
 
 At any point, you can download the current state of annotations:
@@ -52,7 +52,7 @@ scripts/upload_hit.sh container_name new_data.csv
 Or replace both:
 
 ```bash
-scripts/upload_hit.sh container_name new_template.html new_data.csv
+scripts/upload_hit.sh container_name new_data.csv new_template.html
 ```
 
 ## Initial setup ###
