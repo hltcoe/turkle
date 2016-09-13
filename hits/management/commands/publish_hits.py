@@ -1,6 +1,6 @@
 import os
 import sys
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from hits.models import Hit, HitTemplate
 from unicodecsv import reader as UnicodeReader
 #from util.unicodecsv import UnicodeReader
@@ -30,19 +30,19 @@ def parse_csv_file(fh):
 
 
 class Command(BaseCommand):
-
-    args = '<template_file_path> <csv_file_path>'
     help = (
         'Create a new HIT from each row of data in the CSV file based on the '
         'HTML HIT template.'
     )
 
-    def handle(self, *args, **options):
-        if len(args) != 2:
-            sys.stderr.write('received args: %s\n' % args)
-            raise CommandError(self.usage('publish_hits'))
+    def add_arguments(self, parser):
+        parser.add_argument('template_file_path', type=str)
+        parser.add_argument('csv_file_path', type=str)
 
-        template_file_path, csv_file_path = map(os.path.abspath, args)
+    def handle(self, *args, **options):
+        template_file_path = os.path.abspath(options['template_file_path'])
+        csv_file_path = os.path.abspath(options['csv_file_path'])
+
 
         with open(template_file_path, 'rb') as fh:
             template = get_or_create_template_from_html_file(
