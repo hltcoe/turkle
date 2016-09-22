@@ -9,9 +9,101 @@ values in the CSV file.
 
 The results of the HITs completed by the workers can be exported in CSV files.
 
+
 # Installation ##
 
-## Docker approach
+## Initial setup ###
+
+```bash
+git clone https://github.com/hltcoe/turkle.git
+cd turkle
+```
+
+Make sure that the dependencies listed below are met, and then run the commands
+
+```bash
+python manage.py migrate
+python manage.py runserver
+```
+
+TODO: instructions for installing from an extracted bundle that is distributed
+along with the required eggs.
+
+## Dependencies ###
+
+- Turkle depends on the packages listed in `requirements.txt`.
+  If the packages are not already installed in your environment, and you have
+  an internet connection, then you can run the following command to install
+  the required Python packages:
+
+  ```bash
+  pip install -r requirements.txt
+  ```
+
+  or with virtualenv:
+
+  ```bash
+  virtualenv venv
+  source venv/bin/activate
+  pip install -r requirements.txt
+  ```
+
+# Usage
+
+## Worker instructions
+
+Load the URL of the tool (by default
+[http://localhost:8000](http://localhost:8000)) in your browser. Click on
+**List of HITs**, and then start completing the HITs under the **Unfinished
+HITs**
+
+## Requester instructions
+
+### Publish HITs
+
+To publish new HITs, `cd` to the root directory of this server's code
+repository and run the command:
+
+```bash
+python manage.py publish_hits <template_file_path> <csv_file_path>
+```
+
+with `<template_file_path>` replaced with the absolute path to the HIT template
+file and `<csv_file_path>` replaced with the path to the CSV file containing
+the data for the individual HITs.
+
+### Get results
+
+To get the results of the completed HITs, `cd` to the root directory of
+this server's code repository and run the command:
+
+```bash
+python manage.py dump_results <template_file_path> <results_csv_file_path>
+```
+
+with:
+- `<template_file_path>` replaced with the absolute path to where the template
+  file was located when the HITs were published. This argument acts as a filter
+  so that only completed HITs from the same template are dumped.
+- `<results_csv_file_path>` replaced with the desired path to where the
+  results will be saved. The format is:
+
+* UTF-8 encoding
+* a header row for the first line
+* one HIT result per line
+* values in each line are comma-delimited in the Excel style.
+
+### Configuration
+
+To streamline worker task completion, submission of a HIT can
+automatically load the next unfinished HIT.  To enable this setting
+change `NEXT_HIT_ON_SUBMIT` to `True` at the bottom of `settings.py`.
+
+After changing settings, the web server may need to be restarted for
+changes to take effect.
+
+
+# Docker usage
 
 Instead of installing Turkle and dependencies directly, you can run Turkle as a Docker container, using scripts to manage your HIT templates and data.  Either build a Turkle image:
 
@@ -54,75 +146,3 @@ Or replace both:
 ```bash
 scripts/upload_hit.sh container_name new_data.csv new_template.html
 ```
-
-## Initial setup ###
-
-```bash
-git clone https://github.com/hltcoe/turkle.git
-cd turkle
-```
-
-Make sure that the dependencies listed below are met, and then run the commands
-
-```bash
-python manage.py migrate
-python manage.py runserver
-```
-
-TODO: instructions for installing from an extracted bundle that is distributed
-along with the required eggs.
-
-## Dependencies ###
-
-- The packages listed in `requirements.txt`.
-  If the packages are not already installed in your environment, and you have
-  an internet connection, then you can run the following commands to install
-  the required Python packages.
-
-  ```bash
-  cd /path/to/clone/of/turkle
-  virtualenv venv
-  source venv/bin/activate
-  pip install -r requirements.txt
-  ```
-
-# Using it
-
-## Worker instructions
-
-Load the URL of the tool (perhaps
-[http://localhost:8000](http://localhost:8000)) in your browser. Click on
-**List of HITs**, and then start completing the HITs under the **Unfinished
-HITs**
-
-## Requester instructions
-
-### Publish HITs
-
-To publish new HITs, `cd` to the root directory of this server's code
-repository and run the command:
-
-    python manage.py publish_hits <template_file_path> <csv_file_path>
-
-with `<template_file_path>` replaced with the absolute path to the HIT template
-file and `<csv_file_path>` replaced with the path to the CSV file containing
-the data for the individual HITs.
-
-### Get results
-
-To get the results of the completed HITs, `cd` to the root directory of
-this server's code repository and run the command:
-
-    python manage.py dump_results <template_file_path> <results_csv_file_path>
-
-with:
-- `<template_file_path>` replaced with the absolute path to where the template
-  file was located when the HITs were published. This argument acts as a filter
-  so that only completed HITs from the same template are dumped.
-- `<results_csv_file_path>` replaced with the desired path to where the
-  results will be saved. The format is:
-
-* UTF-8 encoding
-* a header row for the first line
-* one HIT result per line
-* values in each line are comma-delimited in the Excel style.
