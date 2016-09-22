@@ -2,7 +2,7 @@ import os
 import sys
 
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.core.exceptions import ObjectDoesNotExist
 from hits.models import HitTemplate
 from unicodecsv import DictWriter
@@ -29,24 +29,20 @@ def results_data(completed_hits):
 
 
 class Command(BaseCommand):
-
-    args = '<template_file_path> <results_csv_file_path>'
     help = (
         'Dumps results of the completed HITs for the template '
         '<template_file_path> '
         'to a file at <results_csv_file_path>'
     )
 
-    def handle(self, *args, **options):
-        if len(args) != 2:
-            raise CommandError(
-                'usage: python manage.py dump_results '
-                '<template_file_path> '
-                '<results_csv_file_path>'
-            )
+    def add_arguments(self, parser):
+        parser.add_argument('template_file_path', type=str)
+        parser.add_argument('results_csv_file_path', type=str)
 
-        # Get paths from args, and normalize them to absolute paths:
-        template_file_path, results_csv_file_path = map(os.path.abspath, args)
+    def handle(self, *args, **options):
+        template_file_path = os.path.abspath(options['template_file_path'])
+        results_csv_file_path = os.path.abspath(
+            options['results_csv_file_path'])
 
         try:
             template = HitTemplate.objects.get(name=template_file_path)
