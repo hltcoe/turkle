@@ -11,6 +11,50 @@ The results of the HITs completed by the workers can be exported in CSV files.
 
 # Installation ##
 
+## Docker approach
+
+Instead of installing Turkle and dependencies directly, you can run Turkle as a Docker container, using scripts to manage your HIT templates and data.  Either build a Turkle image:
+
+```bash
+docker build --force-rm -t hltcoe/turkle .
+```
+
+or pull the latest from the Docker registry:
+
+```bash
+docker pull hltcoe/turkle
+```
+
+and start a container with an easy name, and mapping container port 8080 somewhere on the Docker host (e.g. 18080):
+
+```bash
+docker run -d --name container_name -p 18080:8080 hltcoe/turkle
+```
+
+Your annotator can now browse to that port on the Docker host.  To give them something to do, upload an Amazon Turk HIT template and data:
+
+```bash
+scripts/upload_hit.sh container_name data.csv template.html
+```
+
+At any point, you can download the current state of annotations:
+
+```bash
+scripts/download_annotations.sh container_name annotation_state.csv
+```
+
+You can upload new data to be annotated, without changing the template:
+
+```bash
+scripts/upload_hit.sh container_name new_data.csv
+```
+
+Or replace both:
+
+```bash
+scripts/upload_hit.sh container_name new_data.csv new_template.html
+```
+
 ## Initial setup ###
 
 ```bash

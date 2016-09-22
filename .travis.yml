@@ -1,0 +1,12 @@
+sudo: required
+
+services:
+  - docker
+
+script:
+  - docker build -f $BUILD_FILE .
+
+env:
+  matrix:
+    - TEST_NAME="runserver"
+      BUILD_FILE="Dockerfile"

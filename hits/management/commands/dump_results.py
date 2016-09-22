@@ -2,7 +2,7 @@ import os
 import sys
 
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.core.exceptions import ObjectDoesNotExist
 from hits.models import HitTemplate
 from unicodecsv import DictWriter
@@ -10,8 +10,8 @@ from unicodecsv import DictWriter
 
 def get_fieldnames(hit):
     return tuple(sorted(
-        [u'Input.' + k for k in hit.input_csv_fields.keys()]
-        + [u'Answer.' + k for k in hit.answers.keys()]
+        [u'Input.' + k for k in hit.input_csv_fields.keys()] +
+        [u'Answer.' + k for k in hit.answers.keys()]
     ))
 
 
@@ -23,7 +23,7 @@ def results_data_groups(completed_hits):
         in enumerate(sorted(set(hit_fieldname_tuples)))
     )
 
-    hit_groups = [[] for t in fieldname_tuple_id_map] 
+    hit_groups = [[] for t in fieldname_tuple_id_map]
     for (hit, fieldnames) in zip(completed_hits, hit_fieldname_tuples):
         i = fieldname_tuple_id_map[fieldnames]
         hit_groups[i].append(hit)
@@ -48,27 +48,31 @@ def results_data(completed_hits):
     return fieldnames, rows
 
 
-class Command(BaseCommand):
+def write_csv(fieldnames, rows, path):
+    with open(path, 'wb') as fh:
+        writer = DictWriter(fh, fieldnames)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
 
-    args = '<template_file_path> <results_csv_file_path>'
+
+class Command(BaseCommand):
     help = (
         'Dumps results of the completed HITs for the template'
         ' <template_file_path> to a file at <results_csv_file_path>. '
-		' If <template_file_path> is * then results will be written to'
-		' a separate file for each template and unique set of'
-		' fieldnames (<results_csv_file_path> will be interpreted as a'
-		' prefix for the individual results files).'
+        ' If <template_file_path> is * then results will be written to'
+        ' a separate file for each template and unique set of'
+        ' fieldnames (<results_csv_file_path> will be interpreted as a'
+        ' prefix for the individual results files).'
     )
 
-    def handle(self, *args, **options):
-        if len(args) != 2:
-            raise CommandError(
-                'usage: python manage.py dump_results '
-                '<template_file_path> '
-                '<results_csv_file_path>'
-            )
+    def add_arguments(self, parser):
+        parser.add_argument('template_file_path', type=str)
+        parser.add_argument('results_csv_file_path', type=str)
 
-        (template_file_path, results_csv_file_path) = args
+    def handle(self, *args, **options):
+        template_file_path = options['template_file_path']
+        results_csv_file_path = options['results_csv_file_path']
 
         if template_file_path == '*':
             results_idx = 0
@@ -78,20 +82,18 @@ class Command(BaseCommand):
                 if completed_hits.exists():
                     groups = results_data_groups(completed_hits)
                     for (fieldnames, rows) in groups:
-                        real_results_path = (
-                            '%s.%d.csv' % (results_csv_file_path, results_idx)
+                        real_results_path = '%s.%d.csv' % (
+                            results_csv_file_path, results_idx
                         )
-                        with open(real_results_path, 'wb') as fh:
-                            writer = DictWriter(fh, fieldnames)
-                            writer.writeheader()
-                            for row in rows:
-                                writer.writerow(row)
+                        print 'Writing results for template %s to %s ...' % (
+                            template.name, real_results_path
+                        )
+                        write_csv(fieldnames, rows, real_results_path)
 
                         results_idx += 1
 
         else:
             template_file_path = os.path.abspath(template_file_path)
-            results_csv_file_path = os.path.abspath(results_csv_file_path)
 
             try:
                 template = HitTemplate.objects.get(name=template_file_path)
@@ -102,9 +104,8 @@ class Command(BaseCommand):
             if not completed_hits.exists():
                 sys.exit('There are no completed HITs.')
 
+            print 'Writing results for template %s to %s ...' % (
+                template_file_path, results_csv_file_path
+            )
             (fieldnames, rows) = results_data(completed_hits)
-            with open(results_csv_file_path, 'wb') as fh:
-                writer = DictWriter(fh, fieldnames)
-                writer.writeheader()
-                for row in rows:
-                    writer.writerow(row)
+            write_csv(fieldnames, rows, results_csv_file_path)

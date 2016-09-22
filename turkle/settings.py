@@ -162,3 +162,5 @@ LOGGING = {
         },
     }
 }
+
+NEXT_HIT_ON_SUBMIT = False
