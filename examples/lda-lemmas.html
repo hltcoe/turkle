@@ -1,0 +1,253 @@
+<!-- Bootstrap v3.0.3 -->
+<link href="https://s3.amazonaws.com/mturk-public/bs30/css/bootstrap.min.css" rel="stylesheet" />
+<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js">
+</script>
+<section class="container" id="Other" style="margin-bottom:15px; padding: 10px 10px; font-family: Arial, Helvetica, Verdana, Geneva, sans-serif; color:#333333; font-size:1.2em;">
+  <style type="text/css">
+    .panel-heading {
+      background-color: #FFFFFF !important;
+      color:#333333 !important;
+      font-size:2.0em;
+      border: 0px solid #FFFFFF;
+    }
+
+    .panel-primary {
+      border-color: #FFFFFF;
+      border: 0px solid #FFFFFF;
+    }
+
+    .topic_table {
+      margin: 1em 0 1em 0;
+    }
+
+    .topic_table tr td {
+      padding: 0.5em 2em 0.5em 2em;
+      margin: 0;
+      border: none;
+      text-align: center;
+    }
+
+    .emph {
+      font-style: italic;
+    }
+
+    .inline_tw {
+      font-style: italic;
+    }
+
+    td.topic_word {
+      background-color: #ffffff;
+    }
+
+    td.topic_alt_word {
+      background-color: #f3f9ff;
+    }
+
+    .invisible__ {
+      display: none;
+    }
+  </style>
+
+  <script type="text/javascript">
+    function toggleVisible(id) {
+      var elt = document.getElementById(id);
+      var i = elt.className.indexOf('invisible__');
+      if (i < 0) {
+        elt.className += ' invisible__';
+      } else {
+        elt.className = elt.className.substring(0, i) +
+                        elt.className.substring(i + 'invisible__ '.length);
+      }
+    }
+
+    function generateWordListTable(id, wl, checked, disabled) {
+      var wl_html = '';
+      wl_html += '<table class="topic_table">';
+
+      wl_html += '<tr>';
+      for (var j = 0; j < wl.length; j++) {
+        if (j % 2 == 0) {
+          wl_html += '<td class="topic_word">';
+        } else {
+          wl_html += '<td class="topic_alt_word">';
+        }
+        wl_html += wl[j];
+        wl_html += '</td>';
+      }
+      wl_html += '</tr>';
+
+      wl_html += '<tr>';
+      for (var j = 0; j < wl.length; j++) {
+        if (j % 2 == 0) {
+          wl_html += '<td class="topic_word">';
+        } else {
+          wl_html += '<td class="topic_alt_word">';
+        }
+        wl_html += '<input type="radio" name="' + id + '"' +
+            ' value="' + j + '"' + 
+            (((typeof checked !== 'undefined') && checked == j) ? ' checked="checked"' : '') +
+            (((typeof disabled !== 'undefined') && disabled) ? ' disabled="disabled"' : '') +
+            ' />';
+        wl_html += '</td>';
+      }
+      wl_html += '</tr>';
+
+      wl_html += '</table>';
+
+      return wl_html;
+    }
+
+    /* Add HTML for word lists to DOM element with ID 'word_lists'
+     *
+     * Assumes var_arrays is a dict:
+     * id : a numeric id for the HIT (all word lists)
+     * wl_id : a string id for this particular word list
+     * wl : a list of words
+     */
+    function writeWordLists() {
+      // Mechanical Turk will fill in '$ { varname }' variables when
+      // HTML template is rendered
+      var var_arrays = jQuery.parseJSON('${var_arrays}');
+  
+      var wl_html = ''
+  
+      for (var i = 0; i < var_arrays.length; i++) {
+        var var_array = var_arrays[i];
+        var id = var_array['id'];
+        var wl_id = var_array['wl_id'];
+        var wl = var_array['wl'];
+
+        wl_html += '<div>';
+        wl_html += generateWordListTable(id, wl);
+        wl_html += '</div>';
+      }
+  
+      $("#word_lists").prepend(wl_html);
+    }
+  
+    // read when document is ready (like a "main" function)
+    $(document).ready(function() {
+      console.log("**** run ready function");
+      writeWordLists();
+    });
+  </script>
+
+  <div class="row col-xs-12 col-md-12">
+    <div class="panel panel-primary">
+      <h1>Instructions</h1>
+
+      <div class="instructions_intro">
+
+        <p>
+          In this task you are presented with a topic, represented by its
+          top five words, and a sixth word not from that topic.  The
+          order of the six words is randomized.  You are requested to
+          select the word that is not from the topic.  We refer to this
+          word as the <span class="emph">intruder</span>.
+          When identifying the five topic words
+          and the intruder, please focus on the
+          <span class="emph">meaning</span> of the words and
+          not their othography (similarity of spelling) or syntactic
+          relationships (parts of speech).
+        </p>
+          
+        <p>
+          <a onclick="toggleVisible('instructions_examples');" href="#">Click here to show/hide examples.</a>
+        </p>
+
+      </div>
+
+      <div id="instructions_examples" class="invisible__">
+
+        <script type="text/javascript">
+          document.write(generateWordListTable('example-0',
+            ['floppy', 'alphabet', 'computer', 'processor', 'memory', 'disk'],
+            1, true));
+        </script>
+
+        <p>
+          We note that five of the words in this list concern
+          computers, specifically computer hardware, whereas
+          <span class="inline_tw">alphabet</span>
+          does not.  We select
+          <span class="inline_tw">alphabet</span>
+          as the intruder.
+        </p>
+
+        <script type="text/javascript">
+          document.write(generateWordListTable('example-1',
+            ['molecule', 'education', 'study', 'university', 'school', 'student'],
+            0, true));
+        </script>
+
+        <p>
+          The words
+          <span class="inline_tw">education</span>,
+          <span class="inline_tw">study</span>,
+          <span class="inline_tw">university</span>,
+          <span class="inline_tw">school</span>, and
+          <span class="inline_tw">student</span>
+          concern education, perhaps university-level education in
+          particular.  Whereas a student might study properties of
+          molecules, the word
+          <span class="inline_tw">molecule</span>
+          is too specific for a topic on
+          general university-level education.  We select
+          <span class="inline_tw">molecule</span>
+          as the intruder.
+        </p>
+
+        <script type="text/javascript">
+          document.write(generateWordListTable('example-2',
+            ['linguistics', 'actor', 'film', 'comedy', 'director', 'movie'],
+            0, true));
+        </script>
+
+        <p>
+          The latter five words concern cinema whereas the first word
+          refers to the study of language.  While language and cinema
+          are not unrelated, it is clear
+          <span class="inline_tw">linguistics</span> is the intruder.
+        </p>
+
+        <script type="text/javascript">
+          document.write(generateWordListTable('example-3',
+            ['islands', 'island', 'bird', 'coast', 'portuguese', 'mainland'],
+            4, true));
+        </script>
+
+        <p>
+          The first four words could be from a topic about islands.
+          Portugal has a coast on the ocean, so the latter three words
+          are also somewhat related.  However, neither the first four
+          words nor the last word,
+          <span class="inline_tw">mainland</span>,
+          pertain to Portugal in
+          particular, so we decide the intruder is
+          <span class="inline_tw">portuguese</span>.
+        </p>
+
+      </div>
+
+      <br />
+
+    </div>
+
+    <section>
+      <div id="hit">
+        <h1>HIT</h1>
+
+        <fieldset>
+          <div id="word_lists">&nbsp;</div>
+        </fieldset>
+
+        <div>
+          <input class="btn btn-primary btn-lg" id="submit_button" type="submit" value="Submit" />
+        </div>
+      </div>
+    </section>
+  </div>
+</section>
+
+<style type="text/css">fieldset { padding: 10px; background:#fbfbfb; border-radius:5px; margin-bottom:5px; }
+</style>

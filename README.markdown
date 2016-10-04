@@ -50,6 +50,11 @@ along with the required eggs.
 
 # Usage
 
+## Example HITs
+
+Example HIT HTML templates and corresponding CSV data files are
+provided under `examples/`.
+
 ## Worker instructions
 
 Load the URL of the tool (by default
