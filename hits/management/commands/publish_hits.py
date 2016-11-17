@@ -6,6 +6,10 @@ from unicodecsv import reader as UnicodeReader
 #from util.unicodecsv import UnicodeReader
 #from csv import reader as UnicodeReader
 
+# The default field size limit is 131072 characters
+import unicodecsv
+unicodecsv.field_size_limit(sys.maxsize)
+
 
 def get_or_create_template_from_html_file(htmlfile, template_file_path):
     template_file_path = os.path.abspath(template_file_path)
