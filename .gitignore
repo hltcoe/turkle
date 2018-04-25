@@ -4,3 +4,5 @@ venv
 .ropeproject
 *.csv
 *.tsv
+!examples/*.html
+!examples/*.csv
