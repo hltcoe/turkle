@@ -1,7 +1,9 @@
+# -*- coding: utf-8 -*-
 import os
 # Django settings for turkle project.
 
-DEBUG = True
+DEBUG = False
+ALLOWED_HOSTS = ['*']
 
 ADMINS = (
     # ('Your Name', 'your_email@example.com'),
