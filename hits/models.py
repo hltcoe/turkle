@@ -6,8 +6,8 @@ class Hit(models.Model):
     """
     Human Intelligence Task
     """
+    hit_batch = models.ForeignKey('HitBatch')
     completed = models.BooleanField(default=False)
-    template = models.ForeignKey('HitTemplate')
     input_csv_fields = JSONField()
     answers = JSONField(blank=True)
 
@@ -15,7 +15,7 @@ class Hit(models.Model):
         return 'HIT id:{}'.format(self.id)
 
     def generate_form(self):
-        result = self.template.form
+        result = self.hit_batch.hit_template.form
         for field in self.input_csv_fields.keys():
             result = result.replace(
                 r'${' + field + r'}',
@@ -47,10 +47,16 @@ class Hit(models.Model):
         super(Hit, self).save(*args, **kwargs)
 
 
+class HitBatch(models.Model):
+    date_published = models.DateTimeField(auto_now_add=True)
+    hit_template = models.ForeignKey('HitTemplate')
+    name = models.TextField(blank=True)
+
+
 class HitTemplate(models.Model):
     name = models.CharField(max_length=256, unique=True)
     form = models.TextField()
-    date_published = models.DateTimeField(auto_now_add=True)
+    date_modified = models.DateTimeField(auto_now=True)
 
     def __unicode__(self):
         return 'HIT Template: {}'.format(self.name)

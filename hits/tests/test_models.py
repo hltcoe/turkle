@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import django.test
-from hits.models import Hit, HitTemplate
+from hits.models import Hit, HitBatch, HitTemplate
 
 
 class TestModels(django.test.TestCase):
@@ -11,11 +11,13 @@ class TestModels(django.test.TestCase):
         The HitTemplate is bare,
         the Hit has inputs and answers and refers to the HitTemplate form.
         """
-        form = HitTemplate(name='test', form="<p></p>")
-        form.save()
+        hit_template = HitTemplate(name='test', form="<p></p>")
+        hit_template.save()
+        hit_batch = HitBatch(hit_template=hit_template)
+        hit_batch.save()
 
         hit = Hit(
-            template=form,
+            hit_batch=hit_batch,
             input_csv_fields={u'foo': u'bar'},
             answers={
                 u"comment": u"\u221e", u"userDisplayLanguage": u"",
@@ -93,10 +95,12 @@ class TestGenerateForm(django.test.TestCase):
 
         self.hit_template = HitTemplate(name="filepath", form=form)
         self.hit_template.save()
+        self.hit_batch = HitBatch(hit_template=self.hit_template)
+        self.hit_batch.save()
         field_names = u"tweet0_id,tweet0_entity,tweet0_before_entity,tweet0_after_entity,tweet0_word0,tweet0_word1,tweet0_word2,tweet1_id,tweet1_entity,tweet1_before_entity,tweet1_after_entity,tweet1_word0,tweet1_word1,tweet1_word2,tweet2_id,tweet2_entity,tweet2_before_entity,tweet2_after_entity,tweet2_word0,tweet2_word1,tweet2_word2,tweet3_id,tweet3_entity,tweet3_before_entity,tweet3_after_entity,tweet3_word0,tweet3_word1,tweet3_word2,tweet4_id,tweet4_entity,tweet4_before_entity,tweet4_after_entity,tweet4_word0,tweet4_word1,tweet4_word2,tweet5_id,tweet5_entity,tweet5_before_entity,tweet5_after_entity,tweet5_word0,tweet5_word1,tweet5_word2",
         values = u"268,SANTOS, Muy bien America ......... y lo siento mucho , un muy buen rival,mucho,&nbsp;,&nbsp;,2472,GREGORY, Ah bueno , tampoco andes pidiendo ese tipo de milagros . @jcabrerac @CarlosCabreraR,bueno,&nbsp;,&nbsp;,478,ALEJANDRO, @aguillen19 &#44; un super abrazo mi querido , &#44; mis mejores deseos para este 2012 ... muakkk !,querido,&nbsp;,&nbsp;,906_control, PF, Acusan camioneros extorsiones de, : Transportistas acusaron que deben pagar entre 13 y 15 mil pesos a agentes que .. http://t.co/d8LUVvhP,acusaron,&nbsp;,&nbsp;,2793_control, CHICARO, Me gusta cuando chicharo hace su oracion es lo que lo hace especial .,&nbsp;,gusta,&nbsp;,&nbsp;,357,OSCAR WILDE&QUOT;, &quot; @ ifilosofia : Las pequeñas acciones de cada día son las que hacen o deshacen el carácter.&quot; , bueno !!!! Es así,bueno,&nbsp;,&nbsp;",
         self.hit = Hit(
-            template=self.hit_template,
+            hit_batch=self.hit_batch,
             input_csv_fields=dict(zip(field_names, values))
         )
         self.hit.save()
@@ -114,8 +118,10 @@ class TestGenerateForm(django.test.TestCase):
             form=u"""</select> con relaci&oacute;n a <span style="color: rgb(0, 0, 255);">${tweet0_entity}</span> en este mensaje.</p>"""
         )
         hit_template.save()
+        hit_batch = HitBatch(hit_template=hit_template)
+        hit_batch.save()
         hit = Hit(
-            template=hit_template,
+            hit_batch=hit_batch,
             input_csv_fields=dict(
                 zip(
                     [u"tweet0_id", u"tweet0_entity"],

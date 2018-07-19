@@ -1,7 +1,7 @@
 import os
 import sys
 from django.core.management.base import BaseCommand
-from hits.models import Hit, HitTemplate
+from hits.models import Hit, HitBatch, HitTemplate
 from unicodecsv import reader as UnicodeReader
 #from util.unicodecsv import UnicodeReader
 #from csv import reader as UnicodeReader
@@ -49,13 +49,19 @@ class Command(BaseCommand):
 
 
         with open(template_file_path, 'rb') as fh:
-            template = get_or_create_template_from_html_file(
+            hit_template = get_or_create_template_from_html_file(
                 fh,
                 template_file_path
             )
 
         with open(csv_file_path, 'rb') as fh:
             sys.stderr.write('Creating HITs: ')
+            hit_batch = HitBatch(
+                hit_template=hit_template,
+                name=template_file_path
+            )
+            hit_batch.save()
+
             header, data_rows = parse_csv_file(fh)
 
             num_created_hits = 0
@@ -63,7 +69,7 @@ class Command(BaseCommand):
                 if not row:
                     continue
                 hit = Hit(
-                    template=template,
+                    hit_batch=hit_batch,
                     input_csv_fields=dict(zip(header, row)),
                 )
                 hit.save()

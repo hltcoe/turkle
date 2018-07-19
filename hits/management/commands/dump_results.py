@@ -4,7 +4,7 @@ import sys
 
 from django.core.management.base import BaseCommand
 from django.core.exceptions import ObjectDoesNotExist
-from hits.models import HitTemplate
+from hits.models import Hit, HitTemplate
 from unicodecsv import DictWriter
 
 
@@ -77,7 +77,8 @@ class Command(BaseCommand):
         if template_file_path == '*':
             results_idx = 0
             for template in HitTemplate.objects.all():
-                completed_hits = template.hit_set.filter(completed=True)
+                # We dump HITs from all HIT batches
+                completed_hits = Hit.objects.filter(completed=True).filter(hit_batch__hit_template=template)
 
                 if completed_hits.exists():
                     groups = results_data_groups(completed_hits)
@@ -100,7 +101,7 @@ class Command(BaseCommand):
             except ObjectDoesNotExist:
                 sys.exit('There is no matching <template_file_path>.')
 
-            completed_hits = template.hit_set.filter(completed=True)
+            completed_hits = Hit.objects.filter(completed=True).filter(hit_batch__hit_template=template)
             if not completed_hits.exists():
                 sys.exit('There are no completed HITs.')
 

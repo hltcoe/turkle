@@ -2,7 +2,7 @@
 from io import BytesIO
 import os
 import django.test
-from hits.models import Hit, HitTemplate
+from hits.models import Hit, HitBatch, HitTemplate
 import hits.management.commands.publish_hits as publish_hits
 import hits.management.commands.dump_results as dump_results
 # NB: Each class subclasses the previously defined one.
@@ -55,11 +55,13 @@ class TestPublishHitsMethods(django.test.TestCase):
             rows
         )
 
-        ht = HitTemplate(name='test', form="<p></p>")
-        ht.save()
+        hit_template = HitTemplate(name='test', form="<p></p>")
+        hit_template.save()
+        hit_batch = HitBatch(hit_template=hit_template)
+        hit_batch.save()
 
         hit = Hit.objects.create(
-            template=ht,
+            hit_batch=hit_batch,
             input_csv_fields=dict(zip(header, rows[1])),
         )
 

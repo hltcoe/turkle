@@ -1,15 +1,17 @@
 import django.test
 from django.core.handlers.wsgi import WSGIRequest
-from hits.models import Hit, HitTemplate
+from hits.models import Hit, HitBatch, HitTemplate
 from hits.views import submission
 
 
 class TestSubmission(django.test.TestCase):
 
     def setUp(self):
-        template = HitTemplate(name='foo', form='<p></p>')
-        template.save()
-        self.hit = Hit(template=template, input_csv_fields='{}')
+        hit_template = HitTemplate(name='foo', form='<p></p>')
+        hit_template.save()
+        hit_batch = HitBatch(hit_template=hit_template)
+        hit_batch.save()
+        self.hit = Hit(hit_batch=hit_batch, input_csv_fields='{}')
         self.hit.save()
 
     def test_0(self):
