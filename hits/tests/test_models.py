@@ -124,7 +124,7 @@ class TestGenerateForm(django.test.TestCase):
             ),
         )
         hit.save()
-        expect = """<div style=" width:100%; border:2px solid black; margin-top:10px"><div style="width:100%; margin:10px"></select> con relaci&oacute;n a <span style="color: rgb(0, 0, 255);">SANTOS</span> en este mensaje.</p></div></div>"""
+        expect = u"""<div style=" width:100%; border:2px solid black; margin-top:10px"><div style="margin:10px"></select> con relaci&oacute;n a <span style="color: rgb(0, 0, 255);">SANTOS</span> en este mensaje.</p></div></div>"""
         actual = hit.generate_form()
         self.assertEqual(expect, actual)
 
