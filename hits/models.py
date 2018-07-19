@@ -50,6 +50,7 @@ class Hit(models.Model):
 class HitTemplate(models.Model):
     name = models.CharField(max_length=256, unique=True)
     form = models.TextField()
+    date_published = models.DateTimeField(auto_now_add=True)
 
     def __unicode__(self):
         return 'HIT Template: {}'.format(self.name)
