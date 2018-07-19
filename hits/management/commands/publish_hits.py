@@ -58,7 +58,7 @@ class Command(BaseCommand):
             sys.stderr.write('Creating HITs: ')
             hit_batch = HitBatch(
                 hit_template=hit_template,
-                name=template_file_path
+                name=csv_file_path
             )
             hit_batch.save()
 
