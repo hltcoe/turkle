@@ -2,16 +2,13 @@ from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.template import loader
 from django.conf import settings
-from hits.models import Hit
+from hits.models import Hit, HitTemplate
 
 
 def hits_list_context(template, more_map={}):
-    unfinished_hit_list = Hit.objects.filter(completed=False).order_by('id')
-    finished_hit_list = Hit.objects.filter(completed=True).order_by('-id')
     c = dict(
         {
-            'unfinished_hit_list': unfinished_hit_list,
-            'finished_hit_list': finished_hit_list
+            'hit_templates': HitTemplate.objects.all()
         },
         **more_map
     )

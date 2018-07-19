@@ -52,6 +52,15 @@ class HitBatch(models.Model):
     hit_template = models.ForeignKey('HitTemplate')
     name = models.TextField(blank=True)
 
+    def finished_hits(self):
+        return self.hit_set.filter(completed=True).order_by('-id')
+
+    def unfinished_hits(self):
+        return self.hit_set.filter(completed=False).order_by('id')
+
+    def __unicode__(self):
+        return 'HIT Batch: {}'.format(self.name)
+
 
 class HitTemplate(models.Model):
     name = models.CharField(max_length=256, unique=True)

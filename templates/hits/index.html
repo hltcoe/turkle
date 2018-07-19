@@ -2,24 +2,49 @@
 {% block body %}
 {% block content %}
 {% endblock %}
+
 <h1>Unfinished HITs</h1>
-{% if unfinished_hit_list %}
-    <ul>
-    {% for hit in unfinished_hit_list %}
-    <li><a href="/hits/{{ hit.id }}/">HIT {{ hit.id }}</a></li>
+<div style="margin-left: 2em;">
+  {% for hit_template in hit_templates %}
+  <h2>{{ hit_template }}</h2>
+    {% for hit_batch in hit_template.hitbatch_set.all %}
+      <div style="margin-left: 2em;">
+        <h3>{{ hit_batch }}</h3>
+        <div style="margin-left: 2em;">
+          {% if hit_batch.unfinished_hits %}
+            {% for hit in hit_batch.unfinished_hits %}
+              <span style="padding: 0.5em; white-space:nowrap;">
+                <a href="/hits/{{ hit.id }}/">HIT {{ hit.id }}</a>
+              </span>
+            {% endfor %}
+          {% else %}
+            <p>No HITs are available.</p>
+          {% endif %}
+        </div>
+      </div>
     {% endfor %}
-    </ul>
-{% else %}
-    <p>No HITs are available.</p>
-{% endif %}
+  {% endfor %}
+</div>
+
 <h1>Finished HITs</h1>
-{% if finished_hit_list %}
-    <ul>
-    {% for hit in finished_hit_list %}
-    <li><a href="/hits/{{ hit.id }}/">HIT {{ hit.id }}</a></li>
+<div style="margin-left: 2em;">
+  {% for hit_template in hit_templates %}
+  <h2>{{ hit_template }}</h2>
+    {% for hit_batch in hit_template.hitbatch_set.all %}
+      <div style="margin-left: 2em;">
+        <h3>{{ hit_batch }}</h3>
+        <div style="margin-left: 2em;">
+          {% if hit_batch.finished_hits %}
+            {% for hit in hit_batch.finished_hits %}
+              <span style="padding: 0.5em; white-space:nowrap;">
+                <a href="/hits/{{ hit.id }}/">HIT {{ hit.id }}</a>
+              </span>
+            {% endfor %}
+          {% else %}
+            <p>No HITs are available.</p>
+          {% endif %}
+        </div>
+      </div>
     {% endfor %}
-    </ul>
-{% else %}
-    <p>No HITs are available.</p>
-{% endif %}
-{% endblock %}
+  {% endfor %}
+</div>
