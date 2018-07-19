@@ -91,15 +91,13 @@ class TestPublishHitsHandle(django.test.TestCase):
     """
 
     def setUp(self):
-        args = map(
-            os.path.abspath,
-            [
-                'hits/tests/resources/form_1.html',
-                'hits/tests/resources/form_1_vals.csv'
-            ]
-        )
+        args = []
+        options = {
+            'template_file_path': os.path.abspath('hits/tests/resources/form_1.html'),
+            'csv_file_path': os.path.abspath('hits/tests/resources/form_1_vals.csv')
+        }
         command = publish_hits.Command()
-        with capture(command.handle, *args) as result:
+        with capture(command.handle, *args, **options) as result:
             self.out, self.err = result
 
     def test_out(self):
@@ -124,30 +122,26 @@ class TestPublishHitsHandle(django.test.TestCase):
 class TestPublishHitsHandleNewline(TestPublishHitsHandle):
 
     def setUp(self):
-        args = map(
-            os.path.abspath,
-            [
-                'hits/tests/resources/form_1.html',
-                'hits/tests/resources/form_1_vals_newline_ending.csv'
-            ]
-        )
+        args = []
+        options = {
+            'template_file_path': os.path.abspath('hits/tests/resources/form_1.html'),
+            'csv_file_path': os.path.abspath('hits/tests/resources/form_1_vals_newline_ending.csv')
+        }
         command = publish_hits.Command()
-        with capture(command.handle, *args) as result:
+        with capture(command.handle, *args, **options) as result:
             self.out, self.err = result
 
 
 class TestPublishHitsHandleForm0(TestPublishHitsHandle):
 
     def setUp(self):
-        args = map(
-            os.path.abspath,
-            [
-                'hits/tests/resources/form_0.html',
-                'hits/tests/resources/form_0_vals.csv'
-            ]
-        )
+        args = []
+        options = {
+            'template_file_path': os.path.abspath('hits/tests/resources/form_0.html'),
+            'csv_file_path': os.path.abspath('hits/tests/resources/form_0_vals.csv')
+        }
         command = publish_hits.Command()
-        with capture(command.handle, *args) as result:
+        with capture(command.handle, *args, **options) as result:
             self.out, self.err = result
 
     def test_Hit_fields(self):
@@ -209,19 +203,19 @@ class TestDumpResults(TestPublishHitsHandleForm0):
         hit.save()
 
         # Dump the results.
+        args = []
+        self.options = {
+            'template_file_path': os.path.abspath('hits/tests/resources/form_0.html'),
+            'results_csv_file_path': os.path.abspath('temp.csv')
+        }
         command = dump_results.Command()
-        args = map(
-            os.path.abspath,
-            [
-                'hits/tests/resources/form_0.html',
-                'temp.csv'
-            ],
-        )
-        with capture(command.handle, *args) as result:
+        with capture(command.handle, *args, **self.options) as result:
             self.out, self.err = result
 
     def test_out(self):
-        self.assertEqual('', self.out)
+        expected_out = 'Writing results for template %s to %s ...\n' % \
+            (self.options['template_file_path'], self.options['results_csv_file_path'])
+        self.assertEqual(expected_out, self.out)
 
     def test_err(self):
         self.assertEqual('', self.err)

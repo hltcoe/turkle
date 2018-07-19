@@ -6,3 +6,5 @@ venv
 *.tsv
 !examples/*.html
 !examples/*.csv
+!hits/tests/resources/*.csv
+!hits/tests/resources/*.html
