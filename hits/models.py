@@ -6,6 +6,9 @@ class Hit(models.Model):
     """
     Human Intelligence Task
     """
+    class Meta:
+        verbose_name = "HIT"
+
     hit_batch = models.ForeignKey('HitBatch')
     completed = models.BooleanField(default=False)
     input_csv_fields = JSONField()
@@ -48,6 +51,10 @@ class Hit(models.Model):
 
 
 class HitBatch(models.Model):
+    class Meta:
+        verbose_name = "HIT batch"
+        verbose_name_plural = "HIT batches"
+
     date_published = models.DateTimeField(auto_now_add=True)
     hit_template = models.ForeignKey('HitTemplate')
     name = models.TextField(blank=True)
@@ -63,6 +70,9 @@ class HitBatch(models.Model):
 
 
 class HitTemplate(models.Model):
+    class Meta:
+        verbose_name = "HIT template"
+
     name = models.CharField(max_length=256, unique=True)
     form = models.TextField()
     date_modified = models.DateTimeField(auto_now=True)
