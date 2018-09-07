@@ -57,7 +57,8 @@ class HitBatch(models.Model):
 
     date_published = models.DateTimeField(auto_now_add=True)
     hit_template = models.ForeignKey('HitTemplate')
-    name = models.TextField(blank=True)
+    filename = models.CharField(max_length=1024)
+    name = models.CharField(max_length=1024)
 
     def finished_hits(self):
         return self.hit_set.filter(completed=True).order_by('-id')
@@ -73,7 +74,8 @@ class HitTemplate(models.Model):
     class Meta:
         verbose_name = "HIT template"
 
-    name = models.CharField(max_length=256, unique=True)
+    filename = models.CharField(max_length=1024)
+    name = models.CharField(max_length=1024)
     form = models.TextField()
     date_modified = models.DateTimeField(auto_now=True)
 

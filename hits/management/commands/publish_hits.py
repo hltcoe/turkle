@@ -13,10 +13,12 @@ unicodecsv.field_size_limit(sys.maxsize)
 
 def get_or_create_template_from_html_file(htmlfile, template_file_path):
     template_file_path = os.path.abspath(template_file_path)
+    filename = template_file_path
     name = template_file_path
     form = htmlfile.read().decode('utf-8')
 
     template, created = HitTemplate.objects.get_or_create(
+        filename=filename,
         name=name,
         defaults={'form': form},
     )
@@ -58,6 +60,7 @@ class Command(BaseCommand):
             sys.stderr.write('Creating HITs: ')
             hit_batch = HitBatch(
                 hit_template=hit_template,
+                filename=csv_file_path,
                 name=csv_file_path
             )
             hit_batch.save()
