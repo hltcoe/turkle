@@ -1,3 +1,5 @@
+import random
+
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.template import loader
@@ -40,9 +42,13 @@ def submission(request, hit_id):
     h.save()
 
     if hasattr(settings, 'NEXT_HIT_ON_SUBMIT') and settings.NEXT_HIT_ON_SUBMIT:
+        next_hit_random = hasattr(settings, 'RANDOM_NEXT_HIT_ON_SUBMIT') and \
+                          settings.RANDOM_NEXT_HIT_ON_SUBMIT
         unfinished_hits = Hit.objects.filter(completed=False).order_by('id')
         try:
-            return redirect(detail, unfinished_hits[0].id)
+            next_hit = random.choice(unfinished_hits) if next_hit_random \
+                else unfinished_hits[0]
+            return redirect(detail, next_hit.id)
         except IndexError:
             pass
 
