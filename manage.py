@@ -23,6 +23,7 @@ if __name__ == "__main__":
     #   your project's INSTALLED_APPS setting. runserver --insecure
     #   doesn't work with CachedStaticFilesStorage.
     #     https://docs.djangoproject.com/en/1.11/ref/contrib/staticfiles/#runserver
-    sys.argv.append('--insecure')
+    if 'runserver' in sys.argv:
+        sys.argv.append('--insecure')
 
     execute_from_command_line(sys.argv)
