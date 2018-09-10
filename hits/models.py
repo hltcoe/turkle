@@ -25,6 +25,12 @@ class Hit(models.Model):
     def __unicode__(self):
         return 'HIT id:{}'.format(self.id)
 
+    def get_output_csv_fieldnames(self):
+        return tuple(sorted(
+            [u'Input.' + k for k in self.input_csv_fields.keys()] +
+            [u'Answer.' + k for k in self.answers.keys()]
+        ))
+
     def generate_form(self):
         result = self.hit_batch.hit_template.form
         for field in self.input_csv_fields.keys():
@@ -87,6 +93,13 @@ class HitBatch(models.Model):
     def finished_hits(self):
         return self.hit_set.filter(completed=True).order_by('-id')
 
+    def to_csv(self, csv_fh):
+        fieldnames, rows = self._results_data(self.finished_hits())
+        writer = unicodecsv.DictWriter(csv_fh, fieldnames)
+        writer.writeheader()
+        for row in rows:
+            writer.writerow(row)
+
     def unfinished_hits(self):
         return self.hit_set.filter(completed=False).order_by('id')
 
@@ -94,6 +107,37 @@ class HitBatch(models.Model):
         rows = unicodecsv.reader(csv_fh)
         header = rows.next()
         return header, rows
+
+    def _results_data(self, hits):
+        """
+        All completed HITs must come from the same template so that they have the
+        same field names.
+        """
+        fieldnames = hits[0].get_output_csv_fieldnames()
+
+        rows = []
+        for hit in hits:
+            row = {}
+            row.update({u'Input.' + k: v for k, v in hit.input_csv_fields.items()})
+            row.update({u'Answer.' + k: v for k, v in hit.answers.items()})
+            rows.append(row)
+
+        return fieldnames, rows
+
+    def _results_data_groups(self, hits):
+        hit_fieldname_tuples = [hit.get_output_csv_fieldnames() for hit in hits]
+        fieldname_tuple_id_map = dict(
+            (t, i)
+            for (i, t)
+            in enumerate(sorted(set(hit_fieldname_tuples)))
+        )
+
+        hit_groups = [[] for t in fieldname_tuple_id_map]
+        for (hit, fieldnames) in zip(completed_hits, hit_fieldname_tuples):
+            i = fieldname_tuple_id_map[fieldnames]
+            hit_groups[i].append(hit)
+
+        return map(results_data, hit_groups)
 
     def __unicode__(self):
         return 'HIT Batch: {}'.format(self.name)
@@ -116,6 +160,19 @@ class HitTemplate(models.Model):
         unique_fieldnames = set(re.findall(r'\${(\w+)}', self.form))
         self.fieldnames = dict((fn, True) for fn in unique_fieldnames)
         super(HitTemplate, self).save(*args, **kwargs)
+
+    def to_csv(self, csv_fh):
+        batches = self.hitbatch_set.all()
+        if batches:
+            fieldnames, rows = batches[0]._results_data(batches[0].finished_hits())
+            writer = unicodecsv.DictWriter(csv_fh, fieldnames)
+            writer.writeheader()
+            for row in rows:
+                writer.writerow(row)
+            for batch in batches[1:]:
+                _, rows = batch._results_data(batch.finished_hits())
+                for row in rows:
+                    writer.writerow(row)
 
     def __unicode__(self):
         return 'HIT Template: {}'.format(self.name)

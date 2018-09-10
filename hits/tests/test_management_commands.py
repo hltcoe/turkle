@@ -208,10 +208,6 @@ class TestDumpResults(TestPublishHitsHandleForm0):
     def test_err(self):
         self.assertEqual('', self.err)
 
-    def test_unicode_through_dump_results(self):
-        self.assertEqual(1, len(Hit.objects.filter(completed=True)))
-        _, rows = dump_results.results_data(Hit.objects.filter(completed=True))
-
 
 __all__ = [
     'TestDumpResults',
