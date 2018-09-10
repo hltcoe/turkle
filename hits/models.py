@@ -1,7 +1,13 @@
 import re
+import sys
 
 from django.db import models
 from jsonfield import JSONField
+import unicodecsv
+
+
+# The default field size limit is 131072 characters
+unicodecsv.field_size_limit(sys.maxsize)
 
 
 class Hit(models.Model):
@@ -62,11 +68,32 @@ class HitBatch(models.Model):
     filename = models.CharField(max_length=1024)
     name = models.CharField(max_length=1024)
 
+    def create_hits_from_csv(self, csv_fh):
+        header, data_rows = self._parse_csv(csv_fh)
+
+        num_created_hits = 0
+        for row in data_rows:
+            if not row:
+                continue
+            hit = Hit(
+                hit_batch=self,
+                input_csv_fields=dict(zip(header, row)),
+            )
+            hit.save()
+            num_created_hits += 1
+
+        sys.stderr.write('%d HITs created.\n' % num_created_hits)
+
     def finished_hits(self):
         return self.hit_set.filter(completed=True).order_by('-id')
 
     def unfinished_hits(self):
         return self.hit_set.filter(completed=False).order_by('id')
+
+    def _parse_csv(self, csv_fh):
+        rows = unicodecsv.reader(csv_fh)
+        header = rows.next()
+        return header, rows
 
     def __unicode__(self):
         return 'HIT Batch: {}'.format(self.name)
