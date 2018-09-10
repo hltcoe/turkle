@@ -1,3 +1,5 @@
+import re
+
 from django.db import models
 from jsonfield import JSONField
 
@@ -78,6 +80,15 @@ class HitTemplate(models.Model):
     name = models.CharField(max_length=1024)
     form = models.TextField()
     date_modified = models.DateTimeField(auto_now=True)
+
+    # Fieldnames are automatically extracted from form text
+    fieldnames = JSONField(blank=True)
+
+    def save(self, *args, **kwargs):
+        # Extract fieldnames from form text, save fieldnames as keys of JSON dict
+        unique_fieldnames = set(re.findall(r'\${(\w+)}', self.form))
+        self.fieldnames = dict((fn, True) for fn in unique_fieldnames)
+        super(HitTemplate, self).save(*args, **kwargs)
 
     def __unicode__(self):
         return 'HIT Template: {}'.format(self.name)
