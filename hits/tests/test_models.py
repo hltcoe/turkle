@@ -117,10 +117,14 @@ class TestModels(django.test.TestCase):
 
         csv_output = StringIO()
         hit_template.to_csv(csv_output)
+
+        rows = csv_output.getvalue().split('\r\n')
         self.assertEqual(
-            'Answer.combined,Input.letter,Input.number\r\n2b,b,2\r\n1a,a,1\r\n',
-            csv_output.getvalue()
+            'Answer.combined,Input.letter,Input.number',
+            rows[0]
         )
+        self.assertTrue('1a,a,1' in rows[1:])
+        self.assertTrue('2b,b,2' in rows[1:])
 
     def test_new_hit(self):
         """
