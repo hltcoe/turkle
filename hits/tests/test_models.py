@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
+from cStringIO import StringIO
+
 import django.test
+
 from hits.models import Hit, HitBatch, HitTemplate
 
 
@@ -8,10 +11,10 @@ class TestModels(django.test.TestCase):
     def setUp(self):
         """
         Sets up HitTemplate, Hit objects, and saves them to the DB.
-        The HitTemplate is bare,
-        the Hit has inputs and answers and refers to the HitTemplate form.
+        The HitTemplate form HTML only displays the one input variable.
+        The Hit has inputs and answers and refers to the HitTemplate form.
         """
-        hit_template = HitTemplate(name='test', form="<p></p>")
+        hit_template = HitTemplate(name='test', form="<p>${foo}</p>")
         hit_template.save()
         hit_batch = HitBatch(hit_template=hit_template)
         hit_batch.save()
@@ -53,6 +56,71 @@ class TestModels(django.test.TestCase):
         )
         hit.save()
         self.hit = hit
+
+    def test_extract_fieldnames_from_form_html(self):
+        self.assertEqual(
+            {u'foo': True},
+            self.hit.hit_batch.hit_template.fieldnames
+        )
+
+        hit_template = HitTemplate(name='test', form='<p>${foo} - ${bar}</p>')
+        hit_template.save()
+        self.assertEqual(
+            {u'foo': True, u'bar': True},
+            hit_template.fieldnames
+        )
+
+    def test_hit_batch_to_csv(self):
+        hit_template = HitTemplate(name='test', form='<p>${foo} - ${bar}</p>')
+        hit_template.save()
+        hit_batch = HitBatch(hit_template=hit_template)
+        hit_batch.save()
+        hit_one = Hit(
+            hit_batch=hit_batch,
+            completed=True,
+            input_csv_fields={'number': '1', 'letter': 'a'},
+            answers={'combined': '1a'}
+        ).save()
+        hit_two = Hit(
+            hit_batch=hit_batch,
+            completed=True,
+            input_csv_fields={'number': '2', 'letter': 'b'},
+            answers={'combined': '2b'}
+        ).save()
+
+        csv_output = StringIO()
+        hit_batch.to_csv(csv_output)
+        self.assertEqual(
+            'Answer.combined,Input.letter,Input.number\r\n2b,b,2\r\n1a,a,1\r\n',
+            csv_output.getvalue()
+        )
+
+    def test_hit_template_to_csv(self):
+        hit_template = HitTemplate(name='test', form='<p>${foo} - ${bar}</p>')
+        hit_template.save()
+        hit_batch_one = HitBatch(hit_template=hit_template)
+        hit_batch_one.save()
+        hit_one = Hit(
+            hit_batch=hit_batch_one,
+            completed=True,
+            input_csv_fields={'number': '1', 'letter': 'a'},
+            answers={'combined': '1a'}
+        ).save()
+        hit_batch_two = HitBatch(hit_template=hit_template)
+        hit_batch_two.save()
+        hit_two = Hit(
+            hit_batch=hit_batch_two,
+            completed=True,
+            input_csv_fields={'number': '2', 'letter': 'b'},
+            answers={'combined': '2b'}
+        ).save()
+
+        csv_output = StringIO()
+        hit_template.to_csv(csv_output)
+        self.assertEqual(
+            'Answer.combined,Input.letter,Input.number\r\n2b,b,2\r\n1a,a,1\r\n',
+            csv_output.getvalue()
+        )
 
     def test_new_hit(self):
         """
