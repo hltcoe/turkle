@@ -157,22 +157,6 @@ class HitBatch(models.Model):
 
         return fieldnames, rows
 
-    def _results_data_groups(self, hits):
-        hit_fieldname_tuples = [hit.get_output_csv_fieldnames() for hit in hits]
-        fieldname_tuple_id_map = dict(
-            (t, i)
-            for (i, t)
-            in enumerate(sorted(set(hit_fieldname_tuples)))
-        )
-
-        hit_groups = [[] for t in fieldname_tuple_id_map]
-        for (hit, fieldnames) in zip(completed_hits, hit_fieldname_tuples):
-            i = fieldname_tuple_id_map[fieldnames]
-            hit_groups[i].append(hit)
-
-        sys.stderr.write("_results_data_groups(): %s" % str(map(results_data, hit_groups)))
-        return map(results_data, hit_groups)
-
     def __unicode__(self):
         return 'HIT Batch: {}'.format(self.name)
 
