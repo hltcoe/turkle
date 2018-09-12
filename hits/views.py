@@ -1,11 +1,32 @@
+try:
+    from cStringIO import StringIO
+except ImportError:
+    from StringIO import StringIO
+import os.path
 import random
 
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.template import loader
 from django.conf import settings
-from hits.models import Hit, HitTemplate
 
+from hits.models import Hit, HitBatch, HitTemplate
+
+
+def download_batch_csv(request, batch_id):
+    batch = HitBatch.objects.get(id=batch_id)
+    csv_output = StringIO()
+    batch.to_csv(csv_output)
+    csv_string = csv_output.getvalue()
+
+    batch_filename, extension = os.path.splitext(os.path.basename(batch.filename))
+
+    # We are following Mechanical Turk's naming conventions for results files
+    filename = "{}-Batch_{}_results{}".format(batch_filename, batch.id, extension)
+
+    response = HttpResponse(csv_string, content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
+    return response
 
 def hits_list_context(template, more_map={}):
     c = dict(
