@@ -26,47 +26,33 @@ class TestPublishHitsMethods(django.test.TestCase):
         )
         csv_file = BytesIO(csv_text.encode('utf8'))
 
-        header, data_rows = publish_hits.parse_csv_file(csv_file)
-        rows = [row for row in data_rows]
-        self.assertEqual(
-            [u'h0', u'h1'],
-            header
-        )
-        self.assertEqual(
-            [
-                [u'é0', u'ñ0'],
-                [u'é1, e1', u'ñ1'],
-            ],
-            rows
-        )
-
-    def test_parse_csv_file(self):
-        header, data_rows = publish_hits.parse_csv_file(self.csv_file)
-        rows = [row for row in data_rows]
-        self.assertEqual(
-            [u'h0', u'h1'],
-            header
-        )
-        self.assertEqual(
-            [
-                [u'é0', u'ñ0'],
-                [u'é1, e1', u'ñ1'],
-            ],
-            rows
-        )
-
         hit_template = HitTemplate(name='test', form="<p></p>")
         hit_template.save()
         hit_batch = HitBatch(hit_template=hit_template)
         hit_batch.save()
+        hit_batch.create_hits_from_csv(csv_file)
 
-        hit = Hit.objects.create(
-            hit_batch=hit_batch,
-            input_csv_fields=dict(zip(header, rows[1])),
-        )
+        expect = {u"h0": u"é0", u"h1": u"ñ0"}
+        actual = hit_batch.hit_set.first().input_csv_fields
+        self.assertEqual(expect, actual)
 
         expect = {u"h0": u"é1, e1", u"h1": u"ñ1"}
-        actual = hit.input_csv_fields
+        actual = hit_batch.hit_set.last().input_csv_fields
+        self.assertEqual(expect, actual)
+
+    def test_parse_csv_file(self):
+        hit_template = HitTemplate(name='test', form="<p></p>")
+        hit_template.save()
+        hit_batch = HitBatch(hit_template=hit_template)
+        hit_batch.save()
+        hit_batch.create_hits_from_csv(self.csv_file)
+
+        expect = {u"h0": u"é0", u"h1": u"ñ0"}
+        actual = hit_batch.hit_set.first().input_csv_fields
+        self.assertEqual(expect, actual)
+
+        expect = {u"h0": u"é1, e1", u"h1": u"ñ1"}
+        actual = hit_batch.hit_set.last().input_csv_fields
         self.assertEqual(expect, actual)
 
 
@@ -221,10 +207,6 @@ class TestDumpResults(TestPublishHitsHandleForm0):
 
     def test_err(self):
         self.assertEqual('', self.err)
-
-    def test_unicode_through_dump_results(self):
-        self.assertEqual(1, len(Hit.objects.filter(completed=True)))
-        _, rows = dump_results.results_data(Hit.objects.filter(completed=True))
 
 
 __all__ = [
