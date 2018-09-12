@@ -91,9 +91,19 @@ class HitBatch(models.Model):
         sys.stderr.write('%d HITs created.\n' % num_created_hits)
 
     def finished_hits(self):
+        """
+        Returns:
+            QuerySet of all Hit objects associated with this HitBatch
+            that have been completed.
+        """
         return self.hit_set.filter(completed=True).order_by('-id')
 
     def to_csv(self, csv_fh):
+        """Write CSV output to file handle for every Hit in batch
+
+        Args:
+            csv_fh (file-like object): File handle for CSV output
+        """
         fieldnames, rows = self._results_data(self.finished_hits())
         writer = unicodecsv.DictWriter(csv_fh, fieldnames)
         writer.writeheader()
@@ -101,9 +111,24 @@ class HitBatch(models.Model):
             writer.writerow(row)
 
     def unfinished_hits(self):
+        """
+        Returns:
+            QuerySet of all Hit objects associated with this HitBatch
+            that have NOT been completed.
+        """
         return self.hit_set.filter(completed=False).order_by('id')
 
     def _parse_csv(self, csv_fh):
+        """
+        Args:
+            csv_fh (file-like object): File handle for CSV output
+
+        Returns:
+            A tuple where the first value is a list of strings for the
+            header fieldnames, and the second value is an iterable
+            that returns a list of values for the rest of the roww in
+            the CSV file.
+        """
         rows = unicodecsv.reader(csv_fh)
         header = rows.next()
         return header, rows
@@ -112,6 +137,14 @@ class HitBatch(models.Model):
         """
         All completed HITs must come from the same template so that they have the
         same field names.
+
+        Args:
+            hits (List of Hit objects):
+
+        Returns:
+            A tuple where the first value is a list of fieldname strings, and
+            the second value is a list of dicts, where the keys to these
+            dicts are the values of the fieldname strings.
         """
         fieldnames = hits[0].get_output_csv_fieldnames()
 
@@ -137,6 +170,7 @@ class HitBatch(models.Model):
             i = fieldname_tuple_id_map[fieldnames]
             hit_groups[i].append(hit)
 
+        sys.stderr.write("_results_data_groups(): %s" % str(map(results_data, hit_groups)))
         return map(results_data, hit_groups)
 
     def __unicode__(self):
@@ -162,6 +196,12 @@ class HitTemplate(models.Model):
         super(HitTemplate, self).save(*args, **kwargs)
 
     def to_csv(self, csv_fh):
+        """
+        Writes CSV output to file handle for every Hit associated with template
+
+        Args:
+            csv_fh (file-like object): File handle for CSV output
+        """
         batches = self.hitbatch_set.all()
         if batches:
             fieldnames, rows = batches[0]._results_data(batches[0].finished_hits())
