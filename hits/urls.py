@@ -9,5 +9,5 @@ urlpatterns = [
     url(r'^(?P<hit_id>\d+)/$', detail),
     url(r'^(?P<hit_id>\d+)/results/$', results),
     url(r'^(?P<hit_id>\d+)/submission/$', submission),
-    url(r'^batch/(?P<batch_id>\d+)/download/$', download_batch_csv),
+    url(r'^batch/(?P<batch_id>\d+)/download/$', download_batch_csv, name='download_batch_csv'),
 ]
