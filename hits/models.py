@@ -107,6 +107,12 @@ class HitBatch(models.Model):
         """
         return self.hit_set.filter(completed=True).order_by('-id')
 
+    def total_finished_hits(self):
+        return self.finished_hits().count()
+
+    def total_hits(self):
+        return self.hit_set.count()
+
     def to_csv(self, csv_fh):
         """Write CSV output to file handle for every Hit in batch
 
