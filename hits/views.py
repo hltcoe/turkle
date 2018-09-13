@@ -2,7 +2,6 @@ try:
     from cStringIO import StringIO
 except ImportError:
     from StringIO import StringIO
-import os.path
 import random
 
 from django.http import HttpResponse
@@ -18,14 +17,8 @@ def download_batch_csv(request, batch_id):
     csv_output = StringIO()
     batch.to_csv(csv_output)
     csv_string = csv_output.getvalue()
-
-    batch_filename, extension = os.path.splitext(os.path.basename(batch.filename))
-
-    # We are following Mechanical Turk's naming conventions for results files
-    filename = "{}-Batch_{}_results{}".format(batch_filename, batch.id, extension)
-
     response = HttpResponse(csv_string, content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="{}"'.format(filename)
+    response['Content-Disposition'] = 'attachment; filename="{}"'.format(batch.csv_results_filename())
     return response
 
 def hits_list_context(template, more_map={}):

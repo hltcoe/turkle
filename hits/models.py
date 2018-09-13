@@ -1,3 +1,4 @@
+import os.path
 import re
 import sys
 
@@ -73,6 +74,14 @@ class HitBatch(models.Model):
     hit_template = models.ForeignKey('HitTemplate')
     filename = models.CharField(max_length=1024)
     name = models.CharField(max_length=1024)
+
+    def csv_results_filename(self):
+        """Returns filename for CSV results file for this HitBatch
+        """
+        batch_filename, extension = os.path.splitext(os.path.basename(self.filename))
+
+        # We are following Mechanical Turk's naming conventions for results files
+        return "{}-Batch_{}_results{}".format(batch_filename, self.id, extension)
 
     def create_hits_from_csv(self, csv_fh):
         header, data_rows = self._parse_csv(csv_fh)
