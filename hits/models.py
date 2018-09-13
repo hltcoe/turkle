@@ -1,3 +1,4 @@
+import os.path
 import re
 import sys
 
@@ -74,6 +75,14 @@ class HitBatch(models.Model):
     filename = models.CharField(max_length=1024)
     name = models.CharField(max_length=1024)
 
+    def csv_results_filename(self):
+        """Returns filename for CSV results file for this HitBatch
+        """
+        batch_filename, extension = os.path.splitext(os.path.basename(self.filename))
+
+        # We are following Mechanical Turk's naming conventions for results files
+        return "{}-Batch_{}_results{}".format(batch_filename, self.id, extension)
+
     def create_hits_from_csv(self, csv_fh):
         header, data_rows = self._parse_csv(csv_fh)
 
@@ -97,6 +106,12 @@ class HitBatch(models.Model):
             that have been completed.
         """
         return self.hit_set.filter(completed=True).order_by('-id')
+
+    def total_finished_hits(self):
+        return self.finished_hits().count()
+
+    def total_hits(self):
+        return self.hit_set.count()
 
     def to_csv(self, csv_fh):
         """Write CSV output to file handle for every Hit in batch
