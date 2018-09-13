@@ -17,12 +17,13 @@ class HitBatchForm(ModelForm):
 
 
 class HitBatchAdmin(admin.ModelAdmin):
-    fields = ('hit_template', 'name', 'csv_file')
+    fields = ('hit_template', 'name', 'filename', 'csv_file')
     form = HitBatchForm
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size':'60'})},
     }
     list_display = ('filename', 'total_hits', 'total_finished_hits', 'download_csv')
+    readonly_fields = ('filename',)
 
     def download_csv(self, obj):
         download_url = reverse('download_batch_csv', kwargs={'batch_id': obj.id})
