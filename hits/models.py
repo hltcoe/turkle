@@ -26,12 +26,6 @@ class Hit(models.Model):
     def __unicode__(self):
         return 'HIT id:{}'.format(self.id)
 
-    def get_output_csv_fieldnames(self):
-        return tuple(sorted(
-            [u'Input.' + k for k in self.input_csv_fields.keys()] +
-            [u'Answer.' + k for k in self.answers.keys()]
-        ))
-
     def generate_form(self):
         result = self.hit_batch.hit_template.form
         for field in self.input_csv_fields.keys():
@@ -148,6 +142,25 @@ class HitBatch(models.Model):
         header = rows.next()
         return header, rows
 
+    def _get_csv_fieldnames(self, hits):
+        """
+        Args:
+            hits (List of Hit objects):
+
+        Returns:
+            A tuple of strings specifying the fieldnames to be used in
+            in the header of a CSV file.
+        """
+        input_field_set = set()
+        answer_field_set = set()
+        for hit in hits:
+            input_field_set.update(hit.input_csv_fields.keys())
+            answer_field_set.update(hit.answers.keys())
+        return tuple(
+            [u'Input.' + k for k in sorted(input_field_set)] +
+            [u'Answer.' + k for k in sorted(answer_field_set)]
+        )
+
     def _results_data(self, hits):
         """
         All completed HITs must come from the same template so that they have the
@@ -161,8 +174,6 @@ class HitBatch(models.Model):
             the second value is a list of dicts, where the keys to these
             dicts are the values of the fieldname strings.
         """
-        fieldnames = hits[0].get_output_csv_fieldnames()
-
         rows = []
         for hit in hits:
             row = {}
@@ -170,7 +181,7 @@ class HitBatch(models.Model):
             row.update({u'Answer.' + k: v for k, v in hit.answers.items()})
             rows.append(row)
 
-        return fieldnames, rows
+        return self._get_csv_fieldnames(hits), rows
 
     def __unicode__(self):
         return 'HIT Batch: {}'.format(self.name)

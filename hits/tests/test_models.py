@@ -30,7 +30,9 @@ class TestHitBatch(django.test.TestCase):
         csv_output = StringIO()
         hit_batch.to_csv(csv_output)
         self.assertEqual(
-            'Answer.combined,Input.letter,Input.number\r\n2b,b,2\r\n1a,a,1\r\n',
+            'Input.letter,Input.number,Answer.combined\r\n' +
+            'b,2,2b\r\n' +
+            'a,1,1a\r\n',
             csv_output.getvalue()
         )
 
@@ -61,10 +63,10 @@ class TestHitBatch(django.test.TestCase):
         csv_output = StringIO()
         hit_batch.to_csv(csv_output)
         rows = csv_output.getvalue().split()
-        self.assertEqual(rows[0], 'Answer.1,Answer.2,Answer.3,Answer.4,Input.letter')
-        self.assertEqual(rows[1], '1,2,,,a')
-        self.assertEqual(rows[2], ',,3,4,b')
-        self.assertEqual(rows[3], ',2,3,,c')
+        self.assertEqual(rows[0], 'Input.letter,Answer.1,Answer.2,Answer.3,Answer.4')
+        self.assertTrue('a,1,2,,' in rows)
+        self.assertTrue('b,,,3,4' in rows)
+        self.assertTrue('c,,2,3,' in rows)
 
 
     def test_hit_batch_from_emoji_csv(self):
@@ -173,11 +175,11 @@ class TestModels(django.test.TestCase):
 
         rows = csv_output.getvalue().split('\r\n')
         self.assertEqual(
-            'Answer.combined,Input.letter,Input.number',
+            'Input.letter,Input.number,Answer.combined',
             rows[0]
         )
-        self.assertTrue('1a,a,1' in rows[1:])
-        self.assertTrue('2b,b,2' in rows[1:])
+        self.assertTrue('a,1,1a' in rows[1:])
+        self.assertTrue('b,2,2b' in rows[1:])
 
     def test_new_hit(self):
         """
