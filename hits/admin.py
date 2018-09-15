@@ -31,7 +31,7 @@ class HitBatchAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         obj.filename = request.FILES['csv_file']._name
-        csv_text = request.FILES['csv_file'].read().decode('utf-8')
+        csv_text = request.FILES['csv_file'].read()
         super(HitBatchAdmin, self).save_model(request, obj, form, change)
         csv_fh = StringIO(csv_text)
         obj.create_hits_from_csv(csv_fh)
