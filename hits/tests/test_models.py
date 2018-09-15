@@ -151,7 +151,7 @@ class TestModels(django.test.TestCase):
         )
 
     def test_hit_template_to_csv(self):
-        hit_template = HitTemplate(name='test', form='<p>${foo} - ${bar}</p>')
+        hit_template = HitTemplate(name='test', form='<p>${number} - ${letter}</p>')
         hit_template.save()
         hit_batch_one = HitBatch(hit_template=hit_template)
         hit_batch_one.save()
@@ -180,6 +180,37 @@ class TestModels(django.test.TestCase):
         )
         self.assertTrue('"a","1","1a"' in rows[1:])
         self.assertTrue('"b","2","2b"' in rows[1:])
+
+    def test_hit_template_to_csv_different_answers_per_batch(self):
+        hit_template = HitTemplate(name='test', form='<p>${letter}</p>')
+        hit_template.save()
+        hit_batch_one = HitBatch(hit_template=hit_template)
+        hit_batch_one.save()
+        hit_one = Hit(
+            hit_batch=hit_batch_one,
+            completed=True,
+            input_csv_fields={'letter': 'a'},
+            answers={'1': 1, '2': 2}
+        ).save()
+        hit_batch_two = HitBatch(hit_template=hit_template)
+        hit_batch_two.save()
+        hit_two = Hit(
+            hit_batch=hit_batch_two,
+            completed=True,
+            input_csv_fields={'letter': 'b'},
+            answers={'3': 3, '4': 4}
+        ).save()
+
+        csv_output = StringIO()
+        hit_template.to_csv(csv_output)
+
+        rows = csv_output.getvalue().split('\r\n')
+        self.assertEqual(
+            '"Input.letter","Answer.1","Answer.2","Answer.3","Answer.4"',
+            rows[0]
+        )
+        self.assertTrue('"a","1","2","",""' in rows)
+        self.assertTrue('"b","","","3","4"' in rows)
 
     def test_new_hit(self):
         """

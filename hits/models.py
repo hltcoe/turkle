@@ -214,15 +214,33 @@ class HitTemplate(models.Model):
         """
         batches = self.hitbatch_set.all()
         if batches:
-            fieldnames, rows = batches[0]._results_data(batches[0].finished_hits())
+            fieldnames = self._get_csv_fieldnames(batches)
             writer = unicodecsv.DictWriter(csv_fh, fieldnames, quoting=unicodecsv.QUOTE_ALL)
             writer.writeheader()
-            for row in rows:
-                writer.writerow(row)
-            for batch in batches[1:]:
+            for batch in batches:
                 _, rows = batch._results_data(batch.finished_hits())
                 for row in rows:
                     writer.writerow(row)
+
+    def _get_csv_fieldnames(self, batches):
+        """
+        Args:
+            batches (List of HitBatch objects)
+
+        Returns:
+            A tuple of strings specifying the fieldnames to be used in
+            in the header of a CSV file.
+        """
+        input_field_set = set()
+        answer_field_set = set()
+        for batch in batches:
+            for hit in batch.hit_set.all():
+                input_field_set.update(hit.input_csv_fields.keys())
+                answer_field_set.update(hit.answers.keys())
+        return tuple(
+            [u'Input.' + k for k in sorted(input_field_set)] +
+            [u'Answer.' + k for k in sorted(answer_field_set)]
+        )
 
     def __unicode__(self):
         return 'HIT Template: {}'.format(self.name)
