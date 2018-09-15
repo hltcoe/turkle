@@ -1,7 +1,71 @@
+# -*- coding: utf-8 -*-
+import os.path
+
 import django.test
 from django.core.handlers.wsgi import WSGIRequest
+from django.contrib.auth.models import User
+
 from hits.models import Hit, HitBatch, HitTemplate
 from hits.views import submission
+
+
+class TestHitBatchSave(django.test.TestCase):
+    def setUp(self):
+        user = User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+
+    def test_batch_creation(self):
+        hit_template = HitTemplate(name='foo', form='<p>${foo}: ${bar}</p>')
+        hit_template.save()
+
+        self.assertFalse(HitBatch.objects.filter(name='hit_batch_save').exists())
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        with open(os.path.abspath('hits/tests/resources/form_1_vals.csv')) as fp:
+            response = client.post(
+                u'/admin/hits/hitbatch/add/',
+                {
+                    'hit_template': hit_template.id,
+                    'name': 'hit_batch_save',
+                    'csv_file': fp
+                })
+        self.assertTrue('error' not in response.content)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], u'/admin/hits/hitbatch/')
+        self.assertTrue(HitBatch.objects.filter(name='hit_batch_save').exists())
+        matching_hit_batch = HitBatch.objects.filter(name='hit_batch_save').first()
+        self.assertEqual(matching_hit_batch.filename, u'form_1_vals.csv')
+        self.assertEqual(matching_hit_batch.total_hits(), 1)
+
+    def test_emoji_batch_creation(self):
+        hit_template = HitTemplate(name='foo', form='<p>${emoji}: ${more-emoji}</p>')
+        hit_template.save()
+
+        self.assertFalse(HitBatch.objects.filter(name='hit_batch_save').exists())
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        with open(os.path.abspath('hits/tests/resources/emoji.csv')) as fp:
+            response = client.post(
+                u'/admin/hits/hitbatch/add/',
+                {
+                    'hit_template': hit_template.id,
+                    'name': 'hit_batch_save',
+                    'csv_file': fp
+                })
+        self.assertTrue('error' not in response.content)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], u'/admin/hits/hitbatch/')
+        self.assertTrue(HitBatch.objects.filter(name='hit_batch_save').exists())
+        matching_hit_batch = HitBatch.objects.filter(name='hit_batch_save').first()
+        self.assertEqual(matching_hit_batch.filename, u'emoji.csv')
+
+        self.assertEqual(matching_hit_batch.total_hits(), 3)
+        hits = matching_hit_batch.hit_set.all()
+        self.assertEqual(hits[0].input_csv_fields['emoji'], u'😀')
+        self.assertEqual(hits[0].input_csv_fields['more-emoji'], u'😃')
+        self.assertEqual(hits[2].input_csv_fields['emoji'], u'🤔')
+        self.assertEqual(hits[2].input_csv_fields['more-emoji'], u'🤭')
 
 
 class TestSubmission(django.test.TestCase):
