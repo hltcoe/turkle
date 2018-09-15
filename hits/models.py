@@ -114,7 +114,7 @@ class HitBatch(models.Model):
             csv_fh (file-like object): File handle for CSV output
         """
         fieldnames, rows = self._results_data(self.finished_hits())
-        writer = unicodecsv.DictWriter(csv_fh, fieldnames)
+        writer = unicodecsv.DictWriter(csv_fh, fieldnames, quoting=unicodecsv.QUOTE_ALL)
         writer.writeheader()
         for row in rows:
             writer.writerow(row)
@@ -215,7 +215,7 @@ class HitTemplate(models.Model):
         batches = self.hitbatch_set.all()
         if batches:
             fieldnames, rows = batches[0]._results_data(batches[0].finished_hits())
-            writer = unicodecsv.DictWriter(csv_fh, fieldnames)
+            writer = unicodecsv.DictWriter(csv_fh, fieldnames, quoting=unicodecsv.QUOTE_ALL)
             writer.writeheader()
             for row in rows:
                 writer.writerow(row)
