@@ -70,7 +70,7 @@ class TestHitBatch(django.test.TestCase):
 
 
     def test_hit_batch_from_emoji_csv(self):
-        hit_template = HitTemplate(name='test', form='<p>${emoji} - ${more-emoji}</p>')
+        hit_template = HitTemplate(name='test', form='<p>${emoji} - ${more_emoji}</p>')
         hit_template.save()
         hit_batch = HitBatch(hit_template=hit_template)
         hit_batch.save()
@@ -81,9 +81,9 @@ class TestHitBatch(django.test.TestCase):
         self.assertEqual(hit_batch.total_hits(), 3)
         hits = hit_batch.hit_set.all()
         self.assertEqual(hits[0].input_csv_fields['emoji'], u'😀')
-        self.assertEqual(hits[0].input_csv_fields['more-emoji'], u'😃')
+        self.assertEqual(hits[0].input_csv_fields['more_emoji'], u'😃')
         self.assertEqual(hits[2].input_csv_fields['emoji'], u'🤔')
-        self.assertEqual(hits[2].input_csv_fields['more-emoji'], u'🤭')
+        self.assertEqual(hits[2].input_csv_fields['more_emoji'], u'🤭')
 
 
 class TestModels(django.test.TestCase):

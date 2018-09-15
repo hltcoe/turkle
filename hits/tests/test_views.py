@@ -38,7 +38,7 @@ class TestHitBatchSave(django.test.TestCase):
         self.assertEqual(matching_hit_batch.total_hits(), 1)
 
     def test_emoji_batch_creation(self):
-        hit_template = HitTemplate(name='foo', form='<p>${emoji}: ${more-emoji}</p>')
+        hit_template = HitTemplate(name='foo', form='<p>${emoji}: ${more_emoji}</p>')
         hit_template.save()
 
         self.assertFalse(HitBatch.objects.filter(name='hit_batch_save').exists())
@@ -63,9 +63,9 @@ class TestHitBatchSave(django.test.TestCase):
         self.assertEqual(matching_hit_batch.total_hits(), 3)
         hits = matching_hit_batch.hit_set.all()
         self.assertEqual(hits[0].input_csv_fields['emoji'], u'😀')
-        self.assertEqual(hits[0].input_csv_fields['more-emoji'], u'😃')
+        self.assertEqual(hits[0].input_csv_fields['more_emoji'], u'😃')
         self.assertEqual(hits[2].input_csv_fields['emoji'], u'🤔')
-        self.assertEqual(hits[2].input_csv_fields['more-emoji'], u'🤭')
+        self.assertEqual(hits[2].input_csv_fields['more_emoji'], u'🤭')
 
 
 class TestSubmission(django.test.TestCase):
