@@ -10,7 +10,7 @@ from hits.models import Hit, HitBatch, HitTemplate
 class TestHitBatch(django.test.TestCase):
 
     def test_hit_batch_to_csv(self):
-        hit_template = HitTemplate(name='test', form='<p>${foo} - ${bar}</p>')
+        hit_template = HitTemplate(name='test', form='<p>${number} - ${letter}</p>')
         hit_template.save()
         hit_batch = HitBatch(hit_template=hit_template)
         hit_batch.save()
@@ -30,9 +30,44 @@ class TestHitBatch(django.test.TestCase):
         csv_output = StringIO()
         hit_batch.to_csv(csv_output)
         self.assertEqual(
-            'Answer.combined,Input.letter,Input.number\r\n2b,b,2\r\n1a,a,1\r\n',
+            'Input.letter,Input.number,Answer.combined\r\n' +
+            'b,2,2b\r\n' +
+            'a,1,1a\r\n',
             csv_output.getvalue()
         )
+
+    def test_hit_batch_to_csv_variable_number_of_answers(self):
+        hit_template = HitTemplate(name='test', form='<p>${letter}</p>')
+        hit_template.save()
+        hit_batch = HitBatch(hit_template=hit_template)
+        hit_batch.save()
+        hit_one = Hit(
+            hit_batch=hit_batch,
+            completed=True,
+            input_csv_fields={'letter': 'a'},
+            answers={'1': 1, '2': 2}
+        ).save()
+        hit_two = Hit(
+            hit_batch=hit_batch,
+            completed=True,
+            input_csv_fields={'letter': 'b'},
+            answers={'3': 3, '4': 4}
+        ).save()
+        hit_three = Hit(
+            hit_batch=hit_batch,
+            completed=True,
+            input_csv_fields={'letter': 'c'},
+            answers={'3': 3, '2': 2}
+        ).save()
+
+        csv_output = StringIO()
+        hit_batch.to_csv(csv_output)
+        rows = csv_output.getvalue().split()
+        self.assertEqual(rows[0], 'Input.letter,Answer.1,Answer.2,Answer.3,Answer.4')
+        self.assertTrue('a,1,2,,' in rows)
+        self.assertTrue('b,,,3,4' in rows)
+        self.assertTrue('c,,2,3,' in rows)
+
 
     def test_hit_batch_from_emoji_csv(self):
         hit_template = HitTemplate(name='test', form='<p>${emoji} - ${more-emoji}</p>')
@@ -140,11 +175,11 @@ class TestModels(django.test.TestCase):
 
         rows = csv_output.getvalue().split('\r\n')
         self.assertEqual(
-            'Answer.combined,Input.letter,Input.number',
+            'Input.letter,Input.number,Answer.combined',
             rows[0]
         )
-        self.assertTrue('1a,a,1' in rows[1:])
-        self.assertTrue('2b,b,2' in rows[1:])
+        self.assertTrue('a,1,1a' in rows[1:])
+        self.assertTrue('b,2,2b' in rows[1:])
 
     def test_new_hit(self):
         """
