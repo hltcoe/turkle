@@ -45,6 +45,14 @@ class HitBatchForm(ModelForm):
                         'These missing fields are: %s' %
                         ', '.join(template_but_not_csv)))
 
+        expected_fields = len(header)
+        for (i, row) in enumerate(rows):
+            if len(row) != expected_fields:
+                validation_errors.append(
+                    ValidationError(
+                        'The CSV file header has %d fields, but line %d has %d fields' %
+                        (expected_fields, i+2, len(row))))
+
         if validation_errors:
             raise ValidationError(validation_errors)
 
