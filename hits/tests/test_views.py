@@ -67,6 +67,50 @@ class TestHitBatchSave(django.test.TestCase):
         self.assertEqual(hits[2].input_csv_fields['emoji'], u'🤔')
         self.assertEqual(hits[2].input_csv_fields['more_emoji'], u'🤭')
 
+    def test_batch_creation_validation_extra_fields(self):
+        hit_template = HitTemplate(name='foo', form='<p>${f2}</p>')
+        hit_template.save()
+
+        self.assertFalse(HitBatch.objects.filter(name='hit_batch_save').exists())
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        # CSV file has fields 'f2' and 'f3'
+        with open(os.path.abspath('hits/tests/resources/mismatched_fields.csv')) as fp:
+            response = client.post(
+                u'/admin/hits/hitbatch/add/',
+                {
+                    'hit_template': hit_template.id,
+                    'name': 'hit_batch_save',
+                    'csv_file': fp
+                })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('error' in response.content)
+        self.assertTrue('extra fields' in response.content)
+        self.assertTrue('missing fields' not in response.content)
+
+    def test_batch_creation_validation_missing_fields(self):
+        hit_template = HitTemplate(name='foo', form='<p>${f1} ${f2} ${f3}</p>')
+        hit_template.save()
+
+        self.assertFalse(HitBatch.objects.filter(name='hit_batch_save').exists())
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        # CSV file has fields 'f2' and 'f3'
+        with open(os.path.abspath('hits/tests/resources/mismatched_fields.csv')) as fp:
+            response = client.post(
+                u'/admin/hits/hitbatch/add/',
+                {
+                    'hit_template': hit_template.id,
+                    'name': 'hit_batch_save',
+                    'csv_file': fp
+                })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('error' in response.content)
+        self.assertTrue('extra fields' not in response.content)
+        self.assertTrue('missing fields' in response.content)
+
 
 class TestSubmission(django.test.TestCase):
 
