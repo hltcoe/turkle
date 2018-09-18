@@ -18,8 +18,10 @@ def download_batch_csv(request, batch_id):
     batch.to_csv(csv_output)
     csv_string = csv_output.getvalue()
     response = HttpResponse(csv_string, content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="{}"'.format(batch.csv_results_filename())
+    response['Content-Disposition'] = 'attachment; filename="{}"'.format(
+        batch.csv_results_filename())
     return response
+
 
 def hits_list_context(template, more_map={}):
     c = dict(

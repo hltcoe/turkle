@@ -14,13 +14,13 @@ class TestHitBatch(django.test.TestCase):
         hit_template.save()
         hit_batch = HitBatch(hit_template=hit_template)
         hit_batch.save()
-        hit_one = Hit(
+        Hit(
             hit_batch=hit_batch,
             completed=True,
             input_csv_fields={'number': '1', 'letter': 'a'},
             answers={'combined': '1a'}
         ).save()
-        hit_two = Hit(
+        Hit(
             hit_batch=hit_batch,
             completed=True,
             input_csv_fields={'number': '2', 'letter': 'b'},
@@ -41,19 +41,19 @@ class TestHitBatch(django.test.TestCase):
         hit_template.save()
         hit_batch = HitBatch(hit_template=hit_template)
         hit_batch.save()
-        hit_one = Hit(
+        Hit(
             hit_batch=hit_batch,
             completed=True,
             input_csv_fields={'letter': 'a'},
             answers={'1': 1, '2': 2}
         ).save()
-        hit_two = Hit(
+        Hit(
             hit_batch=hit_batch,
             completed=True,
             input_csv_fields={'letter': 'b'},
             answers={'3': 3, '4': 4}
         ).save()
-        hit_three = Hit(
+        Hit(
             hit_batch=hit_batch,
             completed=True,
             input_csv_fields={'letter': 'c'},
@@ -67,7 +67,6 @@ class TestHitBatch(django.test.TestCase):
         self.assertTrue('"a","1","2","",""' in rows)
         self.assertTrue('"b","","","3","4"' in rows)
         self.assertTrue('"c","","2","3",""' in rows)
-
 
     def test_hit_batch_from_emoji_csv(self):
         hit_template = HitTemplate(name='test', form='<p>${emoji} - ${more_emoji}</p>')
@@ -155,7 +154,7 @@ class TestModels(django.test.TestCase):
         hit_template.save()
         hit_batch_one = HitBatch(hit_template=hit_template)
         hit_batch_one.save()
-        hit_one = Hit(
+        Hit(
             hit_batch=hit_batch_one,
             completed=True,
             input_csv_fields={'number': '1', 'letter': 'a'},
@@ -163,7 +162,7 @@ class TestModels(django.test.TestCase):
         ).save()
         hit_batch_two = HitBatch(hit_template=hit_template)
         hit_batch_two.save()
-        hit_two = Hit(
+        Hit(
             hit_batch=hit_batch_two,
             completed=True,
             input_csv_fields={'number': '2', 'letter': 'b'},
@@ -186,7 +185,7 @@ class TestModels(django.test.TestCase):
         hit_template.save()
         hit_batch_one = HitBatch(hit_template=hit_template)
         hit_batch_one.save()
-        hit_one = Hit(
+        Hit(
             hit_batch=hit_batch_one,
             completed=True,
             input_csv_fields={'letter': 'a'},
@@ -194,7 +193,7 @@ class TestModels(django.test.TestCase):
         ).save()
         hit_batch_two = HitBatch(hit_template=hit_template)
         hit_batch_two.save()
-        hit_two = Hit(
+        Hit(
             hit_batch=hit_batch_two,
             completed=True,
             input_csv_fields={'letter': 'b'},
@@ -255,8 +254,26 @@ class TestGenerateForm(django.test.TestCase):
         self.hit_template.save()
         self.hit_batch = HitBatch(hit_template=self.hit_template)
         self.hit_batch.save()
-        field_names = u"tweet0_id,tweet0_entity,tweet0_before_entity,tweet0_after_entity,tweet0_word0,tweet0_word1,tweet0_word2,tweet1_id,tweet1_entity,tweet1_before_entity,tweet1_after_entity,tweet1_word0,tweet1_word1,tweet1_word2,tweet2_id,tweet2_entity,tweet2_before_entity,tweet2_after_entity,tweet2_word0,tweet2_word1,tweet2_word2,tweet3_id,tweet3_entity,tweet3_before_entity,tweet3_after_entity,tweet3_word0,tweet3_word1,tweet3_word2,tweet4_id,tweet4_entity,tweet4_before_entity,tweet4_after_entity,tweet4_word0,tweet4_word1,tweet4_word2,tweet5_id,tweet5_entity,tweet5_before_entity,tweet5_after_entity,tweet5_word0,tweet5_word1,tweet5_word2",
-        values = u"268,SANTOS, Muy bien America ......... y lo siento mucho , un muy buen rival,mucho,&nbsp;,&nbsp;,2472,GREGORY, Ah bueno , tampoco andes pidiendo ese tipo de milagros . @jcabrerac @CarlosCabreraR,bueno,&nbsp;,&nbsp;,478,ALEJANDRO, @aguillen19 &#44; un super abrazo mi querido , &#44; mis mejores deseos para este 2012 ... muakkk !,querido,&nbsp;,&nbsp;,906_control, PF, Acusan camioneros extorsiones de, : Transportistas acusaron que deben pagar entre 13 y 15 mil pesos a agentes que .. http://t.co/d8LUVvhP,acusaron,&nbsp;,&nbsp;,2793_control, CHICARO, Me gusta cuando chicharo hace su oracion es lo que lo hace especial .,&nbsp;,gusta,&nbsp;,&nbsp;,357,OSCAR WILDE&QUOT;, &quot; @ ifilosofia : Las pequeñas acciones de cada día son las que hacen o deshacen el carácter.&quot; , bueno !!!! Es así,bueno,&nbsp;,&nbsp;",
+        field_names = u"tweet0_id,tweet0_entity,tweet0_before_entity,tweet0_after_entity," + \
+            u"tweet0_word0,tweet0_word1,tweet0_word2,tweet1_id,tweet1_entity," + \
+            u"tweet1_before_entity,tweet1_after_entity,tweet1_word0,tweet1_word1,tweet1_word2," + \
+            u"tweet2_id,tweet2_entity,tweet2_before_entity,tweet2_after_entity,tweet2_word0," + \
+            u"tweet2_word1,tweet2_word2,tweet3_id,tweet3_entity,tweet3_before_entity," + \
+            u"tweet3_after_entity,tweet3_word0,tweet3_word1,tweet3_word2,tweet4_id," + \
+            u"tweet4_entity,tweet4_before_entity,tweet4_after_entity,tweet4_word0," + \
+            u"tweet4_word1,tweet4_word2,tweet5_id,tweet5_entity,tweet5_before_entity," + \
+            u"tweet5_after_entity,tweet5_word0,tweet5_word1,tweet5_word2",
+        values = u"268,SANTOS, Muy bien America ......... y lo siento mucho , un muy buen " + \
+            u"rival,mucho,&nbsp;,&nbsp;,2472,GREGORY, Ah bueno , tampoco andes pidiendo ese " +\
+            u"tipo de milagros . @jcabrerac @CarlosCabreraR,bueno,&nbsp;,&nbsp;,478,ALEJANDRO," + \
+            u" @aguillen19 &#44; un super abrazo mi querido , &#44; mis mejores deseos para " + \
+            u"este 2012 ... muakkk !,querido,&nbsp;,&nbsp;,906_control, PF, Acusan camioneros " + \
+            u"extorsiones de, : Transportistas acusaron que deben pagar entre 13 y 15 mil " + \
+            u"pesos a agentes que .. http://t.co/d8LUVvhP,acusaron,&nbsp;,&nbsp;,2793_control," + \
+            u" CHICARO, Me gusta cuando chicharo hace su oracion es lo que lo hace especial .," + \
+            u"&nbsp;,gusta,&nbsp;,&nbsp;,357,OSCAR WILDE&QUOT;, &quot; @ ifilosofia : Las " + \
+            u"pequeñas acciones de cada día son las que hacen o deshacen el carácter.&quot; , " + \
+            u"bueno !!!! Es así,bueno,&nbsp;,&nbsp;",
         self.hit = Hit(
             hit_batch=self.hit_batch,
             input_csv_fields=dict(zip(field_names, values))
@@ -273,7 +290,8 @@ class TestGenerateForm(django.test.TestCase):
     def test_map_fields_csv_row(self):
         hit_template = HitTemplate(
             name='test',
-            form=u"""</select> con relaci&oacute;n a <span style="color: rgb(0, 0, 255);">${tweet0_entity}</span> en este mensaje.</p>"""
+            form=u"""</select> con relaci&oacute;n a <span style="color: rgb(0, 0, 255);">""" +
+            u"""${tweet0_entity}</span> en este mensaje.</p>"""
         )
         hit_template.save()
         hit_batch = HitBatch(hit_template=hit_template)
@@ -288,7 +306,9 @@ class TestGenerateForm(django.test.TestCase):
             ),
         )
         hit.save()
-        expect = u"""<div style=" width:100%; border:2px solid black; margin-top:10px"><div style="margin:10px"></select> con relaci&oacute;n a <span style="color: rgb(0, 0, 255);">SANTOS</span> en este mensaje.</p></div></div>"""
+        expect = u"""<div style=" width:100%; border:2px solid black; margin-top:10px">""" + \
+            u"""<div style="margin:10px"></select> con relaci&oacute;n a <span style="color:""" + \
+            u""" rgb(0, 0, 255);">SANTOS</span> en este mensaje.</p></div></div>"""
         actual = hit.generate_form()
         self.assertEqual(expect, actual)
 

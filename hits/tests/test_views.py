@@ -11,7 +11,7 @@ from hits.views import submission
 
 class TestHitBatch(django.test.TestCase):
     def setUp(self):
-        user = User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+        User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
 
     def test_batch_add(self):
         hit_template = HitTemplate(name='foo', form='<p>${foo}: ${bar}</p>')
