@@ -1,5 +1,5 @@
 from django.conf.urls import include, url
-from django.contrib import admin
+from django.contrib import admin, auth
 
 import turkle.views
 
@@ -16,4 +16,6 @@ urlpatterns = [
     url(r'^hits/', include('hits.urls')),
 
     url(r'^admin/', include(admin.site.urls)),
+
+    url('^', include('django.contrib.auth.urls')),
 ]
