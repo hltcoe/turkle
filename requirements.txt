@@ -1,4 +1,4 @@
-Django==1.10.1
-django-nose==1.4.4
-unicodecsv==0.9.4
-jsonfield==1.0.3
+Django~=1.11.15
+django-nose==1.4.5
+unicodecsv==0.14.1
+jsonfield==2.0.2
