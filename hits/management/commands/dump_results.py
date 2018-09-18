@@ -29,7 +29,9 @@ class Command(BaseCommand):
             results_idx = 0
             for template in HitTemplate.objects.all():
                 # We dump HITs from all HIT batches
-                completed_hits = Hit.objects.filter(completed=True).filter(hit_batch__hit_template=template)
+                completed_hits = Hit.objects.filter(completed=True).filter(
+                    hit_batch__hit_template=template
+                )
 
                 if completed_hits.exists():
                     real_results_path = '%s.%d.csv' % (
@@ -51,7 +53,9 @@ class Command(BaseCommand):
             except ObjectDoesNotExist:
                 sys.exit('There is no matching <template_file_path>.')
 
-            completed_hits = Hit.objects.filter(completed=True).filter(hit_batch__hit_template=template)
+            completed_hits = Hit.objects.filter(completed=True).filter(
+                hit_batch__hit_template=template
+            )
             if not completed_hits.exists():
                 sys.exit('There are no completed HITs.')
 

@@ -1,12 +1,18 @@
 # -*- coding: utf-8 -*-
+from cStringIO import StringIO
+from contextlib import contextmanager
 from io import BytesIO
 import os
+import sys
+
 import django.test
+
 from hits.models import Hit, HitBatch, HitTemplate
 import hits.management.commands.publish_hits as publish_hits
 import hits.management.commands.dump_results as dump_results
-# NB: Each class subclasses the previously defined one.
 
+
+# NB: Each class subclasses the previously defined one.
 
 class TestPublishHitsMethods(django.test.TestCase):
 
@@ -54,11 +60,6 @@ class TestPublishHitsMethods(django.test.TestCase):
         expect = {u"h0": u"é1, e1", u"h1": u"ñ1"}
         actual = hit_batch.hit_set.last().input_csv_fields
         self.assertEqual(expect, actual)
-
-
-import sys
-from cStringIO import StringIO
-from contextlib import contextmanager
 
 
 @contextmanager

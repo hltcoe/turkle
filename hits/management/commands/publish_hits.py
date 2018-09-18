@@ -3,7 +3,7 @@ import sys
 
 from django.core.management.base import BaseCommand
 
-from hits.models import Hit, HitBatch, HitTemplate
+from hits.models import HitBatch, HitTemplate
 
 
 def get_or_create_template_from_html_file(htmlfile, template_file_path):

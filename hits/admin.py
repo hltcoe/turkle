@@ -89,7 +89,7 @@ class HitBatchForm(ModelForm):
 class HitBatchAdmin(admin.ModelAdmin):
     form = HitBatchForm
     formfield_overrides = {
-        models.CharField: {'widget': TextInput(attrs={'size':'60'})},
+        models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
     list_display = ('filename', 'total_hits', 'total_finished_hits', 'download_csv')
     readonly_fields = ('filename',)
@@ -119,7 +119,7 @@ class HitBatchAdmin(admin.ModelAdmin):
 
 class HitTemplateAdmin(admin.ModelAdmin):
     formfield_overrides = {
-        models.CharField: {'widget': TextInput(attrs={'size':'60'})},
+        models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
 
     # Fieldnames are extracted from form text, and should not be edited directly
