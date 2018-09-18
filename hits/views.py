@@ -4,12 +4,11 @@ except ImportError:
     from StringIO import StringIO
 import random
 
+from django.conf import settings
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
-from django.template import loader
-from django.conf import settings
 
-from hits.models import Hit, HitBatch, HitTemplate
+from hits.models import Hit, HitBatch
 
 
 def download_batch_csv(request, batch_id):
@@ -23,19 +22,8 @@ def download_batch_csv(request, batch_id):
     return response
 
 
-def hits_list_context(template, more_map={}):
-    c = dict(
-        {
-            'hit_templates': HitTemplate.objects.all()
-        },
-        **more_map
-    )
-    return template.render(c)
-
-
 def index(request):
-    t = loader.get_template('hits/index.html')
-    return HttpResponse(hits_list_context(t))
+    return render(request, 'hits/index.html')
 
 
 def detail(request, hit_id):
@@ -68,5 +56,4 @@ def submission(request, hit_id):
         except IndexError:
             pass
 
-    t = loader.get_template('hits/submission.html')
-    return HttpResponse(hits_list_context(t, {'submitted_hit': h}))
+    return render(request, 'hits/submission.html', {'submitted_hit': h})
