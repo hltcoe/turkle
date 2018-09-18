@@ -53,4 +53,5 @@ class Command(BaseCommand):
             )
             hit_batch.save()
 
-            hit_batch.create_hits_from_csv(fh)
+            num_created_hits = hit_batch.create_hits_from_csv(fh)
+            sys.stderr.write('%d HITs created.\n' % num_created_hits)

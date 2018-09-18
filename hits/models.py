@@ -78,6 +78,13 @@ class HitBatch(models.Model):
         return "{}-Batch_{}_results{}".format(batch_filename, self.id, extension)
 
     def create_hits_from_csv(self, csv_fh):
+        """
+        Args:
+            csv_fh (file-like object): File handle for CSV input
+
+        Returns:
+            Number of HITs created from CSV file
+        """
         header, data_rows = self._parse_csv(csv_fh)
 
         num_created_hits = 0
@@ -91,7 +98,7 @@ class HitBatch(models.Model):
             hit.save()
             num_created_hits += 1
 
-        sys.stderr.write('%d HITs created.\n' % num_created_hits)
+        return num_created_hits
 
     def finished_hits(self):
         """
