@@ -183,6 +183,35 @@ class TestHitBatch(django.test.TestCase):
         self.assertTrue(HitBatch.objects.filter(name='hit_batch_save_modified').exists())
 
 
+class TestIndex(django.test.TestCase):
+    def setUp(self):
+        User.objects.create_superuser('ms.admin', 'foo@bar.foo', 'secret')
+
+    def test_get_index(self):
+        client = django.test.Client()
+        response = client.get(u'/')
+        self.assertTrue('error' not in response.content)
+        self.assertEqual(response.status_code, 200)
+
+    def test_index_login_prompt(self):
+        # Display 'Login' link when NOT logged in
+        client = django.test.Client()
+        response = client.get(u'/')
+        self.assertTrue('error' not in response.content)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('Login' in response.content)
+
+    def test_index_logout_prompt(self):
+        # Display 'Logout' link and username when logged in
+        client = django.test.Client()
+        client.login(username='ms.admin', password='secret')
+        response = client.get(u'/')
+        self.assertTrue('error' not in response.content)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('Logout' in response.content)
+        self.assertTrue('ms.admin' in response.content)
+
+
 class TestSubmission(django.test.TestCase):
 
     def setUp(self):
