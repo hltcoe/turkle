@@ -2,7 +2,7 @@
 import os
 # Django settings for turkle project.
 
-DEBUG = True
+DEBUG = False
 ALLOWED_HOSTS = ['*']
 
 ADMINS = (
