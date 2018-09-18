@@ -35,10 +35,6 @@ def detail(request, hit_id):
     )
 
 
-def results(request, hit_id):
-    return HttpResponse("You're looking at the results of hit %s." % hit_id)
-
-
 def submission(request, hit_id):
     h = get_object_or_404(Hit, pk=hit_id)
     h.completed = True
