@@ -16,11 +16,37 @@ from hits.models import Hit, HitBatch, HitTemplate
 class HitBatchForm(ModelForm):
     csv_file = FileField()
 
+    def __init__(self, *args, **kwargs):
+        super(HitBatchForm, self).__init__(*args, **kwargs)
+
+        # csv_file field not required if changing existing HitBatch
+        #
+        # When changing a HitBatch, the HitBatchAdmin.get_fields()
+        # function will cause the form to be rendered without
+        # displaying an HTML form field for the csv_file field.  I was
+        # running into strange behavior where Django would still try
+        # to validate the csv_file form field, even though there was
+        # no way for the user to provide a value for this field.  The
+        # two lines below prevent this problem from occurring, by
+        # making the csv_file field optional when changing
+        # a HitBatch.
+        if not self.instance._state.adding:
+            self.fields['csv_file'].required = False
+
     def clean(self):
+        """Verify format of CSV file
+
+        Verify that:
+        - fieldnames in CSV file are identical to fieldnames in HIT template
+        - number of fields in each row matches number of fields in CSV header
+        """
         cleaned_data = super(HitBatchForm, self).clean()
 
         csv_file = cleaned_data.get("csv_file", False)
         hit_template = cleaned_data.get("hit_template", False)
+
+        if not csv_file:
+            return
 
         validation_errors = []
 
@@ -61,7 +87,6 @@ class HitBatchForm(ModelForm):
 
 
 class HitBatchAdmin(admin.ModelAdmin):
-    fields = ('hit_template', 'name', 'filename', 'csv_file')
     form = HitBatchForm
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size':'60'})},
@@ -73,12 +98,23 @@ class HitBatchAdmin(admin.ModelAdmin):
         download_url = reverse('download_batch_csv', kwargs={'batch_id': obj.id})
         return format_html('<a href="{}">Download CSV results file</a>'.format(download_url))
 
+    def get_fields(self, request, obj):
+        # Display different fields when adding (when obj is None) vs changing a HitBatch
+        if not obj:
+            return ('hit_template', 'name', 'csv_file')
+        else:
+            return ('hit_template', 'name', 'filename')
+
     def save_model(self, request, obj, form, change):
-        obj.filename = request.FILES['csv_file']._name
-        csv_text = request.FILES['csv_file'].read()
-        super(HitBatchAdmin, self).save_model(request, obj, form, change)
-        csv_fh = StringIO(csv_text)
-        obj.create_hits_from_csv(csv_fh)
+        if obj._state.adding:
+            # Only use CSV file when adding HitBatch, not when changing
+            obj.filename = request.FILES['csv_file']._name
+            csv_text = request.FILES['csv_file'].read()
+            super(HitBatchAdmin, self).save_model(request, obj, form, change)
+            csv_fh = StringIO(csv_text)
+            obj.create_hits_from_csv(csv_fh)
+        else:
+            super(HitBatchAdmin, self).save_model(request, obj, form, change)
 
 
 class HitTemplateAdmin(admin.ModelAdmin):
