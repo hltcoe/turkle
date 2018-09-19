@@ -5,12 +5,14 @@ except ImportError:
 import random
 
 from django.conf import settings
+from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 
 from hits.models import Hit, HitBatch
 
 
+@staff_member_required
 def download_batch_csv(request, batch_id):
     batch = HitBatch.objects.get(id=batch_id)
     csv_output = StringIO()
