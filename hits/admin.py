@@ -91,7 +91,7 @@ class HitBatchAdmin(admin.ModelAdmin):
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
-    list_display = ('filename', 'total_hits', 'total_finished_hits', 'download_csv')
+    list_display = ('name', 'filename', 'total_hits', 'total_finished_hits', 'download_csv')
     readonly_fields = ('filename',)
 
     def download_csv(self, obj):
@@ -121,6 +121,7 @@ class HitTemplateAdmin(admin.ModelAdmin):
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
+    list_display = ('name', 'filename', 'date_modified')
 
     # Fieldnames are extracted from form text, and should not be edited directly
     exclude = ('fieldnames',)
