@@ -4,9 +4,45 @@ import os.path
 import django.test
 from django.core.handlers.wsgi import WSGIRequest
 from django.contrib.auth.models import User
+from django.urls import reverse
 
 from hits.models import Hit, HitBatch, HitTemplate
 from hits.views import submission
+
+
+class TestDownloadBatchCSV(django.test.TestCase):
+    def setUp(self):
+        hit_template = HitTemplate(name='foo', form='<p>${foo}: ${bar}</p>')
+        hit_template.save()
+
+        self.hit_batch = HitBatch(hit_template=hit_template, name='foo', filename='foo.csv')
+        self.hit_batch.save()
+
+        hit = Hit(
+            hit_batch=self.hit_batch,
+            input_csv_fields={'foo': 'fufu', 'bar': 'baba'},
+            answers={'a1': 'sauce'}
+        )
+        hit.save()
+
+    def test_get_as_admin(self):
+        User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        download_url = reverse('download_batch_csv', kwargs={'batch_id': self.hit_batch.id})
+        response = client.get(download_url)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.get('Content-Disposition'),
+                         'attachment; filename="%s"' % self.hit_batch.csv_results_filename())
+
+    def test_get_as_rando(self):
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        download_url = reverse('download_batch_csv', kwargs={'batch_id': self.hit_batch.id})
+        response = client.get(download_url)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], u'/admin/login/?next=%s' % download_url)
 
 
 class TestHitBatch(django.test.TestCase):
