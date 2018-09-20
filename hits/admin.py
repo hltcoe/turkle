@@ -94,8 +94,7 @@ class HitBatchAdmin(admin.ModelAdmin):
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
-    list_display = ('name', 'filename', 'total_hits', 'total_finished_hits', 'download_csv')
-    readonly_fields = ('filename',)
+    list_display = ('name', 'filename', 'total_hits', 'assignments_per_hit', 'total_finished_hits', 'download_csv')
 
     def download_csv(self, obj):
         download_url = reverse('download_batch_csv', kwargs={'batch_id': obj.id})
@@ -104,9 +103,15 @@ class HitBatchAdmin(admin.ModelAdmin):
     def get_fields(self, request, obj):
         # Display different fields when adding (when obj is None) vs changing a HitBatch
         if not obj:
-            return ('hit_template', 'name', 'csv_file')
+            return ('hit_template', 'name', 'assignments_per_hit', 'csv_file')
         else:
-            return ('hit_template', 'name', 'filename')
+            return ('hit_template', 'name', 'assignments_per_hit', 'filename')
+
+    def get_readonly_fields(self, request, obj):
+        if not obj:
+            return []
+        else:
+            return ('assignments_per_hit', 'filename')
 
     def save_model(self, request, obj, form, change):
         if obj._state.adding:
