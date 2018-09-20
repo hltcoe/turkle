@@ -70,6 +70,12 @@ class HitAssignment(models.Model):
             del self.answers['csrfmiddlewaretoken']
         super(HitAssignment, self).save(*args, **kwargs)
 
+        # Mark HIT as completed if all Assignments have been completed
+        if self.hit.hitassignment_set.filter(completed=True).count() >= \
+           self.hit.hit_batch.assignments_per_hit:
+            self.hit.completed = True
+            self.hit.save()
+
 
 class HitBatch(models.Model):
     class Meta:

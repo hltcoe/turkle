@@ -68,10 +68,6 @@ def submission(request, hit_id, hit_assignment_id):
     h = get_object_or_404(Hit, pk=hit_id)
     ha = get_object_or_404(HitAssignment, pk=hit_id)
 
-    # TODO: Handle case where Assignments-per-HIT > 1
-    h.completed = True
-    h.save()
-
     ha.answers = dict(request.POST.items())
     ha.completed = True
     ha.save()

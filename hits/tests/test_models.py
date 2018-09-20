@@ -7,6 +7,65 @@ import django.test
 from hits.models import Hit, HitAssignment, HitBatch, HitTemplate
 
 
+class TestHitAssignment(django.test.TestCase):
+    def test_hit_marked_as_completed(self):
+        # When assignment_per_hit==1, completing 1 Assignment marks HIT as complete
+        hit_template = HitTemplate(name='test', form='<p>${number} - ${letter}</p>')
+        hit_template.save()
+        hit_batch = HitBatch(hit_template=hit_template)
+        hit_batch.save()
+
+        hit = Hit(
+            hit_batch=hit_batch,
+            input_csv_fields={'number': '1', 'letter': 'a'}
+        )
+        hit.save()
+
+        self.assertEqual(hit_batch.assignments_per_hit, 1)
+        self.assertFalse(hit.completed)
+
+        HitAssignment(
+            assigned_to=None,
+            completed=True,
+            hit=hit
+        ).save()
+
+        hit.refresh_from_db()
+        self.assertTrue(hit.completed)
+
+    def test_hit_marked_as_completed_two_way_redundancy(self):
+        # When assignment_per_hit==2, completing 2 Assignments marks HIT as complete
+        hit_template = HitTemplate(name='test', form='<p>${number} - ${letter}</p>')
+        hit_template.save()
+        hit_batch = HitBatch(hit_template=hit_template)
+        hit_batch.assignments_per_hit = 2
+        hit_batch.save()
+
+        hit = Hit(
+            hit_batch=hit_batch,
+            input_csv_fields={'number': '1', 'letter': 'a'}
+        )
+        hit.save()
+
+        self.assertFalse(hit.completed)
+
+        HitAssignment(
+            assigned_to=None,
+            completed=True,
+            hit=hit
+        ).save()
+        hit.refresh_from_db()
+        self.assertFalse(hit.completed)
+
+        HitAssignment(
+            assigned_to=None,
+            completed=True,
+            hit=hit
+        ).save()
+        hit.refresh_from_db()
+        self.assertTrue(hit.completed)
+
+
 class TestHitBatch(django.test.TestCase):
 
     def test_hit_batch_to_csv(self):
