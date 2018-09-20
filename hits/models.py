@@ -2,6 +2,7 @@ import os.path
 import re
 import sys
 
+from django.contrib.auth.models import User
 from django.db import models
 from jsonfield import JSONField
 import unicodecsv
@@ -21,7 +22,6 @@ class Hit(models.Model):
     hit_batch = models.ForeignKey('HitBatch')
     completed = models.BooleanField(default=False)
     input_csv_fields = JSONField()
-    answers = JSONField(blank=True)
 
     def __unicode__(self):
         return 'HIT id:{}'.format(self.id)
@@ -59,14 +59,27 @@ class Hit(models.Model):
         super(Hit, self).save(*args, **kwargs)
 
 
+class HitAssignment(models.Model):
+    class Meta:
+        verbose_name = "HIT Assignment"
+
+    answers = JSONField(blank=True)
+    assigned_to = models.ForeignKey(User)
+    completed = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    hit = models.ForeignKey(Hit)
+    updated_at = models.DateTimeField(auto_now=True)
+
+
 class HitBatch(models.Model):
     class Meta:
         verbose_name = "HIT batch"
         verbose_name_plural = "HIT batches"
 
+    assignments_per_hit = models.IntegerField(default=1)
     date_published = models.DateTimeField(auto_now_add=True)
-    hit_template = models.ForeignKey('HitTemplate')
     filename = models.CharField(max_length=1024)
+    hit_template = models.ForeignKey('HitTemplate')
     name = models.CharField(max_length=1024)
 
     def csv_results_filename(self):
@@ -198,10 +211,11 @@ class HitTemplate(models.Model):
     class Meta:
         verbose_name = "HIT template"
 
-    filename = models.CharField(max_length=1024)
-    name = models.CharField(max_length=1024)
-    form = models.TextField()
+    assignments_per_hit = models.IntegerField(default=1)
     date_modified = models.DateTimeField(auto_now=True)
+    filename = models.CharField(max_length=1024)
+    form = models.TextField()
+    name = models.CharField(max_length=1024)
 
     # Fieldnames are automatically extracted from form text
     fieldnames = JSONField(blank=True)
