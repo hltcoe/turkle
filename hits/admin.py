@@ -5,7 +5,7 @@ except ImportError:
 
 from django.contrib import admin
 from django.db import models
-from django.forms import FileField, ModelForm, TextInput, ValidationError
+from django.forms import FileField, ModelChoiceField, ModelForm, TextInput, ValidationError
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 import unicodecsv
@@ -14,10 +14,13 @@ from hits.models import Hit, HitBatch, HitTemplate
 
 
 class HitBatchForm(ModelForm):
-    csv_file = FileField()
+    csv_file = FileField(label='CSV File')
 
     def __init__(self, *args, **kwargs):
         super(HitBatchForm, self).__init__(*args, **kwargs)
+
+        self.fields['hit_template'].label = 'HIT Template'
+        self.fields['name'].label = 'Batch Name'
 
         # csv_file field not required if changing existing HitBatch
         #
