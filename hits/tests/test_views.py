@@ -6,7 +6,7 @@ from django.core.handlers.wsgi import WSGIRequest
 from django.contrib.auth.models import User
 from django.urls import reverse
 
-from hits.models import Hit, HitBatch, HitTemplate
+from hits.models import Hit, HitAssignment, HitBatch, HitTemplate
 from hits.views import submission
 
 
@@ -20,10 +20,15 @@ class TestDownloadBatchCSV(django.test.TestCase):
 
         hit = Hit(
             hit_batch=self.hit_batch,
-            input_csv_fields={'foo': 'fufu', 'bar': 'baba'},
-            answers={'a1': 'sauce'}
+            input_csv_fields={'foo': 'fufu', 'bar': 'baba'}
         )
         hit.save()
+        HitAssignment(
+            answers={'a1': 'sauce'},
+            assigned_to=None,
+            completed=True,
+            hit=hit
+        ).save()
 
     def test_get_as_admin(self):
         User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
@@ -257,18 +262,24 @@ class TestSubmission(django.test.TestCase):
         hit_batch.save()
         self.hit = Hit(hit_batch=hit_batch, input_csv_fields='{}')
         self.hit.save()
+        self.hit_assignment = HitAssignment(
+            assigned_to=None,
+            completed=False,
+            hit=self.hit
+        )
+        self.hit_assignment.save()
 
     def test_0(self):
         post_request = RequestFactory().post(
-            u'/hits/1/submission',
+            u'/hits/%d/assignment/%d/submission/' % (self.hit.id, self.hit_assignment.id),
             {u'foo': u'bar'}
         )
         post_request.csrf_processing_done = True
-        submission(post_request, 1)
-        h = Hit.objects.get(id=1)
+        submission(post_request, self.hit.id, self.hit_assignment.id)
+        ha = HitAssignment.objects.get(id=self.hit_assignment.id)
 
         expect = {u'foo': u'bar'}
-        actual = h.answers
+        actual = ha.answers
         self.assertEqual(expect, actual)
 
 

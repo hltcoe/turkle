@@ -4,7 +4,7 @@ import os.path
 
 import django.test
 
-from hits.models import Hit, HitBatch, HitTemplate
+from hits.models import Hit, HitAssignment, HitBatch, HitTemplate
 
 
 class TestHitBatch(django.test.TestCase):
@@ -14,17 +14,31 @@ class TestHitBatch(django.test.TestCase):
         hit_template.save()
         hit_batch = HitBatch(hit_template=hit_template)
         hit_batch.save()
-        Hit(
+
+        hit1 = Hit(
             hit_batch=hit_batch,
             completed=True,
             input_csv_fields={'number': '1', 'letter': 'a'},
-            answers={'combined': '1a'}
+        )
+        hit1.save()
+        HitAssignment(
+            answers={'combined': '1a'},
+            assigned_to=None,
+            completed=True,
+            hit=hit1
         ).save()
-        Hit(
+
+        hit2 = Hit(
             hit_batch=hit_batch,
             completed=True,
             input_csv_fields={'number': '2', 'letter': 'b'},
-            answers={'combined': '2b'}
+        )
+        hit2.save()
+        HitAssignment(
+            answers={'combined': '2b'},
+            assigned_to=None,
+            completed=True,
+            hit=hit2
         ).save()
 
         csv_output = StringIO()
@@ -41,23 +55,44 @@ class TestHitBatch(django.test.TestCase):
         hit_template.save()
         hit_batch = HitBatch(hit_template=hit_template)
         hit_batch.save()
-        Hit(
+
+        hit1 = Hit(
             hit_batch=hit_batch,
             completed=True,
             input_csv_fields={'letter': 'a'},
-            answers={'1': 1, '2': 2}
+        )
+        hit1.save()
+        HitAssignment(
+            answers={'1': 1, '2': 2},
+            assigned_to=None,
+            completed=True,
+            hit=hit1,
         ).save()
-        Hit(
+
+        hit2 = Hit(
             hit_batch=hit_batch,
             completed=True,
             input_csv_fields={'letter': 'b'},
-            answers={'3': 3, '4': 4}
+        )
+        hit2.save()
+        HitAssignment(
+            answers={'3': 3, '4': 4},
+            assigned_to=None,
+            completed=True,
+            hit=hit2
         ).save()
-        Hit(
+
+        hit3 = Hit(
             hit_batch=hit_batch,
             completed=True,
             input_csv_fields={'letter': 'c'},
-            answers={'3': 3, '2': 2}
+        )
+        hit3.save()
+        HitAssignment(
+            answers={'3': 3, '2': 2},
+            assigned_to=None,
+            completed=True,
+            hit=hit3
         ).save()
 
         csv_output = StringIO()
@@ -101,6 +136,12 @@ class TestModels(django.test.TestCase):
         hit = Hit(
             hit_batch=hit_batch,
             input_csv_fields={u'foo': u'bar'},
+            completed=True,
+        )
+        hit.save()
+        self.hit = hit
+
+        self.hit_assignment = HitAssignment(
             answers={
                 u"comment": u"\u221e", u"userDisplayLanguage": u"",
                 u"sentence_textbox_3_verb1": u"", u"city": u"",
@@ -131,10 +172,11 @@ class TestModels(django.test.TestCase):
                 u"sentence_drop_3_verb1": u"foo",
                 u"ipAddress": u"", u"region": u""
             },
+            assigned_to=None,
             completed=True,
+            hit=hit
         )
-        hit.save()
-        self.hit = hit
+        self.hit_assignment.save()
 
     def test_extract_fieldnames_from_form_html(self):
         self.assertEqual(
@@ -154,19 +196,33 @@ class TestModels(django.test.TestCase):
         hit_template.save()
         hit_batch_one = HitBatch(hit_template=hit_template)
         hit_batch_one.save()
-        Hit(
+
+        hit1 = Hit(
             hit_batch=hit_batch_one,
             completed=True,
             input_csv_fields={'number': '1', 'letter': 'a'},
-            answers={'combined': '1a'}
+        )
+        hit1.save()
+        HitAssignment(
+            answers={'combined': '1a'},
+            assigned_to=None,
+            completed=True,
+            hit=hit1
         ).save()
+
         hit_batch_two = HitBatch(hit_template=hit_template)
         hit_batch_two.save()
-        Hit(
+        hit2 = Hit(
             hit_batch=hit_batch_two,
             completed=True,
-            input_csv_fields={'number': '2', 'letter': 'b'},
-            answers={'combined': '2b'}
+            input_csv_fields={'number': '2', 'letter': 'b'}
+        )
+        hit2.save()
+        HitAssignment(
+            answers={'combined': '2b'},
+            assigned_to=None,
+            completed=True,
+            hit=hit2
         ).save()
 
         csv_output = StringIO()
@@ -185,19 +241,33 @@ class TestModels(django.test.TestCase):
         hit_template.save()
         hit_batch_one = HitBatch(hit_template=hit_template)
         hit_batch_one.save()
-        Hit(
+
+        hit1 = Hit(
             hit_batch=hit_batch_one,
             completed=True,
             input_csv_fields={'letter': 'a'},
-            answers={'1': 1, '2': 2}
+        )
+        hit1.save()
+        HitAssignment(
+            answers={'1': 1, '2': 2},
+            assigned_to=None,
+            completed=True,
+            hit=hit1
         ).save()
+
         hit_batch_two = HitBatch(hit_template=hit_template)
         hit_batch_two.save()
-        Hit(
+        hit2 = Hit(
             hit_batch=hit_batch_two,
             completed=True,
             input_csv_fields={'letter': 'b'},
-            answers={'3': 3, '4': 4}
+        )
+        hit2.save()
+        HitAssignment(
+            answers={'3': 3, '4': 4},
+            assigned_to=None,
+            completed=True,
+            hit=hit2
         ).save()
 
         csv_output = StringIO()
@@ -219,28 +289,25 @@ class TestModels(django.test.TestCase):
         self.assertEqual('HIT id:1', unicode(self.hit))
 
     def test_result_to_dict_Answer(self):
-        hit = self.hit
         self.assertEqual(
             'foo',
-            hit.answers['sentence_drop_1_verb1']
+            self.hit_assignment.answers['sentence_drop_1_verb1']
         )
 
     def test_result_to_dict_ignore_csrfmiddlewaretoken(self):
         with self.assertRaises(KeyError):
-            self.hit.answers['Answer.csrfmiddlewaretoken']
+            self.hit_assignment.answers['Answer.csrfmiddlewaretoken']
 
     def test_result_to_dict_should_include_inputs(self):
-        hit = self.hit
         self.assertEqual(
             'foo',
-            hit.answers['sentence_drop_1_verb1']
+            self.hit_assignment.answers['sentence_drop_1_verb1']
         )
 
     def test_result_to_dict_unicode(self):
-        hit = self.hit
         self.assertEqual(
             '∞'.decode('utf-8'),
-            hit.answers['comment']
+            self.hit_assignment.answers['comment']
         )
 
 
