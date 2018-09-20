@@ -24,6 +24,10 @@ def download_batch_csv(request, batch_id):
     return response
 
 
+def home(request):
+    return render(request, 'index.html')
+
+
 def index(request):
     return render(request, 'hits/index.html')
 
