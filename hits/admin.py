@@ -5,7 +5,7 @@ except ImportError:
 
 from django.contrib import admin
 from django.db import models
-from django.forms import FileField, ModelChoiceField, ModelForm, TextInput, ValidationError
+from django.forms import FileField, ModelForm, TextInput, ValidationError
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 import unicodecsv
