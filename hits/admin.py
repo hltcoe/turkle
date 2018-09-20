@@ -94,7 +94,9 @@ class HitBatchAdmin(admin.ModelAdmin):
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
-    list_display = ('name', 'filename', 'total_hits', 'assignments_per_hit', 'total_finished_hits', 'download_csv')
+    list_display = (
+        'name', 'filename', 'total_hits', 'assignments_per_hit',
+        'total_finished_hits', 'download_csv')
 
     def download_csv(self, obj):
         download_url = reverse('download_batch_csv', kwargs={'batch_id': obj.id})
