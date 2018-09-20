@@ -1,14 +1,14 @@
 from django.conf.urls import include, url
 from django.contrib import admin
 
-import turkle.views
+import hits.views
 
 
 admin.autodiscover()
 
 urlpatterns = [
     # Examples:
-    url(r'^$', turkle.views.home, name='home'),
+    url(r'^$', hits.views.home, name='home'),
 
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
