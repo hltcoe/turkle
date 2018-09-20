@@ -53,11 +53,6 @@ class Hit(models.Model):
         result = border % result
         return result
 
-    def save(self, *args, **kwargs):
-        if 'csrfmiddlewaretoken' in self.answers:
-            del self.answers['csrfmiddlewaretoken']
-        super(Hit, self).save(*args, **kwargs)
-
 
 class HitAssignment(models.Model):
     class Meta:
@@ -69,6 +64,11 @@ class HitAssignment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     hit = models.ForeignKey(Hit)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if 'csrfmiddlewaretoken' in self.answers:
+            del self.answers['csrfmiddlewaretoken']
+        super(HitAssignment, self).save(*args, **kwargs)
 
 
 class HitBatch(models.Model):
@@ -174,8 +174,9 @@ class HitBatch(models.Model):
         input_field_set = set()
         answer_field_set = set()
         for hit in hits:
-            input_field_set.update(hit.input_csv_fields.keys())
-            answer_field_set.update(hit.answers.keys())
+            for hit_assignment in hit.hitassignment_set.all():
+                input_field_set.update(hit.input_csv_fields.keys())
+                answer_field_set.update(hit_assignment.answers.keys())
         return tuple(
             [u'Input.' + k for k in sorted(input_field_set)] +
             [u'Answer.' + k for k in sorted(answer_field_set)]
@@ -196,10 +197,11 @@ class HitBatch(models.Model):
         """
         rows = []
         for hit in hits:
-            row = {}
-            row.update({u'Input.' + k: v for k, v in hit.input_csv_fields.items()})
-            row.update({u'Answer.' + k: v for k, v in hit.answers.items()})
-            rows.append(row)
+            for hit_assignment in hit.hitassignment_set.all():
+                row = {}
+                row.update({u'Input.' + k: v for k, v in hit.input_csv_fields.items()})
+                row.update({u'Answer.' + k: v for k, v in hit_assignment.answers.items()})
+                rows.append(row)
 
         return self._get_csv_fieldnames(hits), rows
 
@@ -256,8 +258,9 @@ class HitTemplate(models.Model):
         answer_field_set = set()
         for batch in batches:
             for hit in batch.hit_set.all():
-                input_field_set.update(hit.input_csv_fields.keys())
-                answer_field_set.update(hit.answers.keys())
+                for hit_assignment in hit.hitassignment_set.all():
+                    input_field_set.update(hit.input_csv_fields.keys())
+                    answer_field_set.update(hit_assignment.answers.keys())
         return tuple(
             [u'Input.' + k for k in sorted(input_field_set)] +
             [u'Answer.' + k for k in sorted(answer_field_set)]
