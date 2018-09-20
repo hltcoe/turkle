@@ -121,7 +121,7 @@ class HitTemplateAdmin(admin.ModelAdmin):
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
-    list_display = ('name', 'filename', 'date_modified')
+    list_display = ('name', 'filename', 'date_modified', 'publish_hits')
 
     # Fieldnames are extracted from form text, and should not be edited directly
     exclude = ('fieldnames',)
@@ -130,6 +130,10 @@ class HitTemplateAdmin(admin.ModelAdmin):
     def form_fieldnames(self, instance):
         return format_html_join('\n', "<li>{}</li>",
                                 ((f, ) for f in instance.fieldnames.keys()))
+
+    def publish_hits(self, instance):
+        publish_hits_url = '%s?hit_template=%d' % (reverse('admin:hits_hitbatch_add'), instance.id)
+        return format_html('<a href="{}" class="button">Publish HITS</a>'.format(publish_hits_url))
 
 
 admin.site.register(Hit)
