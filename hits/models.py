@@ -59,7 +59,7 @@ class HitAssignment(models.Model):
         verbose_name = "HIT Assignment"
 
     answers = JSONField(blank=True)
-    assigned_to = models.ForeignKey(User)
+    assigned_to = models.ForeignKey(User, null=True)
     completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     hit = models.ForeignKey(Hit)
