@@ -82,6 +82,7 @@ class HitBatch(models.Model):
         verbose_name = "HIT batch"
         verbose_name_plural = "HIT batches"
 
+    active = models.BooleanField(default=True)
     assignments_per_hit = models.IntegerField(default=1)
     date_published = models.DateTimeField(auto_now_add=True)
     filename = models.CharField(max_length=1024)
@@ -219,6 +220,7 @@ class HitTemplate(models.Model):
     class Meta:
         verbose_name = "HIT template"
 
+    active = models.BooleanField(default=True)
     assignments_per_hit = models.IntegerField(default=1)
     date_modified = models.DateTimeField(auto_now=True)
     filename = models.CharField(max_length=1024)
@@ -227,6 +229,31 @@ class HitTemplate(models.Model):
 
     # Fieldnames are automatically extracted from form text
     fieldnames = JSONField(blank=True)
+
+    @classmethod
+    def available_for(cls, user):
+        """Retrieve the HitTemplates that the user has permission to access
+
+        Args:
+            user (User):
+
+        Returns:
+            QuerySet of HitTemplate objects this user can access
+        """
+        templates = cls.objects.filter(active=True)
+        return templates
+
+    def batches_available_for(self, user):
+        """Retrieve the HitBatches that the user has permission to access
+
+        Args:
+            user (User):
+
+        Returns:
+            QuerySet of HitBatch objects this usre can access
+        """
+        batches = self.hitbatch_set.filter(active=True)
+        return batches
 
     def save(self, *args, **kwargs):
         # Extract fieldnames from form text, save fieldnames as keys of JSON dict

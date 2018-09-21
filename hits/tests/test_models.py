@@ -2,6 +2,7 @@
 from cStringIO import StringIO
 import os.path
 
+from django.contrib.auth.models import User
 import django.test
 
 from hits.models import Hit, HitAssignment, HitBatch, HitTemplate
@@ -177,6 +178,45 @@ class TestHitBatch(django.test.TestCase):
         self.assertEqual(hits[0].input_csv_fields['more_emoji'], u'😃')
         self.assertEqual(hits[2].input_csv_fields['emoji'], u'🤔')
         self.assertEqual(hits[2].input_csv_fields['more_emoji'], u'🤭')
+
+
+class TestHitTemplate(django.test.TestCase):
+
+    def test_available_for_active_flag(self):
+        user = User.objects.create_user('testuser', password='secret')
+
+        self.assertEqual(len(HitTemplate.available_for(user)), 0)
+
+        HitTemplate(
+            active=False,
+        ).save()
+        self.assertEqual(len(HitTemplate.available_for(user)), 0)
+
+        HitTemplate(
+            active=True,
+        ).save()
+        self.assertEqual(len(HitTemplate.available_for(user)), 1)
+
+    def test_batches_available_for(self):
+        user = User.objects.create_user('testuser', password='secret')
+
+        hit_template = HitTemplate(
+            active=True,
+        )
+        hit_template.save()
+        self.assertEqual(len(hit_template.batches_available_for(user)), 0)
+
+        HitBatch(
+            active=False,
+            hit_template=hit_template,
+        ).save()
+        self.assertEqual(len(hit_template.batches_available_for(user)), 0)
+
+        HitBatch(
+            active=True,
+            hit_template=hit_template,
+        ).save()
+        self.assertEqual(len(hit_template.batches_available_for(user)), 1)
 
 
 class TestModels(django.test.TestCase):
