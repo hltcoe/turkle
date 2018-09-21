@@ -8,7 +8,7 @@
   {% endif %}
 </div>
 {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
-<form action="/hits/{{ hit.id }}/submission/" method="post">
+<form action="{% url 'submission' hit.id hit_assignment.id %}" method="post">
   {% csrf_token %}
   {% autoescape off %}{{ hit.generate_form }}{% endautoescape %}
   <input type="submit" value="Submit" />
