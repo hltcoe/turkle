@@ -82,6 +82,7 @@ class HitBatch(models.Model):
         verbose_name = "HIT batch"
         verbose_name_plural = "HIT batches"
 
+    active = models.BooleanField(default=True)
     assignments_per_hit = models.IntegerField(default=1)
     date_published = models.DateTimeField(auto_now_add=True)
     filename = models.CharField(max_length=1024)
@@ -219,6 +220,7 @@ class HitTemplate(models.Model):
     class Meta:
         verbose_name = "HIT template"
 
+    active = models.BooleanField(default=True)
     assignments_per_hit = models.IntegerField(default=1)
     date_modified = models.DateTimeField(auto_now=True)
     filename = models.CharField(max_length=1024)
