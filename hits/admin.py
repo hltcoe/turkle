@@ -142,7 +142,10 @@ class HitTemplateAdmin(admin.ModelAdmin):
                                 ((f, ) for f in instance.fieldnames.keys()))
 
     def publish_hits(self, instance):
-        publish_hits_url = '%s?hit_template=%d' % (reverse('admin:hits_hitbatch_add'), instance.id)
+        publish_hits_url = '%s?hit_template=%d&assignments_per_hit=%d' % (
+            reverse('admin:hits_hitbatch_add'),
+            instance.id,
+            instance.assignments_per_hit)
         return format_html('<a href="{}" class="button">Publish HITS</a>'.format(publish_hits_url))
 
 
