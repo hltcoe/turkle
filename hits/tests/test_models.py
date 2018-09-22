@@ -3,6 +3,7 @@ from cStringIO import StringIO
 import os.path
 
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 import django.test
 
 from hits.models import Hit, HitAssignment, HitBatch, HitTemplate
@@ -179,6 +180,39 @@ class TestHitBatch(django.test.TestCase):
         self.assertEqual(hits[2].input_csv_fields['emoji'], u'🤔')
         self.assertEqual(hits[2].input_csv_fields['more_emoji'], u'🤭')
 
+    def test_login_required_validation_1(self):
+        # No ValidationError thrown
+        hit_template = HitTemplate(
+            login_required=False,
+        )
+        hit_template.save()
+        HitBatch(
+            assignments_per_hit=1,
+            hit_template=hit_template,
+        ).clean()
+
+    def test_login_required_validation_2(self):
+        # No ValidationError thrown
+        hit_template = HitTemplate(
+            login_required=True,
+        )
+        hit_template.save()
+        HitBatch(
+            assignments_per_hit=2,
+            hit_template=hit_template,
+        ).clean()
+
+    def test_login_required_validation_3(self):
+        with self.assertRaisesMessage(ValidationError, 'Assignments per HIT must be 1'):
+            hit_template = HitTemplate(
+                login_required=False,
+            )
+            hit_template.save()
+            HitBatch(
+                assignments_per_hit=2,
+                hit_template=hit_template,
+            ).clean()
+
 
 class TestHitTemplate(django.test.TestCase):
 
@@ -196,6 +230,19 @@ class TestHitTemplate(django.test.TestCase):
             active=True,
         ).save()
         self.assertEqual(len(HitTemplate.available_for(user)), 1)
+
+    def test_available_for_login_required(self):
+        anonymous_user = None
+
+        self.assertEqual(len(HitTemplate.available_for(anonymous_user)), 0)
+
+        HitTemplate(
+            login_required=True,
+        ).save()
+        self.assertEqual(len(HitTemplate.available_for(anonymous_user)), 0)
+
+        authenticated_user = User.objects.create_user('testuser', password='secret')
+        self.assertEqual(len(HitTemplate.available_for(authenticated_user)), 1)
 
     def test_batches_available_for(self):
         user = User.objects.create_user('testuser', password='secret')
@@ -217,6 +264,27 @@ class TestHitTemplate(django.test.TestCase):
             hit_template=hit_template,
         ).save()
         self.assertEqual(len(hit_template.batches_available_for(user)), 1)
+
+    def test_login_required_validation_1(self):
+        # No ValidationError thrown
+        HitTemplate(
+            assignments_per_hit=1,
+            login_required=False,
+        ).clean()
+
+    def test_login_required_validation_2(self):
+        # No ValidationError thrown
+        HitTemplate(
+            assignments_per_hit=2,
+            login_required=True,
+        ).clean()
+
+    def test_login_required_validation_3(self):
+        with self.assertRaisesMessage(ValidationError, 'Assignments per HIT must be 1'):
+            HitTemplate(
+                assignments_per_hit=2,
+                login_required=False,
+            ).clean()
 
 
 class TestModels(django.test.TestCase):

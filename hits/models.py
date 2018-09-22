@@ -3,6 +3,7 @@ import re
 import sys
 
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 from django.db import models
 from jsonfield import JSONField
 import unicodecsv
@@ -88,6 +89,11 @@ class HitBatch(models.Model):
     filename = models.CharField(max_length=1024)
     hit_template = models.ForeignKey('HitTemplate')
     name = models.CharField(max_length=1024)
+
+    def clean(self):
+        if not self.hit_template.login_required and self.assignments_per_hit != 1:
+            raise ValidationError('When login is not required to access the Template, ' +
+                                  'the number of Assignments per HIT must be 1')
 
     def csv_results_filename(self):
         """Returns filename for CSV results file for this HitBatch
@@ -225,6 +231,7 @@ class HitTemplate(models.Model):
     date_modified = models.DateTimeField(auto_now=True)
     filename = models.CharField(max_length=1024)
     form = models.TextField()
+    login_required = models.BooleanField(default=True)
     name = models.CharField(max_length=1024)
 
     # Fieldnames are automatically extracted from form text
@@ -241,6 +248,8 @@ class HitTemplate(models.Model):
             QuerySet of HitTemplate objects this user can access
         """
         templates = cls.objects.filter(active=True)
+        if not user:
+            templates = templates.filter(login_required=False)
         return templates
 
     def batches_available_for(self, user):
@@ -254,6 +263,11 @@ class HitTemplate(models.Model):
         """
         batches = self.hitbatch_set.filter(active=True)
         return batches
+
+    def clean(self):
+        if not self.login_required and self.assignments_per_hit != 1:
+            raise ValidationError('When login is not required to access the Template, ' +
+                                  'the number of Assignments per HIT must be 1')
 
     def save(self, *args, **kwargs):
         # Extract fieldnames from form text, save fieldnames as keys of JSON dict
