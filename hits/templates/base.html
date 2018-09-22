@@ -3,57 +3,34 @@
   <head>
     <title>LMTurk</title>
     {% load staticfiles %}
+    <meta charset="utf-8">
+    <!--
     <link href="{% static "hits/css/common.css" %}" rel="stylesheet" type="text/css"/>
-
-    {% block head_style %}
-    {% endblock head_style %}
+    -->
+    <link href="{% static "hits/bootstrap-4.1.3/css/bootstrap.min.css" %}" rel="stylesheet" type="text/css"/>
   </head>
   <body>
-    <div>
-      {% if user.is_authenticated %}
-      Logged in as <b>{{ user.username }}</b> -
-      <a href="{% url 'logout' %}?next=/">Logout</a>
-      {% else %}
-      <a href="{% url 'login' %}?next=/">Login</a>
-      {% endif %}
-    </div>
-    <table
-      cellspacing="0"
-      cellpadding="0"
-      width="100%"
-      border="0"
-      height="40px"
-    >
-      <tbody><tr>
-        <td width="30%">&nbsp;</td>
-        <td class="centerText" width="40%">
-          <a
-            style="
-              color: gray;
-              font-color: 40;
-              font-size: 30px;
-              a:link {text-decoration:none;};
-              a:visited {text-decoration:none;};
-              a:hover {text-decoration:none;};
-              a:active {text-decoration:none;};
-            "
-            href="/"
-          >
-            Local Mechanical Turk
-          </a>
-        </td>
-        <td width="30%">&nbsp;</td>
-      </tr></tbody>
-    </table>
-    <div class="centerText">
-      <div id="subtabs">
-          <a href="/" class="subnavclass">Introduction</a>
-          <span>&nbsp;|&nbsp;</span>
-          <a href="/hits" class="subnavclass">Work on HITs</a>
-          <span>&nbsp;|&nbsp;</span>
-          <a href="/admin/hits/" class="subnavclass">Manage HITs</a>
-      </div>
-    </div>
+    <div class="container-fluid">
+      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <a class="navbar-brand" href="{% url 'index' %}">Home</a>
+        <ul class="navbar-nav mr-auto">
+          {% if user.is_staff %}
+          <li class="nav-item active">
+            <a class="nav-link" href="/admin/hits/">Manage HITs</a>
+          </li>
+          {% endif %}
+        </ul>
+        <span class="navbar-text">
+          {% if user.is_authenticated %}
+          Logged in as <b>{{ user.username }}</b> -
+          <a href="{% url 'logout' %}?next=/">Logout</a>
+          {% else %}
+          <a href="{% url 'login' %}?next=/">Login</a>
+          {% endif %}
+        </span>
+      </nav>
+    </div><!-- /container-fluid -->
+
     {% block body %}
     {% endblock %}
   </body>

@@ -10,7 +10,7 @@ from hits.views import (
 )
 
 urlpatterns = [
-    url(r'^$', index),
+    url(r'^$', index, name='index'),
     url(r'^(?P<hit_id>\d+)/$', detail, name='detail'),
     url(r'^(?P<hit_id>\d+)/assignment/(?P<hit_assignment_id>\d+)/$',
         hit_assignment, name='hit_assignment'),
