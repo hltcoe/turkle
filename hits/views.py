@@ -2,24 +2,29 @@ try:
     from cStringIO import StringIO
 except ImportError:
     from StringIO import StringIO
-import random
 
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
 
 from hits.models import Hit, HitAssignment, HitBatch, HitTemplate
 
 
-def claim_hit(request, hit_id):
-    hit = get_object_or_404(Hit, pk=hit_id)
-    # TODO: Verify that current user can claim HIT
-    ha = HitAssignment()
-    ha.assigned_to = request.user
-    ha.hit = hit
-    ha.save()
-    return redirect(hit_assignment, hit_id, ha.id)
+def accept_next_hit(request, batch_id):
+    batch = get_object_or_404(HitBatch, pk=batch_id)
+    hit = batch.next_available_hit_for(request.user)
+    # TODO: Handle possible race condition for two users claiming assignment
+    if hit:
+        ha = HitAssignment()
+        ha.assigned_to = request.user
+        ha.hit = hit
+        ha.save()
+        return redirect(hit_assignment, hit.id, ha.id)
+    else:
+        # TODO: Error handling
+        pass
 
 
 @staff_member_required
@@ -52,7 +57,7 @@ def home(request):
 
 
 def index(request):
-    return render(request, 'hits/index.html', {'hit_templates': HitTemplate.objects.all()})
+    return render(request, 'hits/index.html', {'batch_rows': _get_batch_table_rows(request)})
 
 
 def detail(request, hit_id):
@@ -73,18 +78,25 @@ def submission(request, hit_id, hit_assignment_id):
     ha.save()
 
     if hasattr(settings, 'NEXT_HIT_ON_SUBMIT') and settings.NEXT_HIT_ON_SUBMIT:
-        next_hit_random = hasattr(settings, 'RANDOM_NEXT_HIT_ON_SUBMIT') and \
-                          settings.RANDOM_NEXT_HIT_ON_SUBMIT
-        unfinished_hits = Hit.objects.filter(completed=False).order_by('id')
-        try:
-            next_hit = random.choice(unfinished_hits) if next_hit_random \
-                else unfinished_hits[0]
-            return redirect(claim_hit, next_hit.id)
-        except IndexError:
-            pass
+        return redirect(accept_next_hit, h.hit_batch.id)
 
     return render(request, 'hits/submission.html',
                   {
+                      'batch_rows': _get_batch_table_rows(request),
                       'submitted_hit': h,
-                      'hit_templates': HitTemplate.objects.all(),
                   })
+
+
+def _get_batch_table_rows(request):
+    batch_rows = []
+    for hit_template in HitTemplate.available_for(request.user):
+        for hit_batch in hit_template.batches_available_for(request.user):
+            batch_rows.append({
+                'template_name': hit_template.name,
+                'batch_name': hit_batch.name,
+                'batch_published': hit_batch.date_published,
+                'assignments_available': hit_batch.total_available_hits_for(request.user),
+                'accept_next_hit_url': reverse('accept_next_hit',
+                                               kwargs={'batch_id': hit_batch.id})
+            })
+    return batch_rows

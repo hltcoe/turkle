@@ -143,7 +143,9 @@ class RequestFactory(django.test.Client):
         }
         environ.update(self.defaults)
         environ.update(request)
-        return WSGIRequest(environ)
+        rqst = WSGIRequest(environ)
+        rqst.user = None
+        return rqst
 
 
 __all__ = (
