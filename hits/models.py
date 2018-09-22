@@ -90,6 +90,28 @@ class HitBatch(models.Model):
     hit_template = models.ForeignKey('HitTemplate')
     name = models.CharField(max_length=1024)
 
+    def available_hits_for(self, user):
+        """Retrieve a list of all HITs in this batch available for the user.
+
+        This list DOES NOT include HITs in the batch that have been assigned
+        to the user but not yet completed.
+
+        Args:
+            user (User):
+
+        Returns:
+            QuerySet of Hit objects
+        """
+        hs = self.hit_set.filter(completed=False)
+
+        # Only include HITs whose total (possibly not completed) assignments < assignments_per_hit
+        hs = hs.annotate(ac=models.Count('hitassignment')).filter(ac__lt=self.assignments_per_hit)
+
+        # Exclude HITs that have already been assigned to this user
+        hs = hs.exclude(hitassignment__assigned_to_id=user.id)
+
+        return hs
+
     def clean(self):
         if not self.hit_template.login_required and self.assignments_per_hit != 1:
             raise ValidationError('When login is not required to access the Template, ' +
