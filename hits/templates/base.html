@@ -1,8 +1,12 @@
+<!DOCTYPE html>
 <html>
   <head>
     <title>LMTurk</title>
     {% load staticfiles %}
     <link href="{% static "hits/css/common.css" %}" rel="stylesheet" type="text/css"/>
+
+    {% block head_style %}
+    {% endblock head_style %}
   </head>
   <body>
     <div>
