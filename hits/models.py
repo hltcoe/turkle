@@ -156,6 +156,28 @@ class HitBatch(models.Model):
         """
         return self.hit_set.filter(completed=True).order_by('-id')
 
+    def next_available_hit_for(self, user):
+        """Returns next available HIT for the user, or None if no HITs available
+
+        Args:
+            user (User):
+
+        Returns:
+            Hit|None
+        """
+        return self.available_hits_for(user).first()
+
+    def total_available_hits_for(self, user):
+        """Returns number of HITs available for the user
+
+        Args:
+            user (User):
+
+        Returns:
+            Number of HITs available for user
+        """
+        return self.available_hits_for(user).count()
+
     def total_finished_hits(self):
         return self.finished_hits().count()
 

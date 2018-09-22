@@ -227,13 +227,15 @@ class TestHitBatchAvailableHITs(django.test.TestCase):
             hit_template=self.hit_template
         )
         hit_batch.save()
-        self.assertEqual(len(hit_batch.available_hits_for(self.user)), 0)
+        self.assertEqual(hit_batch.total_available_hits_for(self.user), 0)
+        self.assertEqual(hit_batch.next_available_hit_for(self.user), None)
 
         hit = Hit(
             hit_batch=hit_batch,
         )
         hit.save()
-        self.assertEqual(len(hit_batch.available_hits_for(self.user)), 1)
+        self.assertEqual(hit_batch.total_available_hits_for(self.user), 1)
+        self.assertEqual(hit_batch.next_available_hit_for(self.user), hit)
 
         hit_assignment = HitAssignment(
             assigned_to=self.user,
@@ -241,7 +243,8 @@ class TestHitBatchAvailableHITs(django.test.TestCase):
             hit=hit,
         )
         hit_assignment.save()
-        self.assertEqual(len(hit_batch.available_hits_for(self.user)), 0)
+        self.assertEqual(hit_batch.total_available_hits_for(self.user), 0)
+        self.assertEqual(hit_batch.next_available_hit_for(self.user), None)
 
     def test_available_hits_for__aph_is_2(self):
         hit_batch = HitBatch(
@@ -249,13 +252,13 @@ class TestHitBatchAvailableHITs(django.test.TestCase):
             hit_template=self.hit_template
         )
         hit_batch.save()
-        self.assertEqual(len(hit_batch.available_hits_for(self.user)), 0)
+        self.assertEqual(hit_batch.total_available_hits_for(self.user), 0)
 
         hit = Hit(
             hit_batch=hit_batch,
         )
         hit.save()
-        self.assertEqual(len(hit_batch.available_hits_for(self.user)), 1)
+        self.assertEqual(hit_batch.total_available_hits_for(self.user), 1)
 
         hit_assignment = HitAssignment(
             assigned_to=self.user,
@@ -263,10 +266,10 @@ class TestHitBatchAvailableHITs(django.test.TestCase):
             hit=hit,
         )
         hit_assignment.save()
-        self.assertEqual(len(hit_batch.available_hits_for(self.user)), 0)
+        self.assertEqual(hit_batch.total_available_hits_for(self.user), 0)
 
         other_user = User.objects.create_user('other_user', password='secret')
-        self.assertEqual(len(hit_batch.available_hits_for(other_user)), 1)
+        self.assertEqual(hit_batch.total_available_hits_for(other_user), 1)
 
         hit_assignment = HitAssignment(
             assigned_to=other_user,
@@ -274,7 +277,7 @@ class TestHitBatchAvailableHITs(django.test.TestCase):
             hit=hit,
         )
         hit_assignment.save()
-        self.assertEqual(len(hit_batch.available_hits_for(other_user)), 0)
+        self.assertEqual(hit_batch.total_available_hits_for(other_user), 0)
 
 
 class TestHitTemplate(django.test.TestCase):
