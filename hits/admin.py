@@ -96,7 +96,7 @@ class HitBatchAdmin(admin.ModelAdmin):
     }
     list_display = (
         'name', 'filename', 'total_hits', 'assignments_per_hit',
-        'total_finished_hits', 'download_csv')
+        'total_finished_hits', 'active', 'download_csv')
 
     def download_csv(self, obj):
         download_url = reverse('download_batch_csv', kwargs={'batch_id': obj.id})
@@ -105,9 +105,9 @@ class HitBatchAdmin(admin.ModelAdmin):
     def get_fields(self, request, obj):
         # Display different fields when adding (when obj is None) vs changing a HitBatch
         if not obj:
-            return ('hit_template', 'name', 'assignments_per_hit', 'csv_file')
+            return ('active', 'hit_template', 'name', 'assignments_per_hit', 'csv_file')
         else:
-            return ('hit_template', 'name', 'assignments_per_hit', 'filename')
+            return ('active', 'hit_template', 'name', 'assignments_per_hit', 'filename')
 
     def get_readonly_fields(self, request, obj):
         if not obj:
@@ -131,7 +131,7 @@ class HitTemplateAdmin(admin.ModelAdmin):
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
-    list_display = ('name', 'filename', 'date_modified', 'publish_hits')
+    list_display = ('name', 'filename', 'date_modified', 'active', 'publish_hits')
 
     # Fieldnames are extracted from form text, and should not be edited directly
     exclude = ('fieldnames',)
