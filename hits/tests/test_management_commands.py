@@ -116,7 +116,8 @@ class TestPublishHitsHandleNewline(TestPublishHitsHandle):
         args = []
         options = {
             'template_file_path': os.path.abspath('hits/tests/resources/form_1.html'),
-            'csv_file_path': os.path.abspath('hits/tests/resources/form_1_vals_newline_ending.csv'),
+            'csv_file_path':
+            os.path.abspath('hits/tests/resources/form_1_vals_newline_ending.csv'),
             'batch_name': '',
             'template_name': '',
         }
