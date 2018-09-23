@@ -83,7 +83,9 @@ class TestPublishHitsHandle(django.test.TestCase):
         args = []
         options = {
             'template_file_path': os.path.abspath('hits/tests/resources/form_1.html'),
-            'csv_file_path': os.path.abspath('hits/tests/resources/form_1_vals.csv')
+            'csv_file_path': os.path.abspath('hits/tests/resources/form_1_vals.csv'),
+            'batch_name': '',
+            'template_name': '',
         }
         command = publish_hits.Command()
         with capture(command.handle, *args, **options) as result:
@@ -114,7 +116,10 @@ class TestPublishHitsHandleNewline(TestPublishHitsHandle):
         args = []
         options = {
             'template_file_path': os.path.abspath('hits/tests/resources/form_1.html'),
-            'csv_file_path': os.path.abspath('hits/tests/resources/form_1_vals_newline_ending.csv')
+            'csv_file_path':
+            os.path.abspath('hits/tests/resources/form_1_vals_newline_ending.csv'),
+            'batch_name': '',
+            'template_name': '',
         }
         command = publish_hits.Command()
         with capture(command.handle, *args, **options) as result:
@@ -127,7 +132,9 @@ class TestPublishHitsHandleForm0(TestPublishHitsHandle):
         args = []
         options = {
             'template_file_path': os.path.abspath('hits/tests/resources/form_0.html'),
-            'csv_file_path': os.path.abspath('hits/tests/resources/form_0_vals.csv')
+            'csv_file_path': os.path.abspath('hits/tests/resources/form_0_vals.csv'),
+            'batch_name': '',
+            'template_name': '',
         }
         command = publish_hits.Command()
         with capture(command.handle, *args, **options) as result:
