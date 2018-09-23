@@ -2,24 +2,28 @@ try:
     from cStringIO import StringIO
 except ImportError:
     from StringIO import StringIO
-import random
 
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
 
 from hits.models import Hit, HitAssignment, HitBatch, HitTemplate
 
 
-def claim_hit(request, hit_id):
-    hit = get_object_or_404(Hit, pk=hit_id)
-    # TODO: Verify that current user can claim HIT
-    ha = HitAssignment()
-    ha.assigned_to = request.user
-    ha.hit = hit
-    ha.save()
-    return redirect(hit_assignment, hit_id, ha.id)
+def accept_next_hit(request, batch_id):
+    batch = get_object_or_404(HitBatch, pk=batch_id)
+    hit = batch.next_available_hit_for(request.user)
+    # TODO: Handle possible race condition for two users claiming assignment
+    if hit:
+        ha = HitAssignment()
+        ha.assigned_to = request.user
+        ha.hit = hit
+        ha.save()
+        return redirect(hit_assignment, hit.id, ha.id)
+    else:
+        return redirect(index)
 
 
 @staff_member_required
@@ -37,9 +41,33 @@ def download_batch_csv(request, batch_id):
 def hit_assignment(request, hit_id, hit_assignment_id):
     hit = get_object_or_404(Hit, pk=hit_id)
     hit_assignment = get_object_or_404(HitAssignment, pk=hit_assignment_id)
+
+    if request.method == 'GET':
+        return render(
+            request,
+            'hit_assignment.html',
+            {
+                'hit': hit,
+                'hit_assignment': hit_assignment,
+            },
+        )
+    else:
+        hit_assignment.answers = dict(request.POST.items())
+        hit_assignment.completed = True
+        hit_assignment.save()
+
+        if hasattr(settings, 'NEXT_HIT_ON_SUBMIT') and settings.NEXT_HIT_ON_SUBMIT:
+            return redirect(accept_next_hit, hit.hit_batch.id)
+        else:
+            return redirect(index)
+
+
+def hit_assignment_iframe(request, hit_id, hit_assignment_id):
+    hit = get_object_or_404(Hit, pk=hit_id)
+    hit_assignment = get_object_or_404(HitAssignment, pk=hit_assignment_id)
     return render(
         request,
-        'hits/detail.html',
+        'hit_assignment_iframe.html',
         {
             'hit': hit,
             'hit_assignment': hit_assignment,
@@ -47,44 +75,19 @@ def hit_assignment(request, hit_id, hit_assignment_id):
     )
 
 
-def home(request):
-    return render(request, 'index.html')
-
-
 def index(request):
-    return render(request, 'hits/index.html', {'hit_templates': HitTemplate.objects.all()})
-
-
-def detail(request, hit_id):
-    h = get_object_or_404(Hit, pk=hit_id)
-    return render(
-        request,
-        'hits/detail.html',
-        {'hit': h},
-    )
-
-
-def submission(request, hit_id, hit_assignment_id):
-    h = get_object_or_404(Hit, pk=hit_id)
-    ha = get_object_or_404(HitAssignment, pk=hit_id)
-
-    ha.answers = dict(request.POST.items())
-    ha.completed = True
-    ha.save()
-
-    if hasattr(settings, 'NEXT_HIT_ON_SUBMIT') and settings.NEXT_HIT_ON_SUBMIT:
-        next_hit_random = hasattr(settings, 'RANDOM_NEXT_HIT_ON_SUBMIT') and \
-                          settings.RANDOM_NEXT_HIT_ON_SUBMIT
-        unfinished_hits = Hit.objects.filter(completed=False).order_by('id')
-        try:
-            next_hit = random.choice(unfinished_hits) if next_hit_random \
-                else unfinished_hits[0]
-            return redirect(claim_hit, next_hit.id)
-        except IndexError:
-            pass
-
-    return render(request, 'hits/submission.html',
-                  {
-                      'submitted_hit': h,
-                      'hit_templates': HitTemplate.objects.all(),
-                  })
+    # Create a row for each Batch that has HITs available for the current user
+    batch_rows = []
+    for hit_template in HitTemplate.available_for(request.user):
+        for hit_batch in hit_template.batches_available_for(request.user):
+            total_hits_available = hit_batch.total_available_hits_for(request.user)
+            if total_hits_available > 0:
+                batch_rows.append({
+                    'template_name': hit_template.name,
+                    'batch_name': hit_batch.name,
+                    'batch_published': hit_batch.date_published,
+                    'assignments_available': total_hits_available,
+                    'accept_next_hit_url': reverse('accept_next_hit',
+                                                   kwargs={'batch_id': hit_batch.id})
+                })
+    return render(request, 'index.html', {'batch_rows': batch_rows})

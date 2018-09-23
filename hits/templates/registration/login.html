@@ -1,48 +1,49 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title></title>
-</head>
-<body>
+{% extends "base.html" %}
 
-  <div class="container">
-    <div style="margin-top: 2em;">
-      {% block content %}
+{% block body %}
 
-      {% if form.errors %}
-      <p>Your username and password didn't match. Please try again.</p>
-      {% endif %}
+<div class="container">
+  <div style="margin-top: 2em;">
+    {% block content %}
 
-      {% if next %}
-        {% if user.is_authenticated %}
-        <p>Your account doesn't have access to this page. To proceed,
-        please login with an account that has access.</p>
-        {% else %}
-        <p>Please login to see this page.</p>
+    <div class="card w-50">
+      <div class="card-body">
+        {% if form.errors %}
+        <h5 class="card-title">Your username and password didn't match. Please try again.</h5>
         {% endif %}
-      {% endif %}
 
-      <form method="post" action="{% url 'login' %}">
-        {% csrf_token %}
-        <table>
-        <tr>
-          <td>{{ form.username.label_tag }}</td>
-          <td>{{ form.username }}</td>
-        </tr>
-        <tr>
-          <td>{{ form.password.label_tag }}</td>
-          <td>{{ form.password }}</td>
-        </tr>
-        </table>
+        {% if next %}
+        {% if user.is_authenticated %}
+        <h5 class="card-title">
+          Your account doesn't have access to this page. To proceed,
+          please login with an account that has access.
+        </h5>
+        {% else %}
+        <h5 class="card-title">Please login to see this page.</h5>
+        {% endif %}
+        {% endif %}
 
-        <input type="submit" value="login" />
-        <input type="hidden" name="next" value="{{ next }}" />
-      </form>
+        <form method="post" action="{% url 'login' %}">
+          {% csrf_token %}
+          <table>
+            <tr>
+              <td>{{ form.username.label_tag }}</td>
+              <td>{{ form.username }}</td>
+            </tr>
+            <tr>
+              <td>{{ form.password.label_tag }}</td>
+              <td>{{ form.password }}</td>
+            </tr>
+          </table>
 
-      {% endblock %}
-    </div>
+          <input type="submit" value="login" class="btn btn-primary" />
+          <input type="hidden" name="next" value="{{ next }}" />
+        </form>
+        {% endblock %}
+      </div><!-- /.card-body -->
+    </div><!-- /.card -->
+  </div>
 
-  </div><!-- /.container -->
+</div><!-- /.container -->
 
-</body>
-</html>
+{% endblock %}
