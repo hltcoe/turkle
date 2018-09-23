@@ -37,9 +37,9 @@ body {
 
   {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 
-  <div style="height: 500px;">
+  <div style="height: 500px; background: #000;">
     <iframe src="{% url 'preview_iframe' hit.id %}"
-            style="top: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: 0; box-sizing: inherit;">
+            style="top: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: 0; box-sizing: inherit; background: #fff; opacity: 0.8;">
     </iframe>
   </div>
 
