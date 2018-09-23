@@ -150,5 +150,4 @@ class RequestFactory(django.test.Client):
 
 __all__ = (
     'RequestFactory',
-    'TestSubmission',
 )
