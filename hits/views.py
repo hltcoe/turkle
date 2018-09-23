@@ -64,10 +64,7 @@ def hit_assignment(request, hit_id, hit_assignment_id):
 
 
 def index(request):
-    return render(request, 'index.html', {'batch_rows': _get_batch_table_rows(request)})
-
-
-def _get_batch_table_rows(request):
+    # Create a row for each Batch that has HITs available for the current user
     batch_rows = []
     for hit_template in HitTemplate.available_for(request.user):
         for hit_batch in hit_template.batches_available_for(request.user):
@@ -81,4 +78,4 @@ def _get_batch_table_rows(request):
                     'accept_next_hit_url': reverse('accept_next_hit',
                                                    kwargs={'batch_id': hit_batch.id})
                 })
-    return batch_rows
+    return render(request, 'index.html', {'batch_rows': batch_rows})
