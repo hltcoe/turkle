@@ -5,7 +5,7 @@ from django.contrib.auth.models import User
 from django.urls import reverse
 
 from hits.models import Hit, HitAssignment, HitBatch, HitTemplate
-from hits.views import submission
+from hits.views import hit_assignment
 
 
 class TestDownloadBatchCSV(django.test.TestCase):
@@ -77,7 +77,7 @@ class TestIndex(django.test.TestCase):
         self.assertTrue('ms.admin' in response.content)
 
 
-class TestSubmission(django.test.TestCase):
+class TestHitAssignment(django.test.TestCase):
 
     def setUp(self):
         hit_template = HitTemplate(name='foo', form='<p></p>')
@@ -95,11 +95,11 @@ class TestSubmission(django.test.TestCase):
 
     def test_0(self):
         post_request = RequestFactory().post(
-            u'/hits/%d/assignment/%d/submission/' % (self.hit.id, self.hit_assignment.id),
+            u'/hits/%d/assignment/%d/' % (self.hit.id, self.hit_assignment.id),
             {u'foo': u'bar'}
         )
         post_request.csrf_processing_done = True
-        submission(post_request, self.hit.id, self.hit_assignment.id)
+        hit_assignment(post_request, self.hit.id, self.hit_assignment.id)
         ha = HitAssignment.objects.get(id=self.hit_assignment.id)
 
         expect = {u'foo': u'bar'}

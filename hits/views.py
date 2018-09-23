@@ -42,36 +42,29 @@ def download_batch_csv(request, batch_id):
 def hit_assignment(request, hit_id, hit_assignment_id):
     hit = get_object_or_404(Hit, pk=hit_id)
     hit_assignment = get_object_or_404(HitAssignment, pk=hit_assignment_id)
-    return render(
-        request,
-        'hit_assignment.html',
-        {
-            'hit': hit,
-            'hit_assignment': hit_assignment,
-        },
-    )
+
+    if request.method == 'GET':
+        return render(
+            request,
+            'hit_assignment.html',
+            {
+                'hit': hit,
+                'hit_assignment': hit_assignment,
+            },
+        )
+    else:
+        hit_assignment.answers = dict(request.POST.items())
+        hit_assignment.completed = True
+        hit_assignment.save()
+
+        if hasattr(settings, 'NEXT_HIT_ON_SUBMIT') and settings.NEXT_HIT_ON_SUBMIT:
+            return redirect(accept_next_hit, hit.hit_batch.id)
+        else:
+            return redirect(index)
 
 
 def index(request):
     return render(request, 'index.html', {'batch_rows': _get_batch_table_rows(request)})
-
-
-def submission(request, hit_id, hit_assignment_id):
-    h = get_object_or_404(Hit, pk=hit_id)
-    ha = get_object_or_404(HitAssignment, pk=hit_id)
-
-    ha.answers = dict(request.POST.items())
-    ha.completed = True
-    ha.save()
-
-    if hasattr(settings, 'NEXT_HIT_ON_SUBMIT') and settings.NEXT_HIT_ON_SUBMIT:
-        return redirect(accept_next_hit, h.hit_batch.id)
-
-    return render(request, 'submission.html',
-                  {
-                      'batch_rows': _get_batch_table_rows(request),
-                      'submitted_hit': h,
-                  })
 
 
 def _get_batch_table_rows(request):
