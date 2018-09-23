@@ -62,6 +62,19 @@ def hit_assignment(request, hit_id, hit_assignment_id):
             return redirect(index)
 
 
+def hit_assignment_iframe(request, hit_id, hit_assignment_id):
+    hit = get_object_or_404(Hit, pk=hit_id)
+    hit_assignment = get_object_or_404(HitAssignment, pk=hit_assignment_id)
+    return render(
+        request,
+        'hit_assignment_iframe.html',
+        {
+            'hit': hit,
+            'hit_assignment': hit_assignment,
+        },
+    )
+
+
 def index(request):
     # Create a row for each Batch that has HITs available for the current user
     batch_rows = []
