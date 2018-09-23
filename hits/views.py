@@ -118,7 +118,7 @@ def preview(request, hit_id):
     return render(
         request,
         'preview.html',
-        { 'hit': hit },
+        {'hit': hit},
     )
 
 
@@ -128,5 +128,5 @@ def preview_iframe(request, hit_id):
     return render(
         request,
         'preview_iframe.html',
-        { 'hit': hit },
+        {'hit': hit},
     )
