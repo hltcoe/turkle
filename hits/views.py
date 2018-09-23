@@ -44,7 +44,7 @@ def hit_assignment(request, hit_id, hit_assignment_id):
     hit_assignment = get_object_or_404(HitAssignment, pk=hit_assignment_id)
     return render(
         request,
-        'detail.html',
+        'hit_assignment.html',
         {
             'hit': hit,
             'hit_assignment': hit_assignment,
@@ -54,15 +54,6 @@ def hit_assignment(request, hit_id, hit_assignment_id):
 
 def index(request):
     return render(request, 'index.html', {'batch_rows': _get_batch_table_rows(request)})
-
-
-def detail(request, hit_id):
-    h = get_object_or_404(Hit, pk=hit_id)
-    return render(
-        request,
-        'detail.html',
-        {'hit': h},
-    )
 
 
 def submission(request, hit_id, hit_assignment_id):

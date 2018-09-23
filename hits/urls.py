@@ -2,7 +2,6 @@ from django.conf.urls import url
 
 from hits.views import (
     accept_next_hit,
-    detail,
     download_batch_csv,
     hit_assignment,
     index,
@@ -11,7 +10,6 @@ from hits.views import (
 
 urlpatterns = [
     url(r'^$', index, name='index'),
-    url(r'^(?P<hit_id>\d+)/$', detail, name='detail'),
     url(r'^(?P<hit_id>\d+)/assignment/(?P<hit_assignment_id>\d+)/$',
         hit_assignment, name='hit_assignment'),
     url(r'^(?P<hit_id>\d+)/assignment/(?P<hit_assignment_id>\d+)/submission/$',
