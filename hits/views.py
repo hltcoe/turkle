@@ -106,6 +106,8 @@ def index(request):
                     'batch_name': hit_batch.name,
                     'batch_published': hit_batch.date_published,
                     'assignments_available': total_hits_available,
+                    'preview_next_hit_url': reverse('preview_next_hit',
+                                                    kwargs={'batch_id': hit_batch.id}),
                     'accept_next_hit_url': reverse('accept_next_hit',
                                                    kwargs={'batch_id': hit_batch.id})
                 })
@@ -130,3 +132,9 @@ def preview_iframe(request, hit_id):
         'preview_iframe.html',
         {'hit': hit},
     )
+
+
+def preview_next_hit(request, batch_id):
+    batch = get_object_or_404(HitBatch, pk=batch_id)
+    hit = batch.next_available_hit_for(request.user)
+    return redirect(preview, hit.id)
