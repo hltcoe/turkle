@@ -87,12 +87,14 @@ def _get_batch_table_rows(request):
     batch_rows = []
     for hit_template in HitTemplate.available_for(request.user):
         for hit_batch in hit_template.batches_available_for(request.user):
-            batch_rows.append({
-                'template_name': hit_template.name,
-                'batch_name': hit_batch.name,
-                'batch_published': hit_batch.date_published,
-                'assignments_available': hit_batch.total_available_hits_for(request.user),
-                'accept_next_hit_url': reverse('accept_next_hit',
-                                               kwargs={'batch_id': hit_batch.id})
-            })
+            total_hits_available = hit_batch.total_available_hits_for(request.user)
+            if total_hits_available > 0:
+                batch_rows.append({
+                    'template_name': hit_template.name,
+                    'batch_name': hit_batch.name,
+                    'batch_published': hit_batch.date_published,
+                    'assignments_available': total_hits_available,
+                    'accept_next_hit_url': reverse('accept_next_hit',
+                                                   kwargs={'batch_id': hit_batch.id})
+                })
     return batch_rows

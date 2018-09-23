@@ -6,9 +6,8 @@
 {% block content %}
 {% endblock %}
 
-<div style="padding-bottom: 2em;"></div>
-
 <div class="container-fluid">
+  {% if batch_rows %}
   <table class="table table-bordered table-hover">
     <tr class="thead-dark">
       <th>Template</th>
@@ -31,6 +30,9 @@
     </tr>
     {% endfor %}
   </table>
+  {% else %}
+  <h1>No HITs available at this time</h1>
+  {% endif %}
 </div>
 
 {% endblock %}
