@@ -8,6 +8,8 @@
     <link href="{% static "hits/css/common.css" %}" rel="stylesheet" type="text/css"/>
     -->
     <link href="{% static "hits/bootstrap-4.1.3/css/bootstrap.min.css" %}" rel="stylesheet" type="text/css"/>
+    {% block header %}
+    {% endblock %}
   </head>
   <body>
     <div class="container-fluid">
@@ -29,7 +31,6 @@
           {% endif %}
         </span>
       </nav>
-      <div style="margin-bottom: 2em;"></div>
     </div><!-- /container-fluid -->
 
     {% block body %}
