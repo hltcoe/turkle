@@ -3,13 +3,13 @@
 
 <div class="container-fluid">
 
-  <div>
-    <b>You're working on HIT:</b> {{ hit.id }}<br />
-    <b>which is derived from the template named:</b> {{ hit.hit_batch.hit_template.name }}<br />
-    {% if hit.completed %}
-    <b>Your answers from the previous submission:</b> {{ hit_assignment.answers }}<br />
-    {% endif %}
-  </div>
+  <nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+      <li class="breadcrumb-item"><b>Template:</b> {{ hit.hit_batch.hit_template.name }}</li>
+      <li class="breadcrumb-item"><b>Batch:</b> {{ hit.hit_batch.name }}</li>
+      <li class="breadcrumb-item"><b>HIT:</b> {{ hit.id }}</li>
+    </ol>
+  </nav>
 
   {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 
