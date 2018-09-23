@@ -23,8 +23,7 @@ def accept_next_hit(request, batch_id):
         ha.save()
         return redirect(hit_assignment, hit.id, ha.id)
     else:
-        # TODO: Error handling
-        pass
+        return redirect(index)
 
 
 @staff_member_required
