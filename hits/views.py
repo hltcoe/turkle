@@ -116,22 +116,12 @@ def index(request):
 
 def preview(request, hit_id):
     hit = get_object_or_404(Hit, pk=hit_id)
-
-    return render(
-        request,
-        'preview.html',
-        {'hit': hit},
-    )
+    return render(request, 'preview.html', {'hit': hit})
 
 
 def preview_iframe(request, hit_id):
     hit = get_object_or_404(Hit, pk=hit_id)
-
-    return render(
-        request,
-        'preview_iframe.html',
-        {'hit': hit},
-    )
+    return render(request, 'preview_iframe.html', {'hit': hit})
 
 
 def preview_next_hit(request, batch_id):
