@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import django.test
 from django.core.handlers.wsgi import WSGIRequest
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AnonymousUser, User
 from django.urls import reverse
 
 from hits.models import Hit, HitAssignment, HitBatch, HitTemplate
@@ -75,6 +75,60 @@ class TestIndex(django.test.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue('Logout' in response.content)
         self.assertTrue('ms.admin' in response.content)
+
+    def test_index_protected_template(self):
+        hit_template_protected = HitTemplate(
+            active=True,
+            login_required=True,
+            name='MY_TEMPLATE_NAME',
+        )
+        hit_template_protected.save()
+        hit_batch = HitBatch(hit_template=hit_template_protected, name='MY_BATCH_NAME')
+        hit_batch.save()
+        Hit(hit_batch=hit_batch).save()
+
+        anon_client = django.test.Client()
+        response = anon_client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue('No HITs available' in response.content)
+        self.assertFalse('MY_TEMPLATE_NAME' in response.content)
+        self.assertFalse('MY_BATCH_NAME' in response.content)
+
+        known_client = django.test.Client()
+        User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+        known_client.login(username='admin', password='secret')
+        response = known_client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse('No HITs available' in response.content)
+        self.assertTrue('MY_TEMPLATE_NAME' in response.content)
+        self.assertTrue('MY_BATCH_NAME' in response.content)
+
+    def test_index_unprotected_template(self):
+        hit_template_unprotected = HitTemplate(
+            active=True,
+            login_required=False,
+            name='MY_TEMPLATE_NAME',
+        )
+        hit_template_unprotected.save()
+        hit_batch = HitBatch(hit_template=hit_template_unprotected, name='MY_BATCH_NAME')
+        hit_batch.save()
+        Hit(hit_batch=hit_batch).save()
+
+        anon_client = django.test.Client()
+        response = anon_client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse('No HITs available' in response.content)
+        self.assertTrue('MY_TEMPLATE_NAME' in response.content)
+        self.assertTrue('MY_BATCH_NAME' in response.content)
+
+        known_client = django.test.Client()
+        User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+        known_client.login(username='admin', password='secret')
+        response = known_client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse('No HITs available' in response.content)
+        self.assertTrue('MY_TEMPLATE_NAME' in response.content)
+        self.assertTrue('MY_BATCH_NAME' in response.content)
 
 
 class TestHitAssignment(django.test.TestCase):
