@@ -37,8 +37,8 @@ class Command(BaseCommand):
                     real_results_path = '%s.%d.csv' % (
                         results_csv_file_path, results_idx
                     )
-                    print 'Writing results for template %s to %s ...' % (
-                        template.name, real_results_path
+                    print('Writing results for template {} to {} ...'.format(
+                        template.name, real_results_path)
                     )
                     with open(real_results_path, 'wb') as fh:
                         template.to_csv(fh)
@@ -59,8 +59,8 @@ class Command(BaseCommand):
             if not completed_hits.exists():
                 sys.exit('There are no completed HITs.')
 
-            print 'Writing results for template %s to %s ...' % (
-                template_file_path, results_csv_file_path
+            print('Writing results for template {} to {} ...'.format(
+                template_file_path, results_csv_file_path)
             )
             with open(results_csv_file_path, 'wb') as fh:
                 template.to_csv(fh)

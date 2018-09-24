@@ -1,7 +1,10 @@
 try:
     from cStringIO import StringIO
 except ImportError:
-    from StringIO import StringIO
+    try:
+        from StringIO import StringIO
+    except ImportError:
+        from io import StringIO
 
 from django.contrib import admin
 from django.db import models

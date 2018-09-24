@@ -216,7 +216,7 @@ class HitBatch(models.Model):
             the CSV file.
         """
         rows = unicodecsv.reader(csv_fh)
-        header = rows.next()
+        header = next(rows)
         return header, rows
 
     def _get_csv_fieldnames(self, hits):

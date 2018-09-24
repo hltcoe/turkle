@@ -1,7 +1,10 @@
 try:
     from cStringIO import StringIO
 except ImportError:
-    from StringIO import StringIO
+    try:
+        from StringIO import StringIO
+    except ImportError:
+        from io import StringIO
 
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
