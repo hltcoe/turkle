@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import django.test
 from django.core.handlers.wsgi import WSGIRequest
-from django.contrib.auth.models import AnonymousUser, User
+from django.contrib.auth.models import User
 from django.urls import reverse
 
 from hits.models import Hit, HitAssignment, HitBatch, HitTemplate
