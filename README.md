@@ -1,3 +1,5 @@
+# Turkle #
+
 Run a clone of Amazon's Mechanical **Turk** service in your **l**ocal
 **e**nvironment.
 
@@ -10,27 +12,11 @@ values in the CSV file.
 The results of the HITs completed by the workers can be exported in CSV files.
 
 
-# Installation ##
+# Installation #
 
-## Initial setup ###
+Turkle works with either python 2 or python 3.
 
-```bash
-git clone https://github.com/hltcoe/turkle.git
-cd turkle
-```
-
-Make sure that the dependencies listed below are met, and then run the commands
-
-```bash
-python manage.py migrate
-python manage.py createsuperuser
-python manage.py runserver
-```
-
-TODO: instructions for installing from an extracted bundle that is distributed
-along with the required eggs.
-
-## Dependencies ###
+## Dependencies ##
 
 - Turkle depends on the packages listed in `requirements.txt`.
   If the packages are not already installed in your environment, and you have
@@ -41,7 +27,9 @@ along with the required eggs.
   pip install -r requirements.txt
   ```
 
-  or with virtualenv:
+  Using a virtual environment has the advantage of keeping the dependencies
+  for this project separate from other projects. The actual syntax depends
+  on what virtual environment package you are using, but it should work like this: 
 
   ```bash
   virtualenv venv
@@ -49,65 +37,54 @@ along with the required eggs.
   pip install -r requirements.txt
   ```
 
-# Usage
+## Setup ##
 
-## Example HITs
-
-Example HIT HTML templates and corresponding CSV data files are
-provided under `examples/`.
-
-## Worker instructions
-
-Load the URL of the tool (by default
-[http://localhost:8000](http://localhost:8000)) in your browser. Click on
-**List of HITs**, and then start completing the HITs under the **Unfinished
-HITs**
-
-## Requester instructions
-
-### Publish HITs
-
-To publish new HITs, `cd` to the root directory of this server's code
-repository and run the command:
+After the dependencies have been installed, you create and initialize the db:
 
 ```bash
-python manage.py publish_hits <template_file_path> <csv_file_path>
+python manage.py migrate
+python manage.py createsuperuser
 ```
 
-with `<template_file_path>` replaced with the absolute path to the HIT template
-file and `<csv_file_path>` replaced with the path to the CSV file containing
-the data for the individual HITs.
-
-### Get results
-
-To get the results of the completed HITs, `cd` to the root directory of
-this server's code repository and run the command:
-
-```bash
-python manage.py dump_results <template_file_path> <results_csv_file_path>
-```
-
-with:
-- `<template_file_path>` replaced with the absolute path to where the template
-  file was located when the HITs were published. This argument acts as a filter
-  so that only completed HITs from the same template are dumped.
-- `<results_csv_file_path>` replaced with the desired path to where the
-  results will be saved. The format is:
-
-* UTF-8 encoding
-* a header row for the first line
-* one HIT result per line
-* values in each line are comma-delimited in the Excel style.
-
-### Configuration
+## Configuration ##
 
 To streamline worker task completion, submission of a HIT can
 automatically load the next unfinished HIT.  To enable this setting
-change `NEXT_HIT_ON_SUBMIT` to `True` at the bottom of `settings.py`.
+change `NEXT_HIT_ON_SUBMIT` to `True` at the bottom of `settings.py`
+in the turkle sub-directory.
 
-After changing settings, the web server may need to be restarted for
+After changing settings, the web server will need to be restarted for
 changes to take effect.
 
+# Usage
+
+The administrator loads HITs for the worker(s) to complete.
+There are example HITS in the `examples` directory.
+A batch of HITs consists of an HTML template and corresponding CSV data files.
+
+## Running the server ##
+
+```bash
+python manage.py runserver
+```
+
+## Creating user accounts ##
+
+TODO
+
+## Loading a batch of HITs ##
+
+TODO: documentation on using the admin UI for templates and CSVs.
+
+## Downloading a batch of HITs ##
+
+TODO
+
+# Worker instructions
+
+Use your web browser to visit [http://localhost:8000](http://localhost:8000)
+Log in if you've been given user credentials.
+Find your assigned set of HITs and click the "Accept next HIT" button.
 
 # Docker usage
 
