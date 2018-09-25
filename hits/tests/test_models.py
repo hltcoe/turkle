@@ -2,7 +2,7 @@
 from cStringIO import StringIO
 import os.path
 
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AnonymousUser, User
 from django.core.exceptions import ValidationError
 import django.test
 
@@ -279,6 +279,38 @@ class TestHitBatchAvailableHITs(django.test.TestCase):
         hit_assignment.save()
         self.assertEqual(hit_batch.total_available_hits_for(other_user), 0)
 
+    def test_available_hits_for_anon_user(self):
+        anonymous_user = AnonymousUser()
+        user = User.objects.create_user('user', password='secret')
+
+        hit_template_protected = HitTemplate(
+            active=True,
+            login_required=True,
+        )
+        hit_template_protected.save()
+        self.assertEqual(len(HitTemplate.available_for(anonymous_user)), 0)
+        self.assertEqual(len(HitTemplate.available_for(user)), 2)  # HitTemplate created by setUp
+        hit_batch_protected = HitBatch(hit_template=hit_template_protected)
+        hit_batch_protected.save()
+        Hit(hit_batch=hit_batch_protected).save()
+        self.assertEqual(len(hit_batch_protected.available_hits_for(anonymous_user)), 0)
+        self.assertEqual(len(hit_batch_protected.available_hits_for(user)), 1)
+
+        hit_template_unprotected = HitTemplate(
+            active=True,
+            login_required=False,
+        )
+        hit_template_unprotected.save()
+        hit_batch_unprotected = HitBatch(hit_template=hit_template_unprotected)
+        hit_batch_unprotected.save()
+        Hit(hit_batch=hit_batch_unprotected).save()
+        self.assertEqual(len(HitTemplate.available_for(anonymous_user)), 1)
+        self.assertEqual(len(HitTemplate.available_for(user)), 3)
+        self.assertEqual(len(hit_template_unprotected.batches_available_for(anonymous_user)), 1)
+        self.assertEqual(len(hit_template_unprotected.batches_available_for(user)), 1)
+        self.assertEqual(len(hit_batch_unprotected.available_hits_for(anonymous_user)), 1)
+        self.assertEqual(len(hit_batch_unprotected.available_hits_for(user)), 1)
+
 
 class TestHitTemplate(django.test.TestCase):
 
@@ -298,7 +330,7 @@ class TestHitTemplate(django.test.TestCase):
         self.assertEqual(len(HitTemplate.available_for(user)), 1)
 
     def test_available_for_login_required(self):
-        anonymous_user = None
+        anonymous_user = AnonymousUser()
 
         self.assertEqual(len(HitTemplate.available_for(anonymous_user)), 0)
 
@@ -330,6 +362,29 @@ class TestHitTemplate(django.test.TestCase):
             hit_template=hit_template,
         ).save()
         self.assertEqual(len(hit_template.batches_available_for(user)), 1)
+
+    def test_batches_available_for_anon(self):
+        anonymous_user = AnonymousUser()
+
+        hit_template_protected = HitTemplate(
+            active=True,
+            login_required=True,
+        )
+        hit_template_protected.save()
+        self.assertEqual(len(hit_template_protected.batches_available_for(anonymous_user)), 0)
+
+        HitBatch(hit_template=hit_template_protected).save()
+        self.assertEqual(len(hit_template_protected.batches_available_for(anonymous_user)), 0)
+
+        hit_template_unprotected = HitTemplate(
+            active=True,
+            login_required=False,
+        )
+        hit_template_unprotected.save()
+        self.assertEqual(len(hit_template_unprotected.batches_available_for(anonymous_user)), 0)
+
+        HitBatch(hit_template=hit_template_unprotected).save()
+        self.assertEqual(len(hit_template_unprotected.batches_available_for(anonymous_user)), 1)
 
     def test_login_required_validation_1(self):
         # No ValidationError thrown
