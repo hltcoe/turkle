@@ -1,15 +1,8 @@
-{% extends "base.html" %}
+{% extends "hit_base.html" %}
+
 {% block body %}
 
 <div class="container-fluid">
-
-  <nav aria-label="breadcrumb">
-    <ol class="breadcrumb">
-      <li class="breadcrumb-item"><b>Template:</b> {{ hit.hit_batch.hit_template.name }}</li>
-      <li class="breadcrumb-item"><b>Batch:</b> {{ hit.hit_batch.name }}</li>
-      <li class="breadcrumb-item"><b>HIT:</b> {{ hit.id }}</li>
-    </ol>
-  </nav>
 
   {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 

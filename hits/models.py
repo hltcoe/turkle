@@ -100,18 +100,24 @@ class HitBatch(models.Model):
         to the user but not yet completed.
 
         Args:
-            user (User):
+            user (User|AnonymousUser):
 
         Returns:
             QuerySet of Hit objects
         """
+        if not user.is_authenticated and self.hit_template.login_required:
+            return Hit.objects.none()
+
         hs = self.hit_set.filter(completed=False)
+
+        # Exclude HITs that have already been assigned to this user.
+        if user.is_authenticated:
+            # If the user is not authenticated, then user.id is None,
+            # and the query below would exclude all uncompleted HITs.
+            hs = hs.exclude(hitassignment__assigned_to_id=user.id)
 
         # Only include HITs whose total (possibly not completed) assignments < assignments_per_hit
         hs = hs.annotate(ac=models.Count('hitassignment')).filter(ac__lt=self.assignments_per_hit)
-
-        # Exclude HITs that have already been assigned to this user
-        hs = hs.exclude(hitassignment__assigned_to_id=user.id)
 
         return hs
 
@@ -298,7 +304,7 @@ class HitTemplate(models.Model):
             QuerySet of HitTemplate objects this user can access
         """
         templates = cls.objects.filter(active=True)
-        if not user:
+        if not user.is_authenticated:
             templates = templates.filter(login_required=False)
         return templates
 
@@ -312,6 +318,8 @@ class HitTemplate(models.Model):
             QuerySet of HitBatch objects this usre can access
         """
         batches = self.hitbatch_set.filter(active=True)
+        if not user.is_authenticated:
+            batches = batches.filter(hit_template__login_required=False)
         return batches
 
     def clean(self):
