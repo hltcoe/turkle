@@ -5,11 +5,30 @@ except ImportError:
 
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
+from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
 from django.shortcuts import render, get_object_or_404, redirect
 from django.urls import reverse
 
 from hits.models import Hit, HitAssignment, HitBatch, HitTemplate
+
+
+def accept_hit(request, batch_id, hit_id):
+    batch = get_object_or_404(HitBatch, pk=batch_id)
+    hit = get_object_or_404(Hit, pk=hit_id)
+
+    try:
+        batch.available_hits_for(request.user).get(id=hit_id)
+    except ObjectDoesNotExist:
+        # TODO: Pass error message for user on to index view
+        return redirect(index)
+
+    # TODO: Handle possible race condition for two users claiming assignment
+    ha = HitAssignment()
+    ha.assigned_to = request.user
+    ha.hit = hit
+    ha.save()
+    return redirect(hit_assignment, hit.id, ha.id)
 
 
 def accept_next_hit(request, batch_id):
@@ -87,7 +106,29 @@ def index(request):
                     'batch_name': hit_batch.name,
                     'batch_published': hit_batch.date_published,
                     'assignments_available': total_hits_available,
+                    'preview_next_hit_url': reverse('preview_next_hit',
+                                                    kwargs={'batch_id': hit_batch.id}),
                     'accept_next_hit_url': reverse('accept_next_hit',
                                                    kwargs={'batch_id': hit_batch.id})
                 })
     return render(request, 'index.html', {'batch_rows': batch_rows})
+
+
+def preview(request, hit_id):
+    hit = get_object_or_404(Hit, pk=hit_id)
+    return render(request, 'preview.html', {'hit': hit})
+
+
+def preview_iframe(request, hit_id):
+    hit = get_object_or_404(Hit, pk=hit_id)
+    return render(request, 'preview_iframe.html', {'hit': hit})
+
+
+def preview_next_hit(request, batch_id):
+    batch = get_object_or_404(HitBatch, pk=batch_id)
+    hit = batch.next_available_hit_for(request.user)
+    if hit:
+        return redirect(preview, hit.id)
+    else:
+        # TODO: Pass error via Django messages framework
+        return redirect(index)

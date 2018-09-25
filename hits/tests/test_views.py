@@ -8,6 +8,48 @@ from hits.models import Hit, HitAssignment, HitBatch, HitTemplate
 from hits.views import hit_assignment
 
 
+class TestAcceptHit(django.test.TestCase):
+    def setUp(self):
+        hit_template = HitTemplate(login_required=False)
+        hit_template.save()
+        self.hit_batch = HitBatch(hit_template=hit_template)
+        self.hit_batch.save()
+        self.hit = Hit(hit_batch=self.hit_batch)
+        self.hit.save()
+
+    def test_accept_unclaimed_hit(self):
+        User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+        self.assertEqual(self.hit.hitassignment_set.count(), 0)
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.get(reverse('accept_hit',
+                                      kwargs={'batch_id': self.hit_batch.id,
+                                              'hit_id': self.hit.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.hit.hitassignment_set.count(), 1)
+        self.assertEqual(response['Location'],
+                         reverse('hit_assignment',
+                                 kwargs={'hit_id': self.hit.id,
+                                         'hit_assignment_id':
+                                         self.hit.hitassignment_set.first().id}))
+
+    def test_accept_claimed_hit(self):
+        User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+        other_user = User.objects.create_user('testuser', password='secret')
+        HitAssignment(assigned_to=other_user, hit=self.hit).save()
+        self.assertEqual(self.hit.hitassignment_set.count(), 1)
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.get(reverse('accept_hit',
+                                      kwargs={'batch_id': self.hit_batch.id,
+                                              'hit_id': self.hit.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        # TODO: Check for error message once error is passed through Django message system
+
+
 class TestDownloadBatchCSV(django.test.TestCase):
     def setUp(self):
         hit_template = HitTemplate(name='foo', form='<p>${foo}: ${bar}</p>')
@@ -159,6 +201,46 @@ class TestHitAssignment(django.test.TestCase):
         expect = {u'foo': u'bar'}
         actual = ha.answers
         self.assertEqual(expect, actual)
+
+
+class TestPreview(django.test.TestCase):
+    def setUp(self):
+        hit_template = HitTemplate(form='<p>${foo}: ${bar}</p>', login_required=False, name='foo')
+        hit_template.save()
+        self.hit_batch = HitBatch(filename='foo.csv', hit_template=hit_template, name='foo')
+        self.hit_batch.save()
+        self.hit = Hit(
+            hit_batch=self.hit_batch,
+            input_csv_fields={'foo': 'fufu', 'bar': 'baba'},
+        )
+        self.hit.save()
+
+    def test_get_preview(self):
+        client = django.test.Client()
+        response = client.get(reverse('preview', kwargs={'hit_id': self.hit.id}))
+        self.assertEqual(response.status_code, 200)
+
+    def test_get_preview_bad_hit_id(self):
+        client = django.test.Client()
+        response = client.get(reverse('preview', kwargs={'hit_id': 666}))
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_preview_iframe(self):
+        client = django.test.Client()
+        response = client.get(reverse('preview_iframe', kwargs={'hit_id': self.hit.id}))
+        self.assertEqual(response.status_code, 200)
+
+    def test_get_preview_iframe_bad_hit_id(self):
+        client = django.test.Client()
+        response = client.get(reverse('preview_iframe', kwargs={'hit_id': 666}))
+        self.assertEqual(response.status_code, 404)
+
+    def test_preview_next_hit(self):
+        client = django.test.Client()
+        client.login()
+        response = client.get(reverse('preview_next_hit', kwargs={'batch_id': self.hit_batch.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('preview', kwargs={'hit_id': self.hit.id}))
 
 
 # This was grabbed from

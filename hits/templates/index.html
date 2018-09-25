@@ -7,6 +7,7 @@
 {% endblock %}
 
 <div class="container-fluid">
+  <div style="margin-top: 2em;"></div>
   {% if batch_rows %}
   <table class="table table-bordered table-hover">
     <tr class="thead-dark">
@@ -14,6 +15,7 @@
       <th>Batch</th>
       <th>Batch Published</th>
       <th>HITs Available</th>
+      <th></th>
       <th></th>
     </tr>
     {% for batch_row in batch_rows %}
@@ -23,8 +25,13 @@
       <td>{{ batch_row.batch_published }}</td>
       <td>{{ batch_row.assignments_available }}</td>
       <td>
+        <a href="{{ batch_row.preview_next_hit_url }}" role="button" class="btn btn-sm btn-primary">
+          Preview next HIT
+        </a>
+      </td>
+      <td>
         <a href="{{ batch_row.accept_next_hit_url }}" role="button" class="btn btn-sm btn-primary">
-          Accept Next HIT
+          Accept next HIT
         </a>
       </td>
     </tr>
