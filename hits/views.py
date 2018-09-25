@@ -4,7 +4,8 @@ except ImportError:
     try:
         from StringIO import StringIO
     except ImportError:
-        from io import StringIO
+        from io import BytesIO
+        StringIO = BytesIO
 
 from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
