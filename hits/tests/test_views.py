@@ -132,18 +132,18 @@ class TestIndex(django.test.TestCase):
         anon_client = django.test.Client()
         response = anon_client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
-        self.assertTrue('No HITs available' in response.content)
-        self.assertFalse('MY_TEMPLATE_NAME' in response.content)
-        self.assertFalse('MY_BATCH_NAME' in response.content)
+        self.assertTrue(b'No HITs available' in response.content)
+        self.assertFalse(b'MY_TEMPLATE_NAME' in response.content)
+        self.assertFalse(b'MY_BATCH_NAME' in response.content)
 
         known_client = django.test.Client()
         User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
         known_client.login(username='admin', password='secret')
         response = known_client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
-        self.assertFalse('No HITs available' in response.content)
-        self.assertTrue('MY_TEMPLATE_NAME' in response.content)
-        self.assertTrue('MY_BATCH_NAME' in response.content)
+        self.assertFalse(b'No HITs available' in response.content)
+        self.assertTrue(b'MY_TEMPLATE_NAME' in response.content)
+        self.assertTrue(b'MY_BATCH_NAME' in response.content)
 
     def test_index_unprotected_template(self):
         hit_template_unprotected = HitTemplate(
@@ -159,18 +159,18 @@ class TestIndex(django.test.TestCase):
         anon_client = django.test.Client()
         response = anon_client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
-        self.assertFalse('No HITs available' in response.content)
-        self.assertTrue('MY_TEMPLATE_NAME' in response.content)
-        self.assertTrue('MY_BATCH_NAME' in response.content)
+        self.assertFalse(b'No HITs available' in response.content)
+        self.assertTrue(b'MY_TEMPLATE_NAME' in response.content)
+        self.assertTrue(b'MY_BATCH_NAME' in response.content)
 
         known_client = django.test.Client()
         User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
         known_client.login(username='admin', password='secret')
         response = known_client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
-        self.assertFalse('No HITs available' in response.content)
-        self.assertTrue('MY_TEMPLATE_NAME' in response.content)
-        self.assertTrue('MY_BATCH_NAME' in response.content)
+        self.assertFalse(b'No HITs available' in response.content)
+        self.assertTrue(b'MY_TEMPLATE_NAME' in response.content)
+        self.assertTrue(b'MY_BATCH_NAME' in response.content)
 
 
 class TestHitAssignment(django.test.TestCase):
