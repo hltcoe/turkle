@@ -17,6 +17,9 @@ import unicodecsv
 from hits.models import Hit, HitBatch, HitTemplate
 
 
+admin.site.site_header = 'Turkle administration'
+
+
 class HitBatchForm(ModelForm):
     csv_file = FileField(label='CSV File')
 
