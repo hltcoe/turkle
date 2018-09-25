@@ -23,6 +23,7 @@ Make sure that the dependencies listed below are met, and then run the commands
 
 ```bash
 python manage.py migrate
+python manage.py createsuperuser
 python manage.py runserver
 ```
 
