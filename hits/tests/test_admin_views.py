@@ -28,7 +28,7 @@ class TestHitBatchAdmin(django.test.TestCase):
                     'name': 'hit_batch_save',
                     'csv_file': fp
                 })
-        self.assertTrue('error' not in response.content)
+        self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], u'/admin/hits/hitbatch/')
         self.assertTrue(HitBatch.objects.filter(name='hit_batch_save').exists())
@@ -53,7 +53,7 @@ class TestHitBatchAdmin(django.test.TestCase):
                     'name': 'hit_batch_save',
                     'csv_file': fp
                 })
-        self.assertTrue('error' not in response.content)
+        self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], u'/admin/hits/hitbatch/')
         self.assertTrue(HitBatch.objects.filter(name='hit_batch_save').exists())
@@ -82,9 +82,9 @@ class TestHitBatchAdmin(django.test.TestCase):
                 'hit_template': hit_template.id,
                 'name': 'hit_batch_save',
             })
-        self.assertTrue('error' in response.content)
+        self.assertTrue(b'error' in response.content)
         self.assertEqual(response.status_code, 200)
-        self.assertTrue('This field is required' in response.content)
+        self.assertTrue(b'This field is required' in response.content)
 
     def test_batch_add_validation_extra_fields(self):
         hit_template = HitTemplate(name='foo', form='<p>${f2}</p>')
@@ -105,9 +105,9 @@ class TestHitBatchAdmin(django.test.TestCase):
                     'csv_file': fp
                 })
         self.assertEqual(response.status_code, 200)
-        self.assertTrue('error' in response.content)
-        self.assertTrue('extra fields' in response.content)
-        self.assertTrue('missing fields' not in response.content)
+        self.assertTrue(b'error' in response.content)
+        self.assertTrue(b'extra fields' in response.content)
+        self.assertTrue(b'missing fields' not in response.content)
 
     def test_batch_add_validation_missing_fields(self):
         hit_template = HitTemplate(name='foo', form='<p>${f1} ${f2} ${f3}</p>')
@@ -127,9 +127,9 @@ class TestHitBatchAdmin(django.test.TestCase):
                     'csv_file': fp
                 })
         self.assertEqual(response.status_code, 200)
-        self.assertTrue('error' in response.content)
-        self.assertTrue('extra fields' not in response.content)
-        self.assertTrue('missing fields' in response.content)
+        self.assertTrue(b'error' in response.content)
+        self.assertTrue(b'extra fields' not in response.content)
+        self.assertTrue(b'missing fields' in response.content)
 
     def test_batch_add_validation_variable_fields_per_row(self):
         hit_template = HitTemplate(name='foo', form='<p>${f1} ${f2} ${f3}</p>')
@@ -149,9 +149,9 @@ class TestHitBatchAdmin(django.test.TestCase):
                     'csv_file': fp
                 })
         self.assertEqual(response.status_code, 200)
-        self.assertTrue('error' in response.content)
-        self.assertTrue('line 2 has 2 fields' in response.content)
-        self.assertTrue('line 4 has 4 fields' in response.content)
+        self.assertTrue(b'error' in response.content)
+        self.assertTrue(b'line 2 has 2 fields' in response.content)
+        self.assertTrue(b'line 4 has 4 fields' in response.content)
 
     def test_batch_change_get_page(self):
         self.test_batch_add()
@@ -162,9 +162,9 @@ class TestHitBatchAdmin(django.test.TestCase):
         response = client.get(
             u'/admin/hits/hitbatch/%d/change/' % batch.id
         )
-        self.assertTrue('error' not in response.content)
+        self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 200)
-        self.assertTrue('no file selected' not in response.content)
+        self.assertTrue(b'no file selected' not in response.content)
 
     def test_batch_change_update(self):
         self.test_batch_add()
@@ -179,7 +179,7 @@ class TestHitBatchAdmin(django.test.TestCase):
                 'hit_template': batch.hit_template.id,
                 'name': 'hit_batch_save_modified',
             })
-        self.assertTrue('error' not in response.content)
+        self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], u'/admin/hits/hitbatch/')
         self.assertFalse(HitBatch.objects.filter(name='hit_batch_save').exists())
