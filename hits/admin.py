@@ -1,7 +1,11 @@
 try:
     from cStringIO import StringIO
 except ImportError:
-    from StringIO import StringIO
+    try:
+        from StringIO import StringIO
+    except ImportError:
+        from io import BytesIO
+        StringIO = BytesIO
 
 from django.contrib import admin
 from django.db import models
@@ -54,7 +58,7 @@ class HitBatchForm(ModelForm):
         validation_errors = []
 
         rows = unicodecsv.reader(csv_file)
-        header = rows.next()
+        header = next(rows)
 
         csv_fields = set(header)
         template_fields = set(hit_template.fieldnames)

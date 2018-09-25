@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
-from cStringIO import StringIO
+try:
+    from cStringIO import StringIO
+except ImportError:
+    try:
+        from StringIO import StringIO
+    except ImportError:
+        from io import StringIO
 from contextlib import contextmanager
 from io import BytesIO
 import os
@@ -150,7 +156,12 @@ class TestPublishHitsHandleForm0(TestPublishHitsHandle):
 
     def test_HitTemplate_fields_form(self):
         with open('hits/tests/resources/form_0.html') as f:
-            expect = f.read().decode('utf-8')
+            expect = f.read()
+            try:
+                expect = expect.decode('utf-8')
+            except AttributeError:
+                pass
+
         actual = HitTemplate.objects.get(id=1).form
         self.assertEqual(expect, actual)
 

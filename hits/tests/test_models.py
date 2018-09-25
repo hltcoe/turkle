@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
-from cStringIO import StringIO
+try:
+    from cStringIO import StringIO
+except ImportError:
+    try:
+        from StringIO import StringIO
+    except ImportError:
+        from io import BytesIO
+        StringIO = BytesIO
+
 import os.path
 
 from django.contrib.auth.models import AnonymousUser, User
@@ -7,6 +15,12 @@ from django.core.exceptions import ValidationError
 import django.test
 
 from hits.models import Hit, HitAssignment, HitBatch, HitTemplate
+
+# hack to add unicode() to python3 for backward compatibility
+try:
+    unicode('')
+except NameError:
+    unicode = str
 
 
 class TestHitAssignment(django.test.TestCase):
@@ -105,9 +119,9 @@ class TestHitBatch(django.test.TestCase):
         csv_output = StringIO()
         hit_batch.to_csv(csv_output)
         self.assertEqual(
-            '"Input.letter","Input.number","Answer.combined"\r\n' +
-            '"b","2","2b"\r\n' +
-            '"a","1","1a"\r\n',
+            b'"Input.letter","Input.number","Answer.combined"\r\n' +
+            b'"b","2","2b"\r\n' +
+            b'"a","1","1a"\r\n',
             csv_output.getvalue()
         )
 
@@ -159,10 +173,10 @@ class TestHitBatch(django.test.TestCase):
         csv_output = StringIO()
         hit_batch.to_csv(csv_output)
         rows = csv_output.getvalue().split()
-        self.assertEqual(rows[0], '"Input.letter","Answer.1","Answer.2","Answer.3","Answer.4"')
-        self.assertTrue('"a","1","2","",""' in rows)
-        self.assertTrue('"b","","","3","4"' in rows)
-        self.assertTrue('"c","","2","3",""' in rows)
+        self.assertEqual(rows[0], b'"Input.letter","Answer.1","Answer.2","Answer.3","Answer.4"')
+        self.assertTrue(b'"a","1","2","",""' in rows)
+        self.assertTrue(b'"b","","","3","4"' in rows)
+        self.assertTrue(b'"c","","2","3",""' in rows)
 
     def test_hit_batch_from_emoji_csv(self):
         hit_template = HitTemplate(name='test', form='<p>${emoji} - ${more_emoji}</p>')
@@ -170,7 +184,7 @@ class TestHitBatch(django.test.TestCase):
         hit_batch = HitBatch(hit_template=hit_template)
         hit_batch.save()
 
-        csv_fh = open(os.path.abspath('hits/tests/resources/emoji.csv'))
+        csv_fh = open(os.path.abspath('hits/tests/resources/emoji.csv'), 'rb')
         hit_batch.create_hits_from_csv(csv_fh)
 
         self.assertEqual(hit_batch.total_hits(), 3)
@@ -516,13 +530,13 @@ class TestModels(django.test.TestCase):
         csv_output = StringIO()
         hit_template.to_csv(csv_output)
 
-        rows = csv_output.getvalue().split('\r\n')
+        rows = csv_output.getvalue().split(b'\r\n')
         self.assertEqual(
-            '"Input.letter","Input.number","Answer.combined"',
+            b'"Input.letter","Input.number","Answer.combined"',
             rows[0]
         )
-        self.assertTrue('"a","1","1a"' in rows[1:])
-        self.assertTrue('"b","2","2b"' in rows[1:])
+        self.assertTrue(b'"a","1","1a"' in rows[1:])
+        self.assertTrue(b'"b","2","2b"' in rows[1:])
 
     def test_hit_template_to_csv_different_answers_per_batch(self):
         hit_template = HitTemplate(name='test', form='<p>${letter}</p>')
@@ -561,13 +575,13 @@ class TestModels(django.test.TestCase):
         csv_output = StringIO()
         hit_template.to_csv(csv_output)
 
-        rows = csv_output.getvalue().split('\r\n')
+        rows = csv_output.getvalue().split(b'\r\n')
         self.assertEqual(
-            '"Input.letter","Answer.1","Answer.2","Answer.3","Answer.4"',
+            b'"Input.letter","Answer.1","Answer.2","Answer.3","Answer.4"',
             rows[0]
         )
-        self.assertTrue('"a","1","2","",""' in rows)
-        self.assertTrue('"b","","","3","4"' in rows)
+        self.assertTrue(b'"a","1","2","",""' in rows)
+        self.assertTrue(b'"b","","","3","4"' in rows)
 
     def test_new_hit(self):
         """
@@ -594,7 +608,7 @@ class TestModels(django.test.TestCase):
 
     def test_result_to_dict_unicode(self):
         self.assertEqual(
-            '∞'.decode('utf-8'),
+            u'∞',
             self.hit_assignment.answers['comment']
         )
 
@@ -603,7 +617,12 @@ class TestGenerateForm(django.test.TestCase):
 
     def setUp(self):
         with open('hits/tests/resources/form_0.html') as f:
-            form = f.read().decode('utf-8')
+            form = f.read()
+            # python 2 compat hack
+            try:
+                form = form.decode('utf-8')
+            except AttributeError:
+                pass
 
         self.hit_template = HitTemplate(name="filepath", form=form)
         self.hit_template.save()
@@ -637,7 +656,13 @@ class TestGenerateForm(django.test.TestCase):
 
     def test_generate_form(self):
         with open('hits/tests/resources/form_0_filled.html') as f:
-            form = f.read().decode('utf-8')
+            form = f.read()
+            # python 2 compat hack
+            try:
+                form = form.decode('utf-8')
+            except AttributeError:
+                pass
+
         expect = form
         actual = self.hit.generate_form()
         self.assertNotEqual(expect, actual)

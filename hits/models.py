@@ -27,6 +27,9 @@ class Hit(models.Model):
     def __unicode__(self):
         return 'HIT id:{}'.format(self.id)
 
+    def __str__(self):
+        return 'HIT id:{}'.format(self.id)
+
     def generate_form(self):
         result = self.hit_batch.hit_template.form
         for field in self.input_csv_fields.keys():
@@ -222,7 +225,7 @@ class HitBatch(models.Model):
             the CSV file.
         """
         rows = unicodecsv.reader(csv_fh)
-        header = rows.next()
+        header = next(rows)
         return header, rows
 
     def _get_csv_fieldnames(self, hits):
@@ -269,6 +272,9 @@ class HitBatch(models.Model):
         return self._get_csv_fieldnames(hits), rows
 
     def __unicode__(self):
+        return 'HIT Batch: {}'.format(self.name)
+
+    def __str__(self):
         return 'HIT Batch: {}'.format(self.name)
 
 
@@ -366,4 +372,7 @@ class HitTemplate(models.Model):
         )
 
     def __unicode__(self):
+        return 'HIT Template: {}'.format(self.name)
+
+    def __str__(self):
         return 'HIT Template: {}'.format(self.name)

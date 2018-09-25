@@ -15,3 +15,22 @@ python2-tests:
     - python manage.py test
   tags:
     - docker
+
+
+python3-stylecheck:
+  image: python:3.5-alpine
+  stage: test
+  script:
+    - pip install flake8
+    - flake8
+  tags:
+    - docker
+
+python3-tests:
+  image: python:3.5-alpine
+  stage: test
+  script:
+    - pip install -r requirements.txt
+    - python manage.py test
+  tags:
+    - docker
