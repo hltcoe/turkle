@@ -34,6 +34,21 @@ class TestAcceptHit(django.test.TestCase):
                                          'hit_assignment_id':
                                          self.hit.hitassignment_set.first().id}))
 
+    def test_accept_unclaimed_hit_as_anon(self):
+        self.assertEqual(self.hit.hitassignment_set.count(), 0)
+
+        client = django.test.Client()
+        response = client.get(reverse('accept_hit',
+                                      kwargs={'batch_id': self.hit_batch.id,
+                                              'hit_id': self.hit.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.hit.hitassignment_set.count(), 1)
+        self.assertEqual(response['Location'],
+                         reverse('hit_assignment',
+                                 kwargs={'hit_id': self.hit.id,
+                                         'hit_assignment_id':
+                                         self.hit.hitassignment_set.first().id}))
+
     def test_accept_claimed_hit(self):
         User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
         other_user = User.objects.create_user('testuser', password='secret')
