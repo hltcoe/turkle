@@ -29,7 +29,10 @@ def accept_hit(request, batch_id, hit_id):
 
     # TODO: Handle possible race condition for two users claiming assignment
     ha = HitAssignment()
-    ha.assigned_to = request.user
+    if request.user.is_authenticated:
+        ha.assigned_to = request.user
+    else:
+        ha.assigned_to = None
     ha.hit = hit
     ha.save()
     return redirect(hit_assignment, hit.id, ha.id)
@@ -41,7 +44,10 @@ def accept_next_hit(request, batch_id):
     # TODO: Handle possible race condition for two users claiming assignment
     if hit:
         ha = HitAssignment()
-        ha.assigned_to = request.user
+        if request.user.is_authenticated:
+            ha.assigned_to = request.user
+        else:
+            ha.assigned_to = None
         ha.hit = hit
         ha.save()
         return redirect(hit_assignment, hit.id, ha.id)
