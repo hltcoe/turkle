@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+
+{% block header %}
+<style>
+/* Sticky footer styles
+-------------------------------------------------- */
+html {
+  position: relative;
+  min-height: 100%;
+}
+body {
+  margin-bottom: 60px; /* Margin bottom by footer height */
+}
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 60px; /* Set the fixed height of the footer here */
+  line-height: 60px; /* Vertically center the text there */
+  background-color: #f5f5f5;
+}
+</style>
+{% endblock %}
+
+
+{% block body %}
+{% endblock %}
+
+{% block footer %}
+<footer class="footer">
+  <div class="container">
+    <div class="float-left">
+      <span>
+        <b>Template:</b> {{ hit.hit_batch.hit_template.name }}</li> /
+        <b>Batch:</b> {{ hit.hit_batch.name }}</li> /
+        <b>HIT:</b> {{ hit.id }}</li>
+      </span>
+    </div>
+    <div class="float-right">
+      {% block right_half_footer %}
+      {% endblock %}
+    </div>
+  </div>
+</footer>
+{% endblock %}
