@@ -8,6 +8,48 @@ from hits.models import Hit, HitAssignment, HitBatch, HitTemplate
 from hits.views import hit_assignment
 
 
+class TestAcceptHit(django.test.TestCase):
+    def setUp(self):
+        hit_template = HitTemplate(login_required=False)
+        hit_template.save()
+        self.hit_batch = HitBatch(hit_template=hit_template)
+        self.hit_batch.save()
+        self.hit = Hit(hit_batch=self.hit_batch)
+        self.hit.save()
+
+    def test_accept_unclaimed_hit(self):
+        User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+        self.assertEqual(self.hit.hitassignment_set.count(), 0)
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.get(reverse('accept_hit',
+                                      kwargs={'batch_id': self.hit_batch.id,
+                                              'hit_id': self.hit.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.hit.hitassignment_set.count(), 1)
+        self.assertEqual(response['Location'],
+                         reverse('hit_assignment',
+                                 kwargs={'hit_id': self.hit.id,
+                                         'hit_assignment_id':
+                                         self.hit.hitassignment_set.first().id}))
+
+    def test_accept_claimed_hit(self):
+        User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+        other_user = User.objects.create_user('testuser', password='secret')
+        HitAssignment(assigned_to=other_user, hit=self.hit).save()
+        self.assertEqual(self.hit.hitassignment_set.count(), 1)
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.get(reverse('accept_hit',
+                                      kwargs={'batch_id': self.hit_batch.id,
+                                              'hit_id': self.hit.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        # TODO: Check for error message once error is passed through Django message system
+
+
 class TestDownloadBatchCSV(django.test.TestCase):
     def setUp(self):
         hit_template = HitTemplate(name='foo', form='<p>${foo}: ${bar}</p>')

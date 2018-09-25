@@ -21,7 +21,7 @@ def accept_hit(request, batch_id, hit_id):
         batch.available_hits_for(request.user).get(id=hit_id)
     except ObjectDoesNotExist:
         # TODO: Pass error message for user on to index view
-        redirect(index)
+        return redirect(index)
 
     # TODO: Handle possible race condition for two users claiming assignment
     ha = HitAssignment()
