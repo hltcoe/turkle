@@ -127,4 +127,8 @@ def preview_iframe(request, hit_id):
 def preview_next_hit(request, batch_id):
     batch = get_object_or_404(HitBatch, pk=batch_id)
     hit = batch.next_available_hit_for(request.user)
-    return redirect(preview, hit.id)
+    if hit:
+        return redirect(preview, hit.id)
+    else:
+        # TODO: Pass error via Django messages framework
+        return redirect(index)

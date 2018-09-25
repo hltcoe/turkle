@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import django.test
 from django.core.handlers.wsgi import WSGIRequest
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AnonymousUser, User
 from django.urls import reverse
 
 from hits.models import Hit, HitAssignment, HitBatch, HitTemplate
@@ -159,6 +159,46 @@ class TestHitAssignment(django.test.TestCase):
         expect = {u'foo': u'bar'}
         actual = ha.answers
         self.assertEqual(expect, actual)
+
+
+class TestPreview(django.test.TestCase):
+    def setUp(self):
+        hit_template = HitTemplate(form='<p>${foo}: ${bar}</p>', login_required=False, name='foo')
+        hit_template.save()
+        self.hit_batch = HitBatch(filename='foo.csv', hit_template=hit_template, name='foo')
+        self.hit_batch.save()
+        self.hit = Hit(
+            hit_batch=self.hit_batch,
+            input_csv_fields={'foo': 'fufu', 'bar': 'baba'},
+        )
+        self.hit.save()
+
+    def test_get_preview(self):
+        client = django.test.Client()
+        response = client.get(reverse('preview', kwargs={'hit_id': self.hit.id}))
+        self.assertEqual(response.status_code, 200)
+
+    def test_get_preview_bad_hit_id(self):
+        client = django.test.Client()
+        response = client.get(reverse('preview', kwargs={'hit_id': 666}))
+        self.assertEqual(response.status_code, 404)
+
+    def test_get_preview_iframe(self):
+        client = django.test.Client()
+        response = client.get(reverse('preview_iframe', kwargs={'hit_id': self.hit.id}))
+        self.assertEqual(response.status_code, 200)
+
+    def test_get_preview_iframe_bad_hit_id(self):
+        client = django.test.Client()
+        response = client.get(reverse('preview_iframe', kwargs={'hit_id': 666}))
+        self.assertEqual(response.status_code, 404)
+
+    def test_preview_next_hit(self):
+        client = django.test.Client()
+        client.login()
+        response = client.get(reverse('preview_next_hit', kwargs={'batch_id': self.hit_batch.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('preview', kwargs={'hit_id': self.hit.id}))
 
 
 # This was grabbed from
