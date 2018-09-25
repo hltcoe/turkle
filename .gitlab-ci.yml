@@ -1,5 +1,15 @@
-build-test-deploy:
+python2:
   image: python:2.7-alpine
+  script:
+    - pip install flake8
+    - flake8
+    - pip install -r requirements.txt
+    - python manage.py test
+  tags:
+    - docker
+
+python3:
+  image: python:3.5-alpine
   script:
     - pip install flake8
     - flake8
