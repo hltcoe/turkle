@@ -243,6 +243,72 @@ class TestPreview(django.test.TestCase):
         self.assertEqual(response['Location'], reverse('preview', kwargs={'hit_id': self.hit.id}))
 
 
+class TestReturnHitAssignment(django.test.TestCase):
+    def setUp(self):
+        hit_template = HitTemplate(name='foo', form='<p>${foo}: ${bar}</p>')
+        hit_template.save()
+
+        hit_batch = HitBatch(hit_template=hit_template, name='foo', filename='foo.csv')
+        hit_batch.save()
+
+        self.hit = Hit(hit_batch=hit_batch)
+        self.hit.save()
+
+    def test_return_hit_assignment(self):
+        user = User.objects.create_user('testuser', password='secret')
+
+        hit_assignment = HitAssignment(
+            assigned_to=user,
+            hit=self.hit
+        )
+        hit_assignment.save()
+
+        client = django.test.Client()
+        client.login(username='testuser', password='secret')
+        response = client.get(reverse('return_hit_assignment',
+                                      kwargs={'hit_id': self.hit.id,
+                                              'hit_assignment_id': hit_assignment.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'],
+                         reverse('preview_next_hit',
+                                 kwargs={'batch_id': self.hit.hit_batch_id}))
+
+    def test_return_completed_hit_assignment(self):
+        user = User.objects.create_user('testuser', password='secret')
+
+        hit_assignment = HitAssignment(
+            assigned_to=user,
+            completed=True,
+            hit=self.hit
+        )
+        hit_assignment.save()
+
+        client = django.test.Client()
+        client.login(username='testuser', password='secret')
+        response = client.get(reverse('return_hit_assignment',
+                                      kwargs={'hit_id': self.hit.id,
+                                              'hit_assignment_id': hit_assignment.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        # TODO: Verify error message passed via Django message system
+
+    def test_return_hit_assignment_as_anonymous_user(self):
+        hit_assignment = HitAssignment(
+            assigned_to=None,
+            hit=self.hit
+        )
+        hit_assignment.save()
+
+        client = django.test.Client()
+        response = client.get(reverse('return_hit_assignment',
+                                      kwargs={'hit_id': self.hit.id,
+                                              'hit_assignment_id': hit_assignment.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'],
+                         reverse('preview_next_hit',
+                                 kwargs={'batch_id': self.hit.hit_batch_id}))
+
+
 # This was grabbed from
 # http://djangosnippets.org/snippets/963/
 class RequestFactory(django.test.Client):

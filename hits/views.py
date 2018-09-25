@@ -136,3 +136,23 @@ def preview_next_hit(request, batch_id):
     else:
         # TODO: Pass error via Django messages framework
         return redirect(index)
+
+
+def return_hit_assignment(request, hit_id, hit_assignment_id):
+    hit = get_object_or_404(Hit, pk=hit_id)
+    hit_assignment = get_object_or_404(HitAssignment, pk=hit_assignment_id)
+
+    if hit_assignment.completed:
+        # TODO: Return error message via Django message system
+        return redirect(index)
+    if request.user.is_authenticated:
+        if hit_assignment.assigned_to != request.user:
+            # TODO: Return error message via Django message system
+            return redirect(index)
+    else:
+        if hit_assignment.assigned_to is not None:
+            # TODO: Return error message via Django message system
+            return redirect(index)
+
+    hit_assignment.delete()
+    return redirect(preview_next_hit, hit.hit_batch_id)

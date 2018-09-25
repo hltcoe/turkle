@@ -10,12 +10,15 @@ from hits.views import (
     preview,
     preview_iframe,
     preview_next_hit,
+    return_hit_assignment,
 )
 
 urlpatterns = [
     url(r'^$', index, name='index'),
     url(r'^(?P<hit_id>\d+)/$', preview, name='preview'),
     url(r'^(?P<hit_id>\d+)/iframe/$', preview_iframe, name='preview_iframe'),
+    url(r'^(?P<hit_id>\d+)/assignment/(?P<hit_assignment_id>\d+)/return/$',
+        return_hit_assignment, name='return_hit_assignment'),
     url(r'^(?P<hit_id>\d+)/assignment/(?P<hit_assignment_id>\d+)/$',
         hit_assignment, name='hit_assignment'),
     url(r'^(?P<hit_id>\d+)/assignment/iframe/(?P<hit_assignment_id>\d+)/$',
