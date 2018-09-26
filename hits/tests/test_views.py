@@ -34,6 +34,21 @@ class TestAcceptHit(django.test.TestCase):
                                          'hit_assignment_id':
                                          self.hit.hitassignment_set.first().id}))
 
+    def test_accept_unclaimed_hit_as_anon(self):
+        self.assertEqual(self.hit.hitassignment_set.count(), 0)
+
+        client = django.test.Client()
+        response = client.get(reverse('accept_hit',
+                                      kwargs={'batch_id': self.hit_batch.id,
+                                              'hit_id': self.hit.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(self.hit.hitassignment_set.count(), 1)
+        self.assertEqual(response['Location'],
+                         reverse('hit_assignment',
+                                 kwargs={'hit_id': self.hit.id,
+                                         'hit_assignment_id':
+                                         self.hit.hitassignment_set.first().id}))
+
     def test_accept_claimed_hit(self):
         User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
         other_user = User.objects.create_user('testuser', password='secret')
@@ -48,6 +63,42 @@ class TestAcceptHit(django.test.TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('index'))
         # TODO: Check for error message once error is passed through Django message system
+
+
+class TestAcceptNextHit(django.test.TestCase):
+    def setUp(self):
+        hit_template = HitTemplate(login_required=False, name='foo', form='<p>${foo}: ${bar}</p>')
+        hit_template.save()
+
+        self.hit_batch = HitBatch(hit_template=hit_template, name='foo', filename='foo.csv')
+        self.hit_batch.save()
+
+        self.hit = Hit(
+            hit_batch=self.hit_batch,
+            input_csv_fields={'foo': 'fufu', 'bar': 'baba'}
+        )
+        self.hit.save()
+
+    def test_accept_next_hit(self):
+        User.objects.create_user('testuser', password='secret')
+
+        client = django.test.Client()
+        client.login(username='testuser', password='secret')
+        response = client.get(reverse('accept_next_hit',
+                                      kwargs={'batch_id': self.hit_batch.id}))
+        self.assertEqual(response.status_code, 302)
+        # We are redirected to the hit_assignment view, but we can't predict the
+        # full hit_assignment URL
+        self.assertTrue('{}/assignment/'.format(self.hit.id) in response['Location'])
+
+    def test_accept_next_hit_as_anon(self):
+        client = django.test.Client()
+        response = client.get(reverse('accept_next_hit',
+                                      kwargs={'batch_id': self.hit_batch.id}))
+        self.assertEqual(response.status_code, 302)
+        # We are redirected to the hit_assignment view, but we can't predict the
+        # full hit_assignment URL
+        self.assertTrue('{}/assignment/'.format(self.hit.id) in response['Location'])
 
 
 class TestDownloadBatchCSV(django.test.TestCase):
