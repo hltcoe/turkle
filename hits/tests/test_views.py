@@ -317,7 +317,12 @@ class TestPreview(django.test.TestCase):
     def test_get_preview_bad_hit_id(self):
         client = django.test.Client()
         response = client.get(reverse('preview', kwargs={'hit_id': 666}))
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         u'Cannot find HIT with ID {}'.format(666))
 
     def test_get_preview_iframe(self):
         client = django.test.Client()
@@ -327,7 +332,12 @@ class TestPreview(django.test.TestCase):
     def test_get_preview_iframe_bad_hit_id(self):
         client = django.test.Client()
         response = client.get(reverse('preview_iframe', kwargs={'hit_id': 666}))
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         u'Cannot find HIT with ID {}'.format(666))
 
     def test_preview_next_hit(self):
         client = django.test.Client()

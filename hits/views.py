@@ -12,15 +12,23 @@ from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.http import HttpResponse
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse
 
 from hits.models import Hit, HitAssignment, HitBatch, HitTemplate
 
 
 def accept_hit(request, batch_id, hit_id):
-    batch = get_object_or_404(HitBatch, pk=batch_id)
-    hit = get_object_or_404(Hit, pk=hit_id)
+    try:
+        batch = HitBatch.objects.get(id=batch_id)
+    except ObjectDoesNotExist:
+        messages.error(request, u'Cannot find HIT Batch with ID {}'.format(batch_id))
+        return redirect(index)
+    try:
+        hit = Hit.objects.get(id=hit_id)
+    except ObjectDoesNotExist:
+        messages.error(request, u'Cannot find HIT with ID {}'.format(hit_id))
+        return redirect(index)
 
     try:
         batch.available_hits_for(request.user).get(id=hit_id)
@@ -101,8 +109,17 @@ def hit_assignment(request, hit_id, hit_assignment_id):
 
 
 def hit_assignment_iframe(request, hit_id, hit_assignment_id):
-    hit = get_object_or_404(Hit, pk=hit_id)
-    hit_assignment = get_object_or_404(HitAssignment, pk=hit_assignment_id)
+    try:
+        hit = Hit.objects.get(id=hit_id)
+    except ObjectDoesNotExist:
+        messages.error(request, u'Cannot find HIT with ID {}'.format(hit_id))
+        return redirect(index)
+    try:
+        hit_assignment = HitAssignment.objects.get(id=hit_assignment_id)
+    except ObjectDoesNotExist:
+        messages.error(request,
+                       u'Cannot find HIT Assignment with ID {}'.format(hit_assignment_id))
+        return redirect(index)
     return render(
         request,
         'hit_assignment_iframe.html',
@@ -134,17 +151,29 @@ def index(request):
 
 
 def preview(request, hit_id):
-    hit = get_object_or_404(Hit, pk=hit_id)
+    try:
+        hit = Hit.objects.get(id=hit_id)
+    except ObjectDoesNotExist:
+        messages.error(request, u'Cannot find HIT with ID {}'.format(hit_id))
+        return redirect(index)
     return render(request, 'preview.html', {'hit': hit})
 
 
 def preview_iframe(request, hit_id):
-    hit = get_object_or_404(Hit, pk=hit_id)
+    try:
+        hit = Hit.objects.get(id=hit_id)
+    except ObjectDoesNotExist:
+        messages.error(request, u'Cannot find HIT with ID {}'.format(hit_id))
+        return redirect(index)
     return render(request, 'preview_iframe.html', {'hit': hit})
 
 
 def preview_next_hit(request, batch_id):
-    batch = get_object_or_404(HitBatch, pk=batch_id)
+    try:
+        batch = HitBatch.objects.get(id=batch_id)
+    except ObjectDoesNotExist:
+        messages.error(request, u'Cannot find HIT Batch with ID {}'.format(batch_id))
+        return redirect(index)
     hit = batch.next_available_hit_for(request.user)
     if hit:
         return redirect(preview, hit.id)
@@ -155,8 +184,17 @@ def preview_next_hit(request, batch_id):
 
 
 def return_hit_assignment(request, hit_id, hit_assignment_id):
-    hit = get_object_or_404(Hit, pk=hit_id)
-    hit_assignment = get_object_or_404(HitAssignment, pk=hit_assignment_id)
+    try:
+        hit = Hit.objects.get(id=hit_id)
+    except ObjectDoesNotExist:
+        messages.error(request, u'Cannot find HIT with ID {}'.format(hit_id))
+        return redirect(index)
+    try:
+        hit_assignment = HitAssignment.objects.get(id=hit_assignment_id)
+    except ObjectDoesNotExist:
+        messages.error(request,
+                       u'Cannot find HIT Assignment with ID {}'.format(hit_assignment_id))
+        return redirect(index)
 
     if hit_assignment.completed:
         messages.error(request, u"The HIT can't be returned because it has been completed")
