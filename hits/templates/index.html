@@ -30,9 +30,10 @@
         </a>
       </td>
       <td>
-        <a href="{{ batch_row.accept_next_hit_url }}" role="button" class="btn btn-sm btn-primary">
-          Accept next HIT
-        </a>
+        <form method="post" action="{{ batch_row.accept_next_hit_url }}">
+          {% csrf_token %}
+          <input type="submit" id="submitButton" class="btn btn-sm btn-primary" value="Accept next HIT" />
+        </form>
       </td>
     </tr>
     {% endfor %}
