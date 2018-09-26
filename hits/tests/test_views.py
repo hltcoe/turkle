@@ -77,7 +77,7 @@ class TestAcceptNextHit(django.test.TestCase):
         self.assertEqual(self.hit.hitassignment_set.first().assigned_to, user)
 
     def test_accept_next_hit__bad_batch_id(self):
-        user = User.objects.create_user('testuser', password='secret')
+        User.objects.create_user('testuser', password='secret')
         self.assertEqual(self.hit.hitassignment_set.count(), 0)
 
         client = django.test.Client()
@@ -93,7 +93,7 @@ class TestAcceptNextHit(django.test.TestCase):
                          u'Cannot find HIT Batch with ID {}'.format(666))
 
     def test_accept_next_hit__no_more_hits(self):
-        user = User.objects.create_user('testuser', password='secret')
+        User.objects.create_user('testuser', password='secret')
         hit_assignment = HitAssignment(completed=True, hit=self.hit)
         hit_assignment.save()
         self.assertEqual(self.hit.hitassignment_set.count(), 1)
