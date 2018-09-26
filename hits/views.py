@@ -145,15 +145,15 @@ def return_hit_assignment(request, hit_id, hit_assignment_id):
     hit_assignment = get_object_or_404(HitAssignment, pk=hit_assignment_id)
 
     if hit_assignment.completed:
-        # TODO: Return error message via Django message system
+        messages.error(request, u"The HIT can't be returned because it has been completed")
         return redirect(index)
     if request.user.is_authenticated:
         if hit_assignment.assigned_to != request.user:
-            # TODO: Return error message via Django message system
+            messages.error(request, u'The HIT you are trying to return belongs to another user')
             return redirect(index)
     else:
         if hit_assignment.assigned_to is not None:
-            # TODO: Return error message via Django message system
+            messages.error(request, u'The HIT you are trying to return belongs to another user')
             return redirect(index)
 
     hit_assignment.delete()

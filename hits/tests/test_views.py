@@ -304,7 +304,10 @@ class TestReturnHitAssignment(django.test.TestCase):
                                               'hit_assignment_id': hit_assignment.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('index'))
-        # TODO: Verify error message passed via Django message system
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         u"The HIT can't be returned because it has been completed")
 
     def test_return_hit_assignment_as_anonymous_user(self):
         hit_assignment = HitAssignment(
@@ -321,6 +324,47 @@ class TestReturnHitAssignment(django.test.TestCase):
         self.assertEqual(response['Location'],
                          reverse('preview_next_hit',
                                  kwargs={'batch_id': self.hit.hit_batch_id}))
+
+    def test_return_hit_assignment__anon_user_returns_other_users_hit(self):
+        user = User.objects.create_user('testuser', password='secret')
+
+        hit_assignment = HitAssignment(
+            assigned_to=user,
+            hit=self.hit
+        )
+        hit_assignment.save()
+
+        client = django.test.Client()
+        response = client.get(reverse('return_hit_assignment',
+                                      kwargs={'hit_id': self.hit.id,
+                                              'hit_assignment_id': hit_assignment.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         u'The HIT you are trying to return belongs to another user')
+
+    def test_return_hit_assignment__user_returns_anon_users_hit(self):
+        User.objects.create_user('testuser', password='secret')
+
+        hit_assignment = HitAssignment(
+            assigned_to=None,
+            hit=self.hit
+        )
+        hit_assignment.save()
+
+        client = django.test.Client()
+        client.login(username='testuser', password='secret')
+        response = client.get(reverse('return_hit_assignment',
+                                      kwargs={'hit_id': self.hit.id,
+                                              'hit_assignment_id': hit_assignment.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         u'The HIT you are trying to return belongs to another user')
 
 
 # This was grabbed from
