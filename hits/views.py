@@ -37,7 +37,11 @@ def accept_hit(request, batch_id, hit_id):
 
 
 def accept_next_hit(request, batch_id):
-    batch = get_object_or_404(HitBatch, pk=batch_id)
+    try:
+        hit = HitBatch.objects.get(id=batch_id)
+    except ObjectDoesNotExist:
+        messages.error(request, u'Cannot find HIT Batch with ID {}'.format(batch_id))
+        return redirect(index)
     hit = batch.next_available_hit_for(request.user)
     # TODO: Handle possible race condition for two users claiming assignment
     if hit:
@@ -63,8 +67,17 @@ def download_batch_csv(request, batch_id):
 
 
 def hit_assignment(request, hit_id, hit_assignment_id):
-    hit = get_object_or_404(Hit, pk=hit_id)
-    hit_assignment = get_object_or_404(HitAssignment, pk=hit_assignment_id)
+    try:
+        hit = Hit.objects.get(id=hit_id)
+    except ObjectDoesNotExist:
+        messages.error(request, u'Cannot find HIT with ID {}'.format(hit_id))
+        return redirect(index)
+    try:
+        hit_assignment = HitAssignment.objects.get(id=hit_assignment_id)
+    except ObjectDoesNotExist:
+        messages.error(request,
+                       u'Cannot find HIT Assignment with ID {}'.format(hit_assignment_id))
+        return redirect(index)
 
     if request.method == 'GET':
         return render(

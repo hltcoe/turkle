@@ -180,7 +180,7 @@ class TestIndex(django.test.TestCase):
 class TestHitAssignment(django.test.TestCase):
 
     def setUp(self):
-        hit_template = HitTemplate(name='foo', form='<p></p>')
+        hit_template = HitTemplate(login_required=False, name='foo', form='<p></p>')
         hit_template.save()
         hit_batch = HitBatch(hit_template=hit_template)
         hit_batch.save()
@@ -192,6 +192,39 @@ class TestHitAssignment(django.test.TestCase):
             hit=self.hit
         )
         self.hit_assignment.save()
+
+    def test_get_hit_assignment(self):
+        client = django.test.Client()
+        response = client.get(reverse('hit_assignment',
+                                      kwargs={'hit_id': self.hit.id,
+                                              'hit_assignment_id': self.hit_assignment.id}))
+        self.assertEqual(response.status_code, 200)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 0)
+
+    def test_get_hit_assignment_with_bad_hit_id(self):
+        client = django.test.Client()
+        response = client.get(reverse('hit_assignment',
+                                      kwargs={'hit_id': 666,
+                                              'hit_assignment_id': self.hit_assignment.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         u'Cannot find HIT with ID {}'.format(666))
+
+    def test_get_hit_assignment_with_bad_hit_assignment_id(self):
+        client = django.test.Client()
+        response = client.get(reverse('hit_assignment',
+                                      kwargs={'hit_id': self.hit.id,
+                                              'hit_assignment_id': 666}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         u'Cannot find HIT Assignment with ID {}'.format(666))
 
     def test_0(self):
         post_request = RequestFactory().post(
