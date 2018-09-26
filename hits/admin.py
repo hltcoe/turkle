@@ -148,6 +148,16 @@ class HitTemplateAdmin(admin.ModelAdmin):
         return format_html_join('\n', "<li>{}</li>",
                                 ((f, ) for f in instance.fieldnames.keys()))
 
+    def get_fields(self, request, obj):
+        if not obj:
+            # Adding
+            return ['active', 'assignments_per_hit', 'filename', 'form',
+                    'login_required', 'name']
+        else:
+            # Changing
+            return ['active', 'assignments_per_hit', 'filename', 'form',
+                    'login_required', 'name', 'form_fieldnames']
+
     def publish_hits(self, instance):
         publish_hits_url = '%s?hit_template=%d&assignments_per_hit=%d' % (
             reverse('admin:hits_hitbatch_add'),
