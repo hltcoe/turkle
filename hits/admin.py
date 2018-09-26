@@ -134,7 +134,12 @@ class HitBatchAdmin(admin.ModelAdmin):
             super(HitBatchAdmin, self).save_model(request, obj, form, change)
 
 
+class HitTemplateForm(ModelForm):
+    template_file = FileField(label='HTML template file', required=False)
+
+
 class HitTemplateAdmin(admin.ModelAdmin):
+    form = HitTemplateForm
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
@@ -152,11 +157,12 @@ class HitTemplateAdmin(admin.ModelAdmin):
         if not obj:
             # Adding
             return ['active', 'assignments_per_hit', 'filename', 'form',
-                    'login_required', 'name']
+                    'login_required', 'name', 'template_file']
         else:
             # Changing
             return ['active', 'assignments_per_hit', 'filename', 'form',
-                    'login_required', 'name', 'extracted_template_variables']
+                    'login_required', 'name', 'extracted_template_variables',
+                    'template_file']
 
     def publish_hits(self, instance):
         publish_hits_url = '%s?hit_template=%d&assignments_per_hit=%d' % (
