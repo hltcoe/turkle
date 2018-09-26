@@ -17,7 +17,8 @@
 {% endblock %}
 
 {% block right_half_footer %}
-<a href="{% url 'return_hit_assignment' hit.id hit_assignment.id %}" role="button" class="btn btn-sm btn-danger">
-  Return HIT
-</a>
+<form method="post" action="{% url 'return_hit_assignment' hit.id hit_assignment.id %}">
+  {% csrf_token %}
+  <input type="submit" id="submitButton" class="btn btn-sm btn-danger" value="Return HIT" />
+</form>
 {% endblock %}

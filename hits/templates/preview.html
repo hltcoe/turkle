@@ -17,7 +17,8 @@
 {% endblock %}
 
 {% block right_half_footer %}
-<a href="{% url 'accept_hit' hit.hit_batch_id hit.id %}" role="button" class="btn btn-sm btn-primary">
-  Accept HIT
-</a>
+<form method="post" action="{% url 'accept_hit' hit.hit_batch_id hit.id %}">
+  {% csrf_token %}
+  <input type="submit" id="submitButton" class="btn btn-sm btn-primary" value="Accept HIT" />
+</form>
 {% endblock %}
