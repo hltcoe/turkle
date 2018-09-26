@@ -2,6 +2,7 @@
 import django.test
 from django.core.handlers.wsgi import WSGIRequest
 from django.contrib.auth.models import User
+from django.contrib.messages import get_messages
 from django.urls import reverse
 
 from hits.models import Hit, HitAssignment, HitBatch, HitTemplate
@@ -62,7 +63,67 @@ class TestAcceptHit(django.test.TestCase):
                                               'hit_id': self.hit.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('index'))
-        # TODO: Check for error message once error is passed through Django message system
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         u'The HIT with ID {} is no longer available'.format(self.hit.id))
+
+
+class TestAcceptNextHit(django.test.TestCase):
+    def setUp(self):
+        hit_template = HitTemplate(login_required=False, name='foo', form='<p>${foo}: ${bar}</p>')
+        hit_template.save()
+        self.hit_batch = HitBatch(hit_template=hit_template, name='foo', filename='foo.csv')
+        self.hit_batch.save()
+        self.hit = Hit(hit_batch=self.hit_batch)
+        self.hit.save()
+
+    def test_accept_next_hit(self):
+        user = User.objects.create_user('testuser', password='secret')
+        self.assertEqual(self.hit.hitassignment_set.count(), 0)
+
+        client = django.test.Client()
+        client.login(username='testuser', password='secret')
+        response = client.get(reverse('accept_next_hit',
+                                      kwargs={'batch_id': self.hit_batch.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue('{}/assignment/'.format(self.hit.id) in response['Location'])
+        self.assertEqual(self.hit.hitassignment_set.count(), 1)
+        self.assertEqual(self.hit.hitassignment_set.first().assigned_to, user)
+
+    def test_accept_next_hit__bad_batch_id(self):
+        User.objects.create_user('testuser', password='secret')
+        self.assertEqual(self.hit.hitassignment_set.count(), 0)
+
+        client = django.test.Client()
+        client.login(username='testuser', password='secret')
+        response = client.get(reverse('accept_next_hit',
+                                      kwargs={'batch_id': 666}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(self.hit.hitassignment_set.count(), 0)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         u'Cannot find HIT Batch with ID {}'.format(666))
+
+    def test_accept_next_hit__no_more_hits(self):
+        User.objects.create_user('testuser', password='secret')
+        hit_assignment = HitAssignment(completed=True, hit=self.hit)
+        hit_assignment.save()
+        self.assertEqual(self.hit.hitassignment_set.count(), 1)
+
+        client = django.test.Client()
+        client.login(username='testuser', password='secret')
+        response = client.get(reverse('accept_next_hit',
+                                      kwargs={'batch_id': self.hit_batch.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(self.hit.hitassignment_set.count(), 1)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         u'No more HITs available from Batch {}'.format(self.hit_batch.id))
 
 
 class TestAcceptNextHit(django.test.TestCase):
@@ -227,7 +288,7 @@ class TestIndex(django.test.TestCase):
 class TestHitAssignment(django.test.TestCase):
 
     def setUp(self):
-        hit_template = HitTemplate(name='foo', form='<p></p>')
+        hit_template = HitTemplate(login_required=False, name='foo', form='<p></p>')
         hit_template.save()
         hit_batch = HitBatch(hit_template=hit_template)
         hit_batch.save()
@@ -239,6 +300,39 @@ class TestHitAssignment(django.test.TestCase):
             hit=self.hit
         )
         self.hit_assignment.save()
+
+    def test_get_hit_assignment(self):
+        client = django.test.Client()
+        response = client.get(reverse('hit_assignment',
+                                      kwargs={'hit_id': self.hit.id,
+                                              'hit_assignment_id': self.hit_assignment.id}))
+        self.assertEqual(response.status_code, 200)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 0)
+
+    def test_get_hit_assignment_with_bad_hit_id(self):
+        client = django.test.Client()
+        response = client.get(reverse('hit_assignment',
+                                      kwargs={'hit_id': 666,
+                                              'hit_assignment_id': self.hit_assignment.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         u'Cannot find HIT with ID {}'.format(666))
+
+    def test_get_hit_assignment_with_bad_hit_assignment_id(self):
+        client = django.test.Client()
+        response = client.get(reverse('hit_assignment',
+                                      kwargs={'hit_id': self.hit.id,
+                                              'hit_assignment_id': 666}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         u'Cannot find HIT Assignment with ID {}'.format(666))
 
     def test_0(self):
         post_request = RequestFactory().post(
@@ -274,7 +368,12 @@ class TestPreview(django.test.TestCase):
     def test_get_preview_bad_hit_id(self):
         client = django.test.Client()
         response = client.get(reverse('preview', kwargs={'hit_id': 666}))
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         u'Cannot find HIT with ID {}'.format(666))
 
     def test_get_preview_iframe(self):
         client = django.test.Client()
@@ -284,14 +383,29 @@ class TestPreview(django.test.TestCase):
     def test_get_preview_iframe_bad_hit_id(self):
         client = django.test.Client()
         response = client.get(reverse('preview_iframe', kwargs={'hit_id': 666}))
-        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         u'Cannot find HIT with ID {}'.format(666))
 
     def test_preview_next_hit(self):
         client = django.test.Client()
-        client.login()
         response = client.get(reverse('preview_next_hit', kwargs={'batch_id': self.hit_batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('preview', kwargs={'hit_id': self.hit.id}))
+
+    def test_preview_next_hit_no_more_hits(self):
+        self.hit.completed = True
+        self.hit.save()
+        client = django.test.Client()
+        response = client.get(reverse('preview_next_hit', kwargs={'batch_id': self.hit_batch.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertTrue(u'No more HITs are available for Batch' in str(messages[0]))
 
 
 class TestReturnHitAssignment(django.test.TestCase):
@@ -341,7 +455,10 @@ class TestReturnHitAssignment(django.test.TestCase):
                                               'hit_assignment_id': hit_assignment.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('index'))
-        # TODO: Verify error message passed via Django message system
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         u"The HIT can't be returned because it has been completed")
 
     def test_return_hit_assignment_as_anonymous_user(self):
         hit_assignment = HitAssignment(
@@ -358,6 +475,47 @@ class TestReturnHitAssignment(django.test.TestCase):
         self.assertEqual(response['Location'],
                          reverse('preview_next_hit',
                                  kwargs={'batch_id': self.hit.hit_batch_id}))
+
+    def test_return_hit_assignment__anon_user_returns_other_users_hit(self):
+        user = User.objects.create_user('testuser', password='secret')
+
+        hit_assignment = HitAssignment(
+            assigned_to=user,
+            hit=self.hit
+        )
+        hit_assignment.save()
+
+        client = django.test.Client()
+        response = client.get(reverse('return_hit_assignment',
+                                      kwargs={'hit_id': self.hit.id,
+                                              'hit_assignment_id': hit_assignment.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         u'The HIT you are trying to return belongs to another user')
+
+    def test_return_hit_assignment__user_returns_anon_users_hit(self):
+        User.objects.create_user('testuser', password='secret')
+
+        hit_assignment = HitAssignment(
+            assigned_to=None,
+            hit=self.hit
+        )
+        hit_assignment.save()
+
+        client = django.test.Client()
+        client.login(username='testuser', password='secret')
+        response = client.get(reverse('return_hit_assignment',
+                                      kwargs={'hit_id': self.hit.id,
+                                              'hit_assignment_id': hit_assignment.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         u'The HIT you are trying to return belongs to another user')
 
 
 # This was grabbed from
