@@ -36,7 +36,10 @@ class TurkleClient(object):
                 'password2': self.args.password,
                 'csrfmiddlewaretoken': session.cookies['csrftoken']
             }
-            session.post(url, data=payload)
+            resp = session.post(url, data=payload)
+            if "username already exists" in resp.text:
+                print("Error: username already exists")
+                return False
         return True
 
     def login(self, session):
