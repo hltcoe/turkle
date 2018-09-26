@@ -142,9 +142,9 @@ class HitTemplateAdmin(admin.ModelAdmin):
 
     # Fieldnames are extracted from form text, and should not be edited directly
     exclude = ('fieldnames',)
-    readonly_fields = ('form_fieldnames',)
+    readonly_fields = ('extracted_template_variables',)
 
-    def form_fieldnames(self, instance):
+    def extracted_template_variables(self, instance):
         return format_html_join('\n', "<li>{}</li>",
                                 ((f, ) for f in instance.fieldnames.keys()))
 
@@ -156,7 +156,7 @@ class HitTemplateAdmin(admin.ModelAdmin):
         else:
             # Changing
             return ['active', 'assignments_per_hit', 'filename', 'form',
-                    'login_required', 'name', 'form_fieldnames']
+                    'login_required', 'name', 'extracted_template_variables']
 
     def publish_hits(self, instance):
         publish_hits_url = '%s?hit_template=%d&assignments_per_hit=%d' % (
