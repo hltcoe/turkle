@@ -54,6 +54,63 @@ class TestAcceptHit(django.test.TestCase):
                          u'The HIT with ID {} is no longer available'.format(self.hit.id))
 
 
+class TestAcceptNextHit(django.test.TestCase):
+    def setUp(self):
+        hit_template = HitTemplate(login_required=False, name='foo', form='<p>${foo}: ${bar}</p>')
+        hit_template.save()
+        self.hit_batch = HitBatch(hit_template=hit_template, name='foo', filename='foo.csv')
+        self.hit_batch.save()
+        self.hit = Hit(hit_batch=self.hit_batch)
+        self.hit.save()
+
+    def test_accept_next_hit(self):
+        user = User.objects.create_user('testuser', password='secret')
+        self.assertEqual(self.hit.hitassignment_set.count(), 0)
+
+        client = django.test.Client()
+        client.login(username='testuser', password='secret')
+        response = client.get(reverse('accept_next_hit',
+                                      kwargs={'batch_id': self.hit_batch.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue('{}/assignment/'.format(self.hit.id) in response['Location'])
+        self.assertEqual(self.hit.hitassignment_set.count(), 1)
+        self.assertEqual(self.hit.hitassignment_set.first().assigned_to, user)
+
+    def test_accept_next_hit__bad_batch_id(self):
+        user = User.objects.create_user('testuser', password='secret')
+        self.assertEqual(self.hit.hitassignment_set.count(), 0)
+
+        client = django.test.Client()
+        client.login(username='testuser', password='secret')
+        response = client.get(reverse('accept_next_hit',
+                                      kwargs={'batch_id': 666}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(self.hit.hitassignment_set.count(), 0)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         u'Cannot find HIT Batch with ID {}'.format(666))
+
+    def test_accept_next_hit__no_more_hits(self):
+        user = User.objects.create_user('testuser', password='secret')
+        hit_assignment = HitAssignment(completed=True, hit=self.hit)
+        hit_assignment.save()
+        self.assertEqual(self.hit.hitassignment_set.count(), 1)
+
+        client = django.test.Client()
+        client.login(username='testuser', password='secret')
+        response = client.get(reverse('accept_next_hit',
+                                      kwargs={'batch_id': self.hit_batch.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(self.hit.hitassignment_set.count(), 1)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         u'No more HITs available from Batch {}'.format(self.hit_batch.id))
+
+
 class TestDownloadBatchCSV(django.test.TestCase):
     def setUp(self):
         hit_template = HitTemplate(name='foo', form='<p>${foo}: ${bar}</p>')

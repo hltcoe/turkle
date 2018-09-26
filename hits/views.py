@@ -38,7 +38,7 @@ def accept_hit(request, batch_id, hit_id):
 
 def accept_next_hit(request, batch_id):
     try:
-        hit = HitBatch.objects.get(id=batch_id)
+        batch = HitBatch.objects.get(id=batch_id)
     except ObjectDoesNotExist:
         messages.error(request, u'Cannot find HIT Batch with ID {}'.format(batch_id))
         return redirect(index)
@@ -51,6 +51,7 @@ def accept_next_hit(request, batch_id):
         ha.save()
         return redirect(hit_assignment, hit.id, ha.id)
     else:
+        messages.error(request, u'No more HITs available from Batch {}'.format(batch_id))
         return redirect(index)
 
 
