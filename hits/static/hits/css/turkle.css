@@ -1,0 +1,18 @@
+/* --- There are five Django messages alert levels:
+       - debug, info, success, warning, error
+       We want to map these alert levels to Bootstrap 'alert-*' classes.
+       Bootstrap already has 'alert-info', 'alert-success' and 'alert-warning'
+       classes, so we add 'alert-debug' and 'alert-error'
+ */
+/* --- alert-debug colors copied from Bootstrap's alert-light class  */
+.alert-debug {
+  color: #818182;
+  background-color: #fefefe;
+  border-color: #fdfdfe;
+}
+/* --- alert-error colors copied from Bootstrap's alert-danger class  */
+.alert-error {
+  color: #721c24;
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+}
