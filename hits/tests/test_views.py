@@ -2,6 +2,7 @@
 import django.test
 from django.core.handlers.wsgi import WSGIRequest
 from django.contrib.auth.models import User
+from django.contrib.messages import get_messages
 from django.urls import reverse
 
 from hits.models import Hit, HitAssignment, HitBatch, HitTemplate
@@ -47,7 +48,10 @@ class TestAcceptHit(django.test.TestCase):
                                               'hit_id': self.hit.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('index'))
-        # TODO: Check for error message once error is passed through Django message system
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         u'The HIT with ID {} is no longer available'.format(self.hit.id))
 
 
 class TestDownloadBatchCSV(django.test.TestCase):
@@ -237,10 +241,20 @@ class TestPreview(django.test.TestCase):
 
     def test_preview_next_hit(self):
         client = django.test.Client()
-        client.login()
         response = client.get(reverse('preview_next_hit', kwargs={'batch_id': self.hit_batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('preview', kwargs={'hit_id': self.hit.id}))
+
+    def test_preview_next_hit_no_more_hits(self):
+        self.hit.completed = True
+        self.hit.save()
+        client = django.test.Client()
+        response = client.get(reverse('preview_next_hit', kwargs={'batch_id': self.hit_batch.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertTrue(u'No more HITs are available for Batch' in str(messages[0]))
 
 
 class TestReturnHitAssignment(django.test.TestCase):
