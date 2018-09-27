@@ -3,6 +3,7 @@ import os.path
 
 import django.test
 from django.contrib.auth.models import User
+from django.urls import reverse
 
 from hits.models import HitBatch, HitTemplate
 
@@ -184,3 +185,24 @@ class TestHitBatchAdmin(django.test.TestCase):
         self.assertEqual(response['Location'], u'/admin/hits/hitbatch/')
         self.assertFalse(HitBatch.objects.filter(name='hit_batch_save').exists())
         self.assertTrue(HitBatch.objects.filter(name='hit_batch_save_modified').exists())
+
+
+class TestHitTemplate(django.test.TestCase):
+    def setUp(self):
+        User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+
+    def test_add_hit_template(self):
+        self.assertEqual(HitTemplate.objects.filter(name='foo').count(), 0)
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.post(reverse('admin:hits_hittemplate_add'),
+                               {
+                                   'assignments_per_hit': 1,
+                                   'name': 'foo',
+                                   'form': '<p>${foo}: ${bar}</p>',
+                               })
+        self.assertTrue(b'error' not in response.content)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], u'/admin/hits/hittemplate/')
+        self.assertEqual(HitTemplate.objects.filter(name='foo').count(), 1)
