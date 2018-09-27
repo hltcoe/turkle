@@ -70,15 +70,42 @@ python manage.py runserver
 
 ## Creating user accounts ##
 
-TODO
+### Using the admin UI
+ * Login with a super user account
+ * Select Manage Users from the navigation header
+ * Click the `Add User` button, fill out the form and submit
+
+### Using the scripts
+The `add_user.py` script adds a single user. Run it with the `-h` option for details.
+
+The `import users.py` script reads a CSV file to add users to Turkle.
+The file must be formatted like:
+```
+username1,password1
+username2,password2
+```
 
 ## Loading a batch of HITs ##
 
+### Using the admin UI
+
 TODO: documentation on using the admin UI for templates and CSVs.
+
+### Using the scripts
+With a template html file and a batch CSV file, use the 
+`publish_hits.py` script to add them to Turkle.
+If you have already added the template, you must use the admin UI
+to add additional batches of HITs.
 
 ## Downloading a batch of HITs ##
 
+### Using the admin UI
+
 TODO
+
+### Using the scripts
+The `download_results.py` script downloads all HITs that have been completed
+into a directory that the user selects.
 
 # Worker instructions
 
