@@ -24,6 +24,7 @@ class TestHitBatchAdmin(django.test.TestCase):
             response = client.post(
                 u'/admin/hits/hitbatch/add/',
                 {
+                    'allotted_assignment_time': 24,
                     'assignments_per_hit': 1,
                     'hit_template': hit_template.id,
                     'name': 'hit_batch_save',
@@ -49,6 +50,7 @@ class TestHitBatchAdmin(django.test.TestCase):
             response = client.post(
                 u'/admin/hits/hitbatch/add/',
                 {
+                    'allotted_assignment_time': 24,
                     'assignments_per_hit': 1,
                     'hit_template': hit_template.id,
                     'name': 'hit_batch_save',
@@ -145,6 +147,7 @@ class TestHitBatchAdmin(django.test.TestCase):
             response = client.post(
                 u'/admin/hits/hitbatch/add/',
                 {
+                    'allotted_assignment_time': 24,
                     'hit_template': hit_template.id,
                     'name': 'hit_batch_save',
                     'csv_file': fp
@@ -176,6 +179,7 @@ class TestHitBatchAdmin(django.test.TestCase):
         response = client.post(
             u'/admin/hits/hitbatch/%d/change/' % batch.id,
             {
+                'allotted_assignment_time': 24,
                 'assignments_per_hit': 1,
                 'hit_template': batch.hit_template.id,
                 'name': 'hit_batch_save_modified',

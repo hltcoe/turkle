@@ -26,6 +26,10 @@ class HitBatchForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(HitBatchForm, self).__init__(*args, **kwargs)
 
+        self.fields['allotted_assignment_time'].label = 'Allotted assignment time (hours)'
+        self.fields['allotted_assignment_time'].help_text = 'If a user abandons a HIT, ' + \
+            'this determines how long it takes until their assignment is deleted and ' + \
+            'someone else can work on the HIT.'
         self.fields['hit_template'].label = 'HIT Template'
         self.fields['name'].label = 'Batch Name'
 
@@ -112,9 +116,11 @@ class HitBatchAdmin(admin.ModelAdmin):
     def get_fields(self, request, obj):
         # Display different fields when adding (when obj is None) vs changing a HitBatch
         if not obj:
-            return ('active', 'hit_template', 'name', 'assignments_per_hit', 'csv_file')
+            return ('hit_template', 'name', 'active', 'allotted_assignment_time',
+                    'assignments_per_hit', 'csv_file')
         else:
-            return ('active', 'hit_template', 'name', 'assignments_per_hit', 'filename')
+            return ('hit_template', 'name', 'active', 'allotted_assignment_time',
+                    'assignments_per_hit', 'filename')
 
     def get_readonly_fields(self, request, obj):
         if not obj:
