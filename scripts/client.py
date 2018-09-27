@@ -30,16 +30,18 @@ class TurkleClient(object):
         self.args = args
 
     @exception_handler
-    def add_user(self):
+    def add_user(self, user=None, password=None):
+        user = user if user else self.args.username
+        password = password if password else self.args.password
         with requests.Session() as session:
             if not self.login(session):
                 return False
             url = self.format_url(self.ADD_USER_URL)
             session.get(url)
             payload = {
-                'username': self.args.username,
-                'password1': self.args.password,
-                'password2': self.args.password,
+                'username': user,
+                'password1': password,
+                'password2': password,
                 'csrfmiddlewaretoken': session.cookies['csrftoken']
             }
             resp = session.post(url, data=payload)

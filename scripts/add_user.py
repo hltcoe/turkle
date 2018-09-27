@@ -3,7 +3,7 @@ from client import TurkleClient
 import sys
 
 
-parser = argparse.ArgumentParser()
+parser = argparse.ArgumentParser(description="Add a user to Turkle")
 parser.add_argument("-u", help="admin username", required=True)
 parser.add_argument("-p", help="admin password")
 parser.add_argument("--server", help="hostname:port", default="localhost:8000")
