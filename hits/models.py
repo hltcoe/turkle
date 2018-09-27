@@ -1,3 +1,4 @@
+import datetime
 import os.path
 import re
 import sys
@@ -6,6 +7,7 @@ from bs4 import BeautifulSoup
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.utils import timezone
 from jsonfield import JSONField
 import unicodecsv
 
@@ -67,10 +69,14 @@ class HitAssignment(models.Model):
     assigned_to = models.ForeignKey(User, null=True)
     completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField(null=True)
     hit = models.ForeignKey(Hit)
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
+        self.expires_at = timezone.now() + \
+            datetime.timedelta(hours=self.hit.hit_batch.allotted_assignment_time)
+
         if 'csrfmiddlewaretoken' in self.answers:
             del self.answers['csrfmiddlewaretoken']
         super(HitAssignment, self).save(*args, **kwargs)
@@ -88,6 +94,7 @@ class HitBatch(models.Model):
         verbose_name_plural = "HIT batches"
 
     active = models.BooleanField(default=True)
+    allotted_assignment_time = models.IntegerField(default=24)
     assignments_per_hit = models.IntegerField(default=1)
     date_published = models.DateTimeField(auto_now_add=True)
     filename = models.CharField(max_length=1024)
@@ -157,6 +164,13 @@ class HitBatch(models.Model):
             num_created_hits += 1
 
         return num_created_hits
+
+    def expire_assignments(self):
+        HitAssignment.objects.\
+            filter(completed=False).\
+            filter(hit__hit_batch_id=self.id).\
+            filter(expires_at__lt=timezone.now()).\
+            delete()
 
     def finished_hits(self):
         """
