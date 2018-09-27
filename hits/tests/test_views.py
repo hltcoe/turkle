@@ -328,6 +328,46 @@ class TestHitAssignment(django.test.TestCase):
         self.assertEqual(expect, actual)
 
 
+class TestHitAssignmentIFrame(django.test.TestCase):
+    def setUp(self):
+        self.hit_template = HitTemplate(login_required=False)
+        self.hit_template.save()
+        hit_batch = HitBatch(hit_template=self.hit_template)
+        hit_batch.save()
+        self.hit = Hit(input_csv_fields={}, hit_batch=hit_batch)
+        self.hit.save()
+        self.hit_assignment = HitAssignment(hit=self.hit)
+        self.hit_assignment.save()
+
+    def test_template_with_submit_button(self):
+        self.hit_template.form = '<input id="my_submit_button" type="submit" value="MySubmit" />'
+        self.hit_template.save()
+        self.hit_template.refresh_from_db()
+        self.assertTrue(self.hit_template.form_has_submit_button)
+
+        client = django.test.Client()
+        response = client.get(reverse('hit_assignment_iframe',
+                                      kwargs={'hit_id': self.hit.id,
+                                              'hit_assignment_id': self.hit_assignment.id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(b'my_submit_button' in response.content)
+        self.assertFalse(b'submitButton' in response.content)
+
+    def test_template_without_submit_button(self):
+        self.hit_template.form = '<input id="foo" type="text" value="MyText" />'
+        self.hit_template.save()
+        self.hit_template.refresh_from_db()
+        self.assertFalse(self.hit_template.form_has_submit_button)
+
+        client = django.test.Client()
+        response = client.get(reverse('hit_assignment_iframe',
+                                      kwargs={'hit_id': self.hit.id,
+                                              'hit_assignment_id': self.hit_assignment.id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(b'my_submit_button' in response.content)
+        self.assertTrue(b'submitButton' in response.content)
+
+
 class TestPreview(django.test.TestCase):
     def setUp(self):
         hit_template = HitTemplate(form='<p>${foo}: ${bar}</p>', login_required=False, name='foo')
