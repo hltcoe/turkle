@@ -2,6 +2,7 @@ import os.path
 import re
 import sys
 
+from bs4 import BeautifulSoup
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -287,6 +288,7 @@ class HitTemplate(models.Model):
     date_modified = models.DateTimeField(auto_now=True)
     filename = models.CharField(max_length=1024, blank=True)
     form = models.TextField()
+    form_has_submit_button = models.BooleanField(default=False)
     login_required = models.BooleanField(default=True)
     name = models.CharField(max_length=1024)
 
@@ -328,6 +330,9 @@ class HitTemplate(models.Model):
                                   'the number of Assignments per HIT must be 1')
 
     def save(self, *args, **kwargs):
+        soup = BeautifulSoup(self.form, 'html.parser')
+        self.form_has_submit_button = bool(soup.select('input[type=submit]'))
+
         # Extract fieldnames from form text, save fieldnames as keys of JSON dict
         unique_fieldnames = set(re.findall(r'\${(\w+)}', self.form))
         self.fieldnames = dict((fn, True) for fn in unique_fieldnames)
