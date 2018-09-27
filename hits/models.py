@@ -285,7 +285,7 @@ class HitTemplate(models.Model):
     active = models.BooleanField(default=True)
     assignments_per_hit = models.IntegerField(default=1)
     date_modified = models.DateTimeField(auto_now=True)
-    filename = models.CharField(max_length=1024)
+    filename = models.CharField(max_length=1024, blank=True)
     form = models.TextField()
     login_required = models.BooleanField(default=True)
     name = models.CharField(max_length=1024)
