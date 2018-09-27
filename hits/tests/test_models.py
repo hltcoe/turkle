@@ -400,6 +400,20 @@ class TestHitTemplate(django.test.TestCase):
         HitBatch(hit_template=hit_template_unprotected).save()
         self.assertEqual(len(hit_template_unprotected.batches_available_for(anonymous_user)), 1)
 
+    def test_form_with_submit_button(self):
+        hit_template = HitTemplate(
+            form='<p><input id="my_submit_button" type="submit" value="MySubmit" /></p>'
+        )
+        hit_template.save()
+        self.assertTrue(hit_template.form_has_submit_button)
+
+    def test_form_without_submit_button(self):
+        hit_template = HitTemplate(
+            form='<p>Quick brown fox</p>'
+        )
+        hit_template.save()
+        self.assertFalse(hit_template.form_has_submit_button)
+
     def test_login_required_validation_1(self):
         # No ValidationError thrown
         HitTemplate(
