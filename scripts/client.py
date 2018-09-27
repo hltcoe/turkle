@@ -1,3 +1,4 @@
+from bs4 import BeautifulSoup
 import functools
 import getpass
 import os
@@ -21,6 +22,7 @@ class TurkleClient(object):
     ADD_USER_URL = "/admin/auth/user/add/"
     ADD_TEMPLATE_URL = "/admin/hits/hittemplate/add/"
     ADD_BATCH_URL = "/admin/hits/hitbatch/add/"
+    LIST_BATCH_URL = "/admin/hits/hitbatch/"
 
     def __init__(self, args):
         if not args.p:
@@ -44,6 +46,26 @@ class TurkleClient(object):
             if "username already exists" in resp.text:
                 print("Error: username already exists")
                 return False
+        return True
+
+    @exception_handler
+    def download(self):
+        with requests.Session() as session:
+            if not self.login(session):
+                return False
+            url = self.format_url(self.LIST_BATCH_URL)
+            resp = session.get(url)
+            soup = BeautifulSoup(resp.text, features='html.parser')
+            for row in soup.find('table', id='result_list').tbody.findAll('tr'):
+                finished_col = row.find('td', {'class': 'field-total_finished_hits'}).string
+                download_col = row.findAll('td')[-1].a
+                if finished_col != '0':
+                    resp = session.get(self.format_url(download_col['href']))
+                    info = resp.headers['content-disposition']
+                    filename = re.findall(r'filename="(.+)"', info)[0]
+                    filename = os.path.join(self.args.dir, filename)
+                    with open(filename, 'wb') as fh:
+                        fh.write(resp.content)
         return True
 
     @exception_handler
