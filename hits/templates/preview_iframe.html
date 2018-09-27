@@ -11,10 +11,12 @@
       {% csrf_token %}
       {% autoescape off %}{{ hit.generate_form }}{% endautoescape %}
 
+      {% if not hit.hit_batch.hit_template.form_has_submit_button %}
       <p class="text-center">
         <input type="submit" id="submitButton" class="btn btn-primary" disabled
                value="You must ACCEPT the HIT before you can submit the results." />
       </p>
+      {% endif %}
     </form>
   </body>
 </html>
