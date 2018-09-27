@@ -11,6 +11,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -31,38 +32,42 @@ def accept_hit(request, batch_id, hit_id):
         return redirect(index)
 
     try:
-        batch.available_hits_for(request.user).get(id=hit_id)
+        with transaction.atomic():
+            available_hits = HitBatch.objects.select_for_update().get(id=batch.id).\
+                available_hits_for(request.user)
+            available_hits.get(id=hit_id)  # Can raise ObjectDoesNotExist
+            ha = HitAssignment()
+            if request.user.is_authenticated:
+                ha.assigned_to = request.user
+            else:
+                ha.assigned_to = None
+            ha.hit = hit
+            ha.save()
     except ObjectDoesNotExist:
         messages.error(request, u'The HIT with ID {} is no longer available'.format(hit_id))
         return redirect(index)
 
-    # TODO: Handle possible race condition for two users claiming assignment
-    ha = HitAssignment()
-    if request.user.is_authenticated:
-        ha.assigned_to = request.user
-    else:
-        ha.assigned_to = None
-    ha.hit = hit
-    ha.save()
     return redirect(hit_assignment, hit.id, ha.id)
 
 
 def accept_next_hit(request, batch_id):
     try:
-        batch = HitBatch.objects.get(id=batch_id)
+        with transaction.atomic():
+            batch = HitBatch.objects.select_for_update().get(id=batch_id)
+            hit = batch.next_available_hit_for(request.user)
+            if hit:
+                ha = HitAssignment()
+                if request.user.is_authenticated:
+                    ha.assigned_to = request.user
+                else:
+                    ha.assigned_to = None
+                ha.hit = hit
+                ha.save()
     except ObjectDoesNotExist:
         messages.error(request, u'Cannot find HIT Batch with ID {}'.format(batch_id))
         return redirect(index)
-    hit = batch.next_available_hit_for(request.user)
-    # TODO: Handle possible race condition for two users claiming assignment
+
     if hit:
-        ha = HitAssignment()
-        if request.user.is_authenticated:
-            ha.assigned_to = request.user
-        else:
-            ha.assigned_to = None
-        ha.hit = hit
-        ha.save()
         return redirect(hit_assignment, hit.id, ha.id)
     else:
         messages.error(request, u'No more HITs available from Batch {}'.format(batch_id))
