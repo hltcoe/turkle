@@ -9,7 +9,7 @@ except ImportError:
 
 from django.contrib import admin
 from django.db import models
-from django.forms import FileField, ModelForm, TextInput, ValidationError
+from django.forms import FileField, HiddenInput, ModelForm, TextInput, ValidationError
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 import unicodecsv
@@ -135,7 +135,24 @@ class HitBatchAdmin(admin.ModelAdmin):
 
 
 class HitTemplateForm(ModelForm):
-    template_file = FileField(label='HTML template file', required=False)
+    template_file_upload = FileField(label='HTML template file', required=False)
+
+    def __init__(self, *args, **kwargs):
+        super(HitTemplateForm, self).__init__(*args, **kwargs)
+
+        # This hidden form field is updated by JavaScript code in the
+        # customized admin template file:
+        #   hits/templates/admin/hits/hittemplate/change_form.html
+        self.fields['filename'].widget = HiddenInput()
+
+        self.fields['assignments_per_hit'].label = 'Assignments per HIT'
+        self.fields['assignments_per_hit'].help_text = 'This parameter sets the default ' + \
+            'number of Assignments per HIT for new Batches of HITs.  Changing this ' + \
+            'parameter DOES NOT change the number of Assignments per HIT for already ' + \
+            'published batches of HITS.'
+        self.fields['form'].label = 'HTML template text'
+        self.fields['form'].help_text = 'You can edit the template text directly, ' + \
+            'or upload a template file using the button below'
 
 
 class HitTemplateAdmin(admin.ModelAdmin):
@@ -156,13 +173,14 @@ class HitTemplateAdmin(admin.ModelAdmin):
     def get_fields(self, request, obj):
         if not obj:
             # Adding
-            return ['active', 'assignments_per_hit', 'filename', 'form',
-                    'login_required', 'name', 'template_file']
+            return ['name', 'assignments_per_hit', 'active', 'login_required',
+                    'form', 'template_file_upload',
+                    'filename']
         else:
             # Changing
-            return ['active', 'assignments_per_hit', 'filename', 'form',
-                    'login_required', 'name', 'extracted_template_variables',
-                    'template_file']
+            return ['name', 'assignments_per_hit', 'active', 'login_required',
+                    'form', 'template_file_upload', 'extracted_template_variables',
+                    'filename']
 
     def publish_hits(self, instance):
         publish_hits_url = '%s?hit_template=%d&assignments_per_hit=%d' % (

@@ -5,8 +5,11 @@
 {{ block.super }}
 <style>
 /** Hide file form field  */
-#id_template_file {
+#id_template_file_upload {
   display: none;
+}
+#template_filename_notice {
+  margin-left: 2em;
 }
 </style>
 {% endblock %}
@@ -19,7 +22,7 @@
 <script type="text/javascript" src="{% static 'hits/jQuery-File-Upload-9.22.0/js/jquery.fileupload.js' %}"></script>
 <script type="text/javascript">
 $(function () {
-  $('#id_template_file').fileupload({
+  $('#id_template_file_upload').fileupload({
     add: function (e, data) {
       var reader = new FileReader();
       reader.onload = (function(theFile) {
@@ -27,6 +30,10 @@ $(function () {
         $('#id_form').val(fileContents);
       });
       reader.readAsText(data.files[0]);
+      $('#template_filename_notice').text(data.files[0].name);
+
+      // Update hidden form field
+      $('#id_filename').val(data.files[0].name);
     },
   });
 
@@ -55,9 +62,12 @@ $(function () {
   // Adapted from:
   //   https://stackoverflow.com/questions/16001586/change-the-no-file-chosen
   var betterLookingButtonSpan =
-    $('<span id="template_file_span">').append(
-      $('<label for="id_template_file" class="button" style="text-align: center;">Choose File</label>'));
-  $('#id_template_file').after(betterLookingButtonSpan);
+    $('<span>')
+      .append(
+        $('<span><label for="id_template_file_upload" class="button" style="text-align: center;">Choose File</label></span>'))
+      .append(
+        $('<span><label id="template_filename_notice"></label></span>'));
+  $('#id_template_file_upload').after(betterLookingButtonSpan);
 });
 </script>
 {% endblock %}
