@@ -29,7 +29,7 @@ Turkle works with either python 2 or python 3.
 
   Using a virtual environment has the advantage of keeping the dependencies
   for this project separate from other projects. The actual syntax depends
-  on what virtual environment package you are using, but it should work like this: 
+  on what virtual environment package you are using, but it should work like this:
 
   ```bash
   virtualenv venv
@@ -92,7 +92,7 @@ username2,password2
 TODO: documentation on using the admin UI for templates and CSVs.
 
 ### Using the scripts
-With a template html file and a batch CSV file, use the 
+With a template html file and a batch CSV file, use the
 `publish_hits.py` script to add them to Turkle.
 If you have already added the template, you must use the admin UI
 to add additional batches of HITs.
@@ -174,6 +174,16 @@ and start a container with an easy name, and mapping container port 8080 somewhe
 ```bash
 docker run -d --name container_name -p 18080:8080 hltcoe/turkle
 ```
+
+The Docker container has an `admin` user with a default password of `admin`.
+
+You can change the default admin password by:
+
+- connecting to the exposed container port with a web browser (e.g. connecting to http://localhost:18080/)
+- logging in with username `admin` and password `admin`
+- clicking on the "Manage Users" link on the top left of the screen
+- clicking on the "CHANGE PASSWORD" link at the top right of the screen
+- filling out and submitting the Change Password form
 
 Your annotator can now browse to that port on the Docker host.  To give them something to do, upload an Amazon Turk HIT template and data:
 
