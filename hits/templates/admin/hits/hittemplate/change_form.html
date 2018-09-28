@@ -17,24 +17,29 @@
 {% block admin_change_form_document_ready %}
 {{ block.super }}
 <script type="text/javascript" src="{% static 'hits/jquery-3.3.1.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'hits/jQuery-File-Upload-9.22.0/js/vendor/jquery.ui.widget.js' %}"></script>
-<script type="text/javascript" src="{% static 'hits/jQuery-File-Upload-9.22.0/js/jquery.iframe-transport.js' %}"></script>
-<script type="text/javascript" src="{% static 'hits/jQuery-File-Upload-9.22.0/js/jquery.fileupload.js' %}"></script>
 <script type="text/javascript">
 $(function () {
-  $('#id_template_file_upload').fileupload({
-    add: function (e, data) {
-      var reader = new FileReader();
-      reader.onload = (function(theFile) {
-        var fileContents = theFile.target.result;
-        $('#id_form').val(fileContents);
-      });
-      reader.readAsText(data.files[0]);
-      $('#template_filename_notice').text(data.files[0].name);
+  document.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+  });
 
-      // Update hidden form field
-      $('#id_filename').val(data.files[0].name);
-    },
+  document.addEventListener('dragover', (e) => {
+    e.preventDefault();
+  });
+
+  document.addEventListener('drop', (e) => {
+    e.preventDefault();
+
+    var reader = new FileReader();
+    reader.onload = (function(theFile) {
+      var fileContents = theFile.target.result;
+      $('#id_form').val(fileContents);
+    });
+    reader.readAsText(e.dataTransfer.files[0]);
+    $('#template_filename_notice').text(e.dataTransfer.files[0].name);
+
+    // Update hidden form field
+    $('#id_filename').val(e.dataTransfer.files[0].name);
   });
 
   // The default appearance for a file form field (at least on Safari)
