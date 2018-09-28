@@ -78,7 +78,7 @@ python manage.py runserver
 ### Using the scripts
 The `add_user.py` script adds a single user. Run it with the `-h` option for details.
 
-The `import users.py` script reads a CSV file to add users to Turkle.
+The `import_users.py` script reads a CSV file to add users to Turkle.
 The file must be formatted like:
 ```
 username1,password1
