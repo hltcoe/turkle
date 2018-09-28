@@ -165,7 +165,6 @@ class TestHitBatchAdmin(django.test.TestCase):
         )
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(b'no file selected' not in response.content)
 
     def test_batch_change_update(self):
         self.test_batch_add()
