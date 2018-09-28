@@ -33,8 +33,7 @@ def accept_hit(request, batch_id, hit_id):
 
     try:
         with transaction.atomic():
-            available_hits = HitBatch.objects.select_for_update().get(id=batch.id).\
-                available_hits_for(request.user)
+            available_hits = batch.available_hits_for(request.user).select_for_update()
             available_hits.get(id=hit_id)  # Can raise ObjectDoesNotExist
             ha = HitAssignment()
             if request.user.is_authenticated:
@@ -53,8 +52,8 @@ def accept_hit(request, batch_id, hit_id):
 def accept_next_hit(request, batch_id):
     try:
         with transaction.atomic():
-            batch = HitBatch.objects.select_for_update().get(id=batch_id)
-            hit = batch.next_available_hit_for(request.user)
+            batch = HitBatch.objects.get(id=batch_id)
+            hit = batch.available_hits_for(request.user).select_for_update().first()
             if hit:
                 ha = HitAssignment()
                 if request.user.is_authenticated:
