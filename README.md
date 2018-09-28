@@ -140,8 +140,8 @@ You can change the default admin password by:
 
 - connecting to the exposed container port with a web browser (e.g. connecting to http://localhost:18080/)
 - logging in with username `admin` and password `admin`
-- clicking on the "Manage Users" link on the top right of the screen
-- clicking on the "CHANGE PASSWORD" link at the top left of the screen
+- clicking on the "Manage Users" link on the top left of the screen
+- clicking on the "CHANGE PASSWORD" link at the top right of the screen
 - filling out and submitting the Change Password form
 
 Your annotator can now browse to that port on the Docker host.  To give them something to do, upload an Amazon Turk HIT template and data:
