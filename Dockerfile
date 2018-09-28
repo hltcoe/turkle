@@ -20,6 +20,8 @@ RUN python manage.py migrate
 
 RUN scripts/create_turkle_admin.sh
 
+VOLUME /opt/turkle
+
 EXPOSE 8080
 
 CMD python manage.py runserver 0.0.0.0:8080
