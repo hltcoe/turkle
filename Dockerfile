@@ -18,6 +18,8 @@ RUN pip install --upgrade -r requirements.txt
 
 RUN python manage.py migrate
 
+RUN scripts/create_turkle_admin.sh
+
 EXPOSE 8080
 
 CMD python manage.py runserver 0.0.0.0:8080
