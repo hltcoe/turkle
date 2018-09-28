@@ -15,7 +15,7 @@ from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
-from hits.models import Hit, HitAssignment, HitBatch, HitTemplate
+from hits.models import Hit, HitAssignment, HitBatch, HitProject
 
 
 def accept_hit(request, batch_id, hit_id):
@@ -139,12 +139,12 @@ def hit_assignment_iframe(request, hit_id, hit_assignment_id):
 def index(request):
     # Create a row for each Batch that has HITs available for the current user
     batch_rows = []
-    for hit_template in HitTemplate.available_for(request.user):
-        for hit_batch in hit_template.batches_available_for(request.user):
+    for hit_project in HitProject.available_for(request.user):
+        for hit_batch in hit_project.batches_available_for(request.user):
             total_hits_available = hit_batch.total_available_hits_for(request.user)
             if total_hits_available > 0:
                 batch_rows.append({
-                    'template_name': hit_template.name,
+                    'project_name': hit_project.name,
                     'batch_name': hit_batch.name,
                     'batch_published': hit_batch.date_published,
                     'assignments_available': total_hits_available,

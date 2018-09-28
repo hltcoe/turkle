@@ -20,7 +20,7 @@ def exception_handler(function):
 class TurkleClient(object):
     LOGIN_URL = "/login/"
     ADD_USER_URL = "/admin/auth/user/add/"
-    ADD_TEMPLATE_URL = "/admin/hits/hittemplate/add/"
+    ADD_PROJECT_URL = "/admin/hits/hitproject/add/"
     ADD_BATCH_URL = "/admin/hits/hitbatch/add/"
     LIST_BATCH_URL = "/admin/hits/hitbatch/"
 
@@ -80,18 +80,18 @@ class TurkleClient(object):
         with requests.Session() as session:
             if not self.login(session):
                 return False
-            if not self.upload_template(session):
+            if not self.upload_project(session):
                 return False
             return self.upload_csv(session)
 
-    def upload_template(self, session):
-        url = self.format_url(self.ADD_TEMPLATE_URL)
+    def upload_project(self, session):
+        url = self.format_url(self.ADD_PROJECT_URL)
         session.get(url)
         payload = {
-            'name': self.args.template_name,
+            'name': self.args.project_name,
             'assignments_per_hit': self.args.num,
             'filename': self.args.template,
-            'form': self.args.form,
+            'html_template': self.args.form,
             'active': 1,
             'csrfmiddlewaretoken': session.cookies['csrftoken']
         }
@@ -99,19 +99,19 @@ class TurkleClient(object):
             payload['login_required'] = 1
         resp = session.post(url, data=payload)
         if resp.status_code != requests.codes.ok:
-            print("Error: uploading the template failed")
+            print("Error: uploading the project failed")
             return False
         return True
 
     def upload_csv(self, session):
         url = self.format_url(self.ADD_BATCH_URL)
         resp = session.get(url)
-        # grab a list of the template ids from the form
+        # grab a list of the project ids from the form
         regex = r'<option value="(.*)">'
         ids = re.findall(regex, resp.text)
         payload = {
-            # we just upload a template so we assume that its last in list
-            'hit_template': ids[-1],
+            # we just upload a project so we assume that its last in list
+            'hit_project': ids[-1],
             'name': self.args.batch_name,
             'assignments_per_hit': self.args.num,
             'active': 1,
@@ -141,8 +141,8 @@ class TurkleClient(object):
         return True
 
     def prepare_publish(self):
-        if not self.args.template_name:
-            self.args.template_name = self.extract_name(self.args.template)
+        if not self.args.project_name:
+            self.args.project_name = self.extract_name(self.args.template)
         if not self.args.batch_name:
             self.args.batch_name = self.extract_name(self.args.csv)
         self.args.form = self.read_file(self.args.template)
