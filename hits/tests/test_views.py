@@ -5,15 +5,15 @@ from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
 from django.urls import reverse
 
-from hits.models import Hit, HitAssignment, HitBatch, HitTemplate
+from hits.models import Hit, HitAssignment, HitBatch, HitProject
 from hits.views import hit_assignment
 
 
 class TestAcceptHit(django.test.TestCase):
     def setUp(self):
-        hit_template = HitTemplate(login_required=False)
-        hit_template.save()
-        self.hit_batch = HitBatch(hit_template=hit_template)
+        hit_project = HitProject(login_required=False)
+        hit_project.save()
+        self.hit_batch = HitBatch(hit_project=hit_project)
         self.hit_batch.save()
         self.hit = Hit(hit_batch=self.hit_batch)
         self.hit.save()
@@ -71,10 +71,11 @@ class TestAcceptHit(django.test.TestCase):
 
 class TestAcceptNextHit(django.test.TestCase):
     def setUp(self):
-        hit_template = HitTemplate(login_required=False, name='foo', form='<p>${foo}: ${bar}</p>')
-        hit_template.save()
+        hit_project = HitProject(login_required=False, name='foo',
+                                 html_template='<p>${foo}: ${bar}</p>')
+        hit_project.save()
 
-        self.hit_batch = HitBatch(hit_template=hit_template, name='foo', filename='foo.csv')
+        self.hit_batch = HitBatch(hit_project=hit_project, name='foo', filename='foo.csv')
         self.hit_batch.save()
 
         self.hit = Hit(
@@ -144,10 +145,10 @@ class TestAcceptNextHit(django.test.TestCase):
 
 class TestDownloadBatchCSV(django.test.TestCase):
     def setUp(self):
-        hit_template = HitTemplate(name='foo', form='<p>${foo}: ${bar}</p>')
-        hit_template.save()
+        hit_project = HitProject(name='foo', html_template='<p>${foo}: ${bar}</p>')
+        hit_project.save()
 
-        self.hit_batch = HitBatch(hit_template=hit_template, name='foo', filename='foo.csv')
+        self.hit_batch = HitBatch(hit_project=hit_project, name='foo', filename='foo.csv')
         self.hit_batch.save()
 
         hit = Hit(
@@ -211,13 +212,13 @@ class TestIndex(django.test.TestCase):
         self.assertTrue(b'ms.admin' in response.content)
 
     def test_index_protected_template(self):
-        hit_template_protected = HitTemplate(
+        hit_project_protected = HitProject(
             active=True,
             login_required=True,
             name='MY_TEMPLATE_NAME',
         )
-        hit_template_protected.save()
-        hit_batch = HitBatch(hit_template=hit_template_protected, name='MY_BATCH_NAME')
+        hit_project_protected.save()
+        hit_batch = HitBatch(hit_project=hit_project_protected, name='MY_BATCH_NAME')
         hit_batch.save()
         Hit(hit_batch=hit_batch).save()
 
@@ -238,13 +239,13 @@ class TestIndex(django.test.TestCase):
         self.assertTrue(b'MY_BATCH_NAME' in response.content)
 
     def test_index_unprotected_template(self):
-        hit_template_unprotected = HitTemplate(
+        hit_project_unprotected = HitProject(
             active=True,
             login_required=False,
             name='MY_TEMPLATE_NAME',
         )
-        hit_template_unprotected.save()
-        hit_batch = HitBatch(hit_template=hit_template_unprotected, name='MY_BATCH_NAME')
+        hit_project_unprotected.save()
+        hit_batch = HitBatch(hit_project=hit_project_unprotected, name='MY_BATCH_NAME')
         hit_batch.save()
         Hit(hit_batch=hit_batch).save()
 
@@ -268,9 +269,9 @@ class TestIndex(django.test.TestCase):
 class TestHitAssignment(django.test.TestCase):
 
     def setUp(self):
-        hit_template = HitTemplate(login_required=False, name='foo', form='<p></p>')
-        hit_template.save()
-        hit_batch = HitBatch(hit_template=hit_template)
+        hit_project = HitProject(login_required=False, name='foo', html_template='<p></p>')
+        hit_project.save()
+        hit_batch = HitBatch(hit_project=hit_project)
         hit_batch.save()
         self.hit = Hit(hit_batch=hit_batch, input_csv_fields='{}')
         self.hit.save()
@@ -330,9 +331,9 @@ class TestHitAssignment(django.test.TestCase):
 
 class TestHitAssignmentIFrame(django.test.TestCase):
     def setUp(self):
-        self.hit_template = HitTemplate(login_required=False)
-        self.hit_template.save()
-        hit_batch = HitBatch(hit_template=self.hit_template)
+        self.hit_project = HitProject(login_required=False)
+        self.hit_project.save()
+        hit_batch = HitBatch(hit_project=self.hit_project)
         hit_batch.save()
         self.hit = Hit(input_csv_fields={}, hit_batch=hit_batch)
         self.hit.save()
@@ -340,10 +341,11 @@ class TestHitAssignmentIFrame(django.test.TestCase):
         self.hit_assignment.save()
 
     def test_template_with_submit_button(self):
-        self.hit_template.form = '<input id="my_submit_button" type="submit" value="MySubmit" />'
-        self.hit_template.save()
-        self.hit_template.refresh_from_db()
-        self.assertTrue(self.hit_template.form_has_submit_button)
+        self.hit_project.html_template = \
+            '<input id="my_submit_button" type="submit" value="MySubmit" />'
+        self.hit_project.save()
+        self.hit_project.refresh_from_db()
+        self.assertTrue(self.hit_project.html_template_has_submit_button)
 
         client = django.test.Client()
         response = client.get(reverse('hit_assignment_iframe',
@@ -354,10 +356,10 @@ class TestHitAssignmentIFrame(django.test.TestCase):
         self.assertFalse(b'submitButton' in response.content)
 
     def test_template_without_submit_button(self):
-        self.hit_template.form = '<input id="foo" type="text" value="MyText" />'
-        self.hit_template.save()
-        self.hit_template.refresh_from_db()
-        self.assertFalse(self.hit_template.form_has_submit_button)
+        self.hit_project.form = '<input id="foo" type="text" value="MyText" />'
+        self.hit_project.save()
+        self.hit_project.refresh_from_db()
+        self.assertFalse(self.hit_project.html_template_has_submit_button)
 
         client = django.test.Client()
         response = client.get(reverse('hit_assignment_iframe',
@@ -370,9 +372,10 @@ class TestHitAssignmentIFrame(django.test.TestCase):
 
 class TestPreview(django.test.TestCase):
     def setUp(self):
-        hit_template = HitTemplate(form='<p>${foo}: ${bar}</p>', login_required=False, name='foo')
-        hit_template.save()
-        self.hit_batch = HitBatch(filename='foo.csv', hit_template=hit_template, name='foo')
+        hit_project = HitProject(html_template='<p>${foo}: ${bar}</p>',
+                                 login_required=False, name='foo')
+        hit_project.save()
+        self.hit_batch = HitBatch(filename='foo.csv', hit_project=hit_project, name='foo')
         self.hit_batch.save()
         self.hit = Hit(
             hit_batch=self.hit_batch,
@@ -430,10 +433,10 @@ class TestPreview(django.test.TestCase):
 
 class TestReturnHitAssignment(django.test.TestCase):
     def setUp(self):
-        hit_template = HitTemplate(name='foo', form='<p>${foo}: ${bar}</p>')
-        hit_template.save()
+        hit_project = HitProject(name='foo', html_template='<p>${foo}: ${bar}</p>')
+        hit_project.save()
 
-        hit_batch = HitBatch(hit_template=hit_template, name='foo', filename='foo.csv')
+        hit_batch = HitBatch(hit_project=hit_project, name='foo', filename='foo.csv')
         hit_batch.save()
 
         self.hit = Hit(hit_batch=hit_batch)

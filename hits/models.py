@@ -32,7 +32,7 @@ class Hit(models.Model):
         return 'HIT id:{}'.format(self.id)
 
     def generate_form(self):
-        result = self.hit_batch.hit_template.form
+        result = self.hit_batch.hit_project.html_template
         for field in self.input_csv_fields.keys():
             result = result.replace(
                 r'${' + field + r'}',
@@ -91,7 +91,7 @@ class HitBatch(models.Model):
     assignments_per_hit = models.IntegerField(default=1)
     date_published = models.DateTimeField(auto_now_add=True)
     filename = models.CharField(max_length=1024)
-    hit_template = models.ForeignKey('HitTemplate')
+    hit_project = models.ForeignKey('HitProject')
     name = models.CharField(max_length=1024)
 
     def available_hits_for(self, user):
@@ -106,7 +106,7 @@ class HitBatch(models.Model):
         Returns:
             QuerySet of Hit objects
         """
-        if not user.is_authenticated and self.hit_template.login_required:
+        if not user.is_authenticated and self.hit_project.login_required:
             return Hit.objects.none()
 
         hs = self.hit_set.filter(completed=False)
@@ -123,8 +123,8 @@ class HitBatch(models.Model):
         return hs
 
     def clean(self):
-        if not self.hit_template.login_required and self.assignments_per_hit != 1:
-            raise ValidationError('When login is not required to access the Template, ' +
+        if not self.hit_project.login_required and self.assignments_per_hit != 1:
+            raise ValidationError('When login is not required to access a Project, ' +
                                   'the number of Assignments per HIT must be 1')
 
     def csv_results_filename(self):
@@ -251,7 +251,7 @@ class HitBatch(models.Model):
 
     def _results_data(self, hits):
         """
-        All completed HITs must come from the same template so that they have the
+        All completed HITs must come from the same project so that they have the
         same field names.
 
         Args:
@@ -279,36 +279,36 @@ class HitBatch(models.Model):
         return 'HIT Batch: {}'.format(self.name)
 
 
-class HitTemplate(models.Model):
+class HitProject(models.Model):
     class Meta:
-        verbose_name = "HIT template"
+        verbose_name = "HIT project"
 
     active = models.BooleanField(default=True)
     assignments_per_hit = models.IntegerField(default=1)
     date_modified = models.DateTimeField(auto_now=True)
     filename = models.CharField(max_length=1024, blank=True)
-    form = models.TextField()
-    form_has_submit_button = models.BooleanField(default=False)
+    html_template = models.TextField()
+    html_template_has_submit_button = models.BooleanField(default=False)
     login_required = models.BooleanField(default=True)
     name = models.CharField(max_length=1024)
 
-    # Fieldnames are automatically extracted from form text
+    # Fieldnames are automatically extracted from html_template text
     fieldnames = JSONField(blank=True)
 
     @classmethod
     def available_for(cls, user):
-        """Retrieve the HitTemplates that the user has permission to access
+        """Retrieve the HitProjects that the user has permission to access
 
         Args:
             user (User):
 
         Returns:
-            QuerySet of HitTemplate objects this user can access
+            QuerySet of HitProject objects this user can access
         """
-        templates = cls.objects.filter(active=True)
+        projects = cls.objects.filter(active=True)
         if not user.is_authenticated:
-            templates = templates.filter(login_required=False)
-        return templates
+            projects = projects.filter(login_required=False)
+        return projects
 
     def batches_available_for(self, user):
         """Retrieve the HitBatches that the user has permission to access
@@ -321,26 +321,26 @@ class HitTemplate(models.Model):
         """
         batches = self.hitbatch_set.filter(active=True)
         if not user.is_authenticated:
-            batches = batches.filter(hit_template__login_required=False)
+            batches = batches.filter(hit_project__login_required=False)
         return batches
 
     def clean(self):
         if not self.login_required and self.assignments_per_hit != 1:
-            raise ValidationError('When login is not required to access the Template, ' +
+            raise ValidationError('When login is not required to access the Project, ' +
                                   'the number of Assignments per HIT must be 1')
 
     def save(self, *args, **kwargs):
-        soup = BeautifulSoup(self.form, 'html.parser')
-        self.form_has_submit_button = bool(soup.select('input[type=submit]'))
+        soup = BeautifulSoup(self.html_template, 'html.parser')
+        self.html_template_has_submit_button = bool(soup.select('input[type=submit]'))
 
-        # Extract fieldnames from form text, save fieldnames as keys of JSON dict
-        unique_fieldnames = set(re.findall(r'\${(\w+)}', self.form))
+        # Extract fieldnames from html_template text, save fieldnames as keys of JSON dict
+        unique_fieldnames = set(re.findall(r'\${(\w+)}', self.html_template))
         self.fieldnames = dict((fn, True) for fn in unique_fieldnames)
-        super(HitTemplate, self).save(*args, **kwargs)
+        super(HitProject, self).save(*args, **kwargs)
 
     def to_csv(self, csv_fh):
         """
-        Writes CSV output to file handle for every Hit associated with template
+        Writes CSV output to file handle for every Hit associated with project
 
         Args:
             csv_fh (file-like object): File handle for CSV output
@@ -377,7 +377,7 @@ class HitTemplate(models.Model):
         )
 
     def __unicode__(self):
-        return 'HIT Template: {}'.format(self.name)
+        return 'HIT Project: {}'.format(self.name)
 
     def __str__(self):
-        return 'HIT Template: {}'.format(self.name)
+        return 'HIT Project: {}'.format(self.name)

@@ -14,7 +14,7 @@ from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 import unicodecsv
 
-from hits.models import Hit, HitBatch, HitTemplate
+from hits.models import Hit, HitBatch, HitProject
 
 
 admin.site.site_header = 'Turkle administration'
@@ -26,7 +26,7 @@ class HitBatchForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(HitBatchForm, self).__init__(*args, **kwargs)
 
-        self.fields['hit_template'].label = 'HIT Template'
+        self.fields['hit_project'].label = 'HIT Project'
         self.fields['name'].label = 'Batch Name'
 
         # csv_file field not required if changing existing HitBatch
@@ -47,13 +47,13 @@ class HitBatchForm(ModelForm):
         """Verify format of CSV file
 
         Verify that:
-        - fieldnames in CSV file are identical to fieldnames in HIT template
+        - fieldnames in CSV file are identical to fieldnames in HIT project
         - number of fields in each row matches number of fields in CSV header
         """
         cleaned_data = super(HitBatchForm, self).clean()
 
         csv_file = cleaned_data.get("csv_file", False)
-        hit_template = cleaned_data.get("hit_template", False)
+        hit_project = cleaned_data.get("hit_project", False)
 
         if not csv_file:
             return
@@ -64,20 +64,20 @@ class HitBatchForm(ModelForm):
         header = next(rows)
 
         csv_fields = set(header)
-        template_fields = set(hit_template.fieldnames)
+        template_fields = set(hit_project.fieldnames)
         if csv_fields != template_fields:
             csv_but_not_template = csv_fields.difference(template_fields)
             if csv_but_not_template:
                 validation_errors.append(
                     ValidationError(
-                        'The CSV file contained fields that are not in the HIT template. '
+                        'The CSV file contained fields that are not in the HTML template. '
                         'These extra fields are: %s' %
                         ', '.join(csv_but_not_template)))
             template_but_not_csv = template_fields.difference(csv_fields)
             if template_but_not_csv:
                 validation_errors.append(
                     ValidationError(
-                        'The CSV file is missing fields that are in the HIT template. '
+                        'The CSV file is missing fields that are in the HTML template. '
                         'These missing fields are: %s' %
                         ', '.join(template_but_not_csv)))
 
@@ -112,9 +112,9 @@ class HitBatchAdmin(admin.ModelAdmin):
     def get_fields(self, request, obj):
         # Display different fields when adding (when obj is None) vs changing a HitBatch
         if not obj:
-            return ('active', 'hit_template', 'name', 'assignments_per_hit', 'csv_file')
+            return ('active', 'hit_project', 'name', 'assignments_per_hit', 'csv_file')
         else:
-            return ('active', 'hit_template', 'name', 'assignments_per_hit', 'filename')
+            return ('active', 'hit_project', 'name', 'assignments_per_hit', 'filename')
 
     def get_readonly_fields(self, request, obj):
         if not obj:
@@ -134,15 +134,15 @@ class HitBatchAdmin(admin.ModelAdmin):
             super(HitBatchAdmin, self).save_model(request, obj, form, change)
 
 
-class HitTemplateForm(ModelForm):
+class HitProjectForm(ModelForm):
     template_file_upload = FileField(label='HTML template file', required=False)
 
     def __init__(self, *args, **kwargs):
-        super(HitTemplateForm, self).__init__(*args, **kwargs)
+        super(HitProjectForm, self).__init__(*args, **kwargs)
 
         # This hidden form field is updated by JavaScript code in the
         # customized admin template file:
-        #   hits/templates/admin/hits/hittemplate/change_form.html
+        #   hits/templates/admin/hits/hitproject/change_form.html
         self.fields['filename'].widget = HiddenInput()
 
         self.fields['assignments_per_hit'].label = 'Assignments per HIT'
@@ -150,13 +150,13 @@ class HitTemplateForm(ModelForm):
             'number of Assignments per HIT for new Batches of HITs.  Changing this ' + \
             'parameter DOES NOT change the number of Assignments per HIT for already ' + \
             'published batches of HITS.'
-        self.fields['form'].label = 'HTML template text'
-        self.fields['form'].help_text = 'You can edit the template text directly, ' + \
+        self.fields['html_template'].label = 'HTML template text'
+        self.fields['html_template'].help_text = 'You can edit the template text directly, ' + \
             'or upload a template file using the button below'
 
 
-class HitTemplateAdmin(admin.ModelAdmin):
-    form = HitTemplateForm
+class HitProjectAdmin(admin.ModelAdmin):
+    form = HitProjectForm
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
@@ -174,16 +174,16 @@ class HitTemplateAdmin(admin.ModelAdmin):
         if not obj:
             # Adding
             return ['name', 'assignments_per_hit', 'active', 'login_required',
-                    'form', 'template_file_upload',
+                    'html_template', 'template_file_upload',
                     'filename']
         else:
             # Changing
             return ['name', 'assignments_per_hit', 'active', 'login_required',
-                    'form', 'template_file_upload', 'extracted_template_variables',
+                    'html_template', 'template_file_upload', 'extracted_template_variables',
                     'filename']
 
     def publish_hits(self, instance):
-        publish_hits_url = '%s?hit_template=%d&assignments_per_hit=%d' % (
+        publish_hits_url = '%s?hit_project=%d&assignments_per_hit=%d' % (
             reverse('admin:hits_hitbatch_add'),
             instance.id,
             instance.assignments_per_hit)
@@ -192,4 +192,4 @@ class HitTemplateAdmin(admin.ModelAdmin):
 
 admin.site.register(Hit)
 admin.site.register(HitBatch, HitBatchAdmin)
-admin.site.register(HitTemplate, HitTemplateAdmin)
+admin.site.register(HitProject, HitProjectAdmin)
