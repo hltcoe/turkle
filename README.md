@@ -113,6 +113,47 @@ Use your web browser to visit [http://localhost:8000](http://localhost:8000)
 Log in if you've been given user credentials.
 Find your assigned set of HITs and click the "Accept next HIT" button.
 
+# Production deployment
+
+Turkle was designed to be run in a local environment with a small number of annotators.
+In a high load environment, Turkle can be run with a production quality WSGI HTTP server
+rather than with Django's development server. A possible configuration would involve
+a web server like Apache or nginx as a proxy server with a Python server like Gunicorn behind it.
+A scalable database like MySQL or Postgres would also have to be configured in the settings.py file.
+
+Gunicorn can be installed with pip:
+```bash
+pip install gunicorn
+```
+
+and run from Turkle's base directory like this:
+
+```bash
+gunicorn --bind 127.0.0.1:5000 turkle.wsgi
+```
+
+Common Gunicorn runtime options are available in its [Running Gunicorn documentation](http://docs.gunicorn.org/en/stable/run.html).
+
+This serves Turkle's web pages on port 5000 but not the static files like CSS and JavaScript.
+
+To use Apache as the proxy server, enable proxying: `a2enmod proxy_http`.
+Then edit the configuration of your site to include the proxy information:
+
+```
+ProxyRequests Off
+ProxyPass /static/ !
+ProxyPass / http://localhost:5000/
+ProxyPassReverse / http://localhost:5000/
+```
+
+Apache will look in its default location for the static directory so you'll need to create
+a symbolic link (more convenient) or copy the files (safer).
+After starting Gunicorn and restarting Apache with the new configuration, you should
+be able to view the site at http://localhost/ or whatever the appropriate host name.
+
+Instructions for using Gunicorn with nginx are found on its [deploy page](http://docs.gunicorn.org/en/latest/deploy.html).
+You will still need to configure nginx to serve the static files as we did with Apache. 
+
 # Docker usage
 
 Instead of installing Turkle and dependencies directly, you can run Turkle as a Docker container, using scripts to manage your HIT templates and data.
