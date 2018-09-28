@@ -115,7 +115,8 @@ Find your assigned set of HITs and click the "Accept next HIT" button.
 
 # Docker usage
 
-Instead of installing Turkle and dependencies directly, you can run Turkle as a Docker container, using scripts to manage your HIT templates and data.  Either build a Turkle image:
+Instead of installing Turkle and dependencies directly, you can run Turkle as a Docker container, using scripts to manage your HIT templates and data.
+Either build a Turkle image:
 
 ```bash
 docker build --force-rm -t hltcoe/turkle .
@@ -136,23 +137,11 @@ docker run -d --name container_name -p 18080:8080 hltcoe/turkle
 Your annotator can now browse to that port on the Docker host.  To give them something to do, upload an Amazon Turk HIT template and data:
 
 ```bash
-scripts/upload_hit.sh container_name data.csv template.html
+python scripts/publish_hits.py -u [superuser] --server localhost:18080 template.html data.csv
 ```
 
 At any point, you can download the current state of annotations:
 
 ```bash
-scripts/download_annotations.sh container_name annotation_state.csv
-```
-
-You can upload new data to be annotated, without changing the template:
-
-```bash
-scripts/upload_hit.sh container_name new_data.csv
-```
-
-Or replace both:
-
-```bash
-scripts/upload_hit.sh container_name new_data.csv new_template.html
+python scripts/download_results.py -u [superuser] --server localhost:18080
 ```
