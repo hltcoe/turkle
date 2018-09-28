@@ -70,15 +70,42 @@ python manage.py runserver
 
 ## Creating user accounts ##
 
-TODO
+### Using the admin UI
+ * Login with a super user account
+ * Select Manage Users from the navigation header
+ * Click the `Add User` button, fill out the form and submit
+
+### Using the scripts
+The `add_user.py` script adds a single user. Run it with the `-h` option for details.
+
+The `import_users.py` script reads a CSV file to add users to Turkle.
+The file must be formatted like:
+```
+username1,password1
+username2,password2
+```
 
 ## Loading a batch of HITs ##
 
+### Using the admin UI
+
 TODO: documentation on using the admin UI for templates and CSVs.
+
+### Using the scripts
+With a template html file and a batch CSV file, use the 
+`publish_hits.py` script to add them to Turkle.
+If you have already added the template, you must use the admin UI
+to add additional batches of HITs.
 
 ## Downloading a batch of HITs ##
 
+### Using the admin UI
+
 TODO
+
+### Using the scripts
+The `download_results.py` script downloads all HITs that have been completed
+into a directory that the user selects.
 
 # Worker instructions
 
@@ -88,7 +115,8 @@ Find your assigned set of HITs and click the "Accept next HIT" button.
 
 # Docker usage
 
-Instead of installing Turkle and dependencies directly, you can run Turkle as a Docker container, using scripts to manage your HIT templates and data.  Either build a Turkle image:
+Instead of installing Turkle and dependencies directly, you can run Turkle as a Docker container, using scripts to manage your HIT templates and data.
+Either build a Turkle image:
 
 ```bash
 docker build --force-rm -t hltcoe/turkle .
@@ -109,23 +137,11 @@ docker run -d --name container_name -p 18080:8080 hltcoe/turkle
 Your annotator can now browse to that port on the Docker host.  To give them something to do, upload an Amazon Turk HIT template and data:
 
 ```bash
-scripts/upload_hit.sh container_name data.csv template.html
+python scripts/publish_hits.py -u [superuser] --server localhost:18080 template.html data.csv
 ```
 
 At any point, you can download the current state of annotations:
 
 ```bash
-scripts/download_annotations.sh container_name annotation_state.csv
-```
-
-You can upload new data to be annotated, without changing the template:
-
-```bash
-scripts/upload_hit.sh container_name new_data.csv
-```
-
-Or replace both:
-
-```bash
-scripts/upload_hit.sh container_name new_data.csv new_template.html
+python scripts/download_results.py -u [superuser] --server localhost:18080
 ```
