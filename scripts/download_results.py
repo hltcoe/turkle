@@ -5,7 +5,8 @@ import sys
 
 parser = argparse.ArgumentParser(
     description="Downloads all the batches from Turkle",
-    epilog="A batch must have at least one completed HIT"
+    epilog="A batch must have at least one completed HIT",
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter
 )
 parser.add_argument("-u", help="admin username", required=True)
 parser.add_argument("-p", help="admin password")

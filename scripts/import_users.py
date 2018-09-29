@@ -6,7 +6,8 @@ import sys
 
 parser = argparse.ArgumentParser(
     description="Import a list of users from a CSV",
-    epilog="The CSV should have no header with format: username,password"
+    epilog="The CSV should have no header with format: username,password",
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter
 )
 parser.add_argument("-u", help="admin username", required=True)
 parser.add_argument("-p", help="admin password")
