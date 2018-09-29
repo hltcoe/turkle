@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import django.test
-from django.core.handlers.wsgi import WSGIRequest
+#from django.core.handlers.wsgi import WSGIRequest
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
 from django.urls import reverse
@@ -8,6 +8,7 @@ from django.urls import reverse
 from hits.models import Hit, HitAssignment, HitBatch, HitProject
 from hits.views import hit_assignment
 from django.test import RequestFactory, TestCase
+
 
 class TestAcceptHit(TestCase):
     def setUp(self):
@@ -539,6 +540,7 @@ class TestReturnHitAssignment(TestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
                          u'The HIT you are trying to return belongs to another user')
+
 
 """
 # This was grabbed from
