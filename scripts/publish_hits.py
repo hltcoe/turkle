@@ -5,7 +5,8 @@ import sys
 
 parser = argparse.ArgumentParser(
     description="Publish a batch of HITs to Turkle",
-    epilog="Requires a template and the batch CSV"
+    epilog="Requires a template and the batch CSV",
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter
 )
 parser.add_argument("-u", help="admin username", required=True)
 parser.add_argument("-p", help="admin password")
