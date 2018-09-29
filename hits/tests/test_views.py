@@ -1,15 +1,16 @@
 # -*- coding: utf-8 -*-
 import django.test
-from django.core.handlers.wsgi import WSGIRequest
+# from django.core.handlers.wsgi import WSGIRequest
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
 from django.urls import reverse
 
 from hits.models import Hit, HitAssignment, HitBatch, HitProject
 from hits.views import hit_assignment
+from django.test import RequestFactory, TestCase
 
 
-class TestAcceptHit(django.test.TestCase):
+class TestAcceptHit(TestCase):
     def setUp(self):
         hit_project = HitProject(login_required=False)
         hit_project.save()
@@ -69,7 +70,7 @@ class TestAcceptHit(django.test.TestCase):
                          u'The HIT with ID {} is no longer available'.format(self.hit.id))
 
 
-class TestAcceptNextHit(django.test.TestCase):
+class TestAcceptNextHit(TestCase):
     def setUp(self):
         hit_project = HitProject(login_required=False, name='foo',
                                  html_template='<p>${foo}: ${bar}</p>')
@@ -143,7 +144,7 @@ class TestAcceptNextHit(django.test.TestCase):
                          u'No more HITs available from Batch {}'.format(self.hit_batch.id))
 
 
-class TestDownloadBatchCSV(django.test.TestCase):
+class TestDownloadBatchCSV(TestCase):
     def setUp(self):
         hit_project = HitProject(name='foo', html_template='<p>${foo}: ${bar}</p>')
         hit_project.save()
@@ -266,7 +267,7 @@ class TestIndex(django.test.TestCase):
         self.assertTrue(b'MY_BATCH_NAME' in response.content)
 
 
-class TestHitAssignment(django.test.TestCase):
+class TestHitAssignment(TestCase):
 
     def setUp(self):
         hit_project = HitProject(login_required=False, name='foo', html_template='<p></p>')
@@ -329,7 +330,7 @@ class TestHitAssignment(django.test.TestCase):
         self.assertEqual(expect, actual)
 
 
-class TestHitAssignmentIFrame(django.test.TestCase):
+class TestHitAssignmentIFrame(TestCase):
     def setUp(self):
         self.hit_project = HitProject(login_required=False)
         self.hit_project.save()
@@ -370,7 +371,7 @@ class TestHitAssignmentIFrame(django.test.TestCase):
         self.assertTrue(b'submitButton' in response.content)
 
 
-class TestPreview(django.test.TestCase):
+class TestPreview(TestCase):
     def setUp(self):
         hit_project = HitProject(html_template='<p>${foo}: ${bar}</p>',
                                  login_required=False, name='foo')
@@ -431,7 +432,7 @@ class TestPreview(django.test.TestCase):
         self.assertTrue(u'No more HITs are available for Batch' in str(messages[0]))
 
 
-class TestReturnHitAssignment(django.test.TestCase):
+class TestReturnHitAssignment(TestCase):
     def setUp(self):
         hit_project = HitProject(name='foo', html_template='<p>${foo}: ${bar}</p>')
         hit_project.save()
@@ -541,10 +542,10 @@ class TestReturnHitAssignment(django.test.TestCase):
                          u'The HIT you are trying to return belongs to another user')
 
 
+"""
 # This was grabbed from
 # http://djangosnippets.org/snippets/963/
-class RequestFactory(django.test.Client):
-    """
+class RequestFactory(django.test.Client)
     Class that lets you create mock Request objects for use in testing.
 
     Usage:
@@ -559,12 +560,9 @@ class RequestFactory(django.test.Client):
     Once you have a request object you can pass it to any view function,
     just as if that view had been hooked up using a URLconf.
 
-    """
     def request(self, **request):
-        """
         Similar to parent class, but returns the request object as soon as it
         has created it.
-        """
         environ = {
             'HTTP_COOKIE': self.cookies,
             'PATH_INFO': '/',
@@ -585,3 +583,4 @@ class RequestFactory(django.test.Client):
 __all__ = (
     'RequestFactory',
 )
+"""
