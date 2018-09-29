@@ -7,7 +7,7 @@ from django.urls import reverse
 
 from hits.models import Hit, HitAssignment, HitBatch, HitProject
 from hits.views import hit_assignment
-from django.test import RequestFactory, Testcase
+from django.test import RequestFactory, TestCase
 
 class TestAcceptHit(TestCase):
     def setUp(self):
