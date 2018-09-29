@@ -9,7 +9,8 @@ except ImportError:
 
 from django.contrib import admin
 from django.db import models
-from django.forms import FileField, HiddenInput, ModelForm, TextInput, ValidationError
+from django.forms import (FileField, FileInput, HiddenInput,
+                          ModelForm, TextInput, ValidationError)
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 import unicodecsv
@@ -20,12 +21,24 @@ from hits.models import Hit, HitBatch, HitProject
 admin.site.site_header = 'Turkle administration'
 
 
+class CustomButtonFileWidget(FileInput):
+    # HTML file inputs have a button followed by text that either
+    # gives the filename or says "no file selected".  It is not
+    # possible to modify that text using JavaScript.
+    #
+    # This template Hides the file input, creates a "Choose File"
+    # button (linked to the hidden file input) followed by a span for
+    # displaying custom text.
+    template_name = "admin/forms/widgets/custom_button_file_widget.html"
+
+
 class HitBatchForm(ModelForm):
     csv_file = FileField(label='CSV File')
 
     def __init__(self, *args, **kwargs):
         super(HitBatchForm, self).__init__(*args, **kwargs)
 
+        self.fields['csv_file'].widget = CustomButtonFileWidget()
         self.fields['hit_project'].label = 'HIT Project'
         self.fields['name'].label = 'Batch Name'
 
@@ -139,6 +152,8 @@ class HitProjectForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(HitProjectForm, self).__init__(*args, **kwargs)
+
+        self.fields['template_file_upload'].widget = CustomButtonFileWidget()
 
         # This hidden form field is updated by JavaScript code in the
         # customized admin template file:
