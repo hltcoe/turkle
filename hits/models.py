@@ -31,31 +31,20 @@ class Hit(models.Model):
     def __str__(self):
         return 'HIT id:{}'.format(self.id)
 
-    def generate_form(self):
+    def populate_html_template(self):
+        """Return HTML template for this HIT's project, with populated template variables
+
+        Returns:
+            String containing the HTML template for the HitProject associated with
+            this Hit, with all template variables replaced with the template
+            variable values stored in this Hit's input_csv_fields.
+        """
         result = self.hit_batch.hit_project.html_template
         for field in self.input_csv_fields.keys():
             result = result.replace(
                 r'${' + field + r'}',
                 self.input_csv_fields[field]
             )
-
-        # Surround the html in the form with two div tags:
-        # one surrounding the HIT in a black box
-        # and the other creating some white space between the black box and the
-        # form.
-        border = (
-            '<div style="'
-            ' width:100%%;'
-            ' border:2px solid black;'
-            ' margin-top:10px'
-            '">'
-            '%s'
-            '</div>'
-        )
-        margin = '<div style="margin:10px">%s</div>'
-
-        result = margin % result
-        result = border % result
         return result
 
 

@@ -668,7 +668,7 @@ class TestGenerateForm(django.test.TestCase):
         )
         self.hit.save()
 
-    def test_generate_form(self):
+    def test_populate_html_template(self):
         with open('hits/tests/resources/form_0_filled.html') as f:
             form = f.read()
             # python 2 compat hack
@@ -678,7 +678,7 @@ class TestGenerateForm(django.test.TestCase):
                 pass
 
         expect = form
-        actual = self.hit.generate_form()
+        actual = self.hit.populate_html_template()
         self.assertNotEqual(expect, actual)
 
     def test_map_fields_csv_row(self):
@@ -701,10 +701,9 @@ class TestGenerateForm(django.test.TestCase):
             ),
         )
         hit.save()
-        expect = u"""<div style=" width:100%; border:2px solid black; margin-top:10px">""" + \
-            u"""<div style="margin:10px"></select> con relaci&oacute;n a <span style="color:""" + \
-            u""" rgb(0, 0, 255);">SANTOS</span> en este mensaje.</p></div></div>"""
-        actual = hit.generate_form()
+        expect = u"""</select> con relaci&oacute;n a <span style="color:""" + \
+            u""" rgb(0, 0, 255);">SANTOS</span> en este mensaje.</p>"""
+        actual = hit.populate_html_template()
         self.assertEqual(expect, actual)
 
 
