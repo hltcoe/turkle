@@ -33,8 +33,12 @@ def accept_hit(request, batch_id, hit_id):
 
     try:
         with transaction.atomic():
-            available_hits = batch.available_hits_for(request.user).select_for_update()
-            available_hits.get(id=hit_id)  # Can raise ObjectDoesNotExist
+            # Lock access to the specified Hit
+            Hit.objects.filter(id=hit_id).select_for_update()
+
+            # Will throw ObjectDoesNotExist exception if Hit no longer available
+            batch.available_hits_for(request.user).get(id=hit_id)
+
             ha = HitAssignment()
             if request.user.is_authenticated:
                 ha.assigned_to = request.user
@@ -53,7 +57,11 @@ def accept_next_hit(request, batch_id):
     try:
         with transaction.atomic():
             batch = HitBatch.objects.get(id=batch_id)
-            hit = batch.available_hits_for(request.user).select_for_update().first()
+
+            # Lock access to all HITs available to current user in the batch
+            available_hits = batch.available_hits_for(request.user).select_for_update()
+
+            hit = available_hits.first()
             if hit:
                 ha = HitAssignment()
                 if request.user.is_authenticated:
@@ -218,5 +226,9 @@ def return_hit_assignment(request, hit_id, hit_assignment_id):
             messages.error(request, u'The HIT you are trying to return belongs to another user')
             return redirect(index)
 
-    hit_assignment.delete()
+    with transaction.atomic():
+        # Lock access to the specified Hit
+        Hit.objects.filter(id=hit_id).select_for_update()
+
+        hit_assignment.delete()
     return redirect(preview_next_hit, hit.hit_batch_id)
