@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 import django.test
-# from django.core.handlers.wsgi import WSGIRequest
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
+from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
 from hits.models import Hit, HitAssignment, HitBatch, HitProject
 from hits.views import hit_assignment
-from django.test import RequestFactory, TestCase
 
 
 class TestAcceptHit(TestCase):
@@ -540,47 +539,3 @@ class TestReturnHitAssignment(TestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
                          u'The HIT you are trying to return belongs to another user')
-
-
-"""
-# This was grabbed from
-# http://djangosnippets.org/snippets/963/
-class RequestFactory(django.test.Client)
-    Class that lets you create mock Request objects for use in testing.
-
-    Usage:
-
-    rf = RequestFactory()
-    get_request = rf.get('/hello/')
-    post_request = rf.post('/submit/', {'foo': 'bar'})
-
-    This class re-uses the django.test.client.Client interface, docs here:
-    http://www.djangoproject.com/documentation/testing/#the-test-client
-
-    Once you have a request object you can pass it to any view function,
-    just as if that view had been hooked up using a URLconf.
-
-    def request(self, **request):
-        Similar to parent class, but returns the request object as soon as it
-        has created it.
-        environ = {
-            'HTTP_COOKIE': self.cookies,
-            'PATH_INFO': '/',
-            'QUERY_STRING': '',
-            'REQUEST_METHOD': 'GET',
-            'SCRIPT_NAME': '',
-            'SERVER_NAME': 'testserver',
-            'SERVER_PORT': 80,
-            'SERVER_PROTOCOL': 'HTTP/1.1',
-        }
-        environ.update(self.defaults)
-        environ.update(request)
-        rqst = WSGIRequest(environ)
-        rqst.user = None
-        return rqst
-
-
-__all__ = (
-    'RequestFactory',
-)
-"""
