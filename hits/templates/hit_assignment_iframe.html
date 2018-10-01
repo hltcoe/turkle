@@ -9,9 +9,9 @@
           action="{% url 'hit_assignment' hit.id hit_assignment.id %}">
 
       {% csrf_token %}
-      {% autoescape off %}{{ hit.generate_form }}{% endautoescape %}
+      {% autoescape off %}{{ hit.populate_html_template }}{% endautoescape %}
 
-      {% if not hit.hit_batch.hit_template.form_has_submit_button %}
+      {% if not hit.hit_batch.hit_project.html_template_has_submit_button %}
       <p class="text-center">
         <input type="submit" id="submitButton" class="btn btn-primary" value="Submit" />
       </p>
