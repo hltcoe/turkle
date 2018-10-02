@@ -570,15 +570,49 @@ class TestSkipHit(TestCase):
 
     def test_skip_then_preview(self):
         client = django.test.Client()
+
+        # Skip hit_one
         response = client.post(reverse('skip_hit', kwargs={'batch_id': self.hit_batch.id,
                                                            'hit_id': self.hit_one.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('preview_next_hit',
                                                        kwargs={'batch_id': self.hit_batch.id}))
 
-        # hit_one has been skipped
+        # Verify that hit_one has been skipped
         response = client.get(reverse('preview_next_hit',
                                       kwargs={'batch_id': self.hit_batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('preview',
                                                        kwargs={'hit_id': self.hit_two.id}))
+
+        # Skip hit_two
+        response = client.post(reverse('skip_hit', kwargs={'batch_id': self.hit_batch.id,
+                                                           'hit_id': self.hit_two.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('preview_next_hit',
+                                                       kwargs={'batch_id': self.hit_batch.id}))
+
+        # Verify that hit_two has been skipped
+        response = client.get(reverse('preview_next_hit',
+                                      kwargs={'batch_id': self.hit_batch.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('preview',
+                                                       kwargs={'hit_id': self.hit_three.id}))
+
+        # Skip hit_three
+        response = client.post(reverse('skip_hit', kwargs={'batch_id': self.hit_batch.id,
+                                                           'hit_id': self.hit_three.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('preview_next_hit',
+                                                       kwargs={'batch_id': self.hit_batch.id}))
+
+        # Verify that, with all existing HITs skipped, we have been redirected back to
+        # hit_one and that info message is displayed about only skipped HITs remaining
+        response = client.get(reverse('preview_next_hit',
+                                      kwargs={'batch_id': self.hit_batch.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('preview',
+                                                       kwargs={'hit_id': self.hit_one.id}))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]), u'Only previously skipped HITs are available')
