@@ -7,6 +7,12 @@ except ImportError:
         from io import BytesIO
         StringIO = BytesIO
 
+# hack to add unicode() to python3 for backward compatibility
+try:
+    unicode('')
+except NameError:
+    unicode = str
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
