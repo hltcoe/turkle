@@ -111,6 +111,9 @@ class HitBatch(models.Model):
 
         return hs
 
+    def available_hit_ids_for(self, user):
+        return self.available_hits_for(user).values_list('id', flat=True)
+
     def clean(self):
         if not self.hit_project.login_required and self.assignments_per_hit != 1:
             raise ValidationError('When login is not required to access a Project, ' +

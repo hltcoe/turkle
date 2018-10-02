@@ -539,3 +539,46 @@ class TestReturnHitAssignment(TestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
                          u'The HIT you are trying to return belongs to another user')
+
+
+class TestSkipHit(TestCase):
+    def setUp(self):
+        hit_project = HitProject(login_required=False)
+        hit_project.save()
+        self.hit_batch = HitBatch(hit_project=hit_project)
+        self.hit_batch.save()
+        self.hit_one = Hit(hit_batch=self.hit_batch)
+        self.hit_one.save()
+        self.hit_two = Hit(hit_batch=self.hit_batch)
+        self.hit_two.save()
+        self.hit_three = Hit(hit_batch=self.hit_batch)
+        self.hit_three.save()
+
+    def test_preview_next_hit_order(self):
+        client = django.test.Client()
+
+        response = client.get(reverse('preview_next_hit', kwargs={'batch_id': self.hit_batch.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('preview',
+                                                       kwargs={'hit_id': self.hit_one.id}))
+
+        # Since no HITs have been completed or skipped, preview_next_hit redirects to same HIT
+        response = client.get(reverse('preview_next_hit', kwargs={'batch_id': self.hit_batch.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('preview',
+                                                       kwargs={'hit_id': self.hit_one.id}))
+
+    def test_skip_then_preview(self):
+        client = django.test.Client()
+        response = client.post(reverse('skip_hit', kwargs={'batch_id': self.hit_batch.id,
+                                                           'hit_id': self.hit_one.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('preview_next_hit',
+                                                       kwargs={'batch_id': self.hit_batch.id}))
+
+        # hit_one has been skipped
+        response = client.get(reverse('preview_next_hit',
+                                      kwargs={'batch_id': self.hit_batch.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('preview',
+                                                       kwargs={'hit_id': self.hit_two.id}))
