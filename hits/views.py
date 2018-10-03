@@ -211,8 +211,54 @@ def preview_next_hit(request, batch_id):
 
 
 def return_hit_assignment(request, hit_id, hit_assignment_id):
+    redirect_due_to_error = _return_hit_assignment_helper(request, hit_id, hit_assignment_id)
+    if redirect_due_to_error:
+        return redirect_due_to_error
+    return redirect(index)
+
+
+def skip_and_accept_next_hit(request, batch_id, hit_id, hit_assignment_id):
+    redirect_due_to_error = _return_hit_assignment_helper(request, hit_id, hit_assignment_id)
+    if redirect_due_to_error:
+        return redirect_due_to_error
+
+    _add_hit_id_to_skip_session(request.session, batch_id, hit_id)
+    return redirect(accept_next_hit, batch_id)
+
+
+def skip_hit(request, batch_id, hit_id):
+    _add_hit_id_to_skip_session(request.session, batch_id, hit_id)
+    return redirect(preview_next_hit, batch_id)
+
+
+def _add_hit_id_to_skip_session(session, batch_id, hit_id):
+    # The Django session store converts dictionary keys from ints to strings
+    batch_id = unicode(batch_id)
+    hit_id = unicode(hit_id)
+
+    if 'skipped_hits_in_batch' not in session:
+        session['skipped_hits_in_batch'] = {}
+    if batch_id not in session['skipped_hits_in_batch']:
+        session['skipped_hits_in_batch'][batch_id] = []
+        session.modified = True
+    if hit_id not in session['skipped_hits_in_batch'][batch_id]:
+        session['skipped_hits_in_batch'][batch_id].append(hit_id)
+        session.modified = True
+
+
+def _return_hit_assignment_helper(request, hit_id, hit_assignment_id):
+    """
+    Usage:
+        rr = _return_hit_assignment_helper(request, hit_id, hit_assignment_id)
+        if rr:
+            return rr
+
+    Returns:
+        - None if the HitAssignment can be deleted
+        - An HTTPResponse object created by redirect() if there was an error
+    """
     try:
-        hit = Hit.objects.get(id=hit_id)
+        Hit.objects.get(id=hit_id)
     except ObjectDoesNotExist:
         messages.error(request, u'Cannot find HIT with ID {}'.format(hit_id))
         return redirect(index)
@@ -240,22 +286,6 @@ def return_hit_assignment(request, hit_id, hit_assignment_id):
         Hit.objects.filter(id=hit_id).select_for_update()
 
         hit_assignment.delete()
-    return redirect(preview_next_hit, hit.hit_batch_id)
-
-
-def skip_hit(request, batch_id, hit_id):
-    batch_id = unicode(batch_id)
-    hit_id = unicode(hit_id)
-    if 'skipped_hits_in_batch' not in request.session:
-        request.session['skipped_hits_in_batch'] = {}
-    if batch_id not in request.session['skipped_hits_in_batch']:
-        request.session['skipped_hits_in_batch'][batch_id] = []
-        request.session.modified = True
-    if hit_id not in request.session['skipped_hits_in_batch'][batch_id]:
-        request.session['skipped_hits_in_batch'][batch_id].append(hit_id)
-        request.session.modified = True
-
-    return redirect(preview_next_hit, batch_id)
 
 
 def _skip_aware_next_available_hit_id(request, batch):

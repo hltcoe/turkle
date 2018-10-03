@@ -142,6 +142,29 @@ class TestAcceptNextHit(TestCase):
         self.assertEqual(str(messages[0]),
                          u'No more HITs available from Batch {}'.format(self.hit_batch.id))
 
+    def test_accept_next_hit__respect_skip(self):
+        hit_two = Hit(hit_batch=self.hit_batch)
+        hit_two.save()
+
+        User.objects.create_user('testuser', password='secret')
+        client = django.test.Client()
+        client.login(username='testuser', password='secret')
+
+        # Per the Django docs:
+        #   To modify the session and then save it, it must be stored in a variable first
+        #   (because a new SessionStore is created every time this property is accessed
+        #     https://docs.djangoproject.com/en/1.11/topics/testing/tools/#persistent-state
+        s = client.session
+        s.update({
+            'skipped_hits_in_batch': {unicode(self.hit_batch.id): [unicode(self.hit.id)]}
+        })
+        s.save()
+
+        response = client.get(reverse('accept_next_hit',
+                                      kwargs={'batch_id': self.hit_batch.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue('{}/assignment/'.format(hit_two.id) in response['Location'])
+
 
 class TestDownloadBatchCSV(TestCase):
     def setUp(self):
@@ -457,9 +480,7 @@ class TestReturnHitAssignment(TestCase):
                                       kwargs={'hit_id': self.hit.id,
                                               'hit_assignment_id': hit_assignment.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'],
-                         reverse('preview_next_hit',
-                                 kwargs={'batch_id': self.hit.hit_batch_id}))
+        self.assertEqual(response['Location'], reverse('index'))
 
     def test_return_completed_hit_assignment(self):
         user = User.objects.create_user('testuser', password='secret')
@@ -495,9 +516,7 @@ class TestReturnHitAssignment(TestCase):
                                       kwargs={'hit_id': self.hit.id,
                                               'hit_assignment_id': hit_assignment.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'],
-                         reverse('preview_next_hit',
-                                 kwargs={'batch_id': self.hit.hit_batch_id}))
+        self.assertEqual(response['Location'], reverse('index'))
 
     def test_return_hit_assignment__anon_user_returns_other_users_hit(self):
         user = User.objects.create_user('testuser', password='secret')
@@ -568,7 +587,7 @@ class TestSkipHit(TestCase):
         self.assertEqual(response['Location'], reverse('preview',
                                                        kwargs={'hit_id': self.hit_one.id}))
 
-    def test_skip_then_preview(self):
+    def test_skip_hit(self):
         client = django.test.Client()
 
         # Skip hit_one
@@ -613,6 +632,63 @@ class TestSkipHit(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('preview',
                                                        kwargs={'hit_id': self.hit_one.id}))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]), u'Only previously skipped HITs are available')
+
+    def test_skip_and_accept_next_hit(self):
+        client = django.test.Client()
+
+        ha_one = HitAssignment(hit=self.hit_one)
+        ha_one.save()
+
+        # Skip hit_one
+        response = client.post(reverse('skip_and_accept_next_hit',
+                                       kwargs={'batch_id': self.hit_batch.id,
+                                               'hit_id': self.hit_one.id,
+                                               'hit_assignment_id': ha_one.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('accept_next_hit',
+                                                       kwargs={'batch_id': self.hit_batch.id}))
+
+        # Verify that hit_one has been skipped
+        response = client.get(reverse('accept_next_hit',
+                                      kwargs={'batch_id': self.hit_batch.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue('{}/assignment/'.format(self.hit_two.id) in response['Location'])
+
+        # Skip hit_two
+        ha_two = self.hit_two.hitassignment_set.first()
+        response = client.post(reverse('skip_and_accept_next_hit',
+                                       kwargs={'batch_id': self.hit_batch.id,
+                                               'hit_id': self.hit_two.id,
+                                               'hit_assignment_id': ha_two.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('accept_next_hit',
+                                                       kwargs={'batch_id': self.hit_batch.id}))
+
+        # Verify that hit_two has been skipped
+        response = client.get(reverse('accept_next_hit',
+                                      kwargs={'batch_id': self.hit_batch.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue('{}/assignment/'.format(self.hit_three.id) in response['Location'])
+
+        # Skip hit_three
+        ha_three = self.hit_three.hitassignment_set.first()
+        response = client.post(reverse('skip_and_accept_next_hit',
+                                       kwargs={'batch_id': self.hit_batch.id,
+                                               'hit_id': self.hit_three.id,
+                                               'hit_assignment_id': ha_three.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('accept_next_hit',
+                                                       kwargs={'batch_id': self.hit_batch.id}))
+
+        # Verify that, with all existing HITs skipped, we have been redirected back to
+        # hit_one and that info message is displayed about only skipped HITs remaining
+        response = client.get(reverse('accept_next_hit',
+                                      kwargs={'batch_id': self.hit_batch.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue('{}/assignment/'.format(self.hit_one.id) in response['Location'])
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]), u'Only previously skipped HITs are available')

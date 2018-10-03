@@ -11,6 +11,7 @@ from hits.views import (
     preview_iframe,
     preview_next_hit,
     return_hit_assignment,
+    skip_and_accept_next_hit,
     skip_hit,
 )
 
@@ -26,6 +27,9 @@ urlpatterns = [
         hit_assignment_iframe, name='hit_assignment_iframe'),
     url(r'^batch/(?P<batch_id>\d+)/accept_hit/(?P<hit_id>\d+)/$', accept_hit, name='accept_hit'),
     url(r'^batch/(?P<batch_id>\d+)/skip_hit/(?P<hit_id>\d+)/$', skip_hit, name='skip_hit'),
+    url(r'^batch/(?P<batch_id>\d+)/skip_and_accept_next_hit/(?P<hit_id>\d+)/'
+        '(?P<hit_assignment_id>\d+)/$',
+        skip_and_accept_next_hit, name='skip_and_accept_next_hit'),
     url(r'^batch/(?P<batch_id>\d+)/accept_next_hit/$', accept_next_hit, name='accept_next_hit'),
     url(r'^batch/(?P<batch_id>\d+)/preview_next_hit/$', preview_next_hit, name='preview_next_hit'),
     url(r'^batch/(?P<batch_id>\d+)/download/$', download_batch_csv, name='download_batch_csv'),
