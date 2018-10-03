@@ -7,6 +7,12 @@ except ImportError:
         from io import BytesIO
         StringIO = BytesIO
 
+# hack to add unicode() to python3 for backward compatibility
+try:
+    unicode('')
+except NameError:
+    unicode = str
+
 from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
@@ -59,23 +65,24 @@ def accept_next_hit(request, batch_id):
             batch = HitBatch.objects.get(id=batch_id)
 
             # Lock access to all HITs available to current user in the batch
-            available_hits = batch.available_hits_for(request.user).select_for_update()
+            batch.available_hit_ids_for(request.user).select_for_update()
 
-            hit = available_hits.first()
-            if hit:
+            hit_id = _skip_aware_next_available_hit_id(request, batch)
+
+            if hit_id:
                 ha = HitAssignment()
                 if request.user.is_authenticated:
                     ha.assigned_to = request.user
                 else:
                     ha.assigned_to = None
-                ha.hit = hit
+                ha.hit_id = hit_id
                 ha.save()
     except ObjectDoesNotExist:
         messages.error(request, u'Cannot find HIT Batch with ID {}'.format(batch_id))
         return redirect(index)
 
-    if hit:
-        return redirect(hit_assignment, hit.id, ha.id)
+    if hit_id:
+        return redirect(hit_assignment, hit_id, ha.id)
     else:
         messages.error(request, u'No more HITs available from Batch {}'.format(batch_id))
         return redirect(index)
@@ -192,9 +199,11 @@ def preview_next_hit(request, batch_id):
     except ObjectDoesNotExist:
         messages.error(request, u'Cannot find HIT Batch with ID {}'.format(batch_id))
         return redirect(index)
-    hit = batch.next_available_hit_for(request.user)
-    if hit:
-        return redirect(preview, hit.id)
+
+    hit_id = _skip_aware_next_available_hit_id(request, batch)
+
+    if hit_id:
+        return redirect(preview, hit_id)
     else:
         messages.error(request,
                        u'No more HITs are available for Batch "{}"'.format(batch.name))
@@ -202,8 +211,57 @@ def preview_next_hit(request, batch_id):
 
 
 def return_hit_assignment(request, hit_id, hit_assignment_id):
+    redirect_due_to_error = _delete_hit_assignment(request, hit_id, hit_assignment_id)
+    if redirect_due_to_error:
+        return redirect_due_to_error
+    return redirect(index)
+
+
+def skip_and_accept_next_hit(request, batch_id, hit_id, hit_assignment_id):
+    redirect_due_to_error = _delete_hit_assignment(request, hit_id, hit_assignment_id)
+    if redirect_due_to_error:
+        return redirect_due_to_error
+
+    _add_hit_id_to_skip_session(request.session, batch_id, hit_id)
+    return redirect(accept_next_hit, batch_id)
+
+
+def skip_hit(request, batch_id, hit_id):
+    _add_hit_id_to_skip_session(request.session, batch_id, hit_id)
+    return redirect(preview_next_hit, batch_id)
+
+
+def _add_hit_id_to_skip_session(session, batch_id, hit_id):
+    """Add Hit ID to session variable tracking HITs the user has skipped
+    """
+    # The Django session store converts dictionary keys from ints to strings
+    batch_id = unicode(batch_id)
+    hit_id = unicode(hit_id)
+
+    if 'skipped_hits_in_batch' not in session:
+        session['skipped_hits_in_batch'] = {}
+    if batch_id not in session['skipped_hits_in_batch']:
+        session['skipped_hits_in_batch'][batch_id] = []
+        session.modified = True
+    if hit_id not in session['skipped_hits_in_batch'][batch_id]:
+        session['skipped_hits_in_batch'][batch_id].append(hit_id)
+        session.modified = True
+
+
+def _delete_hit_assignment(request, hit_id, hit_assignment_id):
+    """Delete a HitAssignment, if possible
+
+    Returns:
+        - None if the HitAssignment can be deleted, *OR*
+        - An HTTPResponse object created by redirect() if there was an error
+
+    Usage:
+        redirect_due_to_error = _delete_hit_assignment(request, hit_id, hit_assignment_id)
+        if redirect_due_to_error:
+            return redirect_due_to_error
+    """
     try:
-        hit = Hit.objects.get(id=hit_id)
+        Hit.objects.get(id=hit_id)
     except ObjectDoesNotExist:
         messages.error(request, u'Cannot find HIT with ID {}'.format(hit_id))
         return redirect(index)
@@ -231,4 +289,43 @@ def return_hit_assignment(request, hit_id, hit_assignment_id):
         Hit.objects.filter(id=hit_id).select_for_update()
 
         hit_assignment.delete()
-    return redirect(preview_next_hit, hit.hit_batch_id)
+
+
+def _skip_aware_next_available_hit_id(request, batch):
+    """Get next available HIT for user, taking into account previously skipped HITs
+
+    This function will first look for an available HIT that the user
+    has not previously skipped.  If the only available HITs are HITs
+    that the user has skipped, this function will return the first
+    such HIT.
+
+    Returns:
+        Hit ID (int), or None if no more HITs are available
+    """
+    def _get_skipped_hit_ids_for_batch(session, batch_id):
+        batch_id = unicode(batch_id)
+        if 'skipped_hits_in_batch' in session and \
+           batch_id in session['skipped_hits_in_batch']:
+            return session['skipped_hits_in_batch'][batch_id]
+        else:
+            return None
+
+    available_hit_ids = batch.available_hit_ids_for(request.user)
+    skipped_ids = _get_skipped_hit_ids_for_batch(request.session, batch.id)
+
+    if skipped_ids:
+        hit_id = available_hit_ids.exclude(id__in=skipped_ids).first()
+        if not hit_id:
+            hit_id = available_hit_ids.filter(id__in=skipped_ids).first()
+            if hit_id:
+                messages.info(request, u'Only previously skipped HITs are available')
+
+                # Once all remaining HITs have been marked as skipped, we clear
+                # their skipped status.  If we don't take this step, then a HIT
+                # cannot be skipped a second time.
+                request.session['skipped_hits_in_batch'][unicode(batch.id)] = []
+                request.session.modified = True
+    else:
+        hit_id = available_hit_ids.first()
+
+    return hit_id

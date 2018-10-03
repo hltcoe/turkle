@@ -17,8 +17,17 @@
 {% endblock %}
 
 {% block right_half_footer %}
-<form method="post" action="{% url 'return_hit_assignment' hit.id hit_assignment.id %}">
-  {% csrf_token %}
-  <input type="submit" id="submitButton" class="btn btn-sm btn-danger" value="Return HIT" />
-</form>
+
+<span class="form-buttons">
+  <form method="post" action="{% url 'return_hit_assignment' hit.id hit_assignment.id %}">
+    {% csrf_token %}
+    <input type="submit" id="submitButton" class="btn btn-sm btn-danger" value="Return HIT" />
+  </form>
+
+  <form method="post" action="{% url 'skip_and_accept_next_hit' hit.hit_batch_id hit.id hit_assignment.id %}">
+    {% csrf_token %}
+    <input type="submit" id="submitButton" class="btn btn-sm btn-danger" value="Skip HIT" />
+  </form>
+</span>
+
 {% endblock %}
