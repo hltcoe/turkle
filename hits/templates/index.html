@@ -11,7 +11,7 @@
   {% if batch_rows %}
   <table class="table table-bordered table-hover">
     <tr class="thead-dark">
-      <th>Template</th>
+      <th>Project</th>
       <th>Batch</th>
       <th>Batch Published</th>
       <th>HITs Available</th>
@@ -20,7 +20,7 @@
     </tr>
     {% for batch_row in batch_rows %}
     <tr>
-      <td>{{ batch_row.template_name }}</td>
+      <td>{{ batch_row.project_name }}</td>
       <td>{{ batch_row.batch_name }}</td>
       <td>{{ batch_row.batch_published }}</td>
       <td>{{ batch_row.assignments_available }}</td>

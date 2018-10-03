@@ -1,0 +1,7 @@
+<span>
+  <span><label for="{{ widget.attrs.id }}" class="button" style="text-align: center;">Choose File</label></span>
+  <span><label id="{{ widget.attrs.id }}_custom_text" style="margin-left: 2em;"></label></span>
+  <span style="display: none;">
+    {% include "django/forms/widgets/input.html" %}
+  </span>
+</span>

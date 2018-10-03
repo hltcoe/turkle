@@ -3,6 +3,7 @@
 venv
 *.sqlite3
 .ropeproject
+.idea
 *.csv
 *.tsv
 !examples/*.html

@@ -29,7 +29,7 @@ Turkle works with either python 2 or python 3.
 
   Using a virtual environment has the advantage of keeping the dependencies
   for this project separate from other projects. The actual syntax depends
-  on what virtual environment package you are using, but it should work like this: 
+  on what virtual environment package you are using, but it should work like this:
 
   ```bash
   virtualenv venv
@@ -70,15 +70,42 @@ python manage.py runserver
 
 ## Creating user accounts ##
 
-TODO
+### Using the admin UI
+ * Login with a super user account
+ * Select Manage Users from the navigation header
+ * Click the `Add User` button, fill out the form and submit
+
+### Using the scripts
+The `add_user.py` script adds a single user. Run it with the `-h` option for details.
+
+The `import_users.py` script reads a CSV file to add users to Turkle.
+The file must be formatted like:
+```
+username1,password1
+username2,password2
+```
 
 ## Loading a batch of HITs ##
 
+### Using the admin UI
+
 TODO: documentation on using the admin UI for templates and CSVs.
+
+### Using the scripts
+With a template html file and a batch CSV file, use the
+`publish_hits.py` script to add them to Turkle.
+If you have already added the template, you must use the admin UI
+to add additional batches of HITs.
 
 ## Downloading a batch of HITs ##
 
+### Using the admin UI
+
 TODO
+
+### Using the scripts
+The `download_results.py` script downloads all HITs that have been completed
+into a directory that the user selects.
 
 # Worker instructions
 
@@ -86,9 +113,51 @@ Use your web browser to visit [http://localhost:8000](http://localhost:8000)
 Log in if you've been given user credentials.
 Find your assigned set of HITs and click the "Accept next HIT" button.
 
+# Production deployment
+
+Turkle was designed to be run in a local environment with a small number of annotators.
+In a high load environment, Turkle can be run with a production quality WSGI HTTP server
+rather than with Django's development server. A possible configuration would involve
+a web server like Apache or nginx as a proxy server with a Python server like Gunicorn behind it.
+A scalable database like MySQL or Postgres would also have to be configured in the settings.py file.
+
+Gunicorn can be installed with pip:
+```bash
+pip install gunicorn
+```
+
+and run from Turkle's base directory like this:
+
+```bash
+gunicorn --bind 127.0.0.1:5000 turkle.wsgi
+```
+
+Common Gunicorn runtime options are available in its [Running Gunicorn documentation](http://docs.gunicorn.org/en/stable/run.html).
+
+This serves Turkle's web pages on port 5000 but not the static files like CSS and JavaScript.
+
+To use Apache as the proxy server, enable proxying: `a2enmod proxy_http`.
+Then edit the configuration of your site to include the proxy information:
+
+```
+ProxyRequests Off
+ProxyPass /static/ !
+ProxyPass / http://localhost:5000/
+ProxyPassReverse / http://localhost:5000/
+```
+
+Apache will look in its default location for the static directory so you'll need to create
+a symbolic link (more convenient) or copy the files (safer).
+After starting Gunicorn and restarting Apache with the new configuration, you should
+be able to view the site at http://localhost/ or whatever the appropriate host name.
+
+Instructions for using Gunicorn with nginx are found on its [deploy page](http://docs.gunicorn.org/en/latest/deploy.html).
+You will still need to configure nginx to serve the static files as we did with Apache. 
+
 # Docker usage
 
-Instead of installing Turkle and dependencies directly, you can run Turkle as a Docker container, using scripts to manage your HIT templates and data.  Either build a Turkle image:
+Instead of installing Turkle and dependencies directly, you can run Turkle as a Docker container, using scripts to manage your HIT templates and data.
+Either build a Turkle image:
 
 ```bash
 docker build --force-rm -t hltcoe/turkle .
@@ -106,26 +175,24 @@ and start a container with an easy name, and mapping container port 8080 somewhe
 docker run -d --name container_name -p 18080:8080 hltcoe/turkle
 ```
 
+The Docker container has an `admin` user with a default password of `admin`.
+
+You can change the default admin password by:
+
+- connecting to the exposed container port with a web browser (e.g. connecting to http://localhost:18080/)
+- logging in with username `admin` and password `admin`
+- clicking on the "Manage Users" link on the top left of the screen
+- clicking on the "CHANGE PASSWORD" link at the top right of the screen
+- filling out and submitting the Change Password form
+
 Your annotator can now browse to that port on the Docker host.  To give them something to do, upload an Amazon Turk HIT template and data:
 
 ```bash
-scripts/upload_hit.sh container_name data.csv template.html
+python scripts/publish_hits.py -u [superuser] --server localhost:18080 template.html data.csv
 ```
 
 At any point, you can download the current state of annotations:
 
 ```bash
-scripts/download_annotations.sh container_name annotation_state.csv
-```
-
-You can upload new data to be annotated, without changing the template:
-
-```bash
-scripts/upload_hit.sh container_name new_data.csv
-```
-
-Or replace both:
-
-```bash
-scripts/upload_hit.sh container_name new_data.csv new_template.html
+python scripts/download_results.py -u [superuser] --server localhost:18080
 ```

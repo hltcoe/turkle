@@ -5,7 +5,7 @@ import django.test
 from django.contrib.auth.models import User
 from django.urls import reverse
 
-from hits.models import HitBatch, HitTemplate
+from hits.models import HitBatch, HitProject
 
 
 class TestHitBatchAdmin(django.test.TestCase):
@@ -13,8 +13,8 @@ class TestHitBatchAdmin(django.test.TestCase):
         User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
 
     def test_batch_add(self):
-        hit_template = HitTemplate(name='foo', form='<p>${foo}: ${bar}</p>')
-        hit_template.save()
+        hit_project = HitProject(name='foo', html_template='<p>${foo}: ${bar}</p>')
+        hit_project.save()
 
         self.assertFalse(HitBatch.objects.filter(name='hit_batch_save').exists())
 
@@ -26,7 +26,7 @@ class TestHitBatchAdmin(django.test.TestCase):
                 {
                     'allotted_assignment_time': 24,
                     'assignments_per_hit': 1,
-                    'hit_template': hit_template.id,
+                    'hit_project': hit_project.id,
                     'name': 'hit_batch_save',
                     'csv_file': fp
                 })
@@ -39,8 +39,8 @@ class TestHitBatchAdmin(django.test.TestCase):
         self.assertEqual(matching_hit_batch.total_hits(), 1)
 
     def test_batch_add_csv_with_emoji(self):
-        hit_template = HitTemplate(name='foo', form='<p>${emoji}: ${more_emoji}</p>')
-        hit_template.save()
+        hit_project = HitProject(name='foo', html_template='<p>${emoji}: ${more_emoji}</p>')
+        hit_project.save()
 
         self.assertFalse(HitBatch.objects.filter(name='hit_batch_save').exists())
 
@@ -52,7 +52,7 @@ class TestHitBatchAdmin(django.test.TestCase):
                 {
                     'allotted_assignment_time': 24,
                     'assignments_per_hit': 1,
-                    'hit_template': hit_template.id,
+                    'hit_project': hit_project.id,
                     'name': 'hit_batch_save',
                     'csv_file': fp
                 })
@@ -71,8 +71,8 @@ class TestHitBatchAdmin(django.test.TestCase):
         self.assertEqual(hits[2].input_csv_fields['more_emoji'], u'🤭')
 
     def test_batch_add_missing_file_field(self):
-        hit_template = HitTemplate(name='foo', form='<p>${emoji}: ${more_emoji}</p>')
-        hit_template.save()
+        hit_project = HitProject(name='foo', html_template='<p>${emoji}: ${more_emoji}</p>')
+        hit_project.save()
 
         self.assertFalse(HitBatch.objects.filter(name='hit_batch_save').exists())
 
@@ -82,7 +82,7 @@ class TestHitBatchAdmin(django.test.TestCase):
             u'/admin/hits/hitbatch/add/',
             {
                 'assignments_per_hit': 1,
-                'hit_template': hit_template.id,
+                'hit_project': hit_project.id,
                 'name': 'hit_batch_save',
             })
         self.assertTrue(b'error' in response.content)
@@ -90,8 +90,8 @@ class TestHitBatchAdmin(django.test.TestCase):
         self.assertTrue(b'This field is required' in response.content)
 
     def test_batch_add_validation_extra_fields(self):
-        hit_template = HitTemplate(name='foo', form='<p>${f2}</p>')
-        hit_template.save()
+        hit_project = HitProject(name='foo', html_template='<p>${f2}</p>')
+        hit_project.save()
 
         self.assertFalse(HitBatch.objects.filter(name='hit_batch_save').exists())
 
@@ -103,7 +103,7 @@ class TestHitBatchAdmin(django.test.TestCase):
                 u'/admin/hits/hitbatch/add/',
                 {
                     'assignments_per_hit': 1,
-                    'hit_template': hit_template.id,
+                    'hit_project': hit_project.id,
                     'name': 'hit_batch_save',
                     'csv_file': fp
                 })
@@ -113,8 +113,8 @@ class TestHitBatchAdmin(django.test.TestCase):
         self.assertTrue(b'missing fields' not in response.content)
 
     def test_batch_add_validation_missing_fields(self):
-        hit_template = HitTemplate(name='foo', form='<p>${f1} ${f2} ${f3}</p>')
-        hit_template.save()
+        hit_project = HitProject(name='foo', html_template='<p>${f1} ${f2} ${f3}</p>')
+        hit_project.save()
 
         self.assertFalse(HitBatch.objects.filter(name='hit_batch_save').exists())
 
@@ -125,7 +125,7 @@ class TestHitBatchAdmin(django.test.TestCase):
             response = client.post(
                 u'/admin/hits/hitbatch/add/',
                 {
-                    'hit_template': hit_template.id,
+                    'hit_project': hit_project.id,
                     'name': 'hit_batch_save',
                     'csv_file': fp
                 })
@@ -135,8 +135,8 @@ class TestHitBatchAdmin(django.test.TestCase):
         self.assertTrue(b'missing fields' in response.content)
 
     def test_batch_add_validation_variable_fields_per_row(self):
-        hit_template = HitTemplate(name='foo', form='<p>${f1} ${f2} ${f3}</p>')
-        hit_template.save()
+        hit_project = HitProject(name='foo', html_template='<p>${f1} ${f2} ${f3}</p>')
+        hit_project.save()
 
         self.assertFalse(HitBatch.objects.filter(name='hit_batch_save').exists())
 
@@ -148,7 +148,7 @@ class TestHitBatchAdmin(django.test.TestCase):
                 u'/admin/hits/hitbatch/add/',
                 {
                     'allotted_assignment_time': 24,
-                    'hit_template': hit_template.id,
+                    'hit_project': hit_project.id,
                     'name': 'hit_batch_save',
                     'csv_file': fp
                 })
@@ -168,7 +168,6 @@ class TestHitBatchAdmin(django.test.TestCase):
         )
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(b'no file selected' not in response.content)
 
     def test_batch_change_update(self):
         self.test_batch_add()
@@ -181,7 +180,7 @@ class TestHitBatchAdmin(django.test.TestCase):
             {
                 'allotted_assignment_time': 24,
                 'assignments_per_hit': 1,
-                'hit_template': batch.hit_template.id,
+                'hit_project': batch.hit_project.id,
                 'name': 'hit_batch_save_modified',
             })
         self.assertTrue(b'error' not in response.content)
@@ -191,22 +190,22 @@ class TestHitBatchAdmin(django.test.TestCase):
         self.assertTrue(HitBatch.objects.filter(name='hit_batch_save_modified').exists())
 
 
-class TestHitTemplate(django.test.TestCase):
+class TestHitProject(django.test.TestCase):
     def setUp(self):
         User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
 
-    def test_add_hit_template(self):
-        self.assertEqual(HitTemplate.objects.filter(name='foo').count(), 0)
+    def test_add_hit_project(self):
+        self.assertEqual(HitProject.objects.filter(name='foo').count(), 0)
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.post(reverse('admin:hits_hittemplate_add'),
+        response = client.post(reverse('admin:hits_hitproject_add'),
                                {
                                    'assignments_per_hit': 1,
                                    'name': 'foo',
-                                   'form': '<p>${foo}: ${bar}</p>',
+                                   'html_template': '<p>${foo}: ${bar}</p>',
                                })
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], u'/admin/hits/hittemplate/')
-        self.assertEqual(HitTemplate.objects.filter(name='foo').count(), 1)
+        self.assertEqual(response['Location'], u'/admin/hits/hitproject/')
+        self.assertEqual(HitProject.objects.filter(name='foo').count(), 1)

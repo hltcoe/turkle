@@ -1,0 +1,35 @@
+{% extends 'admin/change_form.html' %}
+{% load static %}
+
+{% block admin_change_form_document_ready %}
+{{ block.super }}
+<script type="text/javascript" src="{% static 'hits/jquery-3.3.1.min.js' %}"></script>
+<script type="text/javascript">
+$(function () {
+  document.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+  });
+
+  document.addEventListener('dragover', (e) => {
+    e.preventDefault();
+  });
+
+  document.addEventListener('drop', (e) => {
+    e.preventDefault();
+
+    var reader = new FileReader();
+    reader.onload = (function(theFile) {
+      var fileContents = theFile.target.result;
+      $('#id_html_template').val(fileContents);
+    });
+    reader.readAsText(e.dataTransfer.files[0]);
+
+    // DOM ID created in custom_button_file_widget.html
+    $('#id_template_file_upload_custom_text').text(e.dataTransfer.files[0].name);
+
+    // Update hidden form field
+    $('#id_filename').val(e.dataTransfer.files[0].name);
+  });
+});
+</script>
+{% endblock %}
