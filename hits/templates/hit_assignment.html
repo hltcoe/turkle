@@ -50,7 +50,7 @@ $(function () {
   <label class="form-check-label" for="update_auto_accept">Auto-accept next HIT</label>
 </span>
 
-<span class="form-buttons">
+<span class="inline-form-buttons">
   <form method="post" action="{% url 'return_hit_assignment' hit.id hit_assignment.id %}">
     {% csrf_token %}
     <input type="submit" id="submitButton" class="btn btn-sm btn-danger" value="Return HIT" />
