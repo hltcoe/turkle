@@ -211,14 +211,14 @@ def preview_next_hit(request, batch_id):
 
 
 def return_hit_assignment(request, hit_id, hit_assignment_id):
-    redirect_due_to_error = _return_hit_assignment_helper(request, hit_id, hit_assignment_id)
+    redirect_due_to_error = _delete_hit_assignment(request, hit_id, hit_assignment_id)
     if redirect_due_to_error:
         return redirect_due_to_error
     return redirect(index)
 
 
 def skip_and_accept_next_hit(request, batch_id, hit_id, hit_assignment_id):
-    redirect_due_to_error = _return_hit_assignment_helper(request, hit_id, hit_assignment_id)
+    redirect_due_to_error = _delete_hit_assignment(request, hit_id, hit_assignment_id)
     if redirect_due_to_error:
         return redirect_due_to_error
 
@@ -232,6 +232,8 @@ def skip_hit(request, batch_id, hit_id):
 
 
 def _add_hit_id_to_skip_session(session, batch_id, hit_id):
+    """Add Hit ID to session variable tracking HITs the user has skipped
+    """
     # The Django session store converts dictionary keys from ints to strings
     batch_id = unicode(batch_id)
     hit_id = unicode(hit_id)
@@ -246,16 +248,17 @@ def _add_hit_id_to_skip_session(session, batch_id, hit_id):
         session.modified = True
 
 
-def _return_hit_assignment_helper(request, hit_id, hit_assignment_id):
-    """
-    Usage:
-        rr = _return_hit_assignment_helper(request, hit_id, hit_assignment_id)
-        if rr:
-            return rr
+def _delete_hit_assignment(request, hit_id, hit_assignment_id):
+    """Delete a HitAssignment, if possible
 
     Returns:
-        - None if the HitAssignment can be deleted
+        - None if the HitAssignment can be deleted, *OR*
         - An HTTPResponse object created by redirect() if there was an error
+
+    Usage:
+        redirect_due_to_error = _delete_hit_assignment(request, hit_id, hit_assignment_id)
+        if redirect_due_to_error:
+            return redirect_due_to_error
     """
     try:
         Hit.objects.get(id=hit_id)
@@ -289,7 +292,13 @@ def _return_hit_assignment_helper(request, hit_id, hit_assignment_id):
 
 
 def _skip_aware_next_available_hit_id(request, batch):
-    """
+    """Get next available HIT for user, taking into account previously skipped HITs
+
+    This function will first look for an available HIT that the user
+    has not previously skipped.  If the only available HITs are HITs
+    that the user has skipped, this function will return the first
+    such HIT.
+
     Returns:
         Hit ID (int), or None if no more HITs are available
     """
