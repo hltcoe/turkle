@@ -48,14 +48,6 @@ python manage.py createsuperuser
 
 ## Configuration ##
 
-To streamline worker task completion, submission of a HIT can
-automatically load the next unfinished HIT.  To enable this setting
-change `NEXT_HIT_ON_SUBMIT` to `True` at the bottom of `settings.py`
-in the turkle sub-directory.
-
-After changing settings, the web server will need to be restarted for
-changes to take effect.
-
 # Usage
 
 The administrator loads HITs for the worker(s) to complete.
@@ -152,7 +144,7 @@ After starting Gunicorn and restarting Apache with the new configuration, you sh
 be able to view the site at http://localhost/ or whatever the appropriate host name.
 
 Instructions for using Gunicorn with nginx are found on its [deploy page](http://docs.gunicorn.org/en/latest/deploy.html).
-You will still need to configure nginx to serve the static files as we did with Apache. 
+You will still need to configure nginx to serve the static files as we did with Apache.
 
 # Docker usage
 

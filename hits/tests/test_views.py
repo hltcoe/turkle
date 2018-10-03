@@ -8,6 +8,7 @@ except NameError:
 import django.test
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
+from django.contrib.sessions.middleware import SessionMiddleware
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
@@ -350,6 +351,11 @@ class TestHitAssignment(TestCase):
             {u'foo': u'bar'}
         )
         post_request.csrf_processing_done = True
+
+        middleware = SessionMiddleware()
+        middleware.process_request(post_request)
+        post_request.session.save()
+
         hit_assignment(post_request, self.hit.id, self.hit_assignment.id)
         ha = HitAssignment.objects.get(id=self.hit_assignment.id)
 
