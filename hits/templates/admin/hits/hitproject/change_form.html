@@ -16,20 +16,30 @@ $(function () {
 
   document.addEventListener('drop', (e) => {
     e.preventDefault();
+    copyFileTextToFormField(e.dataTransfer.files[0]);
+  });
 
+  $('#id_template_file_upload').change(function (e) {
+    copyFileTextToFormField(this.files[0]);
+
+    // Resetting input value allows the user to upload same file twice
+    $(this).val('');
+  });
+
+  function copyFileTextToFormField(f) {
     var reader = new FileReader();
     reader.onload = (function(theFile) {
       var fileContents = theFile.target.result;
       $('#id_html_template').val(fileContents);
     });
-    reader.readAsText(e.dataTransfer.files[0]);
+    reader.readAsText(f);
 
     // DOM ID created in custom_button_file_widget.html
-    $('#id_template_file_upload_custom_text').text(e.dataTransfer.files[0].name);
+    $('#id_template_file_upload_custom_text').text(f.name);
 
     // Update hidden form field
-    $('#id_filename').val(e.dataTransfer.files[0].name);
-  });
+    $('#id_filename').val(f.name);
+  }
 });
 </script>
 {% endblock %}
