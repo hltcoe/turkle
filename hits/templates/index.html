@@ -3,6 +3,34 @@
 
 {% block body %}
 
+{% if abandoned_assignments %}
+<div class="container-fluid">
+  {% for aa in abandoned_assignments %}
+  <div class="alert alert-warning" role="alert">
+    <span class="float-left">
+      You have abandoned <b>HIT {{ aa.hit.id }}</b>
+      from Project <b>{{ aa.hit.hit_batch.hit_project.name }}</b>,
+      Batch <b>{{ aa.hit.hit_batch.name }}</b>
+    </span>
+
+    <span>&nbsp;</span>
+
+    <span class="float-right">
+      <span class="inline-form-buttons">
+        <a href="{% url 'hit_assignment' aa.hit.id aa.hit_assignment_id %}" class="btn btn-sm btn-primary">
+          Resume working on HIT
+        </a>
+        <form method="post" action="{% url 'return_hit_assignment' aa.hit.id aa.hit_assignment_id %}">
+          {% csrf_token %}
+          <input type="submit" id="submitButton" class="btn btn-sm btn-primary" value="Return HIT" />
+        </form>
+      </span>
+    </span>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
 {% block content %}
 {% endblock %}
 

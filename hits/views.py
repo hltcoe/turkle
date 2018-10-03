@@ -158,6 +158,14 @@ def hit_assignment_iframe(request, hit_id, hit_assignment_id):
 
 
 def index(request):
+    abandoned_assignments = []
+    if request.user.is_authenticated:
+        for ha in HitAssignment.objects.filter(assigned_to=request.user).filter(completed=False):
+            abandoned_assignments.append({
+                'hit': ha.hit,
+                'hit_assignment_id': ha.id
+            })
+
     # Create a row for each Batch that has HITs available for the current user
     batch_rows = []
     for hit_project in HitProject.available_for(request.user):
@@ -174,7 +182,10 @@ def index(request):
                     'accept_next_hit_url': reverse('accept_next_hit',
                                                    kwargs={'batch_id': hit_batch.id})
                 })
-    return render(request, 'index.html', {'batch_rows': batch_rows})
+    return render(request, 'index.html', {
+        'abandoned_assignments': abandoned_assignments,
+        'batch_rows': batch_rows
+    })
 
 
 def preview(request, hit_id):
