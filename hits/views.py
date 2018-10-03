@@ -13,12 +13,11 @@ try:
 except NameError:
     unicode = str
 
-from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 
@@ -113,11 +112,14 @@ def hit_assignment(request, hit_id, hit_assignment_id):
                        u'Cannot find HIT Assignment with ID {}'.format(hit_assignment_id))
         return redirect(index)
 
+    auto_accept_status = request.session.get('auto_accept_status', False)
+
     if request.method == 'GET':
         return render(
             request,
             'hit_assignment.html',
             {
+                'auto_accept_status': auto_accept_status,
                 'hit': hit,
                 'hit_assignment': hit_assignment,
             },
@@ -127,7 +129,7 @@ def hit_assignment(request, hit_id, hit_assignment_id):
         hit_assignment.completed = True
         hit_assignment.save()
 
-        if hasattr(settings, 'NEXT_HIT_ON_SUBMIT') and settings.NEXT_HIT_ON_SUBMIT:
+        if request.session.get('auto_accept_status'):
             return redirect(accept_next_hit, hit.hit_batch.id)
         else:
             return redirect(index)
@@ -229,6 +231,12 @@ def skip_and_accept_next_hit(request, batch_id, hit_id, hit_assignment_id):
 def skip_hit(request, batch_id, hit_id):
     _add_hit_id_to_skip_session(request.session, batch_id, hit_id)
     return redirect(preview_next_hit, batch_id)
+
+
+def update_auto_accept(request):
+    accept_status = (request.POST[u'auto_accept'] == u'true')
+    request.session['auto_accept_status'] = accept_status
+    return JsonResponse({})
 
 
 def _add_hit_id_to_skip_session(session, batch_id, hit_id):

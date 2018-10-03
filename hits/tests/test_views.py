@@ -8,6 +8,7 @@ except NameError:
 import django.test
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
+from django.contrib.sessions.middleware import SessionMiddleware
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
 
@@ -344,12 +345,46 @@ class TestHitAssignment(TestCase):
         self.assertEqual(str(messages[0]),
                          u'Cannot find HIT Assignment with ID {}'.format(666))
 
+    def test_submit_assignment_without_auto_accept(self):
+        client = django.test.Client()
+
+        s = client.session
+        s.update({'auto_accept_status': False})
+        s.save()
+
+        response = client.post(reverse('hit_assignment',
+                                       kwargs={'hit_id': self.hit.id,
+                                               'hit_assignment_id': self.hit_assignment.id}),
+                               {u'foo': u'bar'})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+
+    def test_submit_assignment_with_auto_accept(self):
+        client = django.test.Client()
+
+        s = client.session
+        s.update({'auto_accept_status': True})
+        s.save()
+
+        response = client.post(reverse('hit_assignment',
+                                       kwargs={'hit_id': self.hit.id,
+                                               'hit_assignment_id': self.hit_assignment.id}),
+                               {u'foo': u'bar'})
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('accept_next_hit',
+                                                       kwargs={'batch_id': self.hit.hit_batch_id}))
+
     def test_0(self):
         post_request = RequestFactory().post(
             u'/hits/%d/assignment/%d/' % (self.hit.id, self.hit_assignment.id),
             {u'foo': u'bar'}
         )
         post_request.csrf_processing_done = True
+
+        middleware = SessionMiddleware()
+        middleware.process_request(post_request)
+        post_request.session.save()
+
         hit_assignment(post_request, self.hit.id, self.hit_assignment.id)
         ha = HitAssignment.objects.get(id=self.hit_assignment.id)
 

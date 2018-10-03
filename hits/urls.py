@@ -13,10 +13,12 @@ from hits.views import (
     return_hit_assignment,
     skip_and_accept_next_hit,
     skip_hit,
+    update_auto_accept,
 )
 
 urlpatterns = [
     url(r'^$', index, name='index'),
+    url(r'^update_auto_accept/$', update_auto_accept, name='update_auto_accept'),
     url(r'^(?P<hit_id>\d+)/$', preview, name='preview'),
     url(r'^(?P<hit_id>\d+)/iframe/$', preview_iframe, name='preview_iframe'),
     url(r'^(?P<hit_id>\d+)/assignment/(?P<hit_assignment_id>\d+)/return/$',
