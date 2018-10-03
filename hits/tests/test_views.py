@@ -296,8 +296,45 @@ class TestIndex(django.test.TestCase):
         self.assertTrue(b'MY_BATCH_NAME' in response.content)
 
 
-class TestHitAssignment(TestCase):
+class TestIndexAbandonedAssignments(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user('testuser', password='secret')
 
+        hit_project = HitProject()
+        hit_project.save()
+        hit_batch = HitBatch(hit_project=hit_project)
+        hit_batch.save()
+        self.hit = Hit(hit_batch=hit_batch)
+        self.hit.save()
+
+    def test_index_abandoned_assignment(self):
+        HitAssignment(
+            assigned_to=self.user,
+            completed=False,
+            hit=self.hit,
+        ).save()
+
+        client = django.test.Client()
+        client.login(username='testuser', password='secret')
+        response = client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(u'You have abandoned' in response.content)
+
+    def test_index_no_abandoned_assignments(self):
+        HitAssignment(
+            assigned_to=None,
+            completed=False,
+            hit=self.hit,
+        ).save()
+
+        client = django.test.Client()
+        client.login(username='testuser', password='secret')
+        response = client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(u'You have abandoned' in response.content)
+
+
+class TestHitAssignment(TestCase):
     def setUp(self):
         hit_project = HitProject(login_required=False, name='foo', html_template='<p></p>')
         hit_project.save()
