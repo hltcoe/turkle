@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+# hack to add unicode() to python3 for backward compatibility
+try:
+    unicode('')
+except NameError:
+    unicode = str
+
 import django.test
 from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
