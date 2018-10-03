@@ -11,6 +11,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import transaction
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
@@ -31,38 +32,49 @@ def accept_hit(request, batch_id, hit_id):
         return redirect(index)
 
     try:
-        batch.available_hits_for(request.user).get(id=hit_id)
+        with transaction.atomic():
+            # Lock access to the specified Hit
+            Hit.objects.filter(id=hit_id).select_for_update()
+
+            # Will throw ObjectDoesNotExist exception if Hit no longer available
+            batch.available_hits_for(request.user).get(id=hit_id)
+
+            ha = HitAssignment()
+            if request.user.is_authenticated:
+                ha.assigned_to = request.user
+            else:
+                ha.assigned_to = None
+            ha.hit = hit
+            ha.save()
     except ObjectDoesNotExist:
         messages.error(request, u'The HIT with ID {} is no longer available'.format(hit_id))
         return redirect(index)
 
-    # TODO: Handle possible race condition for two users claiming assignment
-    ha = HitAssignment()
-    if request.user.is_authenticated:
-        ha.assigned_to = request.user
-    else:
-        ha.assigned_to = None
-    ha.hit = hit
-    ha.save()
     return redirect(hit_assignment, hit.id, ha.id)
 
 
 def accept_next_hit(request, batch_id):
     try:
-        batch = HitBatch.objects.get(id=batch_id)
+        with transaction.atomic():
+            batch = HitBatch.objects.get(id=batch_id)
+
+            # Lock access to all HITs available to current user in the batch
+            available_hits = batch.available_hits_for(request.user).select_for_update()
+
+            hit = available_hits.first()
+            if hit:
+                ha = HitAssignment()
+                if request.user.is_authenticated:
+                    ha.assigned_to = request.user
+                else:
+                    ha.assigned_to = None
+                ha.hit = hit
+                ha.save()
     except ObjectDoesNotExist:
         messages.error(request, u'Cannot find HIT Batch with ID {}'.format(batch_id))
         return redirect(index)
-    hit = batch.next_available_hit_for(request.user)
-    # TODO: Handle possible race condition for two users claiming assignment
+
     if hit:
-        ha = HitAssignment()
-        if request.user.is_authenticated:
-            ha.assigned_to = request.user
-        else:
-            ha.assigned_to = None
-        ha.hit = hit
-        ha.save()
         return redirect(hit_assignment, hit.id, ha.id)
     else:
         messages.error(request, u'No more HITs available from Batch {}'.format(batch_id))
@@ -214,5 +226,9 @@ def return_hit_assignment(request, hit_id, hit_assignment_id):
             messages.error(request, u'The HIT you are trying to return belongs to another user')
             return redirect(index)
 
-    hit_assignment.delete()
+    with transaction.atomic():
+        # Lock access to the specified Hit
+        Hit.objects.filter(id=hit_id).select_for_update()
+
+        hit_assignment.delete()
     return redirect(preview_next_hit, hit.hit_batch_id)
