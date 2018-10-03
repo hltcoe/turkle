@@ -21,7 +21,7 @@ class Hit(models.Model):
     class Meta:
         verbose_name = "HIT"
 
-    hit_batch = models.ForeignKey('HitBatch')
+    hit_batch = models.ForeignKey('HitBatch', on_delete=models.CASCADE)
     completed = models.BooleanField(default=False)
     input_csv_fields = JSONField()
 
@@ -53,10 +53,10 @@ class HitAssignment(models.Model):
         verbose_name = "HIT Assignment"
 
     answers = JSONField(blank=True)
-    assigned_to = models.ForeignKey(User, null=True)
+    assigned_to = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
     completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    hit = models.ForeignKey(Hit)
+    hit = models.ForeignKey(Hit, on_delete=models.CASCADE)
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
@@ -80,7 +80,7 @@ class HitBatch(models.Model):
     assignments_per_hit = models.IntegerField(default=1)
     date_published = models.DateTimeField(auto_now_add=True)
     filename = models.CharField(max_length=1024)
-    hit_project = models.ForeignKey('HitProject')
+    hit_project = models.ForeignKey('HitProject', on_delete=models.CASCADE)
     name = models.CharField(max_length=1024)
 
     def available_hits_for(self, user):
