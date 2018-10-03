@@ -318,7 +318,7 @@ class TestIndexAbandonedAssignments(TestCase):
         client.login(username='testuser', password='secret')
         response = client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(u'You have abandoned' in response.content)
+        self.assertTrue(b'You have abandoned' in response.content)
 
     def test_index_no_abandoned_assignments(self):
         HitAssignment(
@@ -331,7 +331,7 @@ class TestIndexAbandonedAssignments(TestCase):
         client.login(username='testuser', password='secret')
         response = client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(u'You have abandoned' in response.content)
+        self.assertFalse(b'You have abandoned' in response.content)
 
 
 class TestHitAssignment(TestCase):
