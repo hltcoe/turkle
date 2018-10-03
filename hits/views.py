@@ -310,6 +310,12 @@ def _skip_aware_next_available_hit_id(request, batch):
             hit_id = available_hit_ids.filter(id__in=skipped_ids).first()
             if hit_id:
                 messages.info(request, u'Only previously skipped HITs are available')
+
+                # Once all remaining HITs have been marked as skipped, we clear
+                # their skipped status.  If we don't take this step, then a HIT
+                # cannot be skipped a second time.
+                request.session['skipped_hits_in_batch'][unicode(batch.id)] = []
+                request.session.modified = True
     else:
         hit_id = available_hit_ids.first()
 

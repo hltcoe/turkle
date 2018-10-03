@@ -698,3 +698,19 @@ class TestSkipHit(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]), u'Only previously skipped HITs are available')
+
+        # Skip hit_one for a second time
+        ha_one = self.hit_one.hitassignment_set.first()
+        response = client.post(reverse('skip_and_accept_next_hit',
+                                       kwargs={'batch_id': self.hit_batch.id,
+                                               'hit_id': self.hit_one.id,
+                                               'hit_assignment_id': ha_one.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('accept_next_hit',
+                                                       kwargs={'batch_id': self.hit_batch.id}))
+
+        # Verify that hit_one has been skipped for a second time
+        response = client.get(reverse('accept_next_hit',
+                                      kwargs={'batch_id': self.hit_batch.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue('{}/assignment/'.format(self.hit_two.id) in response['Location'])
