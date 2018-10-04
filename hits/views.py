@@ -17,13 +17,33 @@ from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
+from django.db.utils import OperationalError
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from functools import wraps
 
 from hits.models import Hit, HitAssignment, HitBatch, HitProject
 
 
+def handle_db_lock(func):
+    """Decorator that catches database lock errors from sqlite"""
+    @wraps(func)
+    def wrapper(request, *args, **kwargs):
+        try:
+            return func(request, *args, **kwargs)
+        except OperationalError as ex:
+            # sqlite3 cannot handle concurrent transactions.
+            # This should be very rare with just a few users.
+            # If it happens often, switch to mysql or postgres.
+            if str(ex) == 'database is locked':
+                messages.error(request, u'The database is busy. Please try again.')
+                return redirect(index)
+            raise ex
+    return wrapper
+
+
+@handle_db_lock
 def accept_hit(request, batch_id, hit_id):
     try:
         batch = HitBatch.objects.get(id=batch_id)
@@ -58,6 +78,7 @@ def accept_hit(request, batch_id, hit_id):
     return redirect(hit_assignment, hit.id, ha.id)
 
 
+@handle_db_lock
 def accept_next_hit(request, batch_id):
     try:
         with transaction.atomic():
@@ -267,6 +288,7 @@ def _add_hit_id_to_skip_session(session, batch_id, hit_id):
         session.modified = True
 
 
+@handle_db_lock
 def _delete_hit_assignment(request, hit_id, hit_assignment_id):
     """Delete a HitAssignment, if possible
 
