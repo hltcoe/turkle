@@ -73,7 +73,7 @@ class TestAcceptHit(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         u'The HIT with ID {} is no longer available'.format(self.hit.id))
+                         u'The Task with ID {} is no longer available'.format(self.hit.id))
 
 
 class TestAcceptNextHit(TestCase):
@@ -129,7 +129,7 @@ class TestAcceptNextHit(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         u'Cannot find HIT Batch with ID {}'.format(666))
+                         u'Cannot find Task Batch with ID {}'.format(666))
 
     def test_accept_next_hit__no_more_hits(self):
         User.objects.create_user('testuser', password='secret')
@@ -147,7 +147,7 @@ class TestAcceptNextHit(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         u'No more HITs available from Batch {}'.format(self.hit_batch.id))
+                         u'No more Tasks available from Batch {}'.format(self.hit_batch.id))
 
     def test_accept_next_hit__respect_skip(self):
         hit_two = Hit(hit_batch=self.hit_batch)
@@ -255,7 +255,7 @@ class TestIndex(django.test.TestCase):
         anon_client = django.test.Client()
         response = anon_client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(b'No HITs available' in response.content)
+        self.assertTrue(b'No Tasks available' in response.content)
         self.assertFalse(b'MY_TEMPLATE_NAME' in response.content)
         self.assertFalse(b'MY_BATCH_NAME' in response.content)
 
@@ -264,7 +264,7 @@ class TestIndex(django.test.TestCase):
         known_client.login(username='admin', password='secret')
         response = known_client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(b'No HITs available' in response.content)
+        self.assertFalse(b'No Tasks available' in response.content)
         self.assertTrue(b'MY_TEMPLATE_NAME' in response.content)
         self.assertTrue(b'MY_BATCH_NAME' in response.content)
 
@@ -282,7 +282,7 @@ class TestIndex(django.test.TestCase):
         anon_client = django.test.Client()
         response = anon_client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(b'No HITs available' in response.content)
+        self.assertFalse(b'No Tasks available' in response.content)
         self.assertTrue(b'MY_TEMPLATE_NAME' in response.content)
         self.assertTrue(b'MY_BATCH_NAME' in response.content)
 
@@ -291,7 +291,7 @@ class TestIndex(django.test.TestCase):
         known_client.login(username='admin', password='secret')
         response = known_client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(b'No HITs available' in response.content)
+        self.assertFalse(b'No Tasks available' in response.content)
         self.assertTrue(b'MY_TEMPLATE_NAME' in response.content)
         self.assertTrue(b'MY_BATCH_NAME' in response.content)
 
@@ -368,7 +368,7 @@ class TestHitAssignment(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         u'Cannot find HIT with ID {}'.format(666))
+                         u'Cannot find Task with ID {}'.format(666))
 
     def test_get_hit_assignment_with_bad_hit_assignment_id(self):
         client = django.test.Client()
@@ -380,7 +380,7 @@ class TestHitAssignment(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         u'Cannot find HIT Assignment with ID {}'.format(666))
+                         u'Cannot find Task Assignment with ID {}'.format(666))
 
     def test_submit_assignment_without_auto_accept(self):
         client = django.test.Client()
@@ -497,7 +497,7 @@ class TestPreview(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         u'Cannot find HIT with ID {}'.format(666))
+                         u'Cannot find Task with ID {}'.format(666))
 
     def test_get_preview_iframe(self):
         client = django.test.Client()
@@ -512,7 +512,7 @@ class TestPreview(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         u'Cannot find HIT with ID {}'.format(666))
+                         u'Cannot find Task with ID {}'.format(666))
 
     def test_preview_next_hit(self):
         client = django.test.Client()
@@ -529,7 +529,7 @@ class TestPreview(TestCase):
         self.assertEqual(response['Location'], reverse('index'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
-        self.assertTrue(u'No more HITs are available for Batch' in str(messages[0]))
+        self.assertTrue(u'No more Tasks are available for Batch' in str(messages[0]))
 
 
 class TestReturnHitAssignment(TestCase):
@@ -580,7 +580,7 @@ class TestReturnHitAssignment(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         u"The HIT can't be returned because it has been completed")
+                         u"The Task can't be returned because it has been completed")
 
     def test_return_hit_assignment_as_anonymous_user(self):
         hit_assignment = HitAssignment(
@@ -614,7 +614,7 @@ class TestReturnHitAssignment(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         u'The HIT you are trying to return belongs to another user')
+                         u'The Task you are trying to return belongs to another user')
 
     def test_return_hit_assignment__user_returns_anon_users_hit(self):
         User.objects.create_user('testuser', password='secret')
@@ -635,7 +635,7 @@ class TestReturnHitAssignment(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         u'The HIT you are trying to return belongs to another user')
+                         u'The Task you are trying to return belongs to another user')
 
 
 class TestSkipHit(TestCase):
@@ -659,7 +659,7 @@ class TestSkipHit(TestCase):
         self.assertEqual(response['Location'], reverse('preview',
                                                        kwargs={'hit_id': self.hit_one.id}))
 
-        # Since no HITs have been completed or skipped, preview_next_hit redirects to same HIT
+        # Since no Tasks have been completed or skipped, preview_next_hit redirects to same Task
         response = client.get(reverse('preview_next_hit', kwargs={'batch_id': self.hit_batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('preview',
@@ -703,8 +703,8 @@ class TestSkipHit(TestCase):
         self.assertEqual(response['Location'], reverse('preview_next_hit',
                                                        kwargs={'batch_id': self.hit_batch.id}))
 
-        # Verify that, with all existing HITs skipped, we have been redirected back to
-        # hit_one and that info message is displayed about only skipped HITs remaining
+        # Verify that, with all existing Tasks skipped, we have been redirected back to
+        # hit_one and that info message is displayed about only skipped Tasks remaining
         response = client.get(reverse('preview_next_hit',
                                       kwargs={'batch_id': self.hit_batch.id}))
         self.assertEqual(response.status_code, 302)
@@ -712,7 +712,7 @@ class TestSkipHit(TestCase):
                                                        kwargs={'hit_id': self.hit_one.id}))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
-        self.assertEqual(str(messages[0]), u'Only previously skipped HITs are available')
+        self.assertEqual(str(messages[0]), u'Only previously skipped Tasks are available')
 
     def test_skip_and_accept_next_hit(self):
         client = django.test.Client()
@@ -761,15 +761,15 @@ class TestSkipHit(TestCase):
         self.assertEqual(response['Location'], reverse('accept_next_hit',
                                                        kwargs={'batch_id': self.hit_batch.id}))
 
-        # Verify that, with all existing HITs skipped, we have been redirected back to
-        # hit_one and that info message is displayed about only skipped HITs remaining
+        # Verify that, with all existing Tasks skipped, we have been redirected back to
+        # hit_one and that info message is displayed about only skipped Tasks remaining
         response = client.get(reverse('accept_next_hit',
                                       kwargs={'batch_id': self.hit_batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertTrue('{}/assignment/'.format(self.hit_one.id) in response['Location'])
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
-        self.assertEqual(str(messages[0]), u'Only previously skipped HITs are available')
+        self.assertEqual(str(messages[0]), u'Only previously skipped Tasks are available')
 
         # Skip hit_one for a second time
         ha_one = self.hit_one.hitassignment_set.first()

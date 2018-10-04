@@ -47,18 +47,18 @@ $(function () {
 <span>
   <input type="checkbox" id="update_auto_accept"
          {% if auto_accept_status %} checked="checked" {% endif %} >
-  <label class="form-check-label" for="update_auto_accept">Auto-accept next HIT</label>
+  <label class="form-check-label" for="update_auto_accept">Auto-accept next Task</label>
 </span>
 
 <span class="inline-form-buttons">
   <form method="post" action="{% url 'return_hit_assignment' hit.id hit_assignment.id %}">
     {% csrf_token %}
-    <input type="submit" id="submitButton" class="btn btn-sm btn-danger" value="Return HIT" />
+    <input type="submit" id="submitButton" class="btn btn-sm btn-danger" value="Return Task" />
   </form>
 
   <form method="post" action="{% url 'skip_and_accept_next_hit' hit.hit_batch_id hit.id hit_assignment.id %}">
     {% csrf_token %}
-    <input type="submit" id="submitButton" class="btn btn-sm btn-danger" value="Skip HIT" />
+    <input type="submit" id="submitButton" class="btn btn-sm btn-danger" value="Skip Task" />
   </form>
 </span>
 

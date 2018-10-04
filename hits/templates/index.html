@@ -8,7 +8,7 @@
   {% for aa in abandoned_assignments %}
   <div class="alert alert-warning" role="alert">
     <span class="float-left">
-      You have abandoned <b>HIT {{ aa.hit.id }}</b>
+      You have abandoned <b>Task {{ aa.hit.id }}</b>
       from Project <b>{{ aa.hit.hit_batch.hit_project.name }}</b>,
       Batch <b>{{ aa.hit.hit_batch.name }}</b>
     </span>
@@ -18,11 +18,11 @@
     <span class="float-right">
       <span class="inline-form-buttons">
         <a href="{% url 'hit_assignment' aa.hit.id aa.hit_assignment_id %}" class="btn btn-sm btn-primary">
-          Resume working on HIT
+          Resume working on Task
         </a>
         <form method="post" action="{% url 'return_hit_assignment' aa.hit.id aa.hit_assignment_id %}">
           {% csrf_token %}
-          <input type="submit" id="submitButton" class="btn btn-sm btn-primary" value="Return HIT" />
+          <input type="submit" id="submitButton" class="btn btn-sm btn-primary" value="Return Task" />
         </form>
       </span>
     </span>
@@ -42,7 +42,7 @@
       <th>Project</th>
       <th>Batch</th>
       <th>Batch Published</th>
-      <th>HITs Available</th>
+      <th>Tasks Available</th>
       <th></th>
       <th></th>
     </tr>
@@ -54,23 +54,23 @@
       <td>{{ batch_row.assignments_available }}</td>
       <td>
         <a href="{{ batch_row.preview_next_hit_url }}" role="button" class="btn btn-sm btn-primary">
-          Preview next HIT
+          Preview next Task
         </a>
       </td>
       <td>
         <form method="post" action="{{ batch_row.accept_next_hit_url }}">
           {% csrf_token %}
-          <input type="submit" id="submitButton" class="btn btn-sm btn-primary" value="Accept next HIT" />
+          <input type="submit" id="submitButton" class="btn btn-sm btn-primary" value="Accept next Task" />
         </form>
       </td>
     </tr>
     {% endfor %}
   </table>
   {% else %}
-  <h1>No HITs available at this time</h1>
+  <h1>No Tasks available at this time</h1>
   {% if not user.is_authenticated  %}
   <h4>
-    You may need to <a href="{% url 'login' %}">Login</a> to see available HITs
+    You may need to <a href="{% url 'login' %}">Login</a> to see available Tasks
   </h4>
   {% endif %}
   {% endif %}
