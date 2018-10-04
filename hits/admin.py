@@ -66,9 +66,9 @@ class HitBatchForm(ModelForm):
         cleaned_data = super(HitBatchForm, self).clean()
 
         csv_file = cleaned_data.get("csv_file", False)
-        hit_project = cleaned_data.get("hit_project", False)
+        hit_project = cleaned_data.get("hit_project")
 
-        if not csv_file:
+        if not csv_file or not hit_project:
             return
 
         validation_errors = []

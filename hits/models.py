@@ -115,9 +115,17 @@ class HitBatch(models.Model):
         return self.available_hits_for(user).values_list('id', flat=True)
 
     def clean(self):
-        if not self.hit_project.login_required and self.assignments_per_hit != 1:
-            raise ValidationError('When login is not required to access a Project, ' +
-                                  'the number of Assignments per Task must be 1')
+        # Without this guard condition for hit_project_id, a
+        # RelatedObjectDoesNotExist exception is thrown before a
+        # ValidationError can be thrown.  When this model is edited
+        # using a form, this causes the server to generate an HTTP 500
+        # error due to the uncaught RelatedObjectDoesNotExist
+        # exception, instead of catching the ValidationError and
+        # displaying a form with a "Field required" warning.
+        if self.hit_project_id:
+            if not self.hit_project.login_required and self.assignments_per_hit != 1:
+                raise ValidationError('When login is not required to access a Project, ' +
+                                      'the number of Assignments per Task must be 1')
 
     def csv_results_filename(self):
         """Returns filename for CSV results file for this HitBatch
