@@ -64,7 +64,7 @@ class HitAssignment(models.Model):
 
     @classmethod
     def expire_all_abandoned(cls):
-        cls.objects.\
+        return cls.objects.\
             filter(completed=False).\
             filter(expires_at__lt=timezone.now()).\
             delete()
