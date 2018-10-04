@@ -1,4 +1,31 @@
 {% extends "hit_base.html" %}
+{% load staticfiles %}
+
+{% block header %}
+{{ block.super }}
+<script type="text/javascript" src="{% static 'hits/jquery-3.3.1.min.js' %}"></script>
+<script>
+$(function () {
+  var csrftoken = $("[name=csrfmiddlewaretoken]").val();
+
+  function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+  }
+  $.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+      if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+        xhr.setRequestHeader("X-CSRFToken", csrftoken);
+      }
+    }
+  });
+
+  $('#update_auto_accept').change(function() {
+    $.post("{% url 'update_auto_accept' %}", {'auto_accept': this.checked});
+  });
+});
+</script>
+{% endblock %}
 
 {% block body %}
 
@@ -17,8 +44,13 @@
 {% endblock %}
 
 {% block right_half_footer %}
+<span>
+  <input type="checkbox" id="update_auto_accept"
+         {% if auto_accept_status %} checked="checked" {% endif %} >
+  <label class="form-check-label" for="update_auto_accept">Auto-accept next HIT</label>
+</span>
 
-<span class="form-buttons">
+<span class="inline-form-buttons">
   <form method="post" action="{% url 'return_hit_assignment' hit.id hit_assignment.id %}">
     {% csrf_token %}
     <input type="submit" id="submitButton" class="btn btn-sm btn-danger" value="Return HIT" />

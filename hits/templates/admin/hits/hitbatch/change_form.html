@@ -21,6 +21,10 @@ $(function () {
     // DOM ID created in custom_button_file_widget.html
     $('#id_csv_file_custom_text').text(e.dataTransfer.files[0].name);
   });
+
+  $('#id_csv_file').change(function (e) {
+    $('#id_csv_file_custom_text').text(this.files[0].name);
+  });
 });
 </script>
 {% endblock %}
