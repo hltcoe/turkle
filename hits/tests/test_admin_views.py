@@ -177,7 +177,6 @@ class TestHitBatchAdmin(django.test.TestCase):
         response = client.post(
             u'/admin/hits/hitbatch/%d/change/' % batch.id,
             {
-                'allotted_assignment_time': 24,
                 'assignments_per_hit': 1,
                 'hit_project': batch.hit_project.id,
                 'name': 'hit_batch_save_modified',
