@@ -12,4 +12,3 @@ class TestClient(django.test.LiveServerTestCase):
     def test_add_user(self):
         client = TurkleClient(self.live_server_url, "admin", "password")
         self.assertTrue(client.add_user("tony", "password"))
-
