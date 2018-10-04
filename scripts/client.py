@@ -6,11 +6,11 @@ import re
 import requests
 
 
-def exception_handler(function):
-    @functools.wraps(function)
+def exception_handler(func):
+    @functools.wraps(func)
     def wrapper(*args, **kwargs):
         try:
-            return function(*args, **kwargs)
+            return func(*args, **kwargs)
         except requests.exceptions.ConnectionError:
             print("Error: failed to contact site")
             return False
@@ -24,15 +24,18 @@ class TurkleClient(object):
     ADD_BATCH_URL = "/admin/hits/hitbatch/add/"
     LIST_BATCH_URL = "/admin/hits/hitbatch/"
 
-    def __init__(self, args):
-        if not args.p:
-            args.p = getpass.getpass(prompt="Admin password: ")
-        self.args = args
+    def __init__(self, server, admin, password=None):
+        if not password:
+            self.password = getpass.getpass(prompt="Admin password: ")
+        else:
+            self.password = password
+        self.admin = admin
+        self.server = server
+        if 'http://' in self.server:
+            self.server = self.server.replace('http://', '')
 
     @exception_handler
-    def add_user(self, user=None, password=None):
-        user = user if user else self.args.username
-        password = password if password else self.args.password
+    def add_user(self, user, password):
         with requests.Session() as session:
             if not self.login(session):
                 return False
@@ -51,7 +54,7 @@ class TurkleClient(object):
         return True
 
     @exception_handler
-    def download(self):
+    def download(self, directory):
         with requests.Session() as session:
             if not self.login(session):
                 return False
@@ -65,37 +68,37 @@ class TurkleClient(object):
                     resp = session.get(self.format_url(download_col['href']))
                     info = resp.headers['content-disposition']
                     filename = re.findall(r'filename="(.+)"', info)[0]
-                    filename = os.path.join(self.args.dir, filename)
+                    filename = os.path.join(directory, filename)
                     with open(filename, 'wb') as fh:
                         fh.write(resp.content)
         return True
 
     @exception_handler
-    def publish(self):
-        if not self.validate_publish():
+    def publish(self, options):
+        if not self.validate_publish(options):
             return False
 
-        self.prepare_publish()
+        self.prepare_publish(options)
 
         with requests.Session() as session:
             if not self.login(session):
                 return False
-            if not self.upload_project(session):
+            if not self.upload_project(session, options):
                 return False
-            return self.upload_csv(session)
+            return self.upload_csv(session, options)
 
-    def upload_project(self, session):
+    def upload_project(self, session, options):
         url = self.format_url(self.ADD_PROJECT_URL)
         session.get(url)
         payload = {
-            'name': self.args.project_name,
-            'assignments_per_hit': self.args.num,
-            'filename': self.args.template,
-            'html_template': self.args.form,
+            'name': options.project_name,
+            'assignments_per_hit': options.num,
+            'filename': options.template,
+            'html_template': options.form,
             'active': 1,
             'csrfmiddlewaretoken': session.cookies['csrftoken']
         }
-        if self.args.login:
+        if options.login:
             payload['login_required'] = 1
         resp = session.post(url, data=payload)
         if resp.status_code != requests.codes.ok:
@@ -103,7 +106,7 @@ class TurkleClient(object):
             return False
         return True
 
-    def upload_csv(self, session):
+    def upload_csv(self, session, options):
         url = self.format_url(self.ADD_BATCH_URL)
         resp = session.get(url)
         # grab a list of the project ids from the form
@@ -112,43 +115,43 @@ class TurkleClient(object):
         payload = {
             # we just upload a project so we assume that its last in list
             'hit_project': ids[-1],
-            'name': self.args.batch_name,
-            'assignments_per_hit': self.args.num,
+            'name': options.batch_name,
+            'assignments_per_hit': options.num,
             'active': 1,
             'csrfmiddlewaretoken': session.cookies['csrftoken']
         }
-        files = {'csv_file': (self.args.csv, self.args.csv_data)}
+        files = {'csv_file': (options.csv, options.csv_data)}
         resp = session.post(url, data=payload, files=files)
         if resp.status_code != requests.codes.ok:
             print("Error: uploading the csv failed")
             return False
         return True
 
-    def validate_publish(self):
+    def validate_publish(self, options):
         # HITs that don't require a log in can only be done once
-        if not self.args.login and self.args.num != 1:
+        if not options.login and options.num != 1:
             print("Error: login cannot be off if more than 1 assignment per hit")
             return False
 
-        if not os.path.exists(self.args.template):
+        if not os.path.exists(options.template):
             print("Error: template path does not exist")
             return False
 
-        if not os.path.exists(self.args.csv):
+        if not os.path.exists(options.csv):
             print("Error: csv path does not exist")
             return False
 
         return True
 
-    def prepare_publish(self):
-        if not self.args.project_name:
-            self.args.project_name = self.extract_name(self.args.template)
-        if not self.args.batch_name:
-            self.args.batch_name = self.extract_name(self.args.csv)
-        self.args.form = self.read_file(self.args.template)
-        self.args.template = os.path.basename(self.args.template)
-        self.args.csv_data = self.read_file(self.args.csv)
-        self.args.csv = os.path.basename(self.args.csv)
+    def prepare_publish(self, options):
+        if not options.project_name:
+            options.project_name = self.extract_name(options.template)
+        if not options.batch_name:
+            options.batch_name = self.extract_name(options.csv)
+        options.form = self.read_file(options.template)
+        options.template = os.path.basename(options.template)
+        options.csv_data = self.read_file(options.csv)
+        options.csv = os.path.basename(options.csv)
 
     @staticmethod
     def read_file(filename):
@@ -165,8 +168,8 @@ class TurkleClient(object):
         url = self.format_url(self.LOGIN_URL)
         session.get(url)
         payload = {
-            'username': self.args.u,
-            'password': self.args.p,
+            'username': self.admin,
+            'password': self.password,
             'csrfmiddlewaretoken': session.cookies['csrftoken']
         }
         resp = session.post(url, data=payload)
@@ -176,4 +179,4 @@ class TurkleClient(object):
         return result
 
     def format_url(self, path):
-        return "http://" + self.args.server + path
+        return "http://" + self.server + path

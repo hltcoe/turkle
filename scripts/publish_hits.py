@@ -20,8 +20,8 @@ parser.add_argument("template", help="html template file")
 parser.add_argument("csv", help="csv file for batch")
 args = parser.parse_args()
 
-client = TurkleClient(args)
-result = client.publish()
+client = TurkleClient(args.server, args.u, args.p)
+result = client.publish(args)
 if result:
     print("Success")
 else:

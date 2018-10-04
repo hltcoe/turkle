@@ -14,8 +14,8 @@ parser.add_argument("--server", help="hostname:port", default="localhost:8000")
 parser.add_argument("--dir", help="directory to save files", default=".")
 args = parser.parse_args()
 
-client = TurkleClient(args)
-result = client.download()
+client = TurkleClient(args.server, args.u, args.p)
+result = client.download(args.dir)
 if result:
     print("Success")
 else:
