@@ -9,7 +9,7 @@ except ImportError:
 
 from django.contrib import admin
 from django.db import models
-from django.forms import (FileField, FileInput, HiddenInput,
+from django.forms import (FileField, FileInput, HiddenInput, IntegerField,
                           ModelForm, TextInput, ValidationError)
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
@@ -34,6 +34,10 @@ class CustomButtonFileWidget(FileInput):
 
 class HitBatchForm(ModelForm):
     csv_file = FileField(label='CSV File')
+
+    # Allow a form to be submitted without an 'allotted_assignment_time'
+    # field.  The default value for this field will be used instead.
+    allotted_assignment_time = IntegerField(required=False)
 
     def __init__(self, *args, **kwargs):
         super(HitBatchForm, self).__init__(*args, **kwargs)
