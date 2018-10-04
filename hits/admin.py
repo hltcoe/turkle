@@ -15,7 +15,7 @@ from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 import unicodecsv
 
-from hits.models import Hit, HitBatch, HitProject
+from hits.models import HitBatch, HitProject
 
 
 admin.site.site_header = 'Turkle administration'
@@ -39,7 +39,7 @@ class HitBatchForm(ModelForm):
         super(HitBatchForm, self).__init__(*args, **kwargs)
 
         self.fields['csv_file'].widget = CustomButtonFileWidget()
-        self.fields['hit_project'].label = 'HIT Project'
+        self.fields['hit_project'].label = 'Project'
         self.fields['name'].label = 'Batch Name'
 
         # csv_file field not required if changing existing HitBatch
@@ -60,7 +60,7 @@ class HitBatchForm(ModelForm):
         """Verify format of CSV file
 
         Verify that:
-        - fieldnames in CSV file are identical to fieldnames in HIT project
+        - fieldnames in CSV file are identical to fieldnames in Project
         - number of fields in each row matches number of fields in CSV header
         """
         cleaned_data = super(HitBatchForm, self).clean()
@@ -160,11 +160,11 @@ class HitProjectForm(ModelForm):
         #   hits/templates/admin/hits/hitproject/change_form.html
         self.fields['filename'].widget = HiddenInput()
 
-        self.fields['assignments_per_hit'].label = 'Assignments per HIT'
+        self.fields['assignments_per_hit'].label = 'Assignments per Task'
         self.fields['assignments_per_hit'].help_text = 'This parameter sets the default ' + \
-            'number of Assignments per HIT for new Batches of HITs.  Changing this ' + \
-            'parameter DOES NOT change the number of Assignments per HIT for already ' + \
-            'published batches of HITS.'
+            'number of Assignments per Task for new Batches of Tasks.  Changing this ' + \
+            'parameter DOES NOT change the number of Assignments per Task for already ' + \
+            'published batches of Tasks.'
         self.fields['html_template'].label = 'HTML template text'
         self.fields['html_template'].help_text = 'You can edit the template text directly, ' + \
             'or upload a template file using the button below'
@@ -202,9 +202,10 @@ class HitProjectAdmin(admin.ModelAdmin):
             reverse('admin:hits_hitbatch_add'),
             instance.id,
             instance.assignments_per_hit)
-        return format_html('<a href="{}" class="button">Publish HITS</a>'.format(publish_hits_url))
+        return format_html('<a href="{}" class="button">Publish Tasks</a>'.
+                           format(publish_hits_url))
+    publish_hits.short_description = 'Publish Tasks'
 
 
-admin.site.register(Hit)
 admin.site.register(HitBatch, HitBatchAdmin)
 admin.site.register(HitProject, HitProjectAdmin)

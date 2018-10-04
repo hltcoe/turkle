@@ -25,7 +25,7 @@ except NameError:
 
 class TestHitAssignment(django.test.TestCase):
     def test_hit_marked_as_completed(self):
-        # When assignment_per_hit==1, completing 1 Assignment marks HIT as complete
+        # When assignment_per_hit==1, completing 1 Assignment marks Task as complete
         hit_project = HitProject(name='test', html_template='<p>${number} - ${letter}</p>')
         hit_project.save()
         hit_batch = HitBatch(hit_project=hit_project)
@@ -50,7 +50,7 @@ class TestHitAssignment(django.test.TestCase):
         self.assertTrue(hit.completed)
 
     def test_hit_marked_as_completed_two_way_redundancy(self):
-        # When assignment_per_hit==2, completing 2 Assignments marks HIT as complete
+        # When assignment_per_hit==2, completing 2 Assignments marks Task as complete
         hit_project = HitProject(name='test', html_template='<p>${number} - ${letter}</p>')
         hit_project.save()
         hit_batch = HitBatch(hit_project=hit_project)
@@ -217,7 +217,7 @@ class TestHitBatch(django.test.TestCase):
         ).clean()
 
     def test_login_required_validation_3(self):
-        with self.assertRaisesMessage(ValidationError, 'Assignments per HIT must be 1'):
+        with self.assertRaisesMessage(ValidationError, 'Assignments per Task must be 1'):
             hit_project = HitProject(
                 login_required=False,
             )
@@ -429,7 +429,7 @@ class TestHitProject(django.test.TestCase):
         ).clean()
 
     def test_login_required_validation_3(self):
-        with self.assertRaisesMessage(ValidationError, 'Assignments per HIT must be 1'):
+        with self.assertRaisesMessage(ValidationError, 'Assignments per Task must be 1'):
             HitProject(
                 assignments_per_hit=2,
                 login_required=False,
@@ -602,7 +602,7 @@ class TestModels(django.test.TestCase):
         unicode(hit) should return the template's title followed by :id of the
         hit.
         """
-        self.assertEqual('HIT id:1', unicode(self.hit))
+        self.assertEqual('Task id:1', unicode(self.hit))
 
     def test_result_to_dict_Answer(self):
         self.assertEqual(
