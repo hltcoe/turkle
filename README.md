@@ -150,7 +150,45 @@ DATABASES = {
     }
 }
 ```
-The last step is running the migration command to create the database tables.
+The last step is running the Turkle install steps (migrate and createsuperuser).
+
+## PostgreSQL
+
+
+First, you need to install the python PostgreSQL adapter:
+
+```bash
+pip install psycopg2
+```
+Note that this requires development headers for PostgreSQL and python to be installed.
+The method for installing these depends on your operating system.
+
+Second, create a database and database user for Turkle. In the examples below,
+we are calling the database `turkle` and the user `turkleuser` with the password `password`.
+Log into the psql client and run the following commands:
+
+```sql
+CREATE DATABASE turkle;
+CREATE USER turkleuser WITH PASSWORD 'password';
+ALTER ROLE turkleuser SET client_encoding TO 'utf8';
+GRANT ALL PRIVILEGES ON turkle TO turkleuser;
+```
+
+Third, update Turkle's settings to point at this database:
+
+```python
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'turkle',
+        'USER': 'turkleuser',
+        'PASSWORD': 'password',
+        'HOST': 'localhost'
+    }
+}
+```
+The last step is running the Turkle install steps (migrate and createsuperuser).
+
 
 ## Running with Gunicorn
 
@@ -195,7 +233,7 @@ ProxyPassReverse / http://localhost:5000/
 Apache will look in its default location for the static directory so you'll need to create
 a symbolic link (more convenient) or copy the files (safer).
 After starting Gunicorn and restarting Apache with the new configuration, you should
-be able to view the site at http://localhost/ or whatever the appropriate host name.
+be able to view the site at http://localhost/ or whatever the appropriate host name is.
 
 Instructions for using Gunicorn with nginx are found on its [deploy page](http://docs.gunicorn.org/en/latest/deploy.html).
 You will still need to configure nginx to serve the static files as we did with Apache.
