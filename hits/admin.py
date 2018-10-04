@@ -15,7 +15,7 @@ from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 import unicodecsv
 
-from hits.models import Hit, HitBatch, HitProject
+from hits.models import HitBatch, HitProject
 
 
 admin.site.site_header = 'Turkle administration'
@@ -207,6 +207,5 @@ class HitProjectAdmin(admin.ModelAdmin):
     publish_hits.short_description = 'Publish Tasks'
 
 
-admin.site.register(Hit)
 admin.site.register(HitBatch, HitBatchAdmin)
 admin.site.register(HitProject, HitProjectAdmin)
