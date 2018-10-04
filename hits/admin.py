@@ -8,6 +8,8 @@ except ImportError:
         StringIO = BytesIO
 
 from django.contrib import admin
+from django.contrib.auth.models import User, Group
+from django.contrib.auth.admin import UserAdmin, GroupAdmin
 from django.db import models
 from django.forms import (FileField, FileInput, HiddenInput, IntegerField,
                           ModelForm, TextInput, ValidationError)
@@ -18,7 +20,9 @@ import unicodecsv
 from hits.models import HitBatch, HitProject
 
 
-admin.site.site_header = 'Turkle administration'
+class TurkleAdminSite(admin.AdminSite):
+    app_index_template = 'admin/hits/app_index.html'
+    site_header = 'Turkle administration'
 
 
 class CustomButtonFileWidget(FileInput):
@@ -217,5 +221,8 @@ class HitProjectAdmin(admin.ModelAdmin):
     publish_hits.short_description = 'Publish Tasks'
 
 
-admin.site.register(HitBatch, HitBatchAdmin)
-admin.site.register(HitProject, HitProjectAdmin)
+admin_site = TurkleAdminSite(name='turkle_admin')
+admin_site.register(Group, GroupAdmin)
+admin_site.register(User, UserAdmin)
+admin_site.register(HitBatch, HitBatchAdmin)
+admin_site.register(HitProject, HitProjectAdmin)

@@ -4,6 +4,7 @@ from hits.views import (
     accept_hit,
     accept_next_hit,
     download_batch_csv,
+    expire_abandoned_assignments,
     hit_assignment,
     hit_assignment_iframe,
     index,
@@ -18,6 +19,8 @@ from hits.views import (
 
 urlpatterns = [
     url(r'^$', index, name='index'),
+    url(r'^expire_abandoned_assignments/$', expire_abandoned_assignments,
+        name='expire_abandoned_assignments'),
     url(r'^update_auto_accept/$', update_auto_accept, name='update_auto_accept'),
     url(r'^(?P<hit_id>\d+)/$', preview, name='preview'),
     url(r'^(?P<hit_id>\d+)/iframe/$', preview_iframe, name='preview_iframe'),

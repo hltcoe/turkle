@@ -62,6 +62,13 @@ class HitAssignment(models.Model):
     hit = models.ForeignKey(Hit, on_delete=models.CASCADE)
     updated_at = models.DateTimeField(auto_now=True)
 
+    @classmethod
+    def expire_all_abandoned(cls):
+        cls.objects.\
+            filter(completed=False).\
+            filter(expires_at__lt=timezone.now()).\
+            delete()
+
     def save(self, *args, **kwargs):
         self.expires_at = timezone.now() + \
             datetime.timedelta(hours=self.hit.hit_batch.allotted_assignment_time)
