@@ -21,20 +21,20 @@ class Hit(models.Model):
     Human Intelligence Task
     """
     class Meta:
-        verbose_name = "HIT"
+        verbose_name = "Task"
 
-    hit_batch = models.ForeignKey('HitBatch')
+    hit_batch = models.ForeignKey('HitBatch', on_delete=models.CASCADE)
     completed = models.BooleanField(default=False)
     input_csv_fields = JSONField()
 
     def __unicode__(self):
-        return 'HIT id:{}'.format(self.id)
+        return 'Task id:{}'.format(self.id)
 
     def __str__(self):
-        return 'HIT id:{}'.format(self.id)
+        return 'Task id:{}'.format(self.id)
 
     def populate_html_template(self):
-        """Return HTML template for this HIT's project, with populated template variables
+        """Return HTML template for this Task's project, with populated template variables
 
         Returns:
             String containing the HTML template for the HitProject associated with
@@ -52,14 +52,14 @@ class Hit(models.Model):
 
 class HitAssignment(models.Model):
     class Meta:
-        verbose_name = "HIT Assignment"
+        verbose_name = "Task Assignment"
 
     answers = JSONField(blank=True)
-    assigned_to = models.ForeignKey(User, null=True)
+    assigned_to = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
     completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(null=True)
-    hit = models.ForeignKey(Hit)
+    hit = models.ForeignKey(Hit, on_delete=models.CASCADE)
     updated_at = models.DateTimeField(auto_now=True)
 
     def save(self, *args, **kwargs):
@@ -70,7 +70,7 @@ class HitAssignment(models.Model):
             del self.answers['csrfmiddlewaretoken']
         super(HitAssignment, self).save(*args, **kwargs)
 
-        # Mark HIT as completed if all Assignments have been completed
+        # Mark Task as completed if all Assignments have been completed
         if self.hit.hitassignment_set.filter(completed=True).count() >= \
            self.hit.hit_batch.assignments_per_hit:
             self.hit.completed = True
@@ -79,21 +79,21 @@ class HitAssignment(models.Model):
 
 class HitBatch(models.Model):
     class Meta:
-        verbose_name = "HIT batch"
-        verbose_name_plural = "HIT batches"
+        verbose_name = "Batch"
+        verbose_name_plural = "Batches"
 
     active = models.BooleanField(default=True)
     allotted_assignment_time = models.IntegerField(default=24)
-    assignments_per_hit = models.IntegerField(default=1)
+    assignments_per_hit = models.IntegerField(default=1, verbose_name='Assignments per Task')
     date_published = models.DateTimeField(auto_now_add=True)
     filename = models.CharField(max_length=1024)
-    hit_project = models.ForeignKey('HitProject')
+    hit_project = models.ForeignKey('HitProject', on_delete=models.CASCADE)
     name = models.CharField(max_length=1024)
 
     def available_hits_for(self, user):
-        """Retrieve a list of all HITs in this batch available for the user.
+        """Retrieve a list of all Tasks in this batch available for the user.
 
-        This list DOES NOT include HITs in the batch that have been assigned
+        This list DOES NOT include Tasks in the batch that have been assigned
         to the user but not yet completed.
 
         Args:
@@ -107,13 +107,13 @@ class HitBatch(models.Model):
 
         hs = self.hit_set.filter(completed=False)
 
-        # Exclude HITs that have already been assigned to this user.
+        # Exclude Tasks that have already been assigned to this user.
         if user.is_authenticated:
             # If the user is not authenticated, then user.id is None,
-            # and the query below would exclude all uncompleted HITs.
+            # and the query below would exclude all uncompleted Tasks.
             hs = hs.exclude(hitassignment__assigned_to_id=user.id)
 
-        # Only include HITs whose total (possibly not completed) assignments < assignments_per_hit
+        # Only include Tasks whose total (possibly not completed) assignments < assignments_per_hit
         hs = hs.annotate(ac=models.Count('hitassignment')).filter(ac__lt=self.assignments_per_hit)
 
         return hs
@@ -122,9 +122,17 @@ class HitBatch(models.Model):
         return self.available_hits_for(user).values_list('id', flat=True)
 
     def clean(self):
-        if not self.hit_project.login_required and self.assignments_per_hit != 1:
-            raise ValidationError('When login is not required to access a Project, ' +
-                                  'the number of Assignments per HIT must be 1')
+        # Without this guard condition for hit_project_id, a
+        # RelatedObjectDoesNotExist exception is thrown before a
+        # ValidationError can be thrown.  When this model is edited
+        # using a form, this causes the server to generate an HTTP 500
+        # error due to the uncaught RelatedObjectDoesNotExist
+        # exception, instead of catching the ValidationError and
+        # displaying a form with a "Field required" warning.
+        if self.hit_project_id:
+            if not self.hit_project.login_required and self.assignments_per_hit != 1:
+                raise ValidationError('When login is not required to access a Project, ' +
+                                      'the number of Assignments per Task must be 1')
 
     def csv_results_filename(self):
         """Returns filename for CSV results file for this HitBatch
@@ -140,7 +148,7 @@ class HitBatch(models.Model):
             csv_fh (file-like object): File handle for CSV input
 
         Returns:
-            Number of HITs created from CSV file
+            Number of Tasks created from CSV file
         """
         header, data_rows = self._parse_csv(csv_fh)
 
@@ -173,7 +181,7 @@ class HitBatch(models.Model):
         return self.hit_set.filter(completed=True).order_by('-id')
 
     def next_available_hit_for(self, user):
-        """Returns next available HIT for the user, or None if no HITs available
+        """Returns next available Task for the user, or None if no Tasks available
 
         Args:
             user (User):
@@ -184,21 +192,23 @@ class HitBatch(models.Model):
         return self.available_hits_for(user).first()
 
     def total_available_hits_for(self, user):
-        """Returns number of HITs available for the user
+        """Returns number of Tasks available for the user
 
         Args:
             user (User):
 
         Returns:
-            Number of HITs available for user
+            Number of Tasks available for user
         """
         return self.available_hits_for(user).count()
 
     def total_finished_hits(self):
         return self.finished_hits().count()
+    total_finished_hits.short_description = 'Total finished Tasks'
 
     def total_hits(self):
         return self.hit_set.count()
+    total_hits.short_description = 'Total Tasks'
 
     def to_csv(self, csv_fh):
         """Write CSV output to file handle for every Hit in batch
@@ -257,7 +267,7 @@ class HitBatch(models.Model):
 
     def _results_data(self, hits):
         """
-        All completed HITs must come from the same project so that they have the
+        All completed Tasks must come from the same project so that they have the
         same field names.
 
         Args:
@@ -279,15 +289,15 @@ class HitBatch(models.Model):
         return self._get_csv_fieldnames(hits), rows
 
     def __unicode__(self):
-        return 'HIT Batch: {}'.format(self.name)
+        return 'Batch: {}'.format(self.name)
 
     def __str__(self):
-        return 'HIT Batch: {}'.format(self.name)
+        return 'Batch: {}'.format(self.name)
 
 
 class HitProject(models.Model):
     class Meta:
-        verbose_name = "HIT project"
+        verbose_name = "Project"
 
     active = models.BooleanField(default=True)
     assignments_per_hit = models.IntegerField(default=1)
@@ -333,7 +343,7 @@ class HitProject(models.Model):
     def clean(self):
         if not self.login_required and self.assignments_per_hit != 1:
             raise ValidationError('When login is not required to access the Project, ' +
-                                  'the number of Assignments per HIT must be 1')
+                                  'the number of Assignments per Task must be 1')
 
     def save(self, *args, **kwargs):
         soup = BeautifulSoup(self.html_template, 'html.parser')
@@ -383,7 +393,7 @@ class HitProject(models.Model):
         )
 
     def __unicode__(self):
-        return 'HIT Project: {}'.format(self.name)
+        return 'Project: {}'.format(self.name)
 
     def __str__(self):
-        return 'HIT Project: {}'.format(self.name)
+        return 'Project: {}'.format(self.name)

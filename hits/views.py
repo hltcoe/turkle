@@ -28,12 +28,12 @@ def accept_hit(request, batch_id, hit_id):
     try:
         batch = HitBatch.objects.get(id=batch_id)
     except ObjectDoesNotExist:
-        messages.error(request, u'Cannot find HIT Batch with ID {}'.format(batch_id))
+        messages.error(request, u'Cannot find Task Batch with ID {}'.format(batch_id))
         return redirect(index)
     try:
         hit = Hit.objects.get(id=hit_id)
     except ObjectDoesNotExist:
-        messages.error(request, u'Cannot find HIT with ID {}'.format(hit_id))
+        messages.error(request, u'Cannot find Task with ID {}'.format(hit_id))
         return redirect(index)
 
     try:
@@ -52,7 +52,7 @@ def accept_hit(request, batch_id, hit_id):
             ha.hit = hit
             ha.save()
     except ObjectDoesNotExist:
-        messages.error(request, u'The HIT with ID {} is no longer available'.format(hit_id))
+        messages.error(request, u'The Task with ID {} is no longer available'.format(hit_id))
         return redirect(index)
 
     return redirect(hit_assignment, hit.id, ha.id)
@@ -63,7 +63,7 @@ def accept_next_hit(request, batch_id):
         with transaction.atomic():
             batch = HitBatch.objects.get(id=batch_id)
 
-            # Lock access to all HITs available to current user in the batch
+            # Lock access to all Tasks available to current user in the batch
             batch.available_hit_ids_for(request.user).select_for_update()
 
             hit_id = _skip_aware_next_available_hit_id(request, batch)
@@ -77,13 +77,13 @@ def accept_next_hit(request, batch_id):
                 ha.hit_id = hit_id
                 ha.save()
     except ObjectDoesNotExist:
-        messages.error(request, u'Cannot find HIT Batch with ID {}'.format(batch_id))
+        messages.error(request, u'Cannot find Task Batch with ID {}'.format(batch_id))
         return redirect(index)
 
     if hit_id:
         return redirect(hit_assignment, hit_id, ha.id)
     else:
-        messages.error(request, u'No more HITs available from Batch {}'.format(batch_id))
+        messages.error(request, u'No more Tasks available from Batch {}'.format(batch_id))
         return redirect(index)
 
 
@@ -103,13 +103,13 @@ def hit_assignment(request, hit_id, hit_assignment_id):
     try:
         hit = Hit.objects.get(id=hit_id)
     except ObjectDoesNotExist:
-        messages.error(request, u'Cannot find HIT with ID {}'.format(hit_id))
+        messages.error(request, u'Cannot find Task with ID {}'.format(hit_id))
         return redirect(index)
     try:
         hit_assignment = HitAssignment.objects.get(id=hit_assignment_id)
     except ObjectDoesNotExist:
         messages.error(request,
-                       u'Cannot find HIT Assignment with ID {}'.format(hit_assignment_id))
+                       u'Cannot find Task Assignment with ID {}'.format(hit_assignment_id))
         return redirect(index)
 
     auto_accept_status = request.session.get('auto_accept_status', False)
@@ -139,13 +139,13 @@ def hit_assignment_iframe(request, hit_id, hit_assignment_id):
     try:
         hit = Hit.objects.get(id=hit_id)
     except ObjectDoesNotExist:
-        messages.error(request, u'Cannot find HIT with ID {}'.format(hit_id))
+        messages.error(request, u'Cannot find Task with ID {}'.format(hit_id))
         return redirect(index)
     try:
         hit_assignment = HitAssignment.objects.get(id=hit_assignment_id)
     except ObjectDoesNotExist:
         messages.error(request,
-                       u'Cannot find HIT Assignment with ID {}'.format(hit_assignment_id))
+                       u'Cannot find Task Assignment with ID {}'.format(hit_assignment_id))
         return redirect(index)
     return render(
         request,
@@ -166,7 +166,7 @@ def index(request):
                 'hit_assignment_id': ha.id
             })
 
-    # Create a row for each Batch that has HITs available for the current user
+    # Create a row for each Batch that has Tasks available for the current user
     batch_rows = []
     for hit_project in HitProject.available_for(request.user):
         for hit_batch in hit_project.batches_available_for(request.user):
@@ -192,7 +192,7 @@ def preview(request, hit_id):
     try:
         hit = Hit.objects.get(id=hit_id)
     except ObjectDoesNotExist:
-        messages.error(request, u'Cannot find HIT with ID {}'.format(hit_id))
+        messages.error(request, u'Cannot find Task with ID {}'.format(hit_id))
         return redirect(index)
     return render(request, 'preview.html', {'hit': hit})
 
@@ -201,7 +201,7 @@ def preview_iframe(request, hit_id):
     try:
         hit = Hit.objects.get(id=hit_id)
     except ObjectDoesNotExist:
-        messages.error(request, u'Cannot find HIT with ID {}'.format(hit_id))
+        messages.error(request, u'Cannot find Task with ID {}'.format(hit_id))
         return redirect(index)
     return render(request, 'preview_iframe.html', {'hit': hit})
 
@@ -210,7 +210,7 @@ def preview_next_hit(request, batch_id):
     try:
         batch = HitBatch.objects.get(id=batch_id)
     except ObjectDoesNotExist:
-        messages.error(request, u'Cannot find HIT Batch with ID {}'.format(batch_id))
+        messages.error(request, u'Cannot find Task Batch with ID {}'.format(batch_id))
         return redirect(index)
 
     hit_id = _skip_aware_next_available_hit_id(request, batch)
@@ -219,7 +219,7 @@ def preview_next_hit(request, batch_id):
         return redirect(preview, hit_id)
     else:
         messages.error(request,
-                       u'No more HITs are available for Batch "{}"'.format(batch.name))
+                       u'No more Tasks are available for Batch "{}"'.format(batch.name))
         return redirect(index)
 
 
@@ -251,7 +251,7 @@ def update_auto_accept(request):
 
 
 def _add_hit_id_to_skip_session(session, batch_id, hit_id):
-    """Add Hit ID to session variable tracking HITs the user has skipped
+    """Add Hit ID to session variable tracking Tasks the user has skipped
     """
     # The Django session store converts dictionary keys from ints to strings
     batch_id = unicode(batch_id)
@@ -282,25 +282,25 @@ def _delete_hit_assignment(request, hit_id, hit_assignment_id):
     try:
         Hit.objects.get(id=hit_id)
     except ObjectDoesNotExist:
-        messages.error(request, u'Cannot find HIT with ID {}'.format(hit_id))
+        messages.error(request, u'Cannot find Task with ID {}'.format(hit_id))
         return redirect(index)
     try:
         hit_assignment = HitAssignment.objects.get(id=hit_assignment_id)
     except ObjectDoesNotExist:
         messages.error(request,
-                       u'Cannot find HIT Assignment with ID {}'.format(hit_assignment_id))
+                       u'Cannot find Task Assignment with ID {}'.format(hit_assignment_id))
         return redirect(index)
 
     if hit_assignment.completed:
-        messages.error(request, u"The HIT can't be returned because it has been completed")
+        messages.error(request, u"The Task can't be returned because it has been completed")
         return redirect(index)
     if request.user.is_authenticated:
         if hit_assignment.assigned_to != request.user:
-            messages.error(request, u'The HIT you are trying to return belongs to another user')
+            messages.error(request, u'The Task you are trying to return belongs to another user')
             return redirect(index)
     else:
         if hit_assignment.assigned_to is not None:
-            messages.error(request, u'The HIT you are trying to return belongs to another user')
+            messages.error(request, u'The Task you are trying to return belongs to another user')
             return redirect(index)
 
     with transaction.atomic():
@@ -311,15 +311,15 @@ def _delete_hit_assignment(request, hit_id, hit_assignment_id):
 
 
 def _skip_aware_next_available_hit_id(request, batch):
-    """Get next available HIT for user, taking into account previously skipped HITs
+    """Get next available Task for user, taking into account previously skipped Tasks
 
-    This function will first look for an available HIT that the user
-    has not previously skipped.  If the only available HITs are HITs
+    This function will first look for an available Task that the user
+    has not previously skipped.  If the only available Tasks are Tasks
     that the user has skipped, this function will return the first
-    such HIT.
+    such Task.
 
     Returns:
-        Hit ID (int), or None if no more HITs are available
+        Hit ID (int), or None if no more Tasks are available
     """
     def _get_skipped_hit_ids_for_batch(session, batch_id):
         batch_id = unicode(batch_id)
@@ -337,10 +337,10 @@ def _skip_aware_next_available_hit_id(request, batch):
         if not hit_id:
             hit_id = available_hit_ids.filter(id__in=skipped_ids).first()
             if hit_id:
-                messages.info(request, u'Only previously skipped HITs are available')
+                messages.info(request, u'Only previously skipped Tasks are available')
 
-                # Once all remaining HITs have been marked as skipped, we clear
-                # their skipped status.  If we don't take this step, then a HIT
+                # Once all remaining Tasks have been marked as skipped, we clear
+                # their skipped status.  If we don't take this step, then a Task
                 # cannot be skipped a second time.
                 request.session['skipped_hits_in_batch'][unicode(batch.id)] = []
                 request.session.modified = True
