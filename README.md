@@ -57,8 +57,10 @@ A batch of HITs consists of an HTML template and corresponding CSV data files.
 ## Running the server ##
 
 ```bash
-python manage.py runserver
+python manage.py runserver 0.0.0.0:8000
 ```
+
+This runs the Django development web server on port 8000.
 
 ## Creating user accounts ##
 
@@ -107,11 +109,50 @@ Find your assigned set of HITs and click the "Accept next HIT" button.
 
 # Production deployment
 
-Turkle was designed to be run in a local environment with a small number of annotators.
-In a high load environment, Turkle can be run with a production quality WSGI HTTP server
-rather than with Django's development server. A possible configuration would involve
-a web server like Apache or nginx as a proxy server with a Python server like Gunicorn behind it.
-A scalable database like MySQL or Postgres would also have to be configured in the settings.py file.
+While Turkle can run with the default sqlite database and Django development web server,
+for anything more than a few annotators, we recommend using a scalable database and
+a production quality WSGI HTTP server.
+
+To run on port 80 of your server, a common configuration would be a web server like
+Apache or nginx as a proxy server with a Python HTTP server like Gunicorn behind it.
+
+## MySQL
+
+First, you need to install the python mysqlclient library:
+
+```bash
+pip install mysqlclient
+```
+Note that this requires development headers for mysql and python to be installed.
+The method for installing these depends on your operating system.
+
+Second, create a database and database user for Turkle. In the examples below,
+we are calling the database `turkle` and the user `turkleuser` with the password `password`.
+Log into the mysql client and run the following commands:
+
+```sql
+CREATE DATABASE turkle CHARACTER SET UTF8;
+CREATE USER turkleuser@localhost IDENTIFIED BY 'password';
+GRANT ALL PRIVILEGES ON turkle.* TO turkleuser@localhost;
+FLUSH PRIVILEGES;
+```
+
+Third, update Turkle's settings to point at this database:
+
+```python
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'turkle',
+        'USER': 'turkleuser',
+        'PASSWORD': 'password',
+        'HOST': 'localhost'
+    }
+}
+```
+The last step is running the migration command to create the database tables.
+
+## Running with Gunicorn
 
 Gunicorn can be installed with pip:
 ```bash
@@ -121,12 +162,25 @@ pip install gunicorn
 and run from Turkle's base directory like this:
 
 ```bash
-gunicorn --bind 127.0.0.1:5000 turkle.wsgi
+gunicorn --bind 0.0.0.0:8000 turkle.wsgi
 ```
 
 Common Gunicorn runtime options are available in its [Running Gunicorn documentation](http://docs.gunicorn.org/en/stable/run.html).
 
-This serves Turkle's web pages on port 5000 but not the static files like CSS and JavaScript.
+This serves Turkle's web pages on port 8000 but not the static files like CSS and JavaScript.
+For serious production uses of Turkle, the best option is to use a proxy server
+(like Apache or nginx) to serve the statis files. More details on that below.
+
+If you don't want to set up a proxy server, you can use Whitenoise to serve
+the static files. Install it:
+
+```bash
+pip install whitenoise
+```
+
+and then enable it in `turkle/settings.py` in the MIDDLEWARE section.
+
+## Apache as a reverse proxy
 
 To use Apache as the proxy server, enable proxying: `a2enmod proxy_http`.
 Then edit the configuration of your site to include the proxy information:
