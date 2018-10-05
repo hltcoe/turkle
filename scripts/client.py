@@ -74,11 +74,11 @@ class TurkleClient(object):
         return True
 
     @exception_handler
-    def publish(self, options):
-        if not self.validate_publish(options):
+    def upload(self, options):
+        if not self.validate_upload(options):
             return False
 
-        self.prepare_publish(options)
+        self.prepare_upload(options)
 
         with requests.Session() as session:
             if not self.login(session):
@@ -127,10 +127,10 @@ class TurkleClient(object):
             return False
         return True
 
-    def validate_publish(self, options):
-        # HITs that don't require a log in can only be done once
+    def validate_upload(self, options):
+        # tasks that don't require a log in can only be done once
         if not options.login and options.num != 1:
-            print("Error: login cannot be off if more than 1 assignment per hit")
+            print("Error: login cannot be off if more than 1 assignment per task")
             return False
 
         if not os.path.exists(options.template):
@@ -143,7 +143,7 @@ class TurkleClient(object):
 
         return True
 
-    def prepare_publish(self, options):
+    def prepare_upload(self, options):
         if not options.project_name:
             options.project_name = self.extract_name(options.template)
         if not options.batch_name:

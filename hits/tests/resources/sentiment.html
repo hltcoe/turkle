@@ -1,0 +1,124 @@
+<!-- HIT template: Sentiment-v3.0 --><!-- The following snippet enables the 'responsive' behavior on smaller screens -->
+<meta content="width=device-width,initial-scale=1" name="viewport" />
+<section class="container" id="Sentiment"><!-- Instructions (collapsible) -->
+<div class="row">
+<div class="col-xs-12 col-md-12">
+<div class="panel panel-primary"><!-- WARNING: the ids "collapseTrigger" and "instructionBody" are being used to enable expand/collapse feature --><a class="panel-heading" href="javascript:void(0);" id="collapseTrigger"><strong>Sentiment Analysis Instructions</strong> <span class="collapse-text">(Click to expand)</span> </a>
+<div class="panel-body" id="instructionBody"><strong>Pick the best sentiment based on the following criterion:</strong>
+<table class="table table-condensed table-striped table-responsive">
+	<tbody>
+	</tbody>
+	<colgroup>
+		<col class="col-xs-2 col-md-2" />
+		<col class="col-xs-10 col-md-10" />
+	</colgroup>
+	<!-- By explaining the sentiment scale, the accuracy of the answers may increase. -->
+	<tbody>
+		<tr>
+			<th>Sentiment</th>
+			<th>Guidance</th>
+		</tr>
+		<tr>
+			<td>Strongly positive</td>
+			<td>Select this if the item embodies emotion that was extremely happy or excited toward the topic. For example, &quot;Their customer service is the best that I&#39;ve seen!!!!&quot;</td>
+		</tr>
+		<tr>
+			<td>Positive</td>
+			<td>Select this if the item embodies emotion that was generally happy or satisfied, but the emotion wasn&#39;t extreme. For example, &quot;Sure I&#39;ll shop there again.&quot;</td>
+		</tr>
+		<tr>
+			<td>Neutral</td>
+			<td>Select this if the item does not embody much of positive or negative emotion toward the topic. For example, &quot;Yeah, I guess it&#39;s ok.&quot; or &quot;Is their customer service open 24x7?&quot;</td>
+		</tr>
+		<tr>
+			<td>Negative</td>
+			<td>Select this if the item embodies emotion that is perceived to be angry or upsetting toward the topic, but not to the extreme. For example, &quot;I don&#39;t know if I&#39;ll shop there again because I don&#39;t trust them.&quot;</td>
+		</tr>
+		<tr>
+			<td>Strongly negative</td>
+			<td>Select this if the item embodies negative emotion toward the topic that can be perceived as extreme. For example, &quot;The experience was horrible!!&quot; or &quot;I will NEVER shop there again!!!&quot;</td>
+		</tr>
+	</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+<!-- End instructions --><!-- Categorization Layout -->
+
+<div class="row" id="workContent">
+<div class="col-xs-12 col-sm-8 content"><!-- Place the content (in this case a block of text) below. If content is not text then replace with the relevant html element (image, url, video) below. -->
+<p class="well">${content}</p>
+</div>
+
+<div class="col-xs-12 col-sm-4 fields">
+<div class="form-group"><!-- Question for the Worker --><label class="group-label">Sentiment expressed by the content:</label> <!-- Input from the Worker -->
+
+<div class="btn-group-vertical" data-toggle="buttons" id="Inputs"><label class="btn btn-default"><input id="StronglyPositive" name="sentiment" required="" type="radio" value="Strongly Positive" />Strongly Positive </label> <label class="btn btn-default"> <input id="Positive" name="sentiment" required="" type="radio" value="Positive" />Positive </label> <label class="btn btn-default"> <input id="Neutral" name="sentiment" required="" type="radio" value="Neutral" />Neutral </label> <label class="btn btn-default"> <input id="Negative" name="sentiment" required="" type="radio" value="Negative" />Negative </label> <label class="btn btn-default"> <input id="StronglyNegative" name="sentiment" required="" type="radio" value="Strongly Negative" />Strongly Negative </label> <!-- Add more inputs by copy pasting the "label" container and incrementing/changing the "id" attribute on the "input" field to always be unique. Make sure the "value" attribute has the correct value that you want recorded as a response. --></div>
+</div>
+</div>
+</div>
+</section>
+<!-- End Categorization Layout --><!-- Please note that Bootstrap CSS/JS and JQuery are 3rd party libraries that may update their url/code at any time. Amazon Mechanical Turk (MTurk) is including these libraries as a default option for you, but is not responsible for any changes to the external libraries --><!-- External CSS references -->
+<link crossorigin="anonymous" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" rel="stylesheet" /><!-- Open internal style sheet -->
+<style type="text/css">#collapseTrigger{
+    color:#fff;
+    display: block;
+    text-decoration: none;
+  }
+  #submitButton{
+    white-space: normal;
+  }
+  #instructionBody table{
+    font-size: 14px;
+    margin-top: 10px;
+  }
+  #instructionBody table caption{
+    text-align: left;
+    padding: 0 0 5px 0;
+  }
+  #Inputs{
+    display: block;
+    margin-top: 10px;
+  }
+  .content{
+    margin-bottom: 15px;
+  }
+  .radio:first-of-type{
+    margin-top: -5px;
+  }
+</style>
+<!-- Close internal style sheet --><!-- External JS references --><script src="https://code.jquery.com/jquery-3.1.0.min.js" integrity="sha256-cCueBR6CsyA4/9szpPfrX3s49M9vUU5BgtiJj06wt/s=" crossorigin="anonymous"></script><script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script><!-- Open internal javascript --><script>
+    $(document).ready(function() {
+      // Instructions expand/collapse
+      var content = $('#instructionBody');
+      var trigger = $('#collapseTrigger');
+      content.hide();
+      $('.collapse-text').text('(Click to expand)');
+      trigger.click(function(){
+        content.toggle();
+        var isVisible = content.is(':visible');
+        if(isVisible){
+          $('.collapse-text').text('(Click to collapse)');
+        }else{
+          $('.collapse-text').text('(Click to expand)');
+        }
+      });
+      // end expand/collapse
+
+      // highlight selected category
+      var inputs = $("#Inputs input:radio");
+      inputs.change(function(){
+        inputs.parent().removeClass("btn-success");
+        inputs.parent().addClass("btn-default");
+        if($(this).is(":checked")){
+          $(this).parent().removeClass("btn-default");
+          $(this).parent().addClass("btn-success");
+        }else{
+          $(this).parent().removeClass("btn-success");
+          $(this).parent().addClass("btn-default");
+        }
+      });
+      // end highlight
+    });
+  </script><!-- Close internal javascript -->
