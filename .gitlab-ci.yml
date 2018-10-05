@@ -34,3 +34,14 @@ python3-tests:
     - python manage.py test
   tags:
     - docker
+
+docker-build:
+  image: docker:latest
+  services:
+    - docker:dind
+  before_script:
+    - docker info
+  script:
+    - docker build -t turkle .
+  tags:
+    - docker
