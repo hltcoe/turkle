@@ -129,3 +129,15 @@ class TestClient(django.test.LiveServerTestCase):
         self.assertTrue(self.client.upload(options))
         resp = requests.get(self.live_server_url)
         self.assertTrue(b"Integration Test" in resp.content)
+
+    def test_upload_failure(self):
+        options = argparse.Namespace()
+        options.login = 0
+        options.num = 1
+        options.project_name = "Bad Test"
+        options.batch_name = "Bad Batch"
+        resources_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'resources'))
+        options.template = os.path.join(resources_dir, 'sentiment.html')
+        options.csv = os.path.join(resources_dir, 'sentiment_bad.csv')
+
+        self.assertFalse(self.client.upload(options))

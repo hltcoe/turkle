@@ -125,6 +125,9 @@ class TurkleClient(object):
         if resp.status_code != requests.codes.ok:
             print("Error: uploading the csv failed")
             return False
+        if b'correct the error' in resp.content:
+            print("Error: the csv file is invalid. Try uploading using the admin UI.")
+            return False
         return True
 
     def validate_upload(self, options):
