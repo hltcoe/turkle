@@ -14,8 +14,8 @@ parser.add_argument("username", help="new username")
 parser.add_argument("password", help="new user's password")
 args = parser.parse_args()
 
-client = TurkleClient(args)
-result = client.add_user()
+client = TurkleClient(args.server, args.u, args.p)
+result = client.add_user(args.username, args.password)
 if result:
     print("Success")
 else:

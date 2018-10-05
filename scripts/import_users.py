@@ -15,7 +15,7 @@ parser.add_argument("--server", help="hostname:port", default="localhost:8000")
 parser.add_argument("csv", help="csv filename")
 args = parser.parse_args()
 
-client = TurkleClient(args)
+client = TurkleClient(args.server, args.u, args.p)
 with open(args.csv, 'r') as fh:
     reader = csv.reader(fh)
     result = True
