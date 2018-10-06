@@ -53,8 +53,8 @@ class HitAssignment(models.Model):
         verbose_name = "Task Assignment"
 
     answers = JSONField(blank=True)
-    assigned_to = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
-    completed = models.BooleanField(default=False)
+    assigned_to = models.ForeignKey(User, db_index=True, null=True, on_delete=models.CASCADE)
+    completed = models.BooleanField(db_index=True, default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     hit = models.ForeignKey(Hit, on_delete=models.CASCADE)
     updated_at = models.DateTimeField(auto_now=True)
@@ -76,7 +76,7 @@ class HitBatch(models.Model):
         verbose_name = "Batch"
         verbose_name_plural = "Batches"
 
-    active = models.BooleanField(default=True)
+    active = models.BooleanField(db_index=True, default=True)
     assignments_per_hit = models.IntegerField(default=1, verbose_name='Assignments per Task')
     date_published = models.DateTimeField(auto_now_add=True)
     filename = models.CharField(max_length=1024)
@@ -285,13 +285,13 @@ class HitProject(models.Model):
     class Meta:
         verbose_name = "Project"
 
-    active = models.BooleanField(default=True)
-    assignments_per_hit = models.IntegerField(default=1)
+    active = models.BooleanField(db_index=True, default=True)
+    assignments_per_hit = models.IntegerField(db_index=True, default=1)
     date_modified = models.DateTimeField(auto_now=True)
     filename = models.CharField(max_length=1024, blank=True)
     html_template = models.TextField()
     html_template_has_submit_button = models.BooleanField(default=False)
-    login_required = models.BooleanField(default=True)
+    login_required = models.BooleanField(db_index=True, default=True)
     name = models.CharField(max_length=1024)
 
     # Fieldnames are automatically extracted from html_template text
