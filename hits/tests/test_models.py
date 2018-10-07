@@ -402,6 +402,33 @@ class TestHitBatchAvailableHITs(django.test.TestCase):
         self.assertEqual(len(hit_batch_unprotected.available_hits_for(user)), 1)
 
 
+class TestHitBatchExpireAssignments(django.test.TestCase):
+    def hit_batch_expire_assignments(self):
+        t = timezone.now()
+        dt = datetime.timedelta(hours=2)
+        past = t - dt
+
+        hit_project = HitProject(login_required=False)
+        hit_project.save()
+        hit_batch = HitBatch(
+            allotted_assignment_time=1,
+            hit_project=hit_project
+        )
+        hit_batch.save()
+        hit = Hit(hit_batch=hit_batch)
+        hit.save()
+        ha = HitAssignment(
+            completed=False,
+            expires_at=past,
+            hit=hit,
+        )
+        # Bypass HitAssignment's save(), which updates expires_at
+        super(HitAssignment, ha).save()
+        self.assertEqual(HitAssignment.objects.count(), 1)
+        hit_batch.expire_assignments()
+        self.assertEqual(HitAssignment.objects.count(), 0)
+
+
 class TestHitProject(django.test.TestCase):
 
     def test_available_for_active_flag(self):
