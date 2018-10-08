@@ -10,7 +10,7 @@ except ImportError:
 from django.contrib import admin
 from django.db import models
 from django.forms import (FileField, FileInput, HiddenInput,
-                          ModelForm, TextInput, ValidationError)
+                          ModelForm, TextInput, ValidationError, Widget)
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 import unicodecsv
@@ -30,6 +30,24 @@ class CustomButtonFileWidget(FileInput):
     # button (linked to the hidden file input) followed by a span for
     # displaying custom text.
     template_name = "admin/forms/widgets/custom_button_file_widget.html"
+
+
+class ProjectNameReadOnlyWidget(Widget):
+    """Widget displays a link to Project.  Hidden form variable stores Project ID.
+    """
+    input_type = None
+
+    def __init__(self, project, attrs=None):
+        self.project_id = project.id
+        self.project_name = project.name
+        super(ProjectNameReadOnlyWidget, self).__init__(attrs)
+
+    def render(self, name, value, attrs=None):
+        return format_html(
+            '<div class="readonly"><a href="{}">{}</a></div>'
+            '<input name="hit_project" id="id_hit_project" type="hidden" value="{}" />'.format(
+                reverse('admin:hits_hitproject_change', args=[self.project_id]),
+                self.project_name, self.project_id))
 
 
 class HitBatchForm(ModelForm):
@@ -55,6 +73,8 @@ class HitBatchForm(ModelForm):
         # a HitBatch.
         if not self.instance._state.adding:
             self.fields['csv_file'].required = False
+            self.fields['hit_project'].widget = \
+                ProjectNameReadOnlyWidget(self.instance.hit_project)
 
     def clean(self):
         """Verify format of CSV file
