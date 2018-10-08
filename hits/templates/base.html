@@ -23,6 +23,7 @@
         <span class="navbar-text">
           {% if user.is_authenticated %}
           Logged in as <b>{{ user.username }}</b> -
+          <a href="{% url 'password_change' %}">Change Password</a> -
           <a href="{% url 'logout' %}?next=/">Logout</a>
           {% else %}
           <a href="{% url 'login' %}?next=/">Login</a>
