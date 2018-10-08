@@ -91,10 +91,15 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Our app comes before django.contrib.admin so that Django uses
+    # our password change/reset templates instead of the templates
+    # from django.contrib.admin
+    'hits',
     'django.contrib.admin',
+
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
-    'hits',
     'django_nose',
 )
 
