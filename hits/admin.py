@@ -8,8 +8,8 @@ except ImportError:
         StringIO = BytesIO
 
 from django.contrib import admin
-from django.contrib.auth.models import User, Group
-from django.contrib.auth.admin import UserAdmin, GroupAdmin
+from django.contrib.auth.models import User
+from django.contrib.auth.admin import UserAdmin
 from django.db import models
 from django.forms import (FileField, FileInput, HiddenInput, IntegerField,
                           ModelForm, TextInput, ValidationError, Widget)
@@ -242,7 +242,8 @@ class HitProjectAdmin(admin.ModelAdmin):
 
 
 admin_site = TurkleAdminSite(name='turkle_admin')
-admin_site.register(Group, GroupAdmin)
+# TODO: Uncomment the line below once group access permissions are enabled
+# admin_site.register(Group, GroupAdmin)
 admin_site.register(User, UserAdmin)
 admin_site.register(HitBatch, HitBatchAdmin)
 admin_site.register(HitProject, HitProjectAdmin)
