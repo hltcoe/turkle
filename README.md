@@ -83,7 +83,7 @@ TODO: documentation on using the admin UI for templates and CSVs.
 
 ### Using the scripts
 With a template html file and a batch CSV file, use the
-`publish_hits.py` script to add them to Turkle.
+`upload_tasks.py` script to add them to Turkle.
 If you have already added the template, you must use the admin UI
 to add additional batches of tasks.
 
@@ -263,7 +263,7 @@ You can change the default admin password by:
 Your annotator can now browse to that port on the Docker host.  To give them something to do, upload an Amazon Turk HIT template and data:
 
 ```bash
-python scripts/publish_hits.py -u [superuser] --server localhost:18080 template.html data.csv
+python scripts/upload_tasks.py -u [superuser] --server localhost:18080 template.html data.csv
 ```
 
 At any point, you can download the current state of annotations:
