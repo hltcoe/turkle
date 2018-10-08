@@ -14,6 +14,6 @@ class Command(BaseCommand):
         (total_deleted, _) = HitAssignment.expire_all_abandoned()
         t = datetime.now()
         dt = (t - t0).total_seconds()
-        logging.basicConfig(format="%(asctime)-15s %(message)s")
-        logging.error('TURKLE: Expired {0} abandoned Task Assignments in {1:.3f} seconds'.
-                      format(total_deleted, dt))
+        logging.basicConfig(format="%(asctime)-15s %(message)s", level=logging.INFO)
+        logging.info('TURKLE: Expired {0} abandoned Task Assignments in {1:.3f} seconds'.
+                     format(total_deleted, dt))
