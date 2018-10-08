@@ -1,31 +1,34 @@
 FROM centos:7
-MAINTAINER Tom Lippincott <tom.lippincott@gmail.com>
+MAINTAINER Craig Harman <craig@craigharman.net>
 LABEL Description="Image for running a Turkle interface"
 
 RUN yum install epel-release -y && \
-    yum install python-pip patch git -y && \
+    yum install crontabs git patch python-pip -y && \
     yum clean all -y
-
-COPY hits /opt/turkle/hits
-COPY manage.py /opt/turkle/manage.py
-COPY requirements.txt /opt/turkle/requirements.txt
-COPY scripts /opt/turkle/scripts
-COPY turkle /opt/turkle/turkle
 
 WORKDIR /opt/turkle
 
-RUN patch turkle/settings.py scripts/enable_whitenoise.patch
-
+COPY requirements.txt /opt/turkle/requirements.txt
 RUN pip install --upgrade -r requirements.txt
 RUN pip install gunicorn whitenoise
 
+COPY hits /opt/turkle/hits
+COPY manage.py /opt/turkle/manage.py
+COPY scripts /opt/turkle/scripts
+COPY turkle /opt/turkle/turkle
+COPY docker-config/enable_whitenoise.patch /opt/turkle/enable_whitenoise.patch
+
+COPY docker-config/turkle.crontab /etc/cron.d/turkle
+RUN crontab /etc/cron.d/turkle
+
+RUN patch turkle/settings.py enable_whitenoise.patch
+
 RUN python manage.py collectstatic
 RUN python manage.py migrate
-
 RUN scripts/create_turkle_admin.sh
 
 VOLUME /opt/turkle
 
 EXPOSE 8080
 
-CMD gunicorn --bind 0.0.0.0:8080 turkle.wsgi
+CMD crond && gunicorn --bind 0.0.0.0:8080 turkle.wsgi

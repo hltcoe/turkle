@@ -7,12 +7,13 @@ except ImportError:
     except ImportError:
         from io import BytesIO
         StringIO = BytesIO
-
+import datetime
 import os.path
 
 from django.contrib.auth.models import AnonymousUser, User
 from django.core.exceptions import ValidationError
 import django.test
+from django.utils import timezone
 
 from hits.models import Hit, HitAssignment, HitBatch, HitProject
 
@@ -80,6 +81,81 @@ class TestHitAssignment(django.test.TestCase):
         ).save()
         hit.refresh_from_db()
         self.assertTrue(hit.completed)
+
+    def test_expire_all_abandoned(self):
+        t = timezone.now()
+        dt = datetime.timedelta(hours=2)
+        past = t - dt
+
+        hit_project = HitProject(login_required=False)
+        hit_project.save()
+        hit_batch = HitBatch(
+            allotted_assignment_time=1,
+            hit_project=hit_project
+        )
+        hit_batch.save()
+        hit = Hit(hit_batch=hit_batch)
+        hit.save()
+        ha = HitAssignment(
+            completed=False,
+            expires_at=past,
+            hit=hit,
+        )
+        # Bypass HitAssignment's save(), which updates expires_at
+        super(HitAssignment, ha).save()
+        self.assertEqual(HitAssignment.objects.count(), 1)
+        HitAssignment.expire_all_abandoned()
+        self.assertEqual(HitAssignment.objects.count(), 0)
+
+    def test_expire_all_abandoned__dont_delete_completed(self):
+        t = timezone.now()
+        dt = datetime.timedelta(hours=2)
+        past = t - dt
+
+        hit_project = HitProject(login_required=False)
+        hit_project.save()
+        hit_batch = HitBatch(
+            allotted_assignment_time=1,
+            hit_project=hit_project
+        )
+        hit_batch.save()
+        hit = Hit(hit_batch=hit_batch)
+        hit.save()
+        ha = HitAssignment(
+            completed=True,
+            expires_at=past,
+            hit=hit,
+        )
+        # Bypass HitAssignment's save(), which updates expires_at
+        super(HitAssignment, ha).save()
+        self.assertEqual(HitAssignment.objects.count(), 1)
+        HitAssignment.expire_all_abandoned()
+        self.assertEqual(HitAssignment.objects.count(), 1)
+
+    def test_expire_all_abandoned__dont_delete_non_expired(self):
+        t = timezone.now()
+        dt = datetime.timedelta(hours=2)
+        future = t + dt
+
+        hit_project = HitProject(login_required=False)
+        hit_project.save()
+        hit_batch = HitBatch(
+            allotted_assignment_time=1,
+            hit_project=hit_project
+        )
+        hit_batch.save()
+        hit = Hit(hit_batch=hit_batch)
+        hit.save()
+        ha = HitAssignment(
+            completed=False,
+            expires_at=future,
+            hit=hit,
+        )
+        # Bypass HitAssignment's save(), which updates expires_at
+        super(HitAssignment, ha).save()
+        self.assertEqual(HitAssignment.objects.count(), 1)
+        HitAssignment.expire_all_abandoned()
+        self.assertEqual(HitAssignment.objects.count(), 1)
 
 
 class TestHitBatch(django.test.TestCase):
@@ -324,6 +400,33 @@ class TestHitBatchAvailableHITs(django.test.TestCase):
         self.assertEqual(len(hit_project_unprotected.batches_available_for(user)), 1)
         self.assertEqual(len(hit_batch_unprotected.available_hits_for(anonymous_user)), 1)
         self.assertEqual(len(hit_batch_unprotected.available_hits_for(user)), 1)
+
+
+class TestHitBatchExpireAssignments(django.test.TestCase):
+    def hit_batch_expire_assignments(self):
+        t = timezone.now()
+        dt = datetime.timedelta(hours=2)
+        past = t - dt
+
+        hit_project = HitProject(login_required=False)
+        hit_project.save()
+        hit_batch = HitBatch(
+            allotted_assignment_time=1,
+            hit_project=hit_project
+        )
+        hit_batch.save()
+        hit = Hit(hit_batch=hit_batch)
+        hit.save()
+        ha = HitAssignment(
+            completed=False,
+            expires_at=past,
+            hit=hit,
+        )
+        # Bypass HitAssignment's save(), which updates expires_at
+        super(HitAssignment, ha).save()
+        self.assertEqual(HitAssignment.objects.count(), 1)
+        hit_batch.expire_assignments()
+        self.assertEqual(HitAssignment.objects.count(), 0)
 
 
 class TestHitProject(django.test.TestCase):

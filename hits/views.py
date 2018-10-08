@@ -120,6 +120,13 @@ def download_batch_csv(request, batch_id):
     return response
 
 
+@staff_member_required
+def expire_abandoned_assignments(request):
+    (total_deleted, _) = HitAssignment.expire_all_abandoned()
+    messages.info(request, u'All {} abandoned Tasks have been expired'.format(total_deleted))
+    return redirect('/admin/hits')
+
+
 def hit_assignment(request, hit_id, hit_assignment_id):
     try:
         hit = Hit.objects.get(id=hit_id)

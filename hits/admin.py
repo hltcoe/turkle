@@ -8,9 +8,11 @@ except ImportError:
         StringIO = BytesIO
 
 from django.contrib import admin
+from django.contrib.auth.models import User, Group
+from django.contrib.auth.admin import UserAdmin, GroupAdmin
 from django.db import models
-from django.forms import (FileField, FileInput, HiddenInput,
-                          ModelForm, TextInput, ValidationError)
+from django.forms import (FileField, FileInput, HiddenInput, IntegerField,
+                          ModelForm, TextInput, ValidationError, Widget)
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 import unicodecsv
@@ -18,7 +20,9 @@ import unicodecsv
 from hits.models import HitBatch, HitProject
 
 
-admin.site.site_header = 'Turkle administration'
+class TurkleAdminSite(admin.AdminSite):
+    app_index_template = 'admin/hits/app_index.html'
+    site_header = 'Turkle administration'
 
 
 class CustomButtonFileWidget(FileInput):
@@ -32,12 +36,38 @@ class CustomButtonFileWidget(FileInput):
     template_name = "admin/forms/widgets/custom_button_file_widget.html"
 
 
+class ProjectNameReadOnlyWidget(Widget):
+    """Widget displays a link to Project.  Hidden form variable stores Project ID.
+    """
+    input_type = None
+
+    def __init__(self, project, attrs=None):
+        self.project_id = project.id
+        self.project_name = project.name
+        super(ProjectNameReadOnlyWidget, self).__init__(attrs)
+
+    def render(self, name, value, attrs=None):
+        return format_html(
+            '<div class="readonly"><a href="{}">{}</a></div>'
+            '<input name="hit_project" id="id_hit_project" type="hidden" value="{}" />'.format(
+                reverse('admin:hits_hitproject_change', args=[self.project_id]),
+                self.project_name, self.project_id))
+
+
 class HitBatchForm(ModelForm):
     csv_file = FileField(label='CSV File')
+
+    # Allow a form to be submitted without an 'allotted_assignment_time'
+    # field.  The default value for this field will be used instead.
+    allotted_assignment_time = IntegerField(required=False)
 
     def __init__(self, *args, **kwargs):
         super(HitBatchForm, self).__init__(*args, **kwargs)
 
+        self.fields['allotted_assignment_time'].label = 'Allotted assignment time (hours)'
+        self.fields['allotted_assignment_time'].help_text = 'If a user abandons a HIT, ' + \
+            'this determines how long it takes until their assignment is deleted and ' + \
+            'someone else can work on the HIT.'
         self.fields['csv_file'].widget = CustomButtonFileWidget()
         self.fields['hit_project'].label = 'Project'
         self.fields['name'].label = 'Batch Name'
@@ -55,6 +85,8 @@ class HitBatchForm(ModelForm):
         # a HitBatch.
         if not self.instance._state.adding:
             self.fields['csv_file'].required = False
+            self.fields['hit_project'].widget = \
+                ProjectNameReadOnlyWidget(self.instance.hit_project)
 
     def clean(self):
         """Verify format of CSV file
@@ -125,9 +157,11 @@ class HitBatchAdmin(admin.ModelAdmin):
     def get_fields(self, request, obj):
         # Display different fields when adding (when obj is None) vs changing a HitBatch
         if not obj:
-            return ('active', 'hit_project', 'name', 'assignments_per_hit', 'csv_file')
+            return ('active', 'hit_project', 'name', 'assignments_per_hit',
+                    'allotted_assignment_time', 'csv_file')
         else:
-            return ('active', 'hit_project', 'name', 'assignments_per_hit', 'filename')
+            return ('active', 'hit_project', 'name', 'assignments_per_hit',
+                    'allotted_assignment_time', 'filename')
 
     def get_readonly_fields(self, request, obj):
         if not obj:
@@ -207,5 +241,8 @@ class HitProjectAdmin(admin.ModelAdmin):
     publish_hits.short_description = 'Publish Tasks'
 
 
-admin.site.register(HitBatch, HitBatchAdmin)
-admin.site.register(HitProject, HitProjectAdmin)
+admin_site = TurkleAdminSite(name='turkle_admin')
+admin_site.register(Group, GroupAdmin)
+admin_site.register(User, UserAdmin)
+admin_site.register(HitBatch, HitBatchAdmin)
+admin_site.register(HitProject, HitProjectAdmin)
