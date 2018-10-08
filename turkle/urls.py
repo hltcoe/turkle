@@ -1,6 +1,7 @@
 from django.conf.urls import include, url
 from django.contrib import admin
 
+from hits.admin import admin_site
 import hits.views
 
 
@@ -15,7 +16,7 @@ urlpatterns = [
 
     url(r'^hits/', include('hits.urls')),
 
-    url(r'^admin/', admin.site.urls),
+    url(r'^admin/', admin_site.urls),
 
     url('^', include('django.contrib.auth.urls')),
 ]

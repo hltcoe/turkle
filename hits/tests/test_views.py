@@ -4,6 +4,7 @@ try:
     unicode('')
 except NameError:
     unicode = str
+import datetime
 
 import django.test
 from django.contrib.auth.models import User
@@ -11,6 +12,7 @@ from django.contrib.messages import get_messages
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.test import RequestFactory, TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from hits.models import Hit, HitAssignment, HitBatch, HitProject
 from hits.views import hit_assignment
@@ -211,6 +213,43 @@ class TestDownloadBatchCSV(TestCase):
         response = client.get(download_url)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], u'/admin/login/?next=%s' % download_url)
+
+
+class TestExpireAbandonedAssignments(django.test.TestCase):
+    def test_expire_abandoned_assignments(self):
+        t = timezone.now()
+        dt = datetime.timedelta(hours=2)
+        past = t - dt
+
+        hit_project = HitProject(login_required=False)
+        hit_project.save()
+        hit_batch = HitBatch(
+            allotted_assignment_time=1,
+            hit_project=hit_project
+        )
+        hit_batch.save()
+        hit = Hit(hit_batch=hit_batch)
+        hit.save()
+        ha = HitAssignment(
+            completed=False,
+            expires_at=past,
+            hit=hit,
+        )
+        # Bypass HitAssignment's save(), which updates expires_at
+        super(HitAssignment, ha).save()
+        self.assertEqual(HitAssignment.objects.count(), 1)
+
+        User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.get(reverse('expire_abandoned_assignments'))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], '/admin/hits')
+        self.assertEqual(HitAssignment.objects.count(), 0)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         u'All 1 abandoned Tasks have been expired')
 
 
 class TestIndex(django.test.TestCase):

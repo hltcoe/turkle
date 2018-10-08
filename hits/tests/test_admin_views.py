@@ -36,6 +36,8 @@ class TestHitBatchAdmin(django.test.TestCase):
         matching_hit_batch = HitBatch.objects.filter(name='hit_batch_save').first()
         self.assertEqual(matching_hit_batch.filename, u'form_1_vals.csv')
         self.assertEqual(matching_hit_batch.total_hits(), 1)
+        self.assertEqual(matching_hit_batch.allotted_assignment_time,
+                         HitBatch._meta.get_field('allotted_assignment_time').get_default())
 
     def test_batch_add_csv_with_emoji(self):
         hit_project = HitProject(name='foo', html_template='<p>${emoji}: ${more_emoji}</p>')
