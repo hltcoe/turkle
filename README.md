@@ -107,7 +107,9 @@ a production quality WSGI HTTP server.
 To run on port 80 of your server, a common configuration would be a web server like
 Apache or nginx as a proxy server with a Python HTTP server like Gunicorn behind it.
 
-## MySQL
+## Production Database Configuration
+
+### MySQL
 
 First, you need to install the python mysqlclient library:
 
@@ -143,8 +145,7 @@ DATABASES = {
 ```
 The last step is running the Turkle install steps (migrate and createsuperuser).
 
-## PostgreSQL
-
+### PostgreSQL
 
 First, you need to install the python PostgreSQL adapter:
 
@@ -181,7 +182,33 @@ DATABASES = {
 The last step is running the Turkle install steps (migrate and createsuperuser).
 
 
-## Running with Gunicorn
+## Production Webserver Configuration
+
+### Configuring Static Files
+
+In a production environment, static files should be served by a web
+server and not by a Django web application.  In `settings.py`, you
+will need to set the STATIC_ROOT directory to the location where you
+want to store the static files, e.g.:
+
+``` python
+STATIC_ROOT = "/var/www/example.com/static/"
+```
+
+You should then run the `collecstatic` management command:
+
+``` shell
+$ python manage.py collectstatic
+```
+
+which will copy all static files for Turkle into the STATIC_ROOT
+directory.
+
+The [Django static files HOWTO](https://docs.djangoproject.com/en/1.11/howto/static-files/deployment/)
+provides more details about how Django handles static files in
+production environments.
+
+### Running with Gunicorn
 
 Gunicorn can be installed with pip:
 ```bash
@@ -194,22 +221,30 @@ and run from Turkle's base directory like this:
 gunicorn --bind 0.0.0.0:8000 turkle.wsgi
 ```
 
-Common Gunicorn runtime options are available in its [Running Gunicorn documentation](http://docs.gunicorn.org/en/stable/run.html).
+Common Gunicorn runtime options are available in the
+[Running Gunicorn documentation](http://docs.gunicorn.org/en/stable/run.html).
 
-This serves Turkle's web pages on port 8000 but not the static files like CSS and JavaScript.
-For serious production uses of Turkle, the best option is to use a proxy server
-(like Apache or nginx) to serve the statis files. More details on that below.
+The Gunicorn command above serves Turkle's web pages on port 8000 but
+not the static files like CSS and JavaScript.  For serious production
+uses of Turkle, the best option is to use a proxy server (like Apache
+or nginx) to serve the static files. More details on that below.
 
-If you don't want to set up a proxy server, you can use Whitenoise to serve
-the static files. Install it:
+If you don't want to set up a proxy server, you can use
+[Whitenoise](https://pypi.org/project/whitenoise/) to serve the static
+files.  Install it using:
 
 ```bash
 pip install whitenoise
 ```
 
-and then enable it in `turkle/settings.py` in the MIDDLEWARE section.
+and then enable Whitenoise in `turkle/settings.py` by adding this line
+to the MIDDLEWARE section:
 
-## Apache as a reverse proxy
+``` python
+'whitenoise.middleware.WhiteNoiseMiddleware',
+```
+
+### Apache as a reverse proxy
 
 To use Apache as the proxy server, enable proxying: `a2enmod proxy_http`.
 Then edit the configuration of your site to include the proxy information:
@@ -228,6 +263,7 @@ be able to view the site at http://localhost/ or whatever the appropriate host n
 
 Instructions for using Gunicorn with nginx are found on its [deploy page](http://docs.gunicorn.org/en/latest/deploy.html).
 You will still need to configure nginx to serve the static files as we did with Apache.
+
 
 # Docker usage
 
