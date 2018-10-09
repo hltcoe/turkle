@@ -107,6 +107,14 @@ a production quality WSGI HTTP server.
 To run on port 80 of your server, a common configuration would be a web server like
 Apache or nginx as a proxy server with a Python HTTP server like Gunicorn behind it.
 
+## email Configuration
+
+Turkle can send password reset emails if your server is configured to
+deliver emails.  By default, the links to the password reset page are
+hidden.  To display the links, edit the `turkle/settings.py` file and
+set the variable `TURKLE_EMAIL_ENABLED` to `True`.
+
+
 ## Production Database Configuration
 
 ### MySQL

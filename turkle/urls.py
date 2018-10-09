@@ -1,8 +1,10 @@
 from django.conf.urls import include, url
 from django.contrib import admin
+from django.contrib.auth import views as auth_views
 
 from hits.admin import admin_site
 import hits.views
+from turkle.settings import TURKLE_EMAIL_ENABLED
 
 
 admin.autodiscover()
@@ -18,5 +20,10 @@ urlpatterns = [
 
     url(r'^admin/', admin_site.urls),
 
-    url('^', include('django.contrib.auth.urls')),
+    url(r'^login/$',
+        auth_views.LoginView.as_view(
+            extra_context={'TURKLE_EMAIL_ENABLED': TURKLE_EMAIL_ENABLED}
+        ),
+        name="login"),
+    url(r'^', include('django.contrib.auth.urls')),
 ]

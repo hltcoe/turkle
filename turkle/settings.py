@@ -137,3 +137,6 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600
 FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600
 
 LOGIN_REDIRECT_URL = '/'
+
+# If True, the "Password Reset" link will be added to the login form
+TURKLE_EMAIL_ENABLED = False
