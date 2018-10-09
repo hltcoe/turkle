@@ -45,6 +45,11 @@ def handle_db_lock(func):
 
 @handle_db_lock
 def accept_hit(request, batch_id, hit_id):
+    """
+    Security behavior:
+    - If the user does not have permission to access the Batch+Task, they
+      are redirected to the index page.
+    """
     try:
         batch = HitBatch.objects.get(id=batch_id)
     except ObjectDoesNotExist:
@@ -80,6 +85,11 @@ def accept_hit(request, batch_id, hit_id):
 
 @handle_db_lock
 def accept_next_hit(request, batch_id):
+    """
+    Security behavior:
+    - If the user does not have permission to access the Batch+Task, they
+      are redirected to the index page.
+    """
     try:
         with transaction.atomic():
             batch = HitBatch.objects.get(id=batch_id)
@@ -110,6 +120,11 @@ def accept_next_hit(request, batch_id):
 
 @staff_member_required
 def download_batch_csv(request, batch_id):
+    """
+    Security behavior:
+    - Access to this page is limited to requestors.  Any requestor can
+      download any CSV file.
+    """
     batch = HitBatch.objects.get(id=batch_id)
     csv_output = StringIO()
     batch.to_csv(csv_output)
@@ -122,12 +137,21 @@ def download_batch_csv(request, batch_id):
 
 @staff_member_required
 def expire_abandoned_assignments(request):
+    """
+    Security behavior:
+    - Access to this page is limited to requestors.
+    """
     (total_deleted, _) = HitAssignment.expire_all_abandoned()
     messages.info(request, u'All {} abandoned Tasks have been expired'.format(total_deleted))
     return redirect('/admin/hits')
 
 
 def hit_assignment(request, hit_id, hit_assignment_id):
+    """
+    Security behavior:
+    - If the user does not have permission to access the Task Assignment, they
+      are redirected to the index page.
+    """
     try:
         hit = Hit.objects.get(id=hit_id)
     except ObjectDoesNotExist:
@@ -139,6 +163,21 @@ def hit_assignment(request, hit_id, hit_assignment_id):
         messages.error(request,
                        u'Cannot find Task Assignment with ID {}'.format(hit_assignment_id))
         return redirect(index)
+
+    if request.user.is_authenticated:
+        if request.user is not hit_assignment.assigned_to:
+            messages.error(
+                request,
+                u'You do not have permission to work on the Task Assignment with ID {}'.
+                format(hit_assignment.id))
+            return redirect(index)
+    else:
+        if hit_assignment.assigned_to is not None:
+            messages.error(
+                request,
+                u'You do not have permission to work on the Task Assignment with ID {}'.
+                format(hit_assignment.id))
+            return redirect(index)
 
     auto_accept_status = request.session.get('auto_accept_status', False)
 
@@ -164,6 +203,11 @@ def hit_assignment(request, hit_id, hit_assignment_id):
 
 
 def hit_assignment_iframe(request, hit_id, hit_assignment_id):
+    """
+    Security behavior:
+    - If the user does not have permission to access the Task Assignment, they
+      are redirected to the index page.
+    """
     try:
         hit = Hit.objects.get(id=hit_id)
     except ObjectDoesNotExist:
@@ -175,6 +219,15 @@ def hit_assignment_iframe(request, hit_id, hit_assignment_id):
         messages.error(request,
                        u'Cannot find Task Assignment with ID {}'.format(hit_assignment_id))
         return redirect(index)
+
+    if request.user.is_authenticated:
+        if request.user is not hit_assignment.assigned_to:
+            messages.error(
+                request,
+                u'You do not have permission to work on the Task Assignment with ID {}'.
+                format(hit_assignment.id))
+            return redirect(index)
+
     return render(
         request,
         'hit_assignment_iframe.html',
@@ -186,6 +239,11 @@ def hit_assignment_iframe(request, hit_id, hit_assignment_id):
 
 
 def index(request):
+    """
+    Security behavior:
+    - Anyone can access the page, but the page only shows the user
+      information they have access to.
+    """
     abandoned_assignments = []
     if request.user.is_authenticated:
         for ha in HitAssignment.objects.filter(assigned_to=request.user).filter(completed=False):
@@ -217,24 +275,49 @@ def index(request):
 
 
 def preview(request, hit_id):
+    """
+    Security behavior:
+    - If the user does not have permission to access the Task, they
+      are redirected to the index page.
+    """
     try:
         hit = Hit.objects.get(id=hit_id)
     except ObjectDoesNotExist:
         messages.error(request, u'Cannot find Task with ID {}'.format(hit_id))
         return redirect(index)
+
+    if not request.user.is_authenticated and hit.hit_batch.hit_project.login_required:
+        messages.error(request, u'You do not have permission to view this Task')
+        return redirect(index)
+
     return render(request, 'preview.html', {'hit': hit})
 
 
 def preview_iframe(request, hit_id):
+    """
+    Security behavior:
+    - If the user does not have permission to access the Task, they
+      are redirected to the index page.
+    """
     try:
         hit = Hit.objects.get(id=hit_id)
     except ObjectDoesNotExist:
         messages.error(request, u'Cannot find Task with ID {}'.format(hit_id))
         return redirect(index)
+
+    if not request.user.is_authenticated and hit.hit_batch.hit_project.login_required:
+        messages.error(request, u'You do not have permission to view this task')
+        return redirect(index)
+
     return render(request, 'preview_iframe.html', {'hit': hit})
 
 
 def preview_next_hit(request, batch_id):
+    """
+    Security behavior:
+    - If the user does not have permission to access the Batch, they
+      are redirected to the index page.
+    """
     try:
         batch = HitBatch.objects.get(id=batch_id)
     except ObjectDoesNotExist:
@@ -252,6 +335,11 @@ def preview_next_hit(request, batch_id):
 
 
 def return_hit_assignment(request, hit_id, hit_assignment_id):
+    """
+    Security behavior:
+    - If the user does not have permission to return the Assignment, they
+      are redirected to the index page.
+    """
     redirect_due_to_error = _delete_hit_assignment(request, hit_id, hit_assignment_id)
     if redirect_due_to_error:
         return redirect_due_to_error
@@ -259,6 +347,11 @@ def return_hit_assignment(request, hit_id, hit_assignment_id):
 
 
 def skip_and_accept_next_hit(request, batch_id, hit_id, hit_assignment_id):
+    """
+    Security behavior:
+    - If the user does not have permission to return the Assignment, they
+      are redirected to the index page.
+    """
     redirect_due_to_error = _delete_hit_assignment(request, hit_id, hit_assignment_id)
     if redirect_due_to_error:
         return redirect_due_to_error
@@ -268,11 +361,23 @@ def skip_and_accept_next_hit(request, batch_id, hit_id, hit_assignment_id):
 
 
 def skip_hit(request, batch_id, hit_id):
+    """
+    Security behavior:
+    - This view updates a session variable that controls the order
+      that Tasks are presented to a user.  Users cannot modify other
+      users session variables.
+    """
     _add_hit_id_to_skip_session(request.session, batch_id, hit_id)
     return redirect(preview_next_hit, batch_id)
 
 
 def update_auto_accept(request):
+    """
+    Security behavior:
+    - This view updates a session variable that controls whether or
+      not Task Assignments are auto-accepted.  Users cannot modify other
+      users session variables.
+    """
     accept_status = (request.POST[u'auto_accept'] == u'true')
     request.session['auto_accept_status'] = accept_status
     return JsonResponse({})
@@ -309,7 +414,7 @@ def _delete_hit_assignment(request, hit_id, hit_assignment_id):
             return redirect_due_to_error
     """
     try:
-        Hit.objects.get(id=hit_id)
+        hit = Hit.objects.get(id=hit_id)
     except ObjectDoesNotExist:
         messages.error(request, u'Cannot find Task with ID {}'.format(hit_id))
         return redirect(index)
@@ -330,6 +435,9 @@ def _delete_hit_assignment(request, hit_id, hit_assignment_id):
     else:
         if hit_assignment.assigned_to is not None:
             messages.error(request, u'The Task you are trying to return belongs to another user')
+            return redirect(index)
+        if hit.hit_batch.hit_project.login_required:
+            messages.error(request, u'You do not have permission to access this Task')
             return redirect(index)
 
     with transaction.atomic():
