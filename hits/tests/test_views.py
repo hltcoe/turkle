@@ -439,6 +439,22 @@ class TestHitAssignment(TestCase):
         self.assertTrue(u'You do not have permission to work on the Task Assignment with ID'
                         in str(messages[0]))
 
+    def test_get_hit_assignment_owned_by_user_as_anonymous(self):
+        user = User.objects.create_user('testuser', password='secret')
+        self.hit_assignment.assigned_to = user
+        self.hit_assignment.save()
+
+        client = django.test.Client()
+        response = client.get(reverse('hit_assignment',
+                                      kwargs={'hit_id': self.hit.id,
+                                              'hit_assignment_id': self.hit_assignment.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertTrue(u'You do not have permission to work on the Task Assignment with ID'
+                        in str(messages[0]))
+
     def test_submit_assignment_without_auto_accept(self):
         client = django.test.Client()
 
@@ -499,6 +515,24 @@ class TestHitAssignmentIFrame(TestCase):
         self.hit_assignment = HitAssignment(hit=self.hit)
         self.hit_assignment.save()
 
+    def test_get_hit_assignment_iframe_with_wrong_user(self):
+        user = User.objects.create_user('testuser', password='secret')
+        User.objects.create_user('wrong_user', password='secret')
+        self.hit_assignment.assigned_to = user
+        self.hit_assignment.save()
+
+        client = django.test.Client()
+        client.login(username='wrong_user', password='secret')
+        response = client.get(reverse('hit_assignment_iframe',
+                                      kwargs={'hit_id': self.hit.id,
+                                              'hit_assignment_id': self.hit_assignment.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertTrue(u'You do not have permission to work on the Task Assignment with ID'
+                        in str(messages[0]))
+
     def test_template_with_submit_button(self):
         self.hit_project.html_template = \
             '<input id="my_submit_button" type="submit" value="MySubmit" />'
@@ -531,10 +565,10 @@ class TestHitAssignmentIFrame(TestCase):
 
 class TestPreview(TestCase):
     def setUp(self):
-        hit_project = HitProject(html_template='<p>${foo}: ${bar}</p>',
-                                 login_required=False, name='foo')
-        hit_project.save()
-        self.hit_batch = HitBatch(filename='foo.csv', hit_project=hit_project, name='foo')
+        self.hit_project = HitProject(html_template='<p>${foo}: ${bar}</p>',
+                                      login_required=False, name='foo')
+        self.hit_project.save()
+        self.hit_batch = HitBatch(filename='foo.csv', hit_project=self.hit_project, name='foo')
         self.hit_batch.save()
         self.hit = Hit(
             hit_batch=self.hit_batch,
@@ -546,6 +580,18 @@ class TestPreview(TestCase):
         client = django.test.Client()
         response = client.get(reverse('preview', kwargs={'hit_id': self.hit.id}))
         self.assertEqual(response.status_code, 200)
+
+    def test_get_preview_as_anonymous_but_login_required(self):
+        self.hit_project.login_required = True
+        self.hit_project.save()
+
+        client = django.test.Client()
+        response = client.get(reverse('preview', kwargs={'hit_id': self.hit.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]), u'You do not have permission to view this Task')
 
     def test_get_preview_bad_hit_id(self):
         client = django.test.Client()
@@ -571,6 +617,19 @@ class TestPreview(TestCase):
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
                          u'Cannot find Task with ID {}'.format(666))
+
+    def test_get_preview_iframe_as_anonymous_but_login_required(self):
+        self.hit_project.login_required = True
+        self.hit_project.save()
+
+        client = django.test.Client()
+
+        response = client.get(reverse('preview_iframe', kwargs={'hit_id': self.hit.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]), u'You do not have permission to view this Task')
 
     def test_preview_next_hit(self):
         client = django.test.Client()

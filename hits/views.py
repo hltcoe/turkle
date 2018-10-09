@@ -306,7 +306,7 @@ def preview_iframe(request, hit_id):
         return redirect(index)
 
     if not request.user.is_authenticated and hit.hit_batch.hit_project.login_required:
-        messages.error(request, u'You do not have permission to view this task')
+        messages.error(request, u'You do not have permission to view this Task')
         return redirect(index)
 
     return render(request, 'preview_iframe.html', {'hit': hit})
