@@ -59,35 +59,12 @@ The HTML template can include any HTML form input fields, such as text
 boxes, radio buttons, and check boxes.  When the Worker submits a Task
 Assignment, the values of the form fields are saved to the Turkle database.
 
-## HTML Templates ##
-
-Turkle renders the HTML template for a Task by inserting the Project's
-HTML code into an HTML page that looks like this:
-
-``` html
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-  </head>
-  <body>
-    <form name="mturk_form" method="post" id="mturk_form"
-          target="_parent" action='/some/submit/url'>
-      <!-- YOUR HTML IS INSERTED HERE -->
-      {% if not project_html_template.has_submit_button %}
-      <input type="submit" id="submitButton" value="Submit" />
-      {% endif %}
-    </form>
-  </body>
-</html>
-```
-
-Please note that the Project's HTML template is inserted inside of an
-HTML `form` element.  If the Project's HTML template does not include
-an HTML 'Submit' button, then Turkle will add a 'Submit' button to the
-form.
-
-There are example HTML and CSV files in the `examples` directory.
+Task Assignment data can be exported to CSV files.  Each row of the
+CSV file contains both the template variable input fields and the
+Worker-submitted form fields.  For each template variable
+`${foo}`, the CSV file will contain a column named `Input.foo`.  For
+each submitted form field named `bar`, the CSV file will contain a
+column named `Answer.bar`.
 
 
 # Installation #
@@ -160,6 +137,42 @@ The file must be formatted like:
 username1,password1
 username2,password2
 ```
+
+
+## Creating HTML Templates ##
+
+The HTML template code that you write should not be a complete HTML
+document with `head` and `body` tags.  Turkle renders the page for a
+Task by inserting your HTML template code into an HTML `form` element
+in the body of an HTML document.  The document looks like this:
+
+``` html
+<!DOCTYPE html>
+<html>
+  <head>
+    <title></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  </head>
+  <body>
+    <form name="mturk_form" method="post" id="mturk_form"
+          target="_parent" action='/some/submit/url'>
+      <!-- YOUR HTML IS INSERTED HERE -->
+      {% if not project_html_template.has_submit_button %}
+      <input type="submit" id="submitButton" value="Submit" />
+      {% endif %}
+    </form>
+  </body>
+</html>
+```
+
+Turkle displays the combined HTML document in an iframe, so that your
+code is isolated from any CSS and JavaScript libraries used by the
+Turkle UI.  If your Project's HTML template code does not include an
+HTML 'Submit' button, then Turkle will add a 'Submit' button to the
+combined document.
+
+There are example HTML and CSV files in the `examples` directory.
+
 
 ## Creating Projects and Publishing Batches of Tasks ##
 
