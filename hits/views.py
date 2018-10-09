@@ -122,7 +122,7 @@ def accept_next_hit(request, batch_id):
 def download_batch_csv(request, batch_id):
     """
     Security behavior:
-    - Access to this page is limited to requestors.  Any requestor can
+    - Access to this page is limited to requesters.  Any requester can
       download any CSV file.
     """
     batch = HitBatch.objects.get(id=batch_id)
@@ -139,7 +139,7 @@ def download_batch_csv(request, batch_id):
 def expire_abandoned_assignments(request):
     """
     Security behavior:
-    - Access to this page is limited to requestors.
+    - Access to this page is limited to requesters.
     """
     (total_deleted, _) = HitAssignment.expire_all_abandoned()
     messages.info(request, u'All {} abandoned Tasks have been expired'.format(total_deleted))
