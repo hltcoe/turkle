@@ -48,7 +48,7 @@ def accept_hit(request, batch_id, hit_id):
     """
     Security behavior:
     - If the user does not have permission to access the Batch+Task, they
-      are redirected to the index page.
+      are redirected to the index page with an error message.
     """
     try:
         batch = HitBatch.objects.get(id=batch_id)
@@ -88,7 +88,7 @@ def accept_next_hit(request, batch_id):
     """
     Security behavior:
     - If the user does not have permission to access the Batch+Task, they
-      are redirected to the index page.
+      are redirected to the index page with an error message.
     """
     try:
         with transaction.atomic():
@@ -150,7 +150,7 @@ def hit_assignment(request, hit_id, hit_assignment_id):
     """
     Security behavior:
     - If the user does not have permission to access the Task Assignment, they
-      are redirected to the index page.
+      are redirected to the index page with an error message.
     """
     try:
         hit = Hit.objects.get(id=hit_id)
@@ -206,7 +206,7 @@ def hit_assignment_iframe(request, hit_id, hit_assignment_id):
     """
     Security behavior:
     - If the user does not have permission to access the Task Assignment, they
-      are redirected to the index page.
+      are redirected to the index page with an error messge.
     """
     try:
         hit = Hit.objects.get(id=hit_id)
@@ -278,7 +278,7 @@ def preview(request, hit_id):
     """
     Security behavior:
     - If the user does not have permission to access the Task, they
-      are redirected to the index page.
+      are redirected to the index page with an error message.
     """
     try:
         hit = Hit.objects.get(id=hit_id)
@@ -297,7 +297,7 @@ def preview_iframe(request, hit_id):
     """
     Security behavior:
     - If the user does not have permission to access the Task, they
-      are redirected to the index page.
+      are redirected to the index page with an error message.
     """
     try:
         hit = Hit.objects.get(id=hit_id)
@@ -316,7 +316,7 @@ def preview_next_hit(request, batch_id):
     """
     Security behavior:
     - If the user does not have permission to access the Batch, they
-      are redirected to the index page.
+      are redirected to the index page with an error message.
     """
     try:
         batch = HitBatch.objects.get(id=batch_id)
@@ -338,7 +338,7 @@ def return_hit_assignment(request, hit_id, hit_assignment_id):
     """
     Security behavior:
     - If the user does not have permission to return the Assignment, they
-      are redirected to the index page.
+      are redirected to the index page with an error message.
     """
     redirect_due_to_error = _delete_hit_assignment(request, hit_id, hit_assignment_id)
     if redirect_due_to_error:
@@ -350,7 +350,7 @@ def skip_and_accept_next_hit(request, batch_id, hit_id, hit_assignment_id):
     """
     Security behavior:
     - If the user does not have permission to return the Assignment, they
-      are redirected to the index page.
+      are redirected to the index page with an error message.
     """
     redirect_due_to_error = _delete_hit_assignment(request, hit_id, hit_assignment_id)
     if redirect_due_to_error:
