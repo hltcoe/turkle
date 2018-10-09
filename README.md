@@ -3,14 +3,96 @@
 Run a clone of Amazon's Mechanical **Turk** service in your **l**ocal
 **e**nvironment.
 
-This tool can be run locally on your network or personal machine.
-It is compatible with HITs from Amazon Mechanical Turk (but we call them "Tasks").
-It loads the same task template files and CSV files as the MTurk requester web GUI.
-The results of the tasks completed by the workers can be exported in CSV files.
+Turkle is implemented as a
+[Django](https://www.djangoproject.com)-based web application that can
+be deployed on your local network, or hosted on a public server.  It
+is compatible with Human Intelligence Tasks (HITs) from Amazon
+Mechanical Turk.  Turkle can use the same HTML Task template files and
+CSV files as the MTurk requester web GUI.  The results of the Tasks
+completed by the workers can be exported to CSV files.
+
+## Turkle Overview ##
+
+Turkle provides a Task-oriented interface for **Workers**, and an
+administrative interface for **Requesters**.
+
+Requesters create **Projects** that have an HTML template with a form.
+Once a Project has been created, requesters can create a **Batch** of
+**Tasks** by uploading a CSV file.  A separate Task is generated for
+each row in the CSV file (excluding the header).  When a Batch is
+created, the Requester can specify how many **Assignments** per Task
+they need.  Each Worker is limited to one Assignment per Task.
+
+The HTML template will include template variables, which have the form
+`${variable_name}`.  The CSV files used to create Task Batches include
+a header row with the names of the template variables.  When a Worker
+visits a Task web page, the variables in the HTML template will be
+replaced with the corresponding values from a row of the CSV file.
+
+If a Project's HTML template file uses template variables named
+`${foo}` and `${bar}`:
+
+``` html
+  <p>The variable 'foo' has the value: ${foo}</p>
+  <p>The variable 'bar' has the value: ${bar}</p>
+  <input type="text" name="my_input" />
+```
+
+then the CSV input file's header row should have fields named 'foo'
+and 'bar', e.g.:
+
+    "foo","bar"
+	"1","one"
+	"2","two"
+
+When a Worker views the web page for a Task or Task Assignment, the
+template variables will be replaced with the corresponding values from
+a row of the CSV file, e.g.:
+
+``` html
+  <p>The variable 'foo' has the value: 1</p>
+  <p>The variable 'bar' has the value: one</p>
+  <input type="text" name="my_input" />
+```
+
+The HTML template can include any HTML form input fields, such as text
+boxes, radio buttons, and check boxes.  When the Worker submits a Task
+Assignment, the values of the form fields are saved to the Turkle database.
+
+## HTML Templates ##
+
+Turkle renders the HTML template for a Task by inserting the Project's
+HTML code into an HTML page that looks like this:
+
+``` html
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  </head>
+  <body>
+    <form name="mturk_form" method="post" id="mturk_form"
+          target="_parent" action='/some/submit/url'>
+      <!-- YOUR HTML IS INSERTED HERE -->
+      {% if not project_html_template.has_submit_button %}
+      <input type="submit" id="submitButton" value="Submit" />
+      {% endif %}
+    </form>
+  </body>
+</html>
+```
+
+Please note that the Project's HTML template is inserted inside of an
+HTML `form` element.  If the Project's HTML template does not include
+an HTML 'Submit' button, then Turkle will add a 'Submit' button to the
+form.
+
+There are example HTML and CSV files in the `examples` directory.
+
 
 # Installation #
 
-Turkle works with either python 2 or python 3.
+Turkle works with either Python 2.7 or python 3.5+.
 
 ## Dependencies ##
 
@@ -33,22 +115,23 @@ Turkle works with either python 2 or python 3.
   pip install -r requirements.txt
   ```
 
-## Setup ##
+## One-time Configuration Steps ##
 
-After the dependencies have been installed, you create and initialize the db:
+After the dependencies have been installed, create and initialize the
+database:
 
 ```bash
 python manage.py migrate
+```
+
+Next, create an admin account:
+
+```bash
 python manage.py createsuperuser
 ```
 
-## Configuration ##
 
 # Usage
-
-The administrator loads tasks for the worker(s) to complete.
-A batch of tasks consists of an HTML template and corresponding CSV data files.
-There are example HTML and CSV files in the `examples` directory.
 
 ## Running the server ##
 
@@ -61,9 +144,12 @@ This runs the Django development web server on port 8000.
 ## Creating user accounts ##
 
 ### Using the admin UI
- * Login with a super user account
- * Select Manage Users from the navigation header
- * Click the `Add User` button, fill out the form and submit
+
+* Login with an admin account
+* Select `Admin` from the navigation header
+* In the `Users` row, click the `Add` button, fill out the form and submit
+
+![Turkle admin UI](docs/images/Turkle_admin.png)
 
 ### Using the scripts
 The `add_user.py` script adds a single user. Run it with the `-h` option for details.
@@ -75,32 +161,55 @@ username1,password1
 username2,password2
 ```
 
-## Loading a batch of HITs ##
+## Creating Projects and Publishing Batches of Tasks ##
 
 ### Using the admin UI
 
-TODO: documentation on using the admin UI for templates and CSVs.
+Create a Project:
+
+* Login with an admin account
+* Select `Admin` from the navigation header
+* In the `Projects` row, click the `Add` button, fill out the form
+  and submit
+
+Publish a Batch of Tasks:
+
+* Click on the `Turkle administration` link in the top-left corner of
+  the screen
+* In the `Batches` row, click the `Add` button, fill out the form
+  (selecting a Project and uploading a CSV file) and submit
+
 
 ### Using the scripts
-With a template html file and a batch CSV file, use the
-`upload_tasks.py` script to add them to Turkle.
-If you have already added the template, you must use the admin UI
-to add additional batches of tasks.
+With an HTML template file and a CSV Batch file, use the
+`upload_tasks.py` script to:
 
-## Downloading a batch of HITs ##
+- create a new Project using the HTML template file, and
+- publish a Batch of Tasks using the rows of the CSV file
+
+If you have already created a Project using an HTML template, you
+should use the admin UI to publish additional Batches of Tasks.
+
+## Downloading a Batch of completed Task Assignments ##
 
 ### Using the admin UI
 
-TODO
+* Click on the `Turkle administration` link in the top-left corner of
+  the screen
+* Click on the `Batches` link to view a table of all Batches
+* Click on the `Download CSV results file` for the Batch you are
+  interested in
+
+![Batch list](docs/images/Batch_list.png)
 
 ### Using the scripts
-The `download_results.py` script downloads all tasks that have been completed
+The `download_results.py` script downloads all Tasks that have been completed
 into a directory that the user selects.
 
 
 # Production deployment
 
-While Turkle can run with the default sqlite database and Django development web server,
+While Turkle can run with the default SQLite database and Django development web server,
 for anything more than a few annotators, we recommend using a scalable database and
 a production quality WSGI HTTP server.
 
@@ -111,17 +220,17 @@ Apache or nginx as a proxy server with a Python HTTP server like Gunicorn behind
 
 ### MySQL
 
-First, you need to install the python mysqlclient library:
+First, you need to install the Python mysqlclient library:
 
 ```bash
 pip install mysqlclient
 ```
-Note that this requires development headers for mysql and python to be installed.
+Note that this requires development headers for MySQL and Python to be installed.
 The method for installing these depends on your operating system.
 
 Second, create a database and database user for Turkle. In the examples below,
 we are calling the database `turkle` and the user `turkleuser` with the password `password`.
-Log into the mysql client and run the following commands:
+Log into the MySQL client and run the following commands:
 
 ```sql
 CREATE DATABASE turkle CHARACTER SET UTF8;
@@ -147,12 +256,12 @@ The last step is running the Turkle install steps (migrate and createsuperuser).
 
 ### PostgreSQL
 
-First, you need to install the python PostgreSQL adapter:
+First, you need to install the Python PostgreSQL adapter:
 
 ```bash
 pip install psycopg2
 ```
-Note that this requires development headers for PostgreSQL and python to be installed.
+Note that this requires development headers for PostgreSQL and Python to be installed.
 The method for installing these depends on your operating system.
 
 Second, create a database and database user for Turkle. In the examples below,
