@@ -36,7 +36,12 @@
             </tr>
           </table>
 
-          <input type="submit" value="login" class="btn btn-primary" />
+          <input type="submit" value="Login" class="btn btn-primary" />
+          {% if TURKLE_EMAIL_ENABLED %}
+          <span style="margin-left: 2em;">
+            <a href="{% url 'password_reset' %}">Reset your Password</a>
+          </span>
+          {% endif %}
           <input type="hidden" name="next" value="{{ next }}" />
         </form>
         {% endblock %}
