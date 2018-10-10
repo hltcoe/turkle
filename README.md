@@ -39,7 +39,7 @@ If a Project's HTML template file uses template variables named
 ```
 
 then the CSV input file's header row should have fields named 'foo'
-and 'bar', e.g.:
+and 'bar':
 
     "foo","bar"
 	"1","one"
@@ -47,7 +47,7 @@ and 'bar', e.g.:
 
 When a Worker views the web page for a Task or Task Assignment, the
 template variables will be replaced with the corresponding values from
-a row of the CSV file, e.g.:
+a row of the CSV file:
 
 ``` html
   <p>The variable 'foo' has the value: 1</p>
@@ -69,28 +69,42 @@ column named `Answer.bar`.
 
 # Installation #
 
-Turkle works with either Python 2.7 or python 3.5+.
+Turkle works with either Python 2.7 or Python 3.5+.
+
+This Installation section covers the quickest and easiest way to use
+Turkle with a handful of users on your local network - using the
+Django development web server with the SQLite database backend.
+
+If you want to use Turkle with more than a handful of Workers or host
+Turkle on a public webserver, it is **strongly recommended** that you
+use a more scalable webserver and database backend.  Please see the
+"Production deployment" section below for additional installation
+details not covered in this section.
+
+If you would like to use Turkle in a Docker container, see the "Docker
+usage" section later in this document.
+
 
 ## Dependencies ##
 
-- Turkle depends on the packages listed in `requirements.txt`.
-  If the packages are not already installed in your environment, and you have
-  an internet connection, then you can run the following command to install
-  the required Python packages:
+Turkle depends on the packages listed in `requirements.txt`.
+If the packages are not already installed in your environment, and you have
+an internet connection, then you can run the following command to install
+the required Python packages:
 
-  ```bash
-  pip install -r requirements.txt
-  ```
+```bash
+pip install -r requirements.txt
+```
 
-  Using a virtual environment has the advantage of keeping the dependencies
-  for this project separate from other projects. The actual syntax depends
-  on what virtual environment package you are using, but here is an example:
+Using a virtual environment has the advantage of keeping the dependencies
+for this project separate from other projects. The actual syntax depends
+on what virtual environment package you are using, but here is an example:
 
-  ```bash
-  virtualenv venv
-  source venv/bin/activate
-  pip install -r requirements.txt
-  ```
+```bash
+virtualenv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
 
 ## One-time Configuration Steps ##
 
@@ -110,13 +124,15 @@ python manage.py createsuperuser
 
 # Usage
 
-## Running the server ##
+
+## Running the development server ##
+
+Start the development web server on port 8000 using:
 
 ```bash
 python manage.py runserver 0.0.0.0:8000
 ```
 
-This runs the Django development web server on port 8000.
 
 ## Creating user accounts ##
 
@@ -129,9 +145,9 @@ This runs the Django development web server on port 8000.
 ![Turkle admin UI](docs/images/Turkle_admin.png)
 
 ### Using the scripts
-The `add_user.py` script adds a single user. Run it with the `-h` option for details.
+The `scripts/add_user.py` script adds a single user. Run it with the `-h` option for details.
 
-The `import_users.py` script reads a CSV file to add users to Turkle.
+The `script/import_users.py` script reads a CSV file to add users to Turkle.
 The file must be formatted like:
 ```
 username1,password1
@@ -195,7 +211,7 @@ Publish a Batch of Tasks:
 
 ### Using the scripts
 With an HTML template file and a CSV Batch file, use the
-`upload_tasks.py` script to:
+`script/upload_tasks.py` script to:
 
 - create a new Project using the HTML template file, and
 - publish a Batch of Tasks using the rows of the CSV file
@@ -216,7 +232,7 @@ should use the admin UI to publish additional Batches of Tasks.
 ![Batch list](docs/images/Batch_list.png)
 
 ### Using the scripts
-The `download_results.py` script downloads all Tasks that have been completed
+The `scripts/download_results.py` script downloads all Tasks that have been completed
 into a directory that the user selects.
 
 
@@ -332,12 +348,14 @@ production environments.
 
 ### Running with Gunicorn
 
-Gunicorn can be installed with pip:
+[Gunicorn](https://gunicorn.org) is a Python WSGI HTTP server that can
+be installed with pip:
+
 ```bash
 pip install gunicorn
 ```
 
-and run from Turkle's base directory like this:
+Gunicorn can be run from Turkle's base directory using:
 
 ```bash
 gunicorn --bind 0.0.0.0:8000 turkle.wsgi
@@ -398,7 +416,7 @@ Batches of Tasks.  The Turkle image:
 - uses Whitenoise to serve static files
 - uses SQLite as the database server
 
-You can build the Turkle image yourself:
+You can build the Turkle image using:
 
 ```bash
 docker build --force-rm -t hltcoe/turkle .
@@ -410,8 +428,8 @@ or pull the latest image from the Docker registry:
 docker pull hltcoe/turkle
 ```
 
-To launch a Turkle container that maps container port 8080 to port
-18080 on the Docker host, you can use:
+To launch a Turkle container that maps container port 8080 to Docker
+host port 18080, use:
 
 ```bash
 docker run -d --name container_name -p 18080:8080 hltcoe/turkle
