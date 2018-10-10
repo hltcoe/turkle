@@ -8,8 +8,8 @@ except ImportError:
         StringIO = BytesIO
 
 from django.contrib import admin
-from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
+from django.contrib.auth.models import User
 from django.db import models
 from django.forms import (FileField, FileInput, HiddenInput, IntegerField,
                           ModelForm, TextInput, ValidationError, Widget)
@@ -23,6 +23,15 @@ from hits.models import HitBatch, HitProject
 class TurkleAdminSite(admin.AdminSite):
     app_index_template = 'admin/hits/app_index.html'
     site_header = 'Turkle administration'
+
+
+class CustomUserAdmin(UserAdmin):
+    # The 'email' field should be displayed on the Add User page
+    add_fieldsets = UserAdmin.add_fieldsets + (
+        (None, {
+            'fields': ('email',),
+        }),
+    )
 
 
 class CustomButtonFileWidget(FileInput):
@@ -264,6 +273,6 @@ class HitProjectAdmin(admin.ModelAdmin):
 admin_site = TurkleAdminSite(name='turkle_admin')
 # TODO: Uncomment the line below once group access permissions are enabled
 # admin_site.register(Group, GroupAdmin)
-admin_site.register(User, UserAdmin)
+admin_site.register(User, CustomUserAdmin)
 admin_site.register(HitBatch, HitBatchAdmin)
 admin_site.register(HitProject, HitProjectAdmin)
