@@ -70,6 +70,26 @@ class TestHitBatchAdmin(django.test.TestCase):
         self.assertEqual(hits[2].input_csv_fields['emoji'], u'🤔')
         self.assertEqual(hits[2].input_csv_fields['more_emoji'], u'🤭')
 
+    def test_batch_add_empty_allotted_assignment_time(self):
+        hit_project = HitProject(name='foo', html_template='<p>${foo}: ${bar}</p>')
+        hit_project.save()
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        with open(os.path.abspath('hits/tests/resources/form_1_vals.csv')) as fp:
+            response = client.post(
+                u'/admin/hits/hitbatch/add/',
+                {
+                    'allotted_assignment_time': '',
+                    'assignments_per_hit': 1,
+                    'hit_project': hit_project.id,
+                    'name': 'hit_batch_save',
+                    'csv_file': fp
+                })
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(b'error' in response.content)
+        self.assertTrue(b'This field is required.' in response.content)
+
     def test_batch_add_missing_hit_project(self):
         hit_project = HitProject(name='foo', html_template='<p>${foo}: ${bar}</p>')
         hit_project.save()

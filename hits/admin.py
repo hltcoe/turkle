@@ -59,7 +59,10 @@ class HitBatchForm(ModelForm):
 
     # Allow a form to be submitted without an 'allotted_assignment_time'
     # field.  The default value for this field will be used instead.
-    allotted_assignment_time = IntegerField(required=False)
+    # See also the function clean_allotted_assignment_time().
+    allotted_assignment_time = IntegerField(
+        initial=HitBatch._meta.get_field('allotted_assignment_time').get_default(),
+        required=False)
 
     def __init__(self, *args, **kwargs):
         super(HitBatchForm, self).__init__(*args, **kwargs)
@@ -139,6 +142,23 @@ class HitBatchForm(ModelForm):
 
         # Rewind file, so it can be re-read
         csv_file.seek(0)
+
+    def clean_allotted_assignment_time(self):
+        """Clean 'allotted_assignment_time' form field
+
+        - If the allotted_assignment_time field is not submitted as part
+          of the form data (e.g. when interacting with this form via a
+          script), use the default value.
+        - If the allotted_assignment_time is an empty string (e.g. when
+          submitting the form using a browser), raise a ValidationError
+        """
+        data = self.data.get('allotted_assignment_time')
+        if data is None:
+            return HitBatch._meta.get_field('allotted_assignment_time').get_default()
+        elif data.strip() is u'':
+            raise ValidationError('This field is required.')
+        else:
+            return data
 
 
 class HitBatchAdmin(admin.ModelAdmin):
