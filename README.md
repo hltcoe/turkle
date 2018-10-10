@@ -389,20 +389,29 @@ You will still need to configure nginx to serve the static files as we did with 
 
 # Docker usage
 
-Instead of installing Turkle and dependencies directly, you can run Turkle as a Docker container, using scripts to manage your HIT templates and data.
-Either build a Turkle image:
+Instead of installing Turkle and dependencies directly, you can run
+Turkle as a Docker container, using scripts to manage Projects and
+Batches of Tasks.  The Turkle image:
+
+- listens for HTTP connections on port 8080
+- uses gunicorn as the WSGI HTTP server
+- uses Whitenoise to serve static files
+- uses SQLite as the database server
+
+You can build the Turkle image yourself:
 
 ```bash
 docker build --force-rm -t hltcoe/turkle .
 ```
 
-or pull the latest from the Docker registry:
+or pull the latest image from the Docker registry:
 
 ```bash
 docker pull hltcoe/turkle
 ```
 
-and start a container with an easy name, and mapping container port 8080 somewhere on the Docker host (e.g. 18080):
+To launch a Turkle container that maps container port 8080 to port
+18080 on the Docker host, you can use:
 
 ```bash
 docker run -d --name container_name -p 18080:8080 hltcoe/turkle
@@ -410,22 +419,16 @@ docker run -d --name container_name -p 18080:8080 hltcoe/turkle
 
 The Docker container has an `admin` user with a default password of `admin`.
 
-You can change the default admin password by:
+You should change the default admin password by:
 
 - connecting to the exposed container port with a web browser (e.g. connecting to http://localhost:18080/)
 - logging in with username `admin` and password `admin`
-- clicking on the "Manage Users" link on the top left of the screen
-- clicking on the "CHANGE PASSWORD" link at the top right of the screen
+- clicking on the `Admin` link on the top left of the screen
+- clicking on the `CHANGE PASSWORD` link at the top right of the screen
 - filling out and submitting the Change Password form
 
-Your annotator can now browse to that port on the Docker host.  To give them something to do, upload an Amazon Turk HIT template and data:
-
-```bash
-python scripts/upload_tasks.py -u [superuser] --server localhost:18080 template.html data.csv
-```
-
-At any point, you can download the current state of annotations:
-
-```bash
-python scripts/download_results.py -u [superuser] --server localhost:18080
-```
+The scripts for creating users (`scripts/add_user.py`,
+`scripts/import_users.py`), creating Projects and publishing Batches
+of Tasks (`scripts/upload_tasks.py`), and downloading completed Task
+Assignments (`scripts/download_results.py`) work the same whether
+Turkle is running in a Docker container or on the local host.
