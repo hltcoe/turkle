@@ -458,3 +458,10 @@ The scripts for creating users (`scripts/add_user.py`,
 of Tasks (`scripts/upload_tasks.py`), and downloading completed Task
 Assignments (`scripts/download_results.py`) work the same whether
 Turkle is running in a Docker container or on the local host.
+
+## docker-compose with MySQL
+
+    docker-compose build
+    docker-compose up -d
+    docker-compose run turkle python manage.py migrate --noinput
+    docker-compose run turkle python manage.py createsuperuser

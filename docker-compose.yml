@@ -1,0 +1,34 @@
+version: '3.3'
+
+services:
+  db:
+    image: mysql:5.7
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: sonotsecure
+      MYSQL_DATABASE: turkle
+      MYSQL_USER: turkleuser
+      MYSQL_PASSWORD: turklepass
+    ports:
+      - "3333:3306"
+
+  turkle:
+    depends_on:
+      - db
+    build:
+      context: .
+      dockerfile: Dockerfile-MySQL
+    ports:
+      - "8080:8080"
+    restart: always
+    environment:
+      TURKLE_DB_ENGINE: MySQL
+      TURKLE_DB_HOST: db
+      TURKLE_DB_USER: turkleuser
+      TURKLE_DB_PASSWORD: turklepass
+      TURKLE_DB_NAME: turkle
+
+volumes:
+  db_data:
