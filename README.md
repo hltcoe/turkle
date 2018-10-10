@@ -461,9 +461,13 @@ This will stand up a Turkle server listening on port 8080.
 
 ## Changing the admin password ##
 
-The Docker containers have a user named `admin` with a default password of `admin`.
+The SQLite Docker container has a super-user named `admin` with a
+default password of `admin`.  For the MySQL Docker container, the
+super-user username and password are set by one of the
+`docker-compose` commands listed above.
 
-You should change the default admin password by:
+You should change the default admin password for the SQLite Docker
+container by:
 
 - connecting to the exposed container port with a web browser (e.g. connecting to http://localhost:18080/)
 - logging in with username `admin` and password `admin`
