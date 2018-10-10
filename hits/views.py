@@ -165,7 +165,7 @@ def hit_assignment(request, hit_id, hit_assignment_id):
         return redirect(index)
 
     if request.user.is_authenticated:
-        if request.user is not hit_assignment.assigned_to:
+        if request.user != hit_assignment.assigned_to:
             messages.error(
                 request,
                 u'You do not have permission to work on the Task Assignment with ID {}'.
@@ -221,7 +221,7 @@ def hit_assignment_iframe(request, hit_id, hit_assignment_id):
         return redirect(index)
 
     if request.user.is_authenticated:
-        if request.user is not hit_assignment.assigned_to:
+        if request.user != hit_assignment.assigned_to:
             messages.error(
                 request,
                 u'You do not have permission to work on the Task Assignment with ID {}'.
