@@ -194,12 +194,10 @@ class TestHitBatch(django.test.TestCase):
 
         csv_output = StringIO()
         hit_batch.to_csv(csv_output)
-        self.assertEqual(
-            b'"Input.letter","Input.number","Answer.combined"\r\n' +
-            b'"b","2","2b"\r\n' +
-            b'"a","1","1a"\r\n',
-            csv_output.getvalue()
-        )
+        csv_string = csv_output.getvalue()
+        self.assertTrue(b'"Input.letter","Input.number","Answer.combined"\r\n' in csv_string)
+        self.assertTrue(b'"b","2","2b"\r\n' in csv_string)
+        self.assertTrue(b'"a","1","1a"\r\n' in csv_string)
 
     def test_hit_batch_to_csv_variable_number_of_answers(self):
         hit_project = HitProject(name='test', html_template='<p>${letter}</p>')
@@ -249,10 +247,10 @@ class TestHitBatch(django.test.TestCase):
         csv_output = StringIO()
         hit_batch.to_csv(csv_output)
         rows = csv_output.getvalue().split()
-        self.assertEqual(rows[0], b'"Input.letter","Answer.1","Answer.2","Answer.3","Answer.4"')
-        self.assertTrue(b'"a","1","2","",""' in rows)
-        self.assertTrue(b'"b","","","3","4"' in rows)
-        self.assertTrue(b'"c","","2","3",""' in rows)
+        self.assertTrue(b'"Input.letter","Answer.1","Answer.2","Answer.3","Answer.4"' in rows[0])
+        self.assertTrue(any([b'"a","1","2","",""' in row for row in rows[1:]]))
+        self.assertTrue(any([b'"b","","","3","4"' in row for row in rows[1:]]))
+        self.assertTrue(any([b'"c","","2","3",""' in row for row in rows[1:]]))
 
     def test_hit_batch_from_emoji_csv(self):
         hit_project = HitProject(name='test', html_template='<p>${emoji} - ${more_emoji}</p>')
@@ -648,12 +646,10 @@ class TestModels(django.test.TestCase):
         hit_project.to_csv(csv_output)
 
         rows = csv_output.getvalue().split(b'\r\n')
-        self.assertEqual(
-            b'"Input.letter","Input.number","Answer.combined"',
-            rows[0]
-        )
-        self.assertTrue(b'"a","1","1a"' in rows[1:])
-        self.assertTrue(b'"b","2","2b"' in rows[1:])
+        self.assertTrue(
+            b'"Input.letter","Input.number","Answer.combined"' in rows[0])
+        self.assertTrue(any([b'"a","1","1a"' in row for row in rows[1:]]))
+        self.assertTrue(any([b'"b","2","2b"' in row for row in rows[1:]]))
 
     def test_hit_project_to_csv_different_answers_per_batch(self):
         hit_project = HitProject(name='test', html_template='<p>${letter}</p>')
@@ -693,12 +689,10 @@ class TestModels(django.test.TestCase):
         hit_project.to_csv(csv_output)
 
         rows = csv_output.getvalue().split(b'\r\n')
-        self.assertEqual(
-            b'"Input.letter","Answer.1","Answer.2","Answer.3","Answer.4"',
-            rows[0]
-        )
-        self.assertTrue(b'"a","1","2","",""' in rows)
-        self.assertTrue(b'"b","","","3","4"' in rows)
+        self.assertTrue(
+            b'"Input.letter","Answer.1","Answer.2","Answer.3","Answer.4"' in rows[0])
+        self.assertTrue(b'"a","1","2","",""' in rows[1])
+        self.assertTrue(b'"b","","","3","4"' in rows[2])
 
     def test_new_hit(self):
         """
