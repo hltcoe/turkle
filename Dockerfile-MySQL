@@ -24,8 +24,6 @@ RUN crontab /etc/cron.d/turkle
 RUN patch turkle/settings.py enable_whitenoise.patch
 
 RUN python manage.py collectstatic
-#RUN python manage.py migrate
-#RUN scripts/create_turkle_admin.sh
 
 VOLUME /opt/turkle
 
