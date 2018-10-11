@@ -31,15 +31,15 @@
         </span>
       </nav>
 
+      <div id="messages_container">
       {% if messages %}
-      <div>
         {% for message in messages %}
         <div class="alert alert-{{ message.level_tag }}" role="alert">
           {{ message }}
         </div>
         {% endfor %}
-      </div>
       {% endif %}
+      </div>
     </div><!-- /container-fluid -->
 
     {% block body %}
