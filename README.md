@@ -188,6 +188,12 @@ HTML 'Submit' button, then Turkle will add a 'Submit' button to the
 combined document.
 
 There are example HTML and CSV files in the `examples` directory.
+`translate_minimal.html` uses just HTML elements without any
+JavaScript.  `translate_validate.html` uses third-party JavaScript
+libraries to perform form validation.  `lda-lemmas.html` is a more
+complicated example that uses custom JavaScript to dynamically
+generate HTML elements and CSV files that store data structures as
+JSON strings.
 
 
 ## Creating Projects and Publishing Batches of Tasks ##
