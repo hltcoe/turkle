@@ -153,3 +153,16 @@ LOGIN_REDIRECT_URL = '/'
 
 # If True, the "Password Reset" link will be added to the login form
 TURKLE_EMAIL_ENABLED = False
+
+# Configure connection to Mail Transfer Agent (MTA)
+# more details at https://docs.djangoproject.com/en/1.11/ref/settings/#std:setting-EMAIL_HOST
+# EMAIL_HOST = ''
+# set the [from] email address
+# DEFAULT_FROM_EMAIL = ''
+# configure if not using the standard SMTP port 25
+# EMAIL_PORT = 25
+# uncomment if using secure connection to MTA
+# EMAIL_USE_TLS = True
+# configure if authenticating to MTA
+# EMAIL_HOST_USER = ''
+# EMAIL_HOST_PASSWORD = ''
