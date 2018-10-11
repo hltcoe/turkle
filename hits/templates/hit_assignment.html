@@ -4,6 +4,7 @@
 {% block header %}
 {{ block.super }}
 <script type="text/javascript" src="{% static 'hits/jquery-3.3.1.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'hits/jquery.countdown-2.2.0.js' %}"></script>
 <script>
 $(function () {
   var csrftoken = $("[name=csrfmiddlewaretoken]").val();
@@ -23,6 +24,20 @@ $(function () {
   $('#update_auto_accept').change(function() {
     $.post("{% url 'update_auto_accept' %}", {'auto_accept': this.checked});
   });
+
+  $("#expiration-timer").countdown('{{ hit_assignment.expires_at|date:'Y-m-d H:i' }}')
+                        .on('update.countdown', function(event) {
+                          $(this).text(event.strftime('Expires in %H:%M'))
+                        })
+                        .on('finish.countdown', function(event) {
+                          // "Gray out" background of iFrame
+                          $('#iframe_container').css('background', '#000');
+                          $('#hit_assignment_iframe').css('background', '#fff')
+                                                     .css('opacity', '0.8');
+                          $('#messages_container').append(
+                            $('<div>').addClass('alert alert-error').attr('role', 'alert')
+                                      .text('Task Assignment has expired'));
+                        });
 });
 </script>
 {% endblock %}
@@ -33,9 +48,10 @@ $(function () {
 
   {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 
-  <div style="height: 500px;">
+  <div id="iframe_container" style="height: 500px;">
     <iframe src="{% url 'hit_assignment_iframe' hit.id hit_assignment.id %}"
-            style="top: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: 0; box-sizing: inherit;">
+            style="top: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: 0; box-sizing: inherit;"
+            id="hit_assignment_iframe">
     </iframe>
   </div>
 
@@ -60,6 +76,10 @@ $(function () {
     {% csrf_token %}
     <input type="submit" id="submitButton" class="btn btn-sm btn-danger" value="Skip Task" />
   </form>
+</span>
+
+<span style="padding-left: 2em; font-size: 0.8em;">
+  <span id="expiration-timer"></span>
 </span>
 
 {% endblock %}
