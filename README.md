@@ -417,23 +417,23 @@ You will still need to configure nginx to serve the static files as we did with 
 
 Instead of installing Turkle and dependencies directly, you can run
 Turkle as a Docker container, using scripts to manage Projects and
-Batches of Tasks.  The Turkle image:
+Batches of Tasks.
 
-- listens for HTTP connections on port 8080
-- uses gunicorn as the WSGI HTTP server
-- uses Whitenoise to serve static files
-- uses SQLite as the database server
+This repo comes with two Dockerfiles.  The default file `Dockerfile`
+uses SQLite as the database backend.  The file `Dockerfile-MySQL` uses
+MySQL as the database backend.  The Turkle images created by both
+Dockerfiles:
 
-You can build the Turkle image using:
+- listen for HTTP connections on port 8080
+- use gunicorn as the WSGI HTTP server
+- use Whitenoise to serve static files
+
+## SQLite Docker image ##
+
+You can build the SQLite Turkle image using:
 
 ```bash
 docker build --force-rm -t hltcoe/turkle .
-```
-
-or pull the latest image from the Docker registry:
-
-```bash
-docker pull hltcoe/turkle
 ```
 
 To launch a Turkle container that maps container port 8080 to Docker
@@ -443,15 +443,39 @@ host port 18080, use:
 docker run -d --name container_name -p 18080:8080 hltcoe/turkle
 ```
 
-The Docker container has an `admin` user with a default password of `admin`.
+## MySQL Docker image ##
 
-You should change the default admin password by:
+The MySQL version of Turkle requires two containers - one for Turkle,
+and the other for MySQL.  This multi-container Docker application is
+configured and controlled by docker-compose.
+
+The multi-container Turkle application can be built and configured
+with the commands:
+
+    docker-compose build
+    docker-compose up -d
+    docker-compose run turkle python manage.py migrate --noinput
+    docker-compose run turkle python manage.py createsuperuser
+
+This will stand up a Turkle server listening on port 8080.
+
+## Changing the admin password ##
+
+The SQLite Docker container has a super-user named `admin` with a
+default password of `admin`.  For the MySQL Docker container, the
+super-user username and password are set by one of the
+`docker-compose` commands listed above.
+
+You should change the default admin password for the SQLite Docker
+container by:
 
 - connecting to the exposed container port with a web browser (e.g. connecting to http://localhost:18080/)
 - logging in with username `admin` and password `admin`
 - clicking on the `Admin` link on the top left of the screen
 - clicking on the `CHANGE PASSWORD` link at the top right of the screen
 - filling out and submitting the Change Password form
+
+## Using scripts with Dockerized Turkle ##
 
 The scripts for creating users (`scripts/add_user.py`,
 `scripts/import_users.py`), creating Projects and publishing Batches
