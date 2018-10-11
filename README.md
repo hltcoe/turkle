@@ -154,6 +154,11 @@ username1,password1
 username2,password2
 ```
 
+To support password resets, add an additional column for email address:
+```
+username1,password1,email1@example.com
+username2,password2,email2@example.com
+```
 
 ## Creating HTML Templates ##
 
