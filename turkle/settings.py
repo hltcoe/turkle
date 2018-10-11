@@ -1,18 +1,31 @@
 # -*- coding: utf-8 -*-
 # Django settings for turkle project.
 
+import os
+
 DEBUG = False
 ALLOWED_HOSTS = ['*']
 
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'db.sqlite3',
+if 'TURKLE_DB_ENGINE' in os.environ and os.environ['TURKLE_DB_ENGINE'].lower() == 'mysql':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.environ['TURKLE_DB_NAME'],
+            'USER': os.environ['TURKLE_DB_USER'],
+            'PASSWORD': os.environ['TURKLE_DB_PASSWORD'],
+            'HOST': os.environ['TURKLE_DB_HOST'],
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': 'db.sqlite3',
+        }
+    }
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 
