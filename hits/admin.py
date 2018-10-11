@@ -80,6 +80,8 @@ class HitBatchForm(ModelForm):
         self.fields['allotted_assignment_time'].help_text = 'If a user abandons a HIT, ' + \
             'this determines how long it takes until their assignment is deleted and ' + \
             'someone else can work on the HIT.'
+        self.fields['csv_file'].help_text = 'You can Drag-and-Drop a CSV file onto this ' + \
+            'window, or use the "Choose File" button to browse for the file'
         self.fields['csv_file'].widget = CustomButtonFileWidget()
         self.fields['hit_project'].label = 'Project'
         self.fields['name'].label = 'Batch Name'
@@ -230,7 +232,7 @@ class HitProjectForm(ModelForm):
             'published batches of Tasks.'
         self.fields['html_template'].label = 'HTML template text'
         self.fields['html_template'].help_text = 'You can edit the template text directly, ' + \
-            'or upload a template file using the button below'
+            'Drag-and-Drop a template file onto this window, or use the "Choose File" button below'
 
 
 class HitProjectAdmin(admin.ModelAdmin):
