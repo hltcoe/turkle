@@ -341,7 +341,7 @@ want to store the static files, e.g.:
 STATIC_ROOT = "/var/www/example.com/static/"
 ```
 
-You should then run the `collecstatic` management command:
+You should then run the `collectstatic` management command:
 
 ``` shell
 $ python manage.py collectstatic
