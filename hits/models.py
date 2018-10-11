@@ -268,6 +268,9 @@ class HitBatch(models.Model):
                 input_field_set.update(hit.input_csv_fields.keys())
                 answer_field_set.update(hit_assignment.answers.keys())
         return tuple(
+            [u'HITId', u'HITTypeId', u'Title', u'CreationTime', u'MaxAssignments',
+             u'AssignmentDurationInSeconds', u'AssignmentId', u'WorkerId',
+             u'AcceptTime', u'SubmitTime', u'WorkTimeInSeconds'] +
             [u'Input.' + k for k in sorted(input_field_set)] +
             [u'Answer.' + k for k in sorted(answer_field_set)]
         )
@@ -286,9 +289,26 @@ class HitBatch(models.Model):
             dicts are the values of the fieldname strings.
         """
         rows = []
+        time_format = '%a %b %m %H:%M:%S %Z %Y'
         for hit in hits:
             for hit_assignment in hit.hitassignment_set.all():
-                row = {}
+                batch = hit.hit_batch
+                project = hit.hit_batch.hit_project
+
+                row = {
+                    'HITId': hit.id,
+                    'HITTypeId': project.id,
+                    'Title': project.name,
+                    'CreationTime': batch.date_published.strftime(time_format),
+                    'MaxAssignments': batch.assignments_per_hit,
+                    'AssignmentDurationInSeconds': batch.allotted_assignment_time * 3600,
+                    'AssignmentId': hit_assignment.id,
+                    'WorkerId': hit_assignment.assigned_to_id,
+                    'AcceptTime': hit_assignment.created_at.strftime(time_format),
+                    'SubmitTime': hit_assignment.updated_at.strftime(time_format),
+                    'WorkTimeInSeconds': int((hit_assignment.updated_at -
+                                              hit_assignment.created_at).total_seconds()),
+                }
                 row.update({u'Input.' + k: v for k, v in hit.input_csv_fields.items()})
                 row.update({u'Answer.' + k: v for k, v in hit_assignment.answers.items()})
                 rows.append(row)
@@ -395,6 +415,9 @@ class HitProject(models.Model):
                     input_field_set.update(hit.input_csv_fields.keys())
                     answer_field_set.update(hit_assignment.answers.keys())
         return tuple(
+            [u'HITId', u'HITTypeId', u'Title', u'CreationTime', u'MaxAssignments',
+             u'AssignmentDurationInSeconds', u'AssignmentId', u'WorkerId',
+             u'AcceptTime', u'SubmitTime', u'WorkTimeInSeconds'] +
             [u'Input.' + k for k in sorted(input_field_set)] +
             [u'Answer.' + k for k in sorted(answer_field_set)]
         )
