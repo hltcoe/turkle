@@ -1,0 +1,97 @@
+<!--
+     HTML template for a translation task with form validation.
+
+     Form validation is performed by Parsley:
+
+       http://parsleyjs.org
+
+     Parsley depends on jQuery.  The Parsley and jQuery JavaScript file
+     are loaded from public CDNs.
+
+
+     The CSV input file should have columns:
+
+       "sentence_1","sentence_2","sentence_3","sentence_4","sentence_5"
+
+     The CSV results file will have columns:
+
+       "Input.sentence_1","Input.sentence_2","Input.sentence_3",
+       "Input.sentence_4","Input.sentence_5",
+       "Answer.sentence_1","Answer.sentence_2","Answer.sentence_3",
+       "Answer.sentence_4","Answer.sentence_5"
+-->
+
+<script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/parsley.js/2.8.1/parsley.js"></script>
+<script>
+$(document).ready(function() {
+  $('#mturk_form').parsley();
+});
+</script>
+<style>
+/* Style rules copied from:  http://parsleyjs.org/src/parsley.css */
+input.parsley-success,
+select.parsley-success,
+textarea.parsley-success {
+  color: #468847;
+  background-color: #DFF0D8;
+  border: 1px solid #D6E9C6;
+}
+
+input.parsley-error,
+select.parsley-error,
+textarea.parsley-error {
+  color: #B94A48;
+  background-color: #F2DEDE;
+  border: 1px solid #EED3D7;
+}
+
+.parsley-errors-list {
+  margin: 2px 0 3px;
+  padding: 0;
+  list-style-type: none;
+  font-size: 0.9em;
+  line-height: 0.9em;
+  opacity: 0;
+
+  transition: all .3s ease-in;
+  -o-transition: all .3s ease-in;
+  -moz-transition: all .3s ease-in;
+  -webkit-transition: all .3s ease-in;
+}
+
+.parsley-errors-list.filled {
+  opacity: 1;
+}
+</style>
+
+<h1>Instructions</h1>
+<p>
+  Translate each of the sentences below into Spanish:
+</p>
+<hr />
+<p>
+  <label for="sentence_1">${sentence_1}</label>
+  <br />
+  <input name="sentence_1" id="sentence_1" type="text" required />
+</p>
+<p>
+  <label for="sentence_2">${sentence_2}</label>
+  <br />
+  <input name="sentence_2" id="sentence_2" type="text" required />
+</p>
+<p>
+  <label for="sentence_3">${sentence_3}</label>
+  <br />
+  <input name="sentence_3" id="sentence_3" type="text" required />
+</p>
+<p>
+  <label for="sentence_4">${sentence_4}</label>
+  <br />
+  <input name="sentence_4" id="sentence_4" type="text" required />
+</p>
+<p>
+  <label for="sentence_5">${sentence_5}</label>
+  <br />
+  <input name="sentence_5" id="sentence_5" type="text" required />
+</p>
