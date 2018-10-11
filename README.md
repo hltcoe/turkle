@@ -247,10 +247,10 @@ Apache or nginx as a proxy server with a Python HTTP server like Gunicorn behind
 
 ## email Configuration
 
-Turkle can send password reset emails if your server is configured to
-deliver emails.  By default, the links to the password reset page are
-hidden.  To display the links, edit the `turkle/settings.py` file and
-set the variable `TURKLE_EMAIL_ENABLED` to `True`.
+Turkle can send password reset emails if your server is configured to deliver emails.
+By default, the links to the password reset page are hidden.
+To enable, edit the `turkle/settings.py` file and set the variable `TURKLE_EMAIL_ENABLED` to `True`.
+Then edit the section directly below to configure connecting to the Mail Transfer Agent (MTA).
 
 
 ## Production Database Configuration
