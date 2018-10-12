@@ -116,34 +116,46 @@ INSTALLED_APPS = (
     'django_nose',
 )
 
-# A sample logging configuration. The only tangible logging
-# performed by this configuration is to send an email to
-# the site admins on every HTTP 500 error when DEBUG=False.
-# See http://docs.djangoproject.com/en/dev/topics/logging for
-# more details on how to customize your logging configuration.
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'filters': {
-        'require_debug_false': {
-            '()': 'django.utils.log.RequireDebugFalse'
-        }
-    },
-    'handlers': {
-        'mail_admins': {
-            'level': 'ERROR',
-            'filters': ['require_debug_false'],
-            'class': 'django.utils.log.AdminEmailHandler'
-        }
-    },
-    'loggers': {
-        'django.request': {
-            'handlers': ['mail_admins'],
-            'level': 'ERROR',
-            'propagate': True,
-        },
-    }
-}
+# Below is a possible logging configuration that sends HTTP 500
+# errors to people lists in ADMINS and records an access log to
+# logs/turkle.log. You will need to create the logs directory in
+# the base of this repository (at the same level as examples).
+# More options can be found in Django's logging docs:
+# https://docs.djangoproject.com/en/1.11/topics/logging/
+# ADMINS =(('name','email'),)
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#     'filters': {
+#         'require_debug_false': {
+#             '()': 'django.utils.log.RequireDebugFalse'
+#         }
+#     },
+#     'handlers': {
+#         'file': {
+#             'level': 'INFO',
+#             'class': 'logging.FileHandler',
+#             'filename': os.path.join(os.path.dirname(__file__), os.pardir, 'logs', 'turkle.log'),
+#         },
+#         'mail_admins': {
+#             'level': 'ERROR',
+#             'filters': ['require_debug_false'],
+#             'class': 'django.utils.log.AdminEmailHandler'
+#         }
+#     },
+#     'loggers': {
+#         'django': {
+#             'handlers': ['file'],
+#             'level': 'INFO',
+#             'propagate': True,
+#         },
+#         'django.request': {
+#             'handlers': ['mail_admins'],
+#             'level': 'ERROR',
+#             'propagate': False,
+#         },
+#     }
+# }
 
 # Set max size for file uploads and POST requests to 100MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600
@@ -151,7 +163,8 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600
 
 LOGIN_REDIRECT_URL = '/'
 
-# If True, the "Password Reset" link will be added to the login form
+# If True, the "Password Reset" link will be added to the login form.
+# This requires MTA configuration below.
 TURKLE_EMAIL_ENABLED = False
 
 # Configure connection to Mail Transfer Agent (MTA)
