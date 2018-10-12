@@ -428,6 +428,9 @@ to the MIDDLEWARE section:
 'whitenoise.middleware.WhiteNoiseMiddleware',
 ```
 
+Note that you need to follow the previous instructions on configuring static files
+before running with whitenoise.
+
 ### Apache as a reverse proxy
 
 To use Apache as the proxy server, enable proxying: `a2enmod proxy_http`.
