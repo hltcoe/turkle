@@ -121,6 +121,25 @@ Next, create an admin account:
 python manage.py createsuperuser
 ```
 
+## Configuring automatic expiration of Task Assignments ##
+
+If a user takes a Task Assignment but never submits the Assignment,
+the Task Assignment eventually expires.  The expiration time is
+determined by a Batch-level parameter called "Allotted assignment
+time".  Expired tasks can be deleted using the "Expire Abandoned
+Assignments" button in the Admin UI, or by running the script:
+
+```bash
+python manage.py expire_assignments
+```
+
+The `docker-config/` directory contains a `turkle.crontab` file that
+can be used to periodically run the script using cron.  The method for
+configuring a cron job depends on your operating system.
+
+The Turkle Docker containers are configured to use cron to
+automatically delete expired Task Assignments.
+
 
 # Usage
 
