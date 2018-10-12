@@ -121,7 +121,7 @@ INSTALLED_APPS = (
 # logs/turkle.log. You will need to create the logs directory in
 # the base of this repository (at the same level as examples).
 # More options can be found in Django's logging docs:
-# https://docs.djangoproject.com/en/2.1/topics/logging/
+# https://docs.djangoproject.com/en/1.11/topics/logging/
 # ADMINS =(('name','email'),)
 # LOGGING = {
 #     'version': 1,
