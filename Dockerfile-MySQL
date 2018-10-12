@@ -12,16 +12,16 @@ COPY requirements.txt /opt/turkle/requirements.txt
 RUN pip install --upgrade -r requirements.txt
 RUN pip install gunicorn mysqlclient whitenoise
 
-COPY hits /opt/turkle/hits
+COPY turkle /opt/turkle/turkle
 COPY manage.py /opt/turkle/manage.py
 COPY scripts /opt/turkle/scripts
-COPY turkle /opt/turkle/turkle
+COPY turkle_site /opt/turkle/turkle_site
 COPY docker-config/enable_whitenoise.patch /opt/turkle/enable_whitenoise.patch
 
 COPY docker-config/turkle.crontab /etc/cron.d/turkle
 RUN crontab /etc/cron.d/turkle
 
-RUN patch turkle/settings.py enable_whitenoise.patch
+RUN patch turkle_site/settings.py enable_whitenoise.patch
 
 RUN python manage.py collectstatic
 
@@ -29,4 +29,4 @@ VOLUME /opt/turkle
 
 EXPOSE 8080
 
-CMD crond && gunicorn --bind 0.0.0.0:8080 turkle.wsgi
+CMD crond && gunicorn --bind 0.0.0.0:8080 turkle_site.wsgi

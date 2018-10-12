@@ -20,9 +20,9 @@ def exception_handler(func):
 class TurkleClient(object):
     LOGIN_URL = "/login/"
     ADD_USER_URL = "/admin/auth/user/add/"
-    ADD_PROJECT_URL = "/admin/hits/hitproject/add/"
-    ADD_BATCH_URL = "/admin/hits/hitbatch/add/"
-    LIST_BATCH_URL = "/admin/hits/hitbatch/"
+    ADD_PROJECT_URL = "/admin/turkle/hitproject/add/"
+    ADD_BATCH_URL = "/admin/turkle/hitbatch/add/"
+    LIST_BATCH_URL = "/admin/turkle/hitbatch/"
 
     def __init__(self, server, admin, password=None):
         if not password:

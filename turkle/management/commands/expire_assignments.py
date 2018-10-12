@@ -3,7 +3,7 @@ import logging
 
 from django.core.management.base import BaseCommand
 
-from hits.models import HitAssignment
+from turkle.models import HitAssignment
 
 
 class Command(BaseCommand):

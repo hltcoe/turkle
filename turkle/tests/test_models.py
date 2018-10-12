@@ -15,7 +15,7 @@ from django.core.exceptions import ValidationError
 import django.test
 from django.utils import timezone
 
-from hits.models import Hit, HitAssignment, HitBatch, HitProject
+from turkle.models import Hit, HitAssignment, HitBatch, HitProject
 
 # hack to add unicode() to python3 for backward compatibility
 try:
@@ -258,7 +258,7 @@ class TestHitBatch(django.test.TestCase):
         hit_batch = HitBatch(hit_project=hit_project)
         hit_batch.save()
 
-        csv_fh = open(os.path.abspath('hits/tests/resources/emoji.csv'), 'rb')
+        csv_fh = open(os.path.abspath('turkle/tests/resources/emoji.csv'), 'rb')
         hit_batch.create_hits_from_csv(csv_fh)
 
         self.assertEqual(hit_batch.total_hits(), 3)
@@ -727,7 +727,7 @@ class TestModels(django.test.TestCase):
 class TestGenerateForm(django.test.TestCase):
 
     def setUp(self):
-        with open('hits/tests/resources/form_0.html') as f:
+        with open('turkle/tests/resources/form_0.html') as f:
             html_template = f.read()
             # python 2 compat hack
             try:
@@ -766,7 +766,7 @@ class TestGenerateForm(django.test.TestCase):
         self.hit.save()
 
     def test_populate_html_template(self):
-        with open('hits/tests/resources/form_0_filled.html') as f:
+        with open('turkle/tests/resources/form_0_filled.html') as f:
             form = f.read()
             # python 2 compat hack
             try:

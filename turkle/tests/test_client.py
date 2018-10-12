@@ -99,7 +99,7 @@ if sys.version_info[0] == 2:
 
 
 class TestClient(django.test.LiveServerTestCase):
-    fixtures = ['hits/tests/resources/test_db.json']
+    fixtures = ['turkle/tests/resources/test_db.json']
 
     def setUp(self):
         self.client = TurkleClient(self.live_server_url, "admin", "password")

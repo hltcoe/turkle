@@ -14,8 +14,8 @@ from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from hits.models import Hit, HitAssignment, HitBatch, HitProject
-from hits.views import hit_assignment
+from turkle.models import Hit, HitAssignment, HitBatch, HitProject
+from turkle.views import hit_assignment
 
 
 class TestAcceptHit(TestCase):
@@ -244,7 +244,7 @@ class TestExpireAbandonedAssignments(django.test.TestCase):
         client.login(username='admin', password='secret')
         response = client.get(reverse('expire_abandoned_assignments'))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], '/admin/hits')
+        self.assertEqual(response['Location'], '/admin/turkle')
         self.assertEqual(HitAssignment.objects.count(), 0)
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)

@@ -23,7 +23,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from functools import wraps
 
-from hits.models import Hit, HitAssignment, HitBatch, HitProject
+from turkle.models import Hit, HitAssignment, HitBatch, HitProject
 
 
 def handle_db_lock(func):
@@ -143,7 +143,7 @@ def expire_abandoned_assignments(request):
     """
     (total_deleted, _) = HitAssignment.expire_all_abandoned()
     messages.info(request, u'All {} abandoned Tasks have been expired'.format(total_deleted))
-    return redirect('/admin/hits')
+    return redirect('/admin/turkle')
 
 
 def hit_assignment(request, hit_id, hit_assignment_id):
