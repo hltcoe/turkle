@@ -14,8 +14,8 @@ from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from hits.models import Hit, HitAssignment, HitBatch, HitProject
-from hits.views import hit_assignment
+from turkle.models import Hit, HitAssignment, HitBatch, HitProject
+from turkle.views import hit_assignment
 
 
 class TestAcceptHit(TestCase):

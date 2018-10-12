@@ -17,11 +17,11 @@ from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 import unicodecsv
 
-from hits.models import HitBatch, HitProject
+from turkle.models import HitBatch, HitProject
 
 
 class TurkleAdminSite(admin.AdminSite):
-    app_index_template = 'admin/hits/app_index.html'
+    app_index_template = 'admin/turkle/app_index.html'
     site_header = 'Turkle administration'
 
 
@@ -59,7 +59,7 @@ class ProjectNameReadOnlyWidget(Widget):
         return format_html(
             '<div class="readonly"><a href="{}">{}</a></div>'
             '<input name="hit_project" id="id_hit_project" type="hidden" value="{}" />'.format(
-                reverse('admin:hits_hitproject_change', args=[self.project_id]),
+                reverse('admin:turkle_hitproject_change', args=[self.project_id]),
                 self.project_name, self.project_id))
 
 
@@ -222,7 +222,7 @@ class HitProjectForm(ModelForm):
 
         # This hidden form field is updated by JavaScript code in the
         # customized admin template file:
-        #   hits/templates/admin/hits/hitproject/change_form.html
+        #   turkle/templates/admin/turkle/hitproject/change_form.html
         self.fields['filename'].widget = HiddenInput()
 
         self.fields['assignments_per_hit'].label = 'Assignments per Task'
@@ -264,7 +264,7 @@ class HitProjectAdmin(admin.ModelAdmin):
 
     def publish_hits(self, instance):
         publish_hits_url = '%s?hit_project=%d&assignments_per_hit=%d' % (
-            reverse('admin:hits_hitbatch_add'),
+            reverse('admin:turkle_hitbatch_add'),
             instance.id,
             instance.assignments_per_hit)
         return format_html('<a href="{}" class="button">Publish Tasks</a>'.

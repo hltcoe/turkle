@@ -5,7 +5,7 @@ import django.test
 from django.contrib.auth.models import User
 from django.urls import reverse
 
-from hits.models import HitBatch, HitProject
+from turkle.models import HitBatch, HitProject
 
 
 class TestHitBatchAdmin(django.test.TestCase):
@@ -20,9 +20,9 @@ class TestHitBatchAdmin(django.test.TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        with open(os.path.abspath('hits/tests/resources/form_1_vals.csv')) as fp:
+        with open(os.path.abspath('turkle/tests/resources/form_1_vals.csv')) as fp:
             response = client.post(
-                u'/admin/hits/hitbatch/add/',
+                u'/admin/turkle/hitbatch/add/',
                 {
                     'assignments_per_hit': 1,
                     'hit_project': hit_project.id,
@@ -31,7 +31,7 @@ class TestHitBatchAdmin(django.test.TestCase):
                 })
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], u'/admin/hits/hitbatch/')
+        self.assertEqual(response['Location'], u'/admin/turkle/hitbatch/')
         self.assertTrue(HitBatch.objects.filter(name='hit_batch_save').exists())
         matching_hit_batch = HitBatch.objects.filter(name='hit_batch_save').first()
         self.assertEqual(matching_hit_batch.filename, u'form_1_vals.csv')
@@ -47,9 +47,9 @@ class TestHitBatchAdmin(django.test.TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        with open(os.path.abspath('hits/tests/resources/emoji.csv')) as fp:
+        with open(os.path.abspath('turkle/tests/resources/emoji.csv')) as fp:
             response = client.post(
-                u'/admin/hits/hitbatch/add/',
+                u'/admin/turkle/hitbatch/add/',
                 {
                     'assignments_per_hit': 1,
                     'hit_project': hit_project.id,
@@ -58,7 +58,7 @@ class TestHitBatchAdmin(django.test.TestCase):
                 })
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], u'/admin/hits/hitbatch/')
+        self.assertEqual(response['Location'], u'/admin/turkle/hitbatch/')
         self.assertTrue(HitBatch.objects.filter(name='hit_batch_save').exists())
         matching_hit_batch = HitBatch.objects.filter(name='hit_batch_save').first()
         self.assertEqual(matching_hit_batch.filename, u'emoji.csv')
@@ -76,9 +76,9 @@ class TestHitBatchAdmin(django.test.TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        with open(os.path.abspath('hits/tests/resources/form_1_vals.csv')) as fp:
+        with open(os.path.abspath('turkle/tests/resources/form_1_vals.csv')) as fp:
             response = client.post(
-                u'/admin/hits/hitbatch/add/',
+                u'/admin/turkle/hitbatch/add/',
                 {
                     'allotted_assignment_time': '',
                     'assignments_per_hit': 1,
@@ -98,9 +98,9 @@ class TestHitBatchAdmin(django.test.TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        with open(os.path.abspath('hits/tests/resources/form_1_vals.csv')) as fp:
+        with open(os.path.abspath('turkle/tests/resources/form_1_vals.csv')) as fp:
             response = client.post(
-                u'/admin/hits/hitbatch/add/',
+                u'/admin/turkle/hitbatch/add/',
                 {
                     'assignments_per_hit': 1,
                     'name': 'hit_batch_save',
@@ -119,7 +119,7 @@ class TestHitBatchAdmin(django.test.TestCase):
         client = django.test.Client()
         client.login(username='admin', password='secret')
         response = client.post(
-            u'/admin/hits/hitbatch/add/',
+            u'/admin/turkle/hitbatch/add/',
             {
                 'assignments_per_hit': 1,
                 'hit_project': hit_project.id,
@@ -138,9 +138,9 @@ class TestHitBatchAdmin(django.test.TestCase):
         client = django.test.Client()
         client.login(username='admin', password='secret')
         # CSV file has fields 'f2' and 'f3'
-        with open(os.path.abspath('hits/tests/resources/mismatched_fields.csv')) as fp:
+        with open(os.path.abspath('turkle/tests/resources/mismatched_fields.csv')) as fp:
             response = client.post(
-                u'/admin/hits/hitbatch/add/',
+                u'/admin/turkle/hitbatch/add/',
                 {
                     'assignments_per_hit': 1,
                     'hit_project': hit_project.id,
@@ -161,9 +161,9 @@ class TestHitBatchAdmin(django.test.TestCase):
         client = django.test.Client()
         client.login(username='admin', password='secret')
         # CSV file has fields 'f2' and 'f3'
-        with open(os.path.abspath('hits/tests/resources/mismatched_fields.csv')) as fp:
+        with open(os.path.abspath('turkle/tests/resources/mismatched_fields.csv')) as fp:
             response = client.post(
-                u'/admin/hits/hitbatch/add/',
+                u'/admin/turkle/hitbatch/add/',
                 {
                     'hit_project': hit_project.id,
                     'name': 'hit_batch_save',
@@ -183,9 +183,9 @@ class TestHitBatchAdmin(django.test.TestCase):
         client = django.test.Client()
         client.login(username='admin', password='secret')
         # CSV file has fields 'f2' and 'f3'
-        with open(os.path.abspath('hits/tests/resources/variable_fields_per_row.csv')) as fp:
+        with open(os.path.abspath('turkle/tests/resources/variable_fields_per_row.csv')) as fp:
             response = client.post(
-                u'/admin/hits/hitbatch/add/',
+                u'/admin/turkle/hitbatch/add/',
                 {
                     'hit_project': hit_project.id,
                     'name': 'hit_batch_save',
@@ -203,7 +203,7 @@ class TestHitBatchAdmin(django.test.TestCase):
         client = django.test.Client()
         client.login(username='admin', password='secret')
         response = client.get(
-            u'/admin/hits/hitbatch/%d/change/' % batch.id
+            u'/admin/turkle/hitbatch/%d/change/' % batch.id
         )
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 200)
@@ -215,7 +215,7 @@ class TestHitBatchAdmin(django.test.TestCase):
         client = django.test.Client()
         client.login(username='admin', password='secret')
         response = client.post(
-            u'/admin/hits/hitbatch/%d/change/' % batch.id,
+            u'/admin/turkle/hitbatch/%d/change/' % batch.id,
             {
                 'assignments_per_hit': 1,
                 'hit_project': batch.hit_project.id,
@@ -223,7 +223,7 @@ class TestHitBatchAdmin(django.test.TestCase):
             })
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], u'/admin/hits/hitbatch/')
+        self.assertEqual(response['Location'], u'/admin/turkle/hitbatch/')
         self.assertFalse(HitBatch.objects.filter(name='hit_batch_save').exists())
         self.assertTrue(HitBatch.objects.filter(name='hit_batch_save_modified').exists())
 
@@ -237,7 +237,7 @@ class TestHitProject(django.test.TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.post(reverse('admin:hits_hitproject_add'),
+        response = client.post(reverse('admin:turkle_hitproject_add'),
                                {
                                    'assignments_per_hit': 1,
                                    'name': 'foo',
@@ -245,5 +245,5 @@ class TestHitProject(django.test.TestCase):
                                })
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], u'/admin/hits/hitproject/')
+        self.assertEqual(response['Location'], u'/admin/turkle/hitproject/')
         self.assertEqual(HitProject.objects.filter(name='foo').count(), 1)

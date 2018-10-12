@@ -93,10 +93,10 @@ MIDDLEWARE = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-ROOT_URLCONF = 'turkle.urls'
+ROOT_URLCONF = 'turkle_site.urls'
 
 # Python dotted path to the WSGI application used by Django's runserver.
-WSGI_APPLICATION = 'turkle.wsgi.application'
+WSGI_APPLICATION = 'turkle_site.wsgi.application'
 
 INSTALLED_APPS = (
     'django.contrib.auth',
@@ -108,7 +108,7 @@ INSTALLED_APPS = (
     # Our app comes before django.contrib.admin so that Django uses
     # our password change/reset templates instead of the templates
     # from django.contrib.admin
-    'hits',
+    'turkle',
     'django.contrib.admin',
 
     # Uncomment the next line to enable admin documentation:

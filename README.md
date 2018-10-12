@@ -255,7 +255,7 @@ Apache or nginx as a proxy server with a Python HTTP server like Gunicorn behind
 
 Turkle can send password reset emails if your server is configured to deliver emails.
 By default, the links to the password reset page are hidden.
-To enable, edit the `turkle/settings.py` file and set the variable `TURKLE_EMAIL_ENABLED` to `True`.
+To enable, edit the `turkle_site/settings.py` file and set the variable `TURKLE_EMAIL_ENABLED` to `True`.
 Then edit the section directly below to configure connecting to the Mail Transfer Agent (MTA).
 
 
@@ -372,7 +372,7 @@ pip install gunicorn
 Gunicorn can be run from Turkle's base directory using:
 
 ```bash
-gunicorn --bind 0.0.0.0:8000 turkle.wsgi
+gunicorn --bind 0.0.0.0:8000 turkle_site.wsgi
 ```
 
 Common Gunicorn runtime options are available in the
@@ -391,7 +391,7 @@ files.  Install it using:
 pip install whitenoise
 ```
 
-and then enable Whitenoise in `turkle/settings.py` by adding this line
+and then enable Whitenoise in `turkle_site/settings.py` by adding this line
 to the MIDDLEWARE section:
 
 ``` python

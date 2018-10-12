@@ -23,7 +23,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from functools import wraps
 
-from hits.models import Hit, HitAssignment, HitBatch, HitProject
+from turkle.models import Hit, HitAssignment, HitBatch, HitProject
 
 
 def handle_db_lock(func):

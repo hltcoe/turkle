@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class HitAppConfig(AppConfig):
-    name = 'hits'
+class TurkleAppConfig(AppConfig):
+    name = 'turkle'
     verbose_name = 'Turkle'
