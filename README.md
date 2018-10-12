@@ -345,7 +345,7 @@ Log into the psql client and run the following commands:
 CREATE DATABASE turkle;
 CREATE USER turkleuser WITH PASSWORD 'password';
 ALTER ROLE turkleuser SET client_encoding TO 'utf8';
-GRANT ALL PRIVILEGES ON turkle TO turkleuser;
+GRANT ALL PRIVILEGES ON DATABASE turkle TO turkleuser;
 ```
 
 Third, update Turkle's settings to point at this database:
