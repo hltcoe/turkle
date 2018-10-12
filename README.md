@@ -126,8 +126,9 @@ python manage.py createsuperuser
 If a user takes a Task Assignment but never submits the Assignment,
 the Task Assignment eventually expires.  The expiration time is
 determined by a Batch-level parameter called "Allotted assignment
-time".  Expired tasks can be deleted using the "Expire Abandoned
-Assignments" button in the Admin UI, or by running the script:
+time".  Expired Tasks Assignments can be deleted using the "Expire
+Abandoned Assignments" button in the Admin UI, or by running the
+script:
 
 ```bash
 python manage.py expire_assignments
