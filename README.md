@@ -154,6 +154,11 @@ username1,password1
 username2,password2
 ```
 
+To support password resets, add an additional column for email address:
+```
+username1,password1,email1@example.com
+username2,password2,email2@example.com
+```
 
 ## Creating HTML Templates ##
 
@@ -258,6 +263,11 @@ By default, the links to the password reset page are hidden.
 To enable, edit the `turkle_site/settings.py` file and set the variable `TURKLE_EMAIL_ENABLED` to `True`.
 Then edit the section directly below to configure connecting to the Mail Transfer Agent (MTA).
 
+## Logging Configuration
+
+The Turkle application does not log any internal state. There is a sample logging
+configuration in the settings file if an administrator wants to receive emails 
+if HTTP 500 errors occur.
 
 ## Production Database Configuration
 

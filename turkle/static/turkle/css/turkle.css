@@ -17,7 +17,9 @@
   border-color: #f5c6cb;
 }
 
-.inline-form-buttons > form {
+.inline-form-buttons > form,
+.inline-form-buttons > a[role="button"]
+{
   display: inline-block;
   margin-left: 1em;
 }

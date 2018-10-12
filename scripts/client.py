@@ -35,7 +35,7 @@ class TurkleClient(object):
             self.server = self.server.replace('http://', '')
 
     @exception_handler
-    def add_user(self, user, password):
+    def add_user(self, user, password, email=None):
         with requests.Session() as session:
             if not self.login(session):
                 return False
@@ -47,6 +47,8 @@ class TurkleClient(object):
                 'password2': password,
                 'csrfmiddlewaretoken': session.cookies['csrftoken']
             }
+            if email:
+                payload['email'] = email
             resp = session.post(url, data=payload)
             if "username already exists" in resp.text:
                 print("Error: username already exists")

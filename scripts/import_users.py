@@ -6,7 +6,7 @@ import sys
 
 parser = argparse.ArgumentParser(
     description="Import a list of users from a CSV",
-    epilog="The CSV should have no header with format: username,password",
+    epilog="The CSV should have no header with format: username,password,email[optional]",
     formatter_class=argparse.ArgumentDefaultsHelpFormatter
 )
 parser.add_argument("-u", help="admin username", required=True)
@@ -21,7 +21,10 @@ with open(args.csv, 'r') as fh:
     result = True
     count = 0
     for row in reader:
-        result |= client.add_user(row[0].strip(), row[1].strip())
+        if len(row) == 2:
+            result |= client.add_user(row[0].strip(), row[1].strip())
+        else:
+            result |= client.add_user(row[0].strip(), row[1].strip(), row[2].strip())
         if not result:
             break
         count += 1
