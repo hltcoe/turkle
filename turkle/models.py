@@ -23,7 +23,7 @@ class Hit(models.Model):
     class Meta:
         verbose_name = "Task"
 
-    hit_batch = models.ForeignKey('HitBatch', on_delete=models.CASCADE)
+    batch = models.ForeignKey('Batch', on_delete=models.CASCADE)
     completed = models.BooleanField(default=False)
     input_csv_fields = JSONField()
 
@@ -37,11 +37,11 @@ class Hit(models.Model):
         """Return HTML template for this Task's project, with populated template variables
 
         Returns:
-            String containing the HTML template for the HitProject associated with
+            String containing the HTML template for the Project associated with
             this Hit, with all template variables replaced with the template
             variable values stored in this Hit's input_csv_fields.
         """
-        result = self.hit_batch.hit_project.html_template
+        result = self.batch.project.html_template
         for field in self.input_csv_fields.keys():
             result = result.replace(
                 r'${' + field + r'}',
@@ -71,7 +71,7 @@ class HitAssignment(models.Model):
 
     def save(self, *args, **kwargs):
         self.expires_at = timezone.now() + \
-            datetime.timedelta(hours=self.hit.hit_batch.allotted_assignment_time)
+            datetime.timedelta(hours=self.hit.batch.allotted_assignment_time)
 
         if 'csrfmiddlewaretoken' in self.answers:
             del self.answers['csrfmiddlewaretoken']
@@ -79,12 +79,12 @@ class HitAssignment(models.Model):
 
         # Mark Task as completed if all Assignments have been completed
         if self.hit.hitassignment_set.filter(completed=True).count() >= \
-           self.hit.hit_batch.assignments_per_hit:
+           self.hit.batch.assignments_per_hit:
             self.hit.completed = True
             self.hit.save()
 
 
-class HitBatch(models.Model):
+class Batch(models.Model):
     class Meta:
         verbose_name = "Batch"
         verbose_name_plural = "Batches"
@@ -94,7 +94,7 @@ class HitBatch(models.Model):
     assignments_per_hit = models.IntegerField(default=1, verbose_name='Assignments per Task')
     date_published = models.DateTimeField(auto_now_add=True)
     filename = models.CharField(max_length=1024)
-    hit_project = models.ForeignKey('HitProject', on_delete=models.CASCADE)
+    project = models.ForeignKey('Project', on_delete=models.CASCADE)
     name = models.CharField(max_length=1024)
 
     def available_hits_for(self, user):
@@ -109,7 +109,7 @@ class HitBatch(models.Model):
         Returns:
             QuerySet of Hit objects
         """
-        if not user.is_authenticated and self.hit_project.login_required:
+        if not user.is_authenticated and self.project.login_required:
             return Hit.objects.none()
 
         hs = self.hit_set.filter(completed=False)
@@ -129,20 +129,20 @@ class HitBatch(models.Model):
         return self.available_hits_for(user).values_list('id', flat=True)
 
     def clean(self):
-        # Without this guard condition for hit_project_id, a
+        # Without this guard condition for project_id, a
         # RelatedObjectDoesNotExist exception is thrown before a
         # ValidationError can be thrown.  When this model is edited
         # using a form, this causes the server to generate an HTTP 500
         # error due to the uncaught RelatedObjectDoesNotExist
         # exception, instead of catching the ValidationError and
         # displaying a form with a "Field required" warning.
-        if self.hit_project_id:
-            if not self.hit_project.login_required and self.assignments_per_hit != 1:
+        if self.project_id:
+            if not self.project.login_required and self.assignments_per_hit != 1:
                 raise ValidationError('When login is not required to access a Project, ' +
                                       'the number of Assignments per Task must be 1')
 
     def csv_results_filename(self):
-        """Returns filename for CSV results file for this HitBatch
+        """Returns filename for CSV results file for this Batch
         """
         batch_filename, extension = os.path.splitext(os.path.basename(self.filename))
 
@@ -164,7 +164,7 @@ class HitBatch(models.Model):
             if not row:
                 continue
             hit = Hit(
-                hit_batch=self,
+                batch=self,
                 input_csv_fields=dict(zip(header, row)),
             )
             hit.save()
@@ -175,14 +175,14 @@ class HitBatch(models.Model):
     def expire_assignments(self):
         HitAssignment.objects.\
             filter(completed=False).\
-            filter(hit__hit_batch_id=self.id).\
+            filter(hit__batch_id=self.id).\
             filter(expires_at__lt=timezone.now()).\
             delete()
 
     def finished_hits(self):
         """
         Returns:
-            QuerySet of all Hit objects associated with this HitBatch
+            QuerySet of all Hit objects associated with this Batch
             that have been completed.
         """
         return self.hit_set.filter(completed=True).order_by('-id')
@@ -232,7 +232,7 @@ class HitBatch(models.Model):
     def unfinished_hits(self):
         """
         Returns:
-            QuerySet of all Hit objects associated with this HitBatch
+            QuerySet of all Hit objects associated with this Batch
             that have NOT been completed.
         """
         return self.hit_set.filter(completed=False).order_by('id')
@@ -292,8 +292,8 @@ class HitBatch(models.Model):
         time_format = '%a %b %m %H:%M:%S %Z %Y'
         for hit in hits:
             for hit_assignment in hit.hitassignment_set.all():
-                batch = hit.hit_batch
-                project = hit.hit_batch.hit_project
+                batch = hit.batch
+                project = hit.batch.project
 
                 row = {
                     'HITId': hit.id,
@@ -322,7 +322,7 @@ class HitBatch(models.Model):
         return 'Batch: {}'.format(self.name)
 
 
-class HitProject(models.Model):
+class Project(models.Model):
     class Meta:
         verbose_name = "Project"
 
@@ -340,13 +340,13 @@ class HitProject(models.Model):
 
     @classmethod
     def available_for(cls, user):
-        """Retrieve the HitProjects that the user has permission to access
+        """Retrieve the Projects that the user has permission to access
 
         Args:
             user (User):
 
         Returns:
-            QuerySet of HitProject objects this user can access
+            QuerySet of Project objects this user can access
         """
         projects = cls.objects.filter(active=True)
         if not user.is_authenticated:
@@ -354,17 +354,17 @@ class HitProject(models.Model):
         return projects
 
     def batches_available_for(self, user):
-        """Retrieve the HitBatches that the user has permission to access
+        """Retrieve the Batches that the user has permission to access
 
         Args:
             user (User):
 
         Returns:
-            QuerySet of HitBatch objects this usre can access
+            QuerySet of Batch objects this usre can access
         """
-        batches = self.hitbatch_set.filter(active=True)
+        batches = self.batch_set.filter(active=True)
         if not user.is_authenticated:
-            batches = batches.filter(hit_project__login_required=False)
+            batches = batches.filter(project__login_required=False)
         return batches
 
     def clean(self):
@@ -379,7 +379,7 @@ class HitProject(models.Model):
         # Extract fieldnames from html_template text, save fieldnames as keys of JSON dict
         unique_fieldnames = set(re.findall(r'\${(\w+)}', self.html_template))
         self.fieldnames = dict((fn, True) for fn in unique_fieldnames)
-        super(HitProject, self).save(*args, **kwargs)
+        super(Project, self).save(*args, **kwargs)
 
     def to_csv(self, csv_fh):
         """
@@ -388,7 +388,7 @@ class HitProject(models.Model):
         Args:
             csv_fh (file-like object): File handle for CSV output
         """
-        batches = self.hitbatch_set.all()
+        batches = self.batch_set.all()
         if batches:
             fieldnames = self._get_csv_fieldnames(batches)
             writer = unicodecsv.DictWriter(csv_fh, fieldnames, quoting=unicodecsv.QUOTE_ALL)
@@ -401,7 +401,7 @@ class HitProject(models.Model):
     def _get_csv_fieldnames(self, batches):
         """
         Args:
-            batches (List of HitBatch objects)
+            batches (List of Batch objects)
 
         Returns:
             A tuple of strings specifying the fieldnames to be used in

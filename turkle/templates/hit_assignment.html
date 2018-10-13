@@ -72,7 +72,7 @@ $(function () {
     <input type="submit" id="submitButton" class="btn btn-sm btn-danger" value="Return Task" />
   </form>
 
-  <form method="post" action="{% url 'skip_and_accept_next_hit' hit.hit_batch_id hit.id hit_assignment.id %}">
+  <form method="post" action="{% url 'skip_and_accept_next_hit' hit.batch_id hit.id hit_assignment.id %}">
     {% csrf_token %}
     <input type="submit" id="submitButton" class="btn btn-sm btn-danger" value="Skip Task" />
   </form>
