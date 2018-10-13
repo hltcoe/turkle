@@ -20,9 +20,9 @@ def exception_handler(func):
 class TurkleClient(object):
     LOGIN_URL = "/login/"
     ADD_USER_URL = "/admin/auth/user/add/"
-    ADD_PROJECT_URL = "/admin/turkle/hitproject/add/"
-    ADD_BATCH_URL = "/admin/turkle/hitbatch/add/"
-    LIST_BATCH_URL = "/admin/turkle/hitbatch/"
+    ADD_PROJECT_URL = "/admin/turkle/project/add/"
+    ADD_BATCH_URL = "/admin/turkle/batch/add/"
+    LIST_BATCH_URL = "/admin/turkle/batch/"
 
     def __init__(self, server, admin, password=None):
         if not password:
@@ -116,7 +116,7 @@ class TurkleClient(object):
         ids = re.findall(regex, resp.text)
         payload = {
             # we just upload a project so we assume that its last in list
-            'hit_project': ids[-1],
+            'project': ids[-1],
             'name': options.batch_name,
             'assignments_per_hit': options.num,
             'active': 1,

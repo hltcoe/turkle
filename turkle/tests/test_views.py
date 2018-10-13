@@ -14,17 +14,17 @@ from django.test import RequestFactory, TestCase
 from django.urls import reverse
 from django.utils import timezone
 
-from turkle.models import Hit, HitAssignment, HitBatch, HitProject
+from turkle.models import Hit, HitAssignment, Batch, Project
 from turkle.views import hit_assignment
 
 
 class TestAcceptHit(TestCase):
     def setUp(self):
-        hit_project = HitProject(login_required=False)
-        hit_project.save()
-        self.hit_batch = HitBatch(hit_project=hit_project)
-        self.hit_batch.save()
-        self.hit = Hit(hit_batch=self.hit_batch)
+        project = Project(login_required=False)
+        project.save()
+        self.batch = Batch(project=project)
+        self.batch.save()
+        self.hit = Hit(batch=self.batch)
         self.hit.save()
 
     def test_accept_unclaimed_hit(self):
@@ -34,7 +34,7 @@ class TestAcceptHit(TestCase):
         client = django.test.Client()
         client.login(username='admin', password='secret')
         response = client.get(reverse('accept_hit',
-                                      kwargs={'batch_id': self.hit_batch.id,
+                                      kwargs={'batch_id': self.batch.id,
                                               'hit_id': self.hit.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(self.hit.hitassignment_set.count(), 1)
@@ -49,7 +49,7 @@ class TestAcceptHit(TestCase):
 
         client = django.test.Client()
         response = client.get(reverse('accept_hit',
-                                      kwargs={'batch_id': self.hit_batch.id,
+                                      kwargs={'batch_id': self.batch.id,
                                               'hit_id': self.hit.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(self.hit.hitassignment_set.count(), 1)
@@ -68,7 +68,7 @@ class TestAcceptHit(TestCase):
         client = django.test.Client()
         client.login(username='admin', password='secret')
         response = client.get(reverse('accept_hit',
-                                      kwargs={'batch_id': self.hit_batch.id,
+                                      kwargs={'batch_id': self.batch.id,
                                               'hit_id': self.hit.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('index'))
@@ -80,15 +80,15 @@ class TestAcceptHit(TestCase):
 
 class TestAcceptNextHit(TestCase):
     def setUp(self):
-        hit_project = HitProject(login_required=False, name='foo',
-                                 html_template='<p>${foo}: ${bar}</p>')
-        hit_project.save()
+        project = Project(login_required=False, name='foo',
+                          html_template='<p>${foo}: ${bar}</p>')
+        project.save()
 
-        self.hit_batch = HitBatch(hit_project=hit_project, name='foo', filename='foo.csv')
-        self.hit_batch.save()
+        self.batch = Batch(project=project, name='foo', filename='foo.csv')
+        self.batch.save()
 
         self.hit = Hit(
-            hit_batch=self.hit_batch,
+            batch=self.batch,
             input_csv_fields={'foo': 'fufu', 'bar': 'baba'}
         )
         self.hit.save()
@@ -100,7 +100,7 @@ class TestAcceptNextHit(TestCase):
         client = django.test.Client()
         client.login(username='testuser', password='secret')
         response = client.get(reverse('accept_next_hit',
-                                      kwargs={'batch_id': self.hit_batch.id}))
+                                      kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         # We are redirected to the hit_assignment view, but we can't predict the
         # full hit_assignment URL
@@ -111,7 +111,7 @@ class TestAcceptNextHit(TestCase):
     def test_accept_next_hit_as_anon(self):
         client = django.test.Client()
         response = client.get(reverse('accept_next_hit',
-                                      kwargs={'batch_id': self.hit_batch.id}))
+                                      kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         # We are redirected to the hit_assignment view, but we can't predict the
         # full hit_assignment URL
@@ -142,17 +142,17 @@ class TestAcceptNextHit(TestCase):
         client = django.test.Client()
         client.login(username='testuser', password='secret')
         response = client.get(reverse('accept_next_hit',
-                                      kwargs={'batch_id': self.hit_batch.id}))
+                                      kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('index'))
         self.assertEqual(self.hit.hitassignment_set.count(), 1)
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         u'No more Tasks available from Batch {}'.format(self.hit_batch.id))
+                         u'No more Tasks available from Batch {}'.format(self.batch.id))
 
     def test_accept_next_hit__respect_skip(self):
-        hit_two = Hit(hit_batch=self.hit_batch)
+        hit_two = Hit(batch=self.batch)
         hit_two.save()
 
         User.objects.create_user('testuser', password='secret')
@@ -165,26 +165,26 @@ class TestAcceptNextHit(TestCase):
         #     https://docs.djangoproject.com/en/1.11/topics/testing/tools/#persistent-state
         s = client.session
         s.update({
-            'skipped_hits_in_batch': {unicode(self.hit_batch.id): [unicode(self.hit.id)]}
+            'skipped_hits_in_batch': {unicode(self.batch.id): [unicode(self.hit.id)]}
         })
         s.save()
 
         response = client.get(reverse('accept_next_hit',
-                                      kwargs={'batch_id': self.hit_batch.id}))
+                                      kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertTrue('{}/assignment/'.format(hit_two.id) in response['Location'])
 
 
 class TestDownloadBatchCSV(TestCase):
     def setUp(self):
-        hit_project = HitProject(name='foo', html_template='<p>${foo}: ${bar}</p>')
-        hit_project.save()
+        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p>')
+        project.save()
 
-        self.hit_batch = HitBatch(hit_project=hit_project, name='foo', filename='foo.csv')
-        self.hit_batch.save()
+        self.batch = Batch(project=project, name='foo', filename='foo.csv')
+        self.batch.save()
 
         hit = Hit(
-            hit_batch=self.hit_batch,
+            batch=self.batch,
             input_csv_fields={'foo': 'fufu', 'bar': 'baba'}
         )
         hit.save()
@@ -200,16 +200,16 @@ class TestDownloadBatchCSV(TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        download_url = reverse('download_batch_csv', kwargs={'batch_id': self.hit_batch.id})
+        download_url = reverse('download_batch_csv', kwargs={'batch_id': self.batch.id})
         response = client.get(download_url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get('Content-Disposition'),
-                         'attachment; filename="%s"' % self.hit_batch.csv_results_filename())
+                         'attachment; filename="%s"' % self.batch.csv_results_filename())
 
     def test_get_as_rando(self):
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        download_url = reverse('download_batch_csv', kwargs={'batch_id': self.hit_batch.id})
+        download_url = reverse('download_batch_csv', kwargs={'batch_id': self.batch.id})
         response = client.get(download_url)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], u'/admin/login/?next=%s' % download_url)
@@ -221,14 +221,14 @@ class TestExpireAbandonedAssignments(django.test.TestCase):
         dt = datetime.timedelta(hours=2)
         past = t - dt
 
-        hit_project = HitProject(login_required=False)
-        hit_project.save()
-        hit_batch = HitBatch(
+        project = Project(login_required=False)
+        project.save()
+        batch = Batch(
             allotted_assignment_time=1,
-            hit_project=hit_project
+            project=project
         )
-        hit_batch.save()
-        hit = Hit(hit_batch=hit_batch)
+        batch.save()
+        hit = Hit(batch=batch)
         hit.save()
         ha = HitAssignment(
             completed=False,
@@ -281,15 +281,15 @@ class TestIndex(django.test.TestCase):
         self.assertTrue(b'ms.admin' in response.content)
 
     def test_index_protected_template(self):
-        hit_project_protected = HitProject(
+        project_protected = Project(
             active=True,
             login_required=True,
             name='MY_TEMPLATE_NAME',
         )
-        hit_project_protected.save()
-        hit_batch = HitBatch(hit_project=hit_project_protected, name='MY_BATCH_NAME')
-        hit_batch.save()
-        Hit(hit_batch=hit_batch).save()
+        project_protected.save()
+        batch = Batch(project=project_protected, name='MY_BATCH_NAME')
+        batch.save()
+        Hit(batch=batch).save()
 
         anon_client = django.test.Client()
         response = anon_client.get(reverse('index'))
@@ -308,15 +308,15 @@ class TestIndex(django.test.TestCase):
         self.assertTrue(b'MY_BATCH_NAME' in response.content)
 
     def test_index_unprotected_template(self):
-        hit_project_unprotected = HitProject(
+        project_unprotected = Project(
             active=True,
             login_required=False,
             name='MY_TEMPLATE_NAME',
         )
-        hit_project_unprotected.save()
-        hit_batch = HitBatch(hit_project=hit_project_unprotected, name='MY_BATCH_NAME')
-        hit_batch.save()
-        Hit(hit_batch=hit_batch).save()
+        project_unprotected.save()
+        batch = Batch(project=project_unprotected, name='MY_BATCH_NAME')
+        batch.save()
+        Hit(batch=batch).save()
 
         anon_client = django.test.Client()
         response = anon_client.get(reverse('index'))
@@ -339,11 +339,11 @@ class TestIndexAbandonedAssignments(TestCase):
     def setUp(self):
         self.user = User.objects.create_user('testuser', password='secret')
 
-        hit_project = HitProject()
-        hit_project.save()
-        hit_batch = HitBatch(hit_project=hit_project)
-        hit_batch.save()
-        self.hit = Hit(hit_batch=hit_batch)
+        project = Project()
+        project.save()
+        batch = Batch(project=project)
+        batch.save()
+        self.hit = Hit(batch=batch)
         self.hit.save()
 
     def test_index_abandoned_assignment(self):
@@ -375,11 +375,11 @@ class TestIndexAbandonedAssignments(TestCase):
 
 class TestHitAssignment(TestCase):
     def setUp(self):
-        hit_project = HitProject(login_required=False, name='foo', html_template='<p></p>')
-        hit_project.save()
-        hit_batch = HitBatch(hit_project=hit_project)
-        hit_batch.save()
-        self.hit = Hit(hit_batch=hit_batch, input_csv_fields='{}')
+        project = Project(login_required=False, name='foo', html_template='<p></p>')
+        project.save()
+        batch = Batch(project=project)
+        batch.save()
+        self.hit = Hit(batch=batch, input_csv_fields='{}')
         self.hit.save()
         self.hit_assignment = HitAssignment(
             assigned_to=None,
@@ -482,7 +482,7 @@ class TestHitAssignment(TestCase):
                                {u'foo': u'bar'})
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('accept_next_hit',
-                                                       kwargs={'batch_id': self.hit.hit_batch_id}))
+                                                       kwargs={'batch_id': self.hit.batch_id}))
 
     def test_0(self):
         post_request = RequestFactory().post(
@@ -506,11 +506,11 @@ class TestHitAssignment(TestCase):
 
 class TestHitAssignmentIFrame(TestCase):
     def setUp(self):
-        self.hit_project = HitProject(login_required=False)
-        self.hit_project.save()
-        hit_batch = HitBatch(hit_project=self.hit_project)
-        hit_batch.save()
-        self.hit = Hit(input_csv_fields={}, hit_batch=hit_batch)
+        self.project = Project(login_required=False)
+        self.project.save()
+        batch = Batch(project=self.project)
+        batch.save()
+        self.hit = Hit(input_csv_fields={}, batch=batch)
         self.hit.save()
         self.hit_assignment = HitAssignment(hit=self.hit)
         self.hit_assignment.save()
@@ -534,11 +534,11 @@ class TestHitAssignmentIFrame(TestCase):
                         in str(messages[0]))
 
     def test_template_with_submit_button(self):
-        self.hit_project.html_template = \
+        self.project.html_template = \
             '<input id="my_submit_button" type="submit" value="MySubmit" />'
-        self.hit_project.save()
-        self.hit_project.refresh_from_db()
-        self.assertTrue(self.hit_project.html_template_has_submit_button)
+        self.project.save()
+        self.project.refresh_from_db()
+        self.assertTrue(self.project.html_template_has_submit_button)
 
         client = django.test.Client()
         response = client.get(reverse('hit_assignment_iframe',
@@ -549,10 +549,10 @@ class TestHitAssignmentIFrame(TestCase):
         self.assertFalse(b'submitButton' in response.content)
 
     def test_template_without_submit_button(self):
-        self.hit_project.form = '<input id="foo" type="text" value="MyText" />'
-        self.hit_project.save()
-        self.hit_project.refresh_from_db()
-        self.assertFalse(self.hit_project.html_template_has_submit_button)
+        self.project.form = '<input id="foo" type="text" value="MyText" />'
+        self.project.save()
+        self.project.refresh_from_db()
+        self.assertFalse(self.project.html_template_has_submit_button)
 
         client = django.test.Client()
         response = client.get(reverse('hit_assignment_iframe',
@@ -565,13 +565,13 @@ class TestHitAssignmentIFrame(TestCase):
 
 class TestPreview(TestCase):
     def setUp(self):
-        self.hit_project = HitProject(html_template='<p>${foo}: ${bar}</p>',
-                                      login_required=False, name='foo')
-        self.hit_project.save()
-        self.hit_batch = HitBatch(filename='foo.csv', hit_project=self.hit_project, name='foo')
-        self.hit_batch.save()
+        self.project = Project(html_template='<p>${foo}: ${bar}</p>',
+                               login_required=False, name='foo')
+        self.project.save()
+        self.batch = Batch(filename='foo.csv', project=self.project, name='foo')
+        self.batch.save()
         self.hit = Hit(
-            hit_batch=self.hit_batch,
+            batch=self.batch,
             input_csv_fields={'foo': 'fufu', 'bar': 'baba'},
         )
         self.hit.save()
@@ -582,8 +582,8 @@ class TestPreview(TestCase):
         self.assertEqual(response.status_code, 200)
 
     def test_get_preview_as_anonymous_but_login_required(self):
-        self.hit_project.login_required = True
-        self.hit_project.save()
+        self.project.login_required = True
+        self.project.save()
 
         client = django.test.Client()
         response = client.get(reverse('preview', kwargs={'hit_id': self.hit.id}))
@@ -619,8 +619,8 @@ class TestPreview(TestCase):
                          u'Cannot find Task with ID {}'.format(666))
 
     def test_get_preview_iframe_as_anonymous_but_login_required(self):
-        self.hit_project.login_required = True
-        self.hit_project.save()
+        self.project.login_required = True
+        self.project.save()
 
         client = django.test.Client()
 
@@ -633,7 +633,7 @@ class TestPreview(TestCase):
 
     def test_preview_next_hit(self):
         client = django.test.Client()
-        response = client.get(reverse('preview_next_hit', kwargs={'batch_id': self.hit_batch.id}))
+        response = client.get(reverse('preview_next_hit', kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('preview', kwargs={'hit_id': self.hit.id}))
 
@@ -641,7 +641,7 @@ class TestPreview(TestCase):
         self.hit.completed = True
         self.hit.save()
         client = django.test.Client()
-        response = client.get(reverse('preview_next_hit', kwargs={'batch_id': self.hit_batch.id}))
+        response = client.get(reverse('preview_next_hit', kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('index'))
         messages = list(get_messages(response.wsgi_request))
@@ -651,13 +651,13 @@ class TestPreview(TestCase):
 
 class TestReturnHitAssignment(TestCase):
     def setUp(self):
-        hit_project = HitProject(name='foo', html_template='<p>${foo}: ${bar}</p>')
-        hit_project.save()
+        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p>')
+        project.save()
 
-        hit_batch = HitBatch(hit_project=hit_project, name='foo', filename='foo.csv')
-        hit_batch.save()
+        batch = Batch(project=project, name='foo', filename='foo.csv')
+        batch.save()
 
-        self.hit = Hit(hit_batch=hit_batch)
+        self.hit = Hit(batch=batch)
         self.hit.save()
 
     def test_return_hit_assignment(self):
@@ -757,27 +757,27 @@ class TestReturnHitAssignment(TestCase):
 
 class TestSkipHit(TestCase):
     def setUp(self):
-        hit_project = HitProject(login_required=False)
-        hit_project.save()
-        self.hit_batch = HitBatch(hit_project=hit_project)
-        self.hit_batch.save()
-        self.hit_one = Hit(hit_batch=self.hit_batch)
+        project = Project(login_required=False)
+        project.save()
+        self.batch = Batch(project=project)
+        self.batch.save()
+        self.hit_one = Hit(batch=self.batch)
         self.hit_one.save()
-        self.hit_two = Hit(hit_batch=self.hit_batch)
+        self.hit_two = Hit(batch=self.batch)
         self.hit_two.save()
-        self.hit_three = Hit(hit_batch=self.hit_batch)
+        self.hit_three = Hit(batch=self.batch)
         self.hit_three.save()
 
     def test_preview_next_hit_order(self):
         client = django.test.Client()
 
-        response = client.get(reverse('preview_next_hit', kwargs={'batch_id': self.hit_batch.id}))
+        response = client.get(reverse('preview_next_hit', kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('preview',
                                                        kwargs={'hit_id': self.hit_one.id}))
 
         # Since no Tasks have been completed or skipped, preview_next_hit redirects to same Task
-        response = client.get(reverse('preview_next_hit', kwargs={'batch_id': self.hit_batch.id}))
+        response = client.get(reverse('preview_next_hit', kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('preview',
                                                        kwargs={'hit_id': self.hit_one.id}))
@@ -786,44 +786,44 @@ class TestSkipHit(TestCase):
         client = django.test.Client()
 
         # Skip hit_one
-        response = client.post(reverse('skip_hit', kwargs={'batch_id': self.hit_batch.id,
+        response = client.post(reverse('skip_hit', kwargs={'batch_id': self.batch.id,
                                                            'hit_id': self.hit_one.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('preview_next_hit',
-                                                       kwargs={'batch_id': self.hit_batch.id}))
+                                                       kwargs={'batch_id': self.batch.id}))
 
         # Verify that hit_one has been skipped
         response = client.get(reverse('preview_next_hit',
-                                      kwargs={'batch_id': self.hit_batch.id}))
+                                      kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('preview',
                                                        kwargs={'hit_id': self.hit_two.id}))
 
         # Skip hit_two
-        response = client.post(reverse('skip_hit', kwargs={'batch_id': self.hit_batch.id,
+        response = client.post(reverse('skip_hit', kwargs={'batch_id': self.batch.id,
                                                            'hit_id': self.hit_two.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('preview_next_hit',
-                                                       kwargs={'batch_id': self.hit_batch.id}))
+                                                       kwargs={'batch_id': self.batch.id}))
 
         # Verify that hit_two has been skipped
         response = client.get(reverse('preview_next_hit',
-                                      kwargs={'batch_id': self.hit_batch.id}))
+                                      kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('preview',
                                                        kwargs={'hit_id': self.hit_three.id}))
 
         # Skip hit_three
-        response = client.post(reverse('skip_hit', kwargs={'batch_id': self.hit_batch.id,
+        response = client.post(reverse('skip_hit', kwargs={'batch_id': self.batch.id,
                                                            'hit_id': self.hit_three.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('preview_next_hit',
-                                                       kwargs={'batch_id': self.hit_batch.id}))
+                                                       kwargs={'batch_id': self.batch.id}))
 
         # Verify that, with all existing Tasks skipped, we have been redirected back to
         # hit_one and that info message is displayed about only skipped Tasks remaining
         response = client.get(reverse('preview_next_hit',
-                                      kwargs={'batch_id': self.hit_batch.id}))
+                                      kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('preview',
                                                        kwargs={'hit_id': self.hit_one.id}))
@@ -839,49 +839,49 @@ class TestSkipHit(TestCase):
 
         # Skip hit_one
         response = client.post(reverse('skip_and_accept_next_hit',
-                                       kwargs={'batch_id': self.hit_batch.id,
+                                       kwargs={'batch_id': self.batch.id,
                                                'hit_id': self.hit_one.id,
                                                'hit_assignment_id': ha_one.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('accept_next_hit',
-                                                       kwargs={'batch_id': self.hit_batch.id}))
+                                                       kwargs={'batch_id': self.batch.id}))
 
         # Verify that hit_one has been skipped
         response = client.get(reverse('accept_next_hit',
-                                      kwargs={'batch_id': self.hit_batch.id}))
+                                      kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertTrue('{}/assignment/'.format(self.hit_two.id) in response['Location'])
 
         # Skip hit_two
         ha_two = self.hit_two.hitassignment_set.first()
         response = client.post(reverse('skip_and_accept_next_hit',
-                                       kwargs={'batch_id': self.hit_batch.id,
+                                       kwargs={'batch_id': self.batch.id,
                                                'hit_id': self.hit_two.id,
                                                'hit_assignment_id': ha_two.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('accept_next_hit',
-                                                       kwargs={'batch_id': self.hit_batch.id}))
+                                                       kwargs={'batch_id': self.batch.id}))
 
         # Verify that hit_two has been skipped
         response = client.get(reverse('accept_next_hit',
-                                      kwargs={'batch_id': self.hit_batch.id}))
+                                      kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertTrue('{}/assignment/'.format(self.hit_three.id) in response['Location'])
 
         # Skip hit_three
         ha_three = self.hit_three.hitassignment_set.first()
         response = client.post(reverse('skip_and_accept_next_hit',
-                                       kwargs={'batch_id': self.hit_batch.id,
+                                       kwargs={'batch_id': self.batch.id,
                                                'hit_id': self.hit_three.id,
                                                'hit_assignment_id': ha_three.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('accept_next_hit',
-                                                       kwargs={'batch_id': self.hit_batch.id}))
+                                                       kwargs={'batch_id': self.batch.id}))
 
         # Verify that, with all existing Tasks skipped, we have been redirected back to
         # hit_one and that info message is displayed about only skipped Tasks remaining
         response = client.get(reverse('accept_next_hit',
-                                      kwargs={'batch_id': self.hit_batch.id}))
+                                      kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertTrue('{}/assignment/'.format(self.hit_one.id) in response['Location'])
         messages = list(get_messages(response.wsgi_request))
@@ -891,15 +891,15 @@ class TestSkipHit(TestCase):
         # Skip hit_one for a second time
         ha_one = self.hit_one.hitassignment_set.first()
         response = client.post(reverse('skip_and_accept_next_hit',
-                                       kwargs={'batch_id': self.hit_batch.id,
+                                       kwargs={'batch_id': self.batch.id,
                                                'hit_id': self.hit_one.id,
                                                'hit_assignment_id': ha_one.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('accept_next_hit',
-                                                       kwargs={'batch_id': self.hit_batch.id}))
+                                                       kwargs={'batch_id': self.batch.id}))
 
         # Verify that hit_one has been skipped for a second time
         response = client.get(reverse('accept_next_hit',
-                                      kwargs={'batch_id': self.hit_batch.id}))
+                                      kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertTrue('{}/assignment/'.format(self.hit_two.id) in response['Location'])

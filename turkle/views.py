@@ -23,7 +23,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from functools import wraps
 
-from turkle.models import Hit, HitAssignment, HitBatch, HitProject
+from turkle.models import Hit, HitAssignment, Batch, Project
 
 
 def handle_db_lock(func):
@@ -51,7 +51,7 @@ def accept_hit(request, batch_id, hit_id):
       are redirected to the index page with an error message.
     """
     try:
-        batch = HitBatch.objects.get(id=batch_id)
+        batch = Batch.objects.get(id=batch_id)
     except ObjectDoesNotExist:
         messages.error(request, u'Cannot find Task Batch with ID {}'.format(batch_id))
         return redirect(index)
@@ -92,7 +92,7 @@ def accept_next_hit(request, batch_id):
     """
     try:
         with transaction.atomic():
-            batch = HitBatch.objects.get(id=batch_id)
+            batch = Batch.objects.get(id=batch_id)
 
             # Lock access to all Tasks available to current user in the batch
             batch.available_hit_ids_for(request.user).select_for_update()
@@ -125,7 +125,7 @@ def download_batch_csv(request, batch_id):
     - Access to this page is limited to requesters.  Any requester can
       download any CSV file.
     """
-    batch = HitBatch.objects.get(id=batch_id)
+    batch = Batch.objects.get(id=batch_id)
     csv_output = StringIO()
     batch.to_csv(csv_output)
     csv_string = csv_output.getvalue()
@@ -197,7 +197,7 @@ def hit_assignment(request, hit_id, hit_assignment_id):
         hit_assignment.save()
 
         if request.session.get('auto_accept_status'):
-            return redirect(accept_next_hit, hit.hit_batch.id)
+            return redirect(accept_next_hit, hit.batch.id)
         else:
             return redirect(index)
 
@@ -254,19 +254,19 @@ def index(request):
 
     # Create a row for each Batch that has Tasks available for the current user
     batch_rows = []
-    for hit_project in HitProject.available_for(request.user):
-        for hit_batch in hit_project.batches_available_for(request.user):
-            total_hits_available = hit_batch.total_available_hits_for(request.user)
+    for project in Project.available_for(request.user):
+        for batch in project.batches_available_for(request.user):
+            total_hits_available = batch.total_available_hits_for(request.user)
             if total_hits_available > 0:
                 batch_rows.append({
-                    'project_name': hit_project.name,
-                    'batch_name': hit_batch.name,
-                    'batch_published': hit_batch.date_published,
+                    'project_name': project.name,
+                    'batch_name': batch.name,
+                    'batch_published': batch.date_published,
                     'assignments_available': total_hits_available,
                     'preview_next_hit_url': reverse('preview_next_hit',
-                                                    kwargs={'batch_id': hit_batch.id}),
+                                                    kwargs={'batch_id': batch.id}),
                     'accept_next_hit_url': reverse('accept_next_hit',
-                                                   kwargs={'batch_id': hit_batch.id})
+                                                   kwargs={'batch_id': batch.id})
                 })
     return render(request, 'index.html', {
         'abandoned_assignments': abandoned_assignments,
@@ -286,7 +286,7 @@ def preview(request, hit_id):
         messages.error(request, u'Cannot find Task with ID {}'.format(hit_id))
         return redirect(index)
 
-    if not request.user.is_authenticated and hit.hit_batch.hit_project.login_required:
+    if not request.user.is_authenticated and hit.batch.project.login_required:
         messages.error(request, u'You do not have permission to view this Task')
         return redirect(index)
 
@@ -305,7 +305,7 @@ def preview_iframe(request, hit_id):
         messages.error(request, u'Cannot find Task with ID {}'.format(hit_id))
         return redirect(index)
 
-    if not request.user.is_authenticated and hit.hit_batch.hit_project.login_required:
+    if not request.user.is_authenticated and hit.batch.project.login_required:
         messages.error(request, u'You do not have permission to view this Task')
         return redirect(index)
 
@@ -319,7 +319,7 @@ def preview_next_hit(request, batch_id):
       are redirected to the index page with an error message.
     """
     try:
-        batch = HitBatch.objects.get(id=batch_id)
+        batch = Batch.objects.get(id=batch_id)
     except ObjectDoesNotExist:
         messages.error(request, u'Cannot find Task Batch with ID {}'.format(batch_id))
         return redirect(index)
@@ -436,7 +436,7 @@ def _delete_hit_assignment(request, hit_id, hit_assignment_id):
         if hit_assignment.assigned_to is not None:
             messages.error(request, u'The Task you are trying to return belongs to another user')
             return redirect(index)
-        if hit.hit_batch.hit_project.login_required:
+        if hit.batch.project.login_required:
             messages.error(request, u'You do not have permission to access this Task')
             return redirect(index)
 
