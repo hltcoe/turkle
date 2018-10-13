@@ -3,9 +3,66 @@ import os.path
 
 import django.test
 from django.contrib.auth.models import User
+from django.contrib.messages import get_messages
 from django.urls import reverse
 
 from turkle.models import HitBatch, HitProject
+
+
+class TestCancelOrPublishBatch(django.test.TestCase):
+    def setUp(self):
+        User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+        hit_project = HitProject(name='foo', html_template='<p>${foo}: ${bar}</p>')
+        hit_project.save()
+        self.hit_batch = HitBatch(active=False, hit_project=hit_project, name='MY_BATCH_NAME')
+        self.hit_batch.save()
+
+    def test_batch_cancel(self):
+        batch_id = self.hit_batch.id
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.post(reverse('turkle_admin:cancel_batch', kwargs={'batch_id': batch_id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('turkle_admin:turkle_hitbatch_changelist'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 0)
+
+    def test_batch_cancel_bad_batch_id(self):
+        batch_id = 666
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.post(reverse('turkle_admin:cancel_batch', kwargs={'batch_id': batch_id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('turkle_admin:turkle_hitbatch_changelist'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]), u'Cannot find Batch with ID 666')
+
+    def test_batch_publish(self):
+        batch_id = self.hit_batch.id
+        client = django.test.Client()
+        self.assertFalse(self.hit_batch.active)
+        client.login(username='admin', password='secret')
+        response = client.post(reverse('turkle_admin:publish_batch',
+                                       kwargs={'batch_id': batch_id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('turkle_admin:turkle_hitbatch_changelist'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 0)
+        self.hit_batch.refresh_from_db()
+        self.assertTrue(self.hit_batch.active)
+
+    def test_batch_publish_bad_batch_id(self):
+        batch_id = 666
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.post(reverse('turkle_admin:publish_batch',
+                                       kwargs={'batch_id': batch_id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('turkle_admin:turkle_hitbatch_changelist'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]), u'Cannot find Batch with ID 666')
 
 
 class TestHitBatchAdmin(django.test.TestCase):
@@ -31,7 +88,7 @@ class TestHitBatchAdmin(django.test.TestCase):
                 })
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], u'/admin/turkle/hitbatch/')
+        self.assertEqual(response['Location'], u'/admin/turkle/hitbatch/1/review/')
         self.assertTrue(HitBatch.objects.filter(name='hit_batch_save').exists())
         matching_hit_batch = HitBatch.objects.filter(name='hit_batch_save').first()
         self.assertEqual(matching_hit_batch.filename, u'form_1_vals.csv')
@@ -58,7 +115,7 @@ class TestHitBatchAdmin(django.test.TestCase):
                 })
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], u'/admin/turkle/hitbatch/')
+        self.assertEqual(response['Location'], u'/admin/turkle/hitbatch/1/review/')
         self.assertTrue(HitBatch.objects.filter(name='hit_batch_save').exists())
         matching_hit_batch = HitBatch.objects.filter(name='hit_batch_save').first()
         self.assertEqual(matching_hit_batch.filename, u'emoji.csv')
@@ -247,3 +304,17 @@ class TestHitProject(django.test.TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], u'/admin/turkle/hitproject/')
         self.assertEqual(HitProject.objects.filter(name='foo').count(), 1)
+
+
+class TestReviewBatch(django.test.TestCase):
+    def test_batch_review_bad_batch_id(self):
+        User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+        batch_id = 666
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.post(reverse('turkle_admin:review_batch', kwargs={'batch_id': batch_id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('turkle_admin:turkle_hitbatch_changelist'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]), u'Cannot find Batch with ID 666')
