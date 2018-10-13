@@ -16,7 +16,7 @@ urlpatterns = [
     # Uncomment the admin/doc line below to enable admin documentation:
     # url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
 
-    url(r'^hits/', include('turkle.urls')),
+    url(r'^turkle/', include('turkle.urls')),
 
     url(r'^admin/', admin_site.urls),
 
