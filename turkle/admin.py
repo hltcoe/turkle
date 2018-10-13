@@ -6,13 +6,17 @@ except ImportError:
     except ImportError:
         from io import BytesIO
         StringIO = BytesIO
+import json
 
-from django.contrib import admin
+from django.conf.urls import url
+from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin
 from django.contrib.auth.models import User
+from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.forms import (FileField, FileInput, HiddenInput, IntegerField,
                           ModelForm, TextInput, ValidationError, Widget)
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 import unicodecsv
@@ -181,6 +185,15 @@ class HitBatchAdmin(admin.ModelAdmin):
         'name', 'filename', 'total_hits', 'assignments_per_hit',
         'total_finished_hits', 'active', 'download_csv')
 
+    def cancel_batch(self, request, batch_id):
+        try:
+            batch = HitBatch.objects.get(id=batch_id)
+            batch.delete()
+        except ObjectDoesNotExist:
+            messages.error(request, u'Cannot find Batch with ID {}'.format(batch_id))
+
+        return redirect(reverse('turkle_admin:turkle_hitbatch_changelist'))
+
     def download_csv(self, obj):
         download_url = reverse('download_batch_csv', kwargs={'batch_id': obj.id})
         return format_html('<a href="{}">Download CSV results file</a>'.format(download_url))
@@ -188,7 +201,7 @@ class HitBatchAdmin(admin.ModelAdmin):
     def get_fields(self, request, obj):
         # Display different fields when adding (when obj is None) vs changing a HitBatch
         if not obj:
-            return ('active', 'hit_project', 'name', 'assignments_per_hit',
+            return ('hit_project', 'name', 'assignments_per_hit',
                     'allotted_assignment_time', 'csv_file')
         else:
             return ('active', 'hit_project', 'name', 'assignments_per_hit',
@@ -200,8 +213,55 @@ class HitBatchAdmin(admin.ModelAdmin):
         else:
             return ('assignments_per_hit', 'filename')
 
+    def get_urls(self):
+        urls = super(HitBatchAdmin, self).get_urls()
+        my_urls = [
+            url(r'^(?P<batch_id>\d+)/cancel/$',
+                self.admin_site.admin_view(self.cancel_batch), name='cancel_batch'),
+            url(r'^(?P<batch_id>\d+)/review/$',
+                self.admin_site.admin_view(self.review_batch), name='review_batch'),
+            url(r'^(?P<batch_id>\d+)/publish/$',
+                self.admin_site.admin_view(self.publish_batch), name='publish_batch'),
+        ]
+        return my_urls + urls
+
+    def publish_batch(self, request, batch_id):
+        try:
+            batch = HitBatch.objects.get(id=batch_id)
+            batch.active = True
+            batch.save()
+        except ObjectDoesNotExist:
+            messages.error(request, u'Cannot find Batch with ID {}'.format(batch_id))
+
+        return redirect(reverse('turkle_admin:turkle_hitbatch_changelist'))
+
+    def response_add(self, request, obj, post_url_continue=None):
+        return redirect(reverse('turkle_admin:review_batch', kwargs={'batch_id': obj.id}))
+
+    def review_batch(self, request, batch_id):
+        request.current_app = self.admin_site.name
+        try:
+            batch = HitBatch.objects.get(id=batch_id)
+        except ObjectDoesNotExist:
+            messages.error(request, u'Cannot find Batch with ID {}'.format(batch_id))
+            return redirect(reverse('turkle_admin:turkle_hitbatch_changelist'))
+
+        hit_ids = list(batch.hit_set.values_list('id', flat=True))
+        hit_ids_as_json = json.dumps(hit_ids)
+        return render(request, 'admin/turkle/review_batch.html', {
+            'batch_id': batch_id,
+            'first_hit_id': hit_ids[0],
+            'hit_ids_as_json': hit_ids_as_json,
+            'site_header': self.admin_site.site_header,
+            'site_title': self.admin_site.site_title,
+        })
+
     def save_model(self, request, obj, form, change):
         if obj._state.adding:
+            # If Batch active flag not explicitly set, make inactive until Batch reviewed
+            if u'active' not in request.POST:
+                obj.active = False
+
             # Only use CSV file when adding HitBatch, not when changing
             obj.filename = request.FILES['csv_file']._name
             csv_text = request.FILES['csv_file'].read()

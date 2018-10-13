@@ -28,3 +28,24 @@ $(function () {
 });
 </script>
 {% endblock %}
+
+{% block submit_buttons_bottom %}
+{% if add %}
+<div class="submit-row">
+  <input type="submit" value="Review Batch" name="_saveasnew" />
+</div>
+{% elif not object_id %}
+{% comment %}
+   There was a form validation error while trying to Add a Batch.
+   The Batch has not been saved yet.  Following the example from:
+     django/contrib/admin/templates/admin/submit_line.html
+   We add a "Delete" link that just reloads the page.
+{% endcomment %}
+<div class="submit-row">
+  <p class="deletelink-box"><a href="" class="deletelink">Delete</a></p>
+  <input type="submit" value="Review Batch" name="_saveasnew" />
+</div>
+{% else %}
+{{ block.super }}
+{% endif %}
+{% endblock %}
