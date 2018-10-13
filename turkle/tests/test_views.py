@@ -7,15 +7,13 @@ except NameError:
 import datetime
 
 import django.test
-from django.contrib.auth.models import AnonymousUser, User
+from django.contrib.auth.models import User
 from django.contrib.messages import get_messages
-from django.contrib.sessions.middleware import SessionMiddleware
-from django.test import RequestFactory, TestCase
+from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
 from turkle.models import Hit, HitAssignment, Batch, Project
-from turkle.views import hit_assignment
 
 
 class TestAcceptHit(TestCase):
@@ -483,25 +481,6 @@ class TestHitAssignment(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('accept_next_hit',
                                                        kwargs={'batch_id': self.hit.batch_id}))
-
-    def test_0(self):
-        post_request = RequestFactory().post(
-            u'/hits/%d/assignment/%d/' % (self.hit.id, self.hit_assignment.id),
-            {u'foo': u'bar'}
-        )
-        post_request.csrf_processing_done = True
-        post_request.user = AnonymousUser()
-
-        middleware = SessionMiddleware()
-        middleware.process_request(post_request)
-        post_request.session.save()
-
-        hit_assignment(post_request, self.hit.id, self.hit_assignment.id)
-        ha = HitAssignment.objects.get(id=self.hit_assignment.id)
-
-        expect = {u'foo': u'bar'}
-        actual = ha.answers
-        self.assertEqual(expect, actual)
 
 
 class TestHitAssignmentIFrame(TestCase):
