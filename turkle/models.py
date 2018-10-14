@@ -324,10 +324,14 @@ class Batch(models.Model):
 
 class Project(models.Model):
     class Meta:
+        permissions = (
+            ('can_work_on', 'Can work on Tasks for this Project'),
+        )
         verbose_name = "Project"
 
     active = models.BooleanField(db_index=True, default=True)
     assignments_per_hit = models.IntegerField(db_index=True, default=1)
+    custom_permissions = models.BooleanField(default=False)
     date_modified = models.DateTimeField(auto_now=True)
     filename = models.CharField(max_length=1024, blank=True)
     html_template = models.TextField()

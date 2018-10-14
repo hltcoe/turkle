@@ -10,12 +10,12 @@ import json
 
 from django.conf.urls import url
 from django.contrib import admin, messages
-from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.models import User
+from django.contrib.auth.admin import GroupAdmin, UserAdmin
+from django.contrib.auth.models import Group, User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.forms import (FileField, FileInput, HiddenInput, IntegerField,
-                          ModelForm, TextInput, ValidationError, Widget)
+                          ModelForm, ModelMultipleChoiceField, TextInput, ValidationError, Widget)
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
@@ -273,6 +273,7 @@ class BatchAdmin(admin.ModelAdmin):
 
 
 class ProjectForm(ModelForm):
+    permissions = ModelMultipleChoiceField(queryset=Group.objects.all())
     template_file_upload = FileField(label='HTML template file', required=False)
 
     def __init__(self, *args, **kwargs):
@@ -315,12 +316,12 @@ class ProjectAdmin(admin.ModelAdmin):
             # Adding
             return ['name', 'assignments_per_hit', 'active', 'login_required',
                     'html_template', 'template_file_upload',
-                    'filename']
+                    'filename', 'custom_permissions', 'permissions']
         else:
             # Changing
             return ['name', 'assignments_per_hit', 'active', 'login_required',
                     'html_template', 'template_file_upload', 'extracted_template_variables',
-                    'filename']
+                    'filename', 'custom_permissions', 'permissions']
 
     def publish_hits(self, instance):
         publish_hits_url = '%s?project=%d&assignments_per_hit=%d' % (
@@ -331,10 +332,15 @@ class ProjectAdmin(admin.ModelAdmin):
                            format(publish_hits_url))
     publish_hits.short_description = 'Publish Tasks'
 
+    def save_model(self, request, obj, form, change):
+        if u'permissions' in form.data:
+            # TODO: Update group permissions for this object
+            pass
+        super(ProjectAdmin, self).save_model(request, obj, form, change)
+
 
 admin_site = TurkleAdminSite(name='turkle_admin')
-# TODO: Uncomment the line below once group access permissions are enabled
-# admin_site.register(Group, GroupAdmin)
+admin_site.register(Group, GroupAdmin)
 admin_site.register(User, CustomUserAdmin)
 admin_site.register(Batch, BatchAdmin)
 admin_site.register(Project, ProjectAdmin)
