@@ -273,7 +273,7 @@ class BatchAdmin(admin.ModelAdmin):
 
 
 class ProjectForm(ModelForm):
-    permissions = ModelMultipleChoiceField(queryset=Group.objects.all())
+    permissions = ModelMultipleChoiceField(queryset=Group.objects.all(), required=False)
     template_file_upload = FileField(label='HTML template file', required=False)
 
     def __init__(self, *args, **kwargs):
