@@ -343,7 +343,7 @@ class Project(models.Model):
     fieldnames = JSONField(blank=True)
 
     @classmethod
-    def available_for(cls, user):
+    def all_available_for(cls, user):
         """Retrieve the Projects that the user has permission to access
 
         Args:
@@ -355,7 +355,21 @@ class Project(models.Model):
         projects = cls.objects.filter(active=True)
         if not user.is_authenticated:
             projects = projects.filter(login_required=False)
+
+        projects = [p for p in projects if p.available_for(user)]
         return projects
+
+    def available_for(self, user):
+        """
+        Returns:
+            Boolean indicating if this Project is available for the user
+        """
+        if not user.is_authenticated and self.login_required:
+            return False
+        elif self.custom_permissions:
+            return user.has_perm('can_work_on', self)
+        else:
+            return True
 
     def batches_available_for(self, user):
         """Retrieve the Batches that the user has permission to access

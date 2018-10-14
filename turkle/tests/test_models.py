@@ -376,8 +376,8 @@ class TestBatchAvailableHITs(django.test.TestCase):
             login_required=True,
         )
         project_protected.save()
-        self.assertEqual(len(Project.available_for(anonymous_user)), 0)
-        self.assertEqual(len(Project.available_for(user)), 2)  # Project created by setUp
+        self.assertEqual(len(Project.all_available_for(anonymous_user)), 0)
+        self.assertEqual(len(Project.all_available_for(user)), 2)  # Project created by setUp
         batch_protected = Batch(project=project_protected)
         batch_protected.save()
         Hit(batch=batch_protected).save()
@@ -392,8 +392,8 @@ class TestBatchAvailableHITs(django.test.TestCase):
         batch_unprotected = Batch(project=project_unprotected)
         batch_unprotected.save()
         Hit(batch=batch_unprotected).save()
-        self.assertEqual(len(Project.available_for(anonymous_user)), 1)
-        self.assertEqual(len(Project.available_for(user)), 3)
+        self.assertEqual(len(Project.all_available_for(anonymous_user)), 1)
+        self.assertEqual(len(Project.all_available_for(user)), 3)
         self.assertEqual(len(project_unprotected.batches_available_for(anonymous_user)), 1)
         self.assertEqual(len(project_unprotected.batches_available_for(user)), 1)
         self.assertEqual(len(batch_unprotected.available_hits_for(anonymous_user)), 1)
@@ -432,30 +432,30 @@ class TestProject(django.test.TestCase):
     def test_available_for_active_flag(self):
         user = User.objects.create_user('testuser', password='secret')
 
-        self.assertEqual(len(Project.available_for(user)), 0)
+        self.assertEqual(len(Project.all_available_for(user)), 0)
 
         Project(
             active=False,
         ).save()
-        self.assertEqual(len(Project.available_for(user)), 0)
+        self.assertEqual(len(Project.all_available_for(user)), 0)
 
         Project(
             active=True,
         ).save()
-        self.assertEqual(len(Project.available_for(user)), 1)
+        self.assertEqual(len(Project.all_available_for(user)), 1)
 
     def test_available_for_login_required(self):
         anonymous_user = AnonymousUser()
 
-        self.assertEqual(len(Project.available_for(anonymous_user)), 0)
+        self.assertEqual(len(Project.all_available_for(anonymous_user)), 0)
 
         Project(
             login_required=True,
         ).save()
-        self.assertEqual(len(Project.available_for(anonymous_user)), 0)
+        self.assertEqual(len(Project.all_available_for(anonymous_user)), 0)
 
         authenticated_user = User.objects.create_user('testuser', password='secret')
-        self.assertEqual(len(Project.available_for(authenticated_user)), 1)
+        self.assertEqual(len(Project.all_available_for(authenticated_user)), 1)
 
     def test_batches_available_for(self):
         user = User.objects.create_user('testuser', password='secret')

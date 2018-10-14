@@ -254,7 +254,7 @@ def index(request):
 
     # Create a row for each Batch that has Tasks available for the current user
     batch_rows = []
-    for project in Project.available_for(request.user):
+    for project in Project.all_available_for(request.user):
         for batch in project.batches_available_for(request.user):
             total_hits_available = batch.total_available_hits_for(request.user)
             if total_hits_available > 0:
