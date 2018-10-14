@@ -8,13 +8,13 @@
 <script type="text/javascript" src="{% static 'admin/js/SelectFilter2.js' %}"></script>
 <script type="text/javascript">
 $(function () {
-  SelectFilter.init('id_permissions', 'Worker Groups', false);
+  SelectFilter.init('id_worker_permissions', 'Worker Groups', false);
 
   if (!$('#id_custom_permissions').is(':checked')) {
-    $('div.field-permissions').hide();
+    $('div.field-worker_permissions').hide();
   }
   $('#id_custom_permissions').change(function() {
-    $('div.field-permissions').toggle();
+    $('div.field-worker_permissions').toggle();
   });
 
   document.addEventListener('dragenter', (e) => {
