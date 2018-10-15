@@ -10,10 +10,11 @@ except ImportError:
 import datetime
 import os.path
 
-from django.contrib.auth.models import AnonymousUser, User
+from django.contrib.auth.models import AnonymousUser, Group, User
 from django.core.exceptions import ValidationError
 import django.test
 from django.utils import timezone
+from guardian.shortcuts import assign_perm
 
 from turkle.models import Hit, HitAssignment, Batch, Project
 
@@ -514,6 +515,25 @@ class TestProject(django.test.TestCase):
         )
         project.save()
         self.assertFalse(project.html_template_has_submit_button)
+
+    def test_group_permissions(self):
+        user = User.objects.create_user('testuser', password='secret')
+        group = Group.objects.create(name='testgroup')
+        user.groups.add(group)
+        project = Project()
+        project.save()
+
+        # Group permissions are ignored if custom_permissions is False
+        self.assertTrue(project.available_for(user))
+        project.custom_permissions = True
+        project.save()
+        self.assertFalse(project.available_for(user))
+
+        # Verify that giving the group access also gives the group members access
+        self.assertFalse(user.has_perm('can_work_on', project))
+        assign_perm('can_work_on', group, project)
+        self.assertTrue(user.has_perm('can_work_on', project))
+        self.assertTrue(project.available_for(user))
 
     def test_login_required_validation_1(self):
         # No ValidationError thrown

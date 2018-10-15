@@ -286,7 +286,7 @@ def preview(request, hit_id):
         messages.error(request, u'Cannot find Task with ID {}'.format(hit_id))
         return redirect(index)
 
-    if not request.user.is_authenticated and hit.batch.project.login_required:
+    if not hit.batch.project.available_for(request.user):
         messages.error(request, u'You do not have permission to view this Task')
         return redirect(index)
 
@@ -305,7 +305,7 @@ def preview_iframe(request, hit_id):
         messages.error(request, u'Cannot find Task with ID {}'.format(hit_id))
         return redirect(index)
 
-    if not request.user.is_authenticated and hit.batch.project.login_required:
+    if not hit.batch.project.available_for(request.user):
         messages.error(request, u'You do not have permission to view this Task')
         return redirect(index)
 
