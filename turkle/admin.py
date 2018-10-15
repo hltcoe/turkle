@@ -298,6 +298,7 @@ class ProjectForm(ModelForm):
             'number of Assignments per Task for new Batches of Tasks.  Changing this ' + \
             'parameter DOES NOT change the number of Assignments per Task for already ' + \
             'published batches of Tasks.'
+        self.fields['custom_permissions'].label = 'Restrict access to specific Groups of Workers '
         self.fields['html_template'].label = 'HTML template text'
         self.fields['html_template'].help_text = 'You can edit the template text directly, ' + \
             'Drag-and-Drop a template file onto this window, or use the "Choose File" button below'
@@ -305,6 +306,7 @@ class ProjectForm(ModelForm):
         initial_ids = [unicode(id)
                        for id in get_groups_with_perms(self.instance).values_list('id', flat=True)]
         self.fields['worker_permissions'].initial = initial_ids
+        self.fields['worker_permissions'].label = 'Worker Groups with access to this Project'
 
 
 class ProjectAdmin(GuardedModelAdmin):
@@ -323,17 +325,36 @@ class ProjectAdmin(GuardedModelAdmin):
         return format_html_join('\n', "<li>{}</li>",
                                 ((f, ) for f in instance.fieldnames.keys()))
 
-    def get_fields(self, request, obj):
+    def get_fieldsets(self, request, obj):
         if not obj:
             # Adding
-            return ['name', 'assignments_per_hit', 'active', 'login_required',
-                    'html_template', 'template_file_upload',
-                    'filename', 'custom_permissions', 'worker_permissions']
+            return (
+                (None, {
+                    'fields': ('name', 'assignments_per_hit')
+                }),
+                ('HTML Template', {
+                    'fields': ('html_template', 'template_file_upload', 'filename')
+                }),
+                ('Permissions', {
+                    'fields': ('active', 'login_required', 'custom_permissions',
+                               'worker_permissions')
+                }),
+            )
         else:
             # Changing
-            return ['name', 'assignments_per_hit', 'active', 'login_required',
-                    'html_template', 'template_file_upload', 'extracted_template_variables',
-                    'filename', 'custom_permissions', 'worker_permissions']
+            return (
+                (None, {
+                    'fields': ('name', 'assignments_per_hit')
+                }),
+                ('HTML Template', {
+                    'fields': ('html_template', 'template_file_upload', 'filename',
+                               'extracted_template_variables')
+                }),
+                ('Permissions', {
+                    'fields': ('active', 'login_required', 'custom_permissions',
+                               'worker_permissions')
+                }),
+            )
 
     def publish_hits(self, instance):
         publish_hits_url = '%s?project=%d&assignments_per_hit=%d' % (
