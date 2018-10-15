@@ -7,18 +7,25 @@ except ImportError:
         from io import BytesIO
         StringIO = BytesIO
 import json
+# hack to add unicode() to python3 for backward compatibility
+try:
+    unicode('')
+except NameError:
+    unicode = str
 
 from django.conf.urls import url
 from django.contrib import admin, messages
-from django.contrib.auth.admin import UserAdmin
-from django.contrib.auth.models import User
+from django.contrib.auth.admin import GroupAdmin, UserAdmin
+from django.contrib.auth.models import Group, User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.forms import (FileField, FileInput, HiddenInput, IntegerField,
-                          ModelForm, TextInput, ValidationError, Widget)
+                          ModelForm, ModelMultipleChoiceField, TextInput, ValidationError, Widget)
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
+from guardian.admin import GuardedModelAdmin
+from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 import unicodecsv
 
 from turkle.models import Batch, Project
@@ -273,6 +280,7 @@ class BatchAdmin(admin.ModelAdmin):
 
 
 class ProjectForm(ModelForm):
+    worker_permissions = ModelMultipleChoiceField(queryset=Group.objects.all(), required=False)
     template_file_upload = FileField(label='HTML template file', required=False)
 
     def __init__(self, *args, **kwargs):
@@ -290,12 +298,19 @@ class ProjectForm(ModelForm):
             'number of Assignments per Task for new Batches of Tasks.  Changing this ' + \
             'parameter DOES NOT change the number of Assignments per Task for already ' + \
             'published batches of Tasks.'
+        self.fields['custom_permissions'].label = 'Restrict access to specific Groups of Workers '
         self.fields['html_template'].label = 'HTML template text'
         self.fields['html_template'].help_text = 'You can edit the template text directly, ' + \
             'Drag-and-Drop a template file onto this window, or use the "Choose File" button below'
 
+        initial_ids = [unicode(id)
+                       for id in get_groups_with_perms(self.instance).values_list('id', flat=True)]
+        self.fields['worker_permissions'].initial = initial_ids
+        self.fields['worker_permissions'].label = 'Worker Groups with access to this Project'
 
-class ProjectAdmin(admin.ModelAdmin):
+
+class ProjectAdmin(GuardedModelAdmin):
+    change_form_template = 'admin/turkle/project/change_form.html'
     form = ProjectForm
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
@@ -310,17 +325,36 @@ class ProjectAdmin(admin.ModelAdmin):
         return format_html_join('\n', "<li>{}</li>",
                                 ((f, ) for f in instance.fieldnames.keys()))
 
-    def get_fields(self, request, obj):
+    def get_fieldsets(self, request, obj):
         if not obj:
             # Adding
-            return ['name', 'assignments_per_hit', 'active', 'login_required',
-                    'html_template', 'template_file_upload',
-                    'filename']
+            return (
+                (None, {
+                    'fields': ('name', 'assignments_per_hit')
+                }),
+                ('HTML Template', {
+                    'fields': ('html_template', 'template_file_upload', 'filename')
+                }),
+                ('Permissions', {
+                    'fields': ('active', 'login_required', 'custom_permissions',
+                               'worker_permissions')
+                }),
+            )
         else:
             # Changing
-            return ['name', 'assignments_per_hit', 'active', 'login_required',
-                    'html_template', 'template_file_upload', 'extracted_template_variables',
-                    'filename']
+            return (
+                (None, {
+                    'fields': ('name', 'assignments_per_hit')
+                }),
+                ('HTML Template', {
+                    'fields': ('html_template', 'template_file_upload', 'filename',
+                               'extracted_template_variables')
+                }),
+                ('Permissions', {
+                    'fields': ('active', 'login_required', 'custom_permissions',
+                               'worker_permissions')
+                }),
+            )
 
     def publish_hits(self, instance):
         publish_hits_url = '%s?project=%d&assignments_per_hit=%d' % (
@@ -331,10 +365,25 @@ class ProjectAdmin(admin.ModelAdmin):
                            format(publish_hits_url))
     publish_hits.short_description = 'Publish Tasks'
 
+    def save_model(self, request, obj, form, change):
+        if u'custom_permissions' in form.data:
+            if u'worker_permissions' in form.data:
+                existing_groups = set(get_groups_with_perms(obj))
+                form_groups = set(form.cleaned_data[u'worker_permissions'])
+                groups_to_add = form_groups.difference(existing_groups)
+                groups_to_remove = existing_groups.difference(form_groups)
+                for group in groups_to_add:
+                    assign_perm('can_work_on', group, obj)
+                for group in groups_to_remove:
+                    remove_perm('can_work_on', group, obj)
+            else:
+                for group in get_groups_with_perms(obj):
+                    remove_perm('can_work_on', group, obj)
+        super(ProjectAdmin, self).save_model(request, obj, form, change)
+
 
 admin_site = TurkleAdminSite(name='turkle_admin')
-# TODO: Uncomment the line below once group access permissions are enabled
-# admin_site.register(Group, GroupAdmin)
+admin_site.register(Group, GroupAdmin)
 admin_site.register(User, CustomUserAdmin)
 admin_site.register(Batch, BatchAdmin)
 admin_site.register(Project, ProjectAdmin)

@@ -7,11 +7,12 @@ except NameError:
 import datetime
 
 import django.test
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
 from django.contrib.messages import get_messages
 from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
+from guardian.shortcuts import assign_perm
 
 from turkle.models import Hit, HitAssignment, Batch, Project
 
@@ -278,16 +279,46 @@ class TestIndex(django.test.TestCase):
         self.assertTrue(b'Logout' in response.content)
         self.assertTrue(b'ms.admin' in response.content)
 
-    def test_index_protected_template(self):
-        project_protected = Project(
+    def test_index_permission_protected_project(self):
+        project = Project.objects.create(
+            active=True,
+            custom_permissions=True,
+            login_required=True,
+            name='MY_TEMPLATE_NAME',
+        )
+        batch = Batch.objects.create(project=project, name='MY_BATCH_NAME')
+        Hit.objects.create(batch=batch)
+
+        in_user = User.objects.create_user('in_user', password='secret')
+        User.objects.create_user('out_user', password='secret')
+        group = Group.objects.create(name='testgroup')
+        in_user.groups.add(group)
+        assign_perm('can_work_on', group, project)
+
+        in_client = django.test.Client()
+        in_client.login(username='in_user', password='secret')
+        response = in_client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(b'No Tasks available' in response.content)
+        self.assertTrue(b'MY_TEMPLATE_NAME' in response.content)
+        self.assertTrue(b'MY_BATCH_NAME' in response.content)
+
+        out_client = django.test.Client()
+        out_client.login(username='out_user', password='secret')
+        response = out_client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(b'No Tasks available' in response.content)
+        self.assertFalse(b'MY_TEMPLATE_NAME' in response.content)
+        self.assertFalse(b'MY_BATCH_NAME' in response.content)
+
+    def test_index_protected_project(self):
+        project_protected = Project.objects.create(
             active=True,
             login_required=True,
             name='MY_TEMPLATE_NAME',
         )
-        project_protected.save()
-        batch = Batch(project=project_protected, name='MY_BATCH_NAME')
-        batch.save()
-        Hit(batch=batch).save()
+        batch = Batch.objects.create(project=project_protected, name='MY_BATCH_NAME')
+        Hit.objects.create(batch=batch)
 
         anon_client = django.test.Client()
         response = anon_client.get(reverse('index'))

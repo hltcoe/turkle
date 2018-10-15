@@ -114,7 +114,14 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     'django_nose',
+    'guardian',
 )
+
+AUTHENTICATION_BACKENDS = (
+    'django.contrib.auth.backends.ModelBackend',  # default
+    'guardian.backends.ObjectPermissionBackend',
+)
+
 
 # Below is a possible logging configuration that sends HTTP 500
 # errors to people lists in ADMINS and records an access log to

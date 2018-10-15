@@ -254,7 +254,7 @@ def index(request):
 
     # Create a row for each Batch that has Tasks available for the current user
     batch_rows = []
-    for project in Project.available_for(request.user):
+    for project in Project.all_available_for(request.user):
         for batch in project.batches_available_for(request.user):
             total_hits_available = batch.total_available_hits_for(request.user)
             if total_hits_available > 0:
@@ -286,7 +286,7 @@ def preview(request, hit_id):
         messages.error(request, u'Cannot find Task with ID {}'.format(hit_id))
         return redirect(index)
 
-    if not request.user.is_authenticated and hit.batch.project.login_required:
+    if not hit.batch.project.available_for(request.user):
         messages.error(request, u'You do not have permission to view this Task')
         return redirect(index)
 
@@ -305,7 +305,7 @@ def preview_iframe(request, hit_id):
         messages.error(request, u'Cannot find Task with ID {}'.format(hit_id))
         return redirect(index)
 
-    if not request.user.is_authenticated and hit.batch.project.login_required:
+    if not hit.batch.project.available_for(request.user):
         messages.error(request, u'You do not have permission to view this Task')
         return redirect(index)
 

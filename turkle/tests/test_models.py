@@ -10,10 +10,11 @@ except ImportError:
 import datetime
 import os.path
 
-from django.contrib.auth.models import AnonymousUser, User
+from django.contrib.auth.models import AnonymousUser, Group, User
 from django.core.exceptions import ValidationError
 import django.test
 from django.utils import timezone
+from guardian.shortcuts import assign_perm
 
 from turkle.models import Hit, HitAssignment, Batch, Project
 
@@ -376,8 +377,8 @@ class TestBatchAvailableHITs(django.test.TestCase):
             login_required=True,
         )
         project_protected.save()
-        self.assertEqual(len(Project.available_for(anonymous_user)), 0)
-        self.assertEqual(len(Project.available_for(user)), 2)  # Project created by setUp
+        self.assertEqual(len(Project.all_available_for(anonymous_user)), 0)
+        self.assertEqual(len(Project.all_available_for(user)), 2)  # Project created by setUp
         batch_protected = Batch(project=project_protected)
         batch_protected.save()
         Hit(batch=batch_protected).save()
@@ -392,8 +393,8 @@ class TestBatchAvailableHITs(django.test.TestCase):
         batch_unprotected = Batch(project=project_unprotected)
         batch_unprotected.save()
         Hit(batch=batch_unprotected).save()
-        self.assertEqual(len(Project.available_for(anonymous_user)), 1)
-        self.assertEqual(len(Project.available_for(user)), 3)
+        self.assertEqual(len(Project.all_available_for(anonymous_user)), 1)
+        self.assertEqual(len(Project.all_available_for(user)), 3)
         self.assertEqual(len(project_unprotected.batches_available_for(anonymous_user)), 1)
         self.assertEqual(len(project_unprotected.batches_available_for(user)), 1)
         self.assertEqual(len(batch_unprotected.available_hits_for(anonymous_user)), 1)
@@ -432,30 +433,30 @@ class TestProject(django.test.TestCase):
     def test_available_for_active_flag(self):
         user = User.objects.create_user('testuser', password='secret')
 
-        self.assertEqual(len(Project.available_for(user)), 0)
+        self.assertEqual(len(Project.all_available_for(user)), 0)
 
         Project(
             active=False,
         ).save()
-        self.assertEqual(len(Project.available_for(user)), 0)
+        self.assertEqual(len(Project.all_available_for(user)), 0)
 
         Project(
             active=True,
         ).save()
-        self.assertEqual(len(Project.available_for(user)), 1)
+        self.assertEqual(len(Project.all_available_for(user)), 1)
 
     def test_available_for_login_required(self):
         anonymous_user = AnonymousUser()
 
-        self.assertEqual(len(Project.available_for(anonymous_user)), 0)
+        self.assertEqual(len(Project.all_available_for(anonymous_user)), 0)
 
         Project(
             login_required=True,
         ).save()
-        self.assertEqual(len(Project.available_for(anonymous_user)), 0)
+        self.assertEqual(len(Project.all_available_for(anonymous_user)), 0)
 
         authenticated_user = User.objects.create_user('testuser', password='secret')
-        self.assertEqual(len(Project.available_for(authenticated_user)), 1)
+        self.assertEqual(len(Project.all_available_for(authenticated_user)), 1)
 
     def test_batches_available_for(self):
         user = User.objects.create_user('testuser', password='secret')
@@ -514,6 +515,25 @@ class TestProject(django.test.TestCase):
         )
         project.save()
         self.assertFalse(project.html_template_has_submit_button)
+
+    def test_group_permissions(self):
+        user = User.objects.create_user('testuser', password='secret')
+        group = Group.objects.create(name='testgroup')
+        user.groups.add(group)
+        project = Project()
+        project.save()
+
+        # Group permissions are ignored if custom_permissions is False
+        self.assertTrue(project.available_for(user))
+        project.custom_permissions = True
+        project.save()
+        self.assertFalse(project.available_for(user))
+
+        # Verify that giving the group access also gives the group members access
+        self.assertFalse(user.has_perm('can_work_on', project))
+        assign_perm('can_work_on', group, project)
+        self.assertTrue(user.has_perm('can_work_on', project))
+        self.assertTrue(project.available_for(user))
 
     def test_login_required_validation_1(self):
         # No ValidationError thrown
