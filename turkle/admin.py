@@ -29,11 +29,12 @@ from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 import unicodecsv
 
 from turkle.models import Batch, Project
+from turkle.utils import get_site_name
 
 
 class TurkleAdminSite(admin.AdminSite):
     app_index_template = 'admin/turkle/app_index.html'
-    site_header = 'Turkle administration'
+    site_header = get_site_name() + ' administration'
 
 
 class CustomUserAdmin(UserAdmin):

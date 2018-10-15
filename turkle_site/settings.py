@@ -6,6 +6,8 @@ import os
 DEBUG = False
 ALLOWED_HOSTS = ['*']
 
+TURKLE_SITE_NAME = 'Turkle'
+
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
@@ -77,6 +79,7 @@ TEMPLATES = [
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
+                'turkle.utils.site',
             ],
         },
     },

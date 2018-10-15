@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Turkle</title>
+    <title>{{turkle_site_name}}</title>
     {% load staticfiles %}
     <meta charset="utf-8">
     <link href="{% static "turkle/css/turkle.css" %}" rel="stylesheet" type="text/css"/>
@@ -12,11 +12,11 @@
   <body>
     <div class="container-fluid">
       <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <a class="navbar-brand" href="{% url 'index' %}">Home</a>
+        <a class="navbar-brand" href="{% url 'index' %}" title="Home">{{turkle_site_name}}</a>
         <ul class="navbar-nav mr-auto">
           {% if user.is_staff %}
           <li class="nav-item active">
-            <a class="nav-link" href="/admin/">Admin</a>
+            <a class="nav-link" href="/admin/" title="Administration">Admin</a>
           </li>
           {% endif %}
         </ul>
