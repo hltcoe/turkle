@@ -11,6 +11,15 @@ Mechanical Turk.  Turkle can use the same HTML Task template files and
 CSV files as the MTurk requester web GUI.  The results of the Tasks
 completed by the workers can be exported to CSV files.
 
+Turkle's features include:
+
+- Authentication support for Users
+- Projects can be restricted to Users who are members of a particular Group
+- Each Task in a Project can be assigned to multiple users (redundant annotation)
+- An admin GUI for managing Users, Groups, Projects, and Batches of Tasks
+- Scripts to automate the creation of Users, Projects, and Batches of Tasks
+- Docker images using the SQLite and MySQL database backends
+
 ## Turkle Overview ##
 
 Turkle provides a Task-oriented interface for **Workers**, and an
@@ -286,7 +295,7 @@ Then edit the section directly below to configure connecting to the Mail Transfe
 ## Logging Configuration
 
 The Turkle application does not log any internal state. There is a sample logging
-configuration in the settings file if an administrator wants to receive emails 
+configuration in the settings file if an administrator wants to receive emails
 if HTTP 500 errors occur.
 
 ## Production Database Configuration
