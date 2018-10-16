@@ -4,12 +4,8 @@
 {% block admin_change_form_document_ready %}
 {{ block.super }}
 <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'admin/js/SelectBox.js' %}"></script>
-<script type="text/javascript" src="{% static 'admin/js/SelectFilter2.js' %}"></script>
 <script type="text/javascript">
 $(function () {
-  SelectFilter.init('id_worker_permissions', 'Worker Groups', false);
-
   if (!$('#id_custom_permissions').is(':checked')) {
     $('div.field-worker_permissions').hide();
   }

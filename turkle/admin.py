@@ -347,8 +347,13 @@ class BatchAdmin(admin.ModelAdmin):
 
 
 class ProjectForm(ModelForm):
-    worker_permissions = ModelMultipleChoiceField(queryset=Group.objects.all(), required=False)
     template_file_upload = FileField(label='HTML template file', required=False)
+    worker_permissions = ModelMultipleChoiceField(
+        label='Worker Groups with access to this Project',
+        queryset=Group.objects.all(),
+        required=False,
+        widget=FilteredSelectMultiple('Worker Groups', False),
+    )
 
     def __init__(self, *args, **kwargs):
         super(ProjectForm, self).__init__(*args, **kwargs)
@@ -373,7 +378,6 @@ class ProjectForm(ModelForm):
         initial_ids = [unicode(id)
                        for id in get_groups_with_perms(self.instance).values_list('id', flat=True)]
         self.fields['worker_permissions'].initial = initial_ids
-        self.fields['worker_permissions'].label = 'Worker Groups with access to this Project'
 
 
 class ProjectAdmin(GuardedModelAdmin):
@@ -433,6 +437,7 @@ class ProjectAdmin(GuardedModelAdmin):
     publish_hits.short_description = 'Publish Tasks'
 
     def save_model(self, request, obj, form, change):
+        super(ProjectAdmin, self).save_model(request, obj, form, change)
         if u'custom_permissions' in form.data:
             if u'worker_permissions' in form.data:
                 existing_groups = set(get_groups_with_perms(obj))
@@ -446,7 +451,6 @@ class ProjectAdmin(GuardedModelAdmin):
             else:
                 for group in get_groups_with_perms(obj):
                     remove_perm('can_work_on', group, obj)
-        super(ProjectAdmin, self).save_model(request, obj, form, change)
 
 
 admin_site = TurkleAdminSite(name='turkle_admin')
