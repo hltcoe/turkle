@@ -2,7 +2,7 @@
 import os.path
 
 import django.test
-from django.contrib.auth.models import User
+from django.contrib.auth.models import Group, User
 from django.contrib.messages import get_messages
 from django.urls import reverse
 
@@ -283,6 +283,92 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertEqual(response['Location'], u'/admin/turkle/batch/')
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
         self.assertTrue(Batch.objects.filter(name='batch_save_modified').exists())
+
+
+class TestGroupAdmin(django.test.TestCase):
+    def setUp(self):
+        User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+
+    def test_get_group_add(self):
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.get(reverse('turkle_admin:auth_group_add'))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(b'error' in response.content)
+
+    def test_post_group_add(self):
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.post(reverse('turkle_admin:auth_group_add'), {
+            'name': 'testgroup',
+        })
+        self.assertFalse(b'error' in response.content)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('turkle_admin:auth_group_changelist'))
+
+    def test_post_group_add_add_users(self):
+        user_to_add = User.objects.create_user('user_to_add', password='secret')
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.post(reverse('turkle_admin:auth_group_add'), {
+            'name': 'testgroup',
+            'users': [user_to_add.id]
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('turkle_admin:auth_group_changelist'))
+
+        group = Group.objects.get(name='testgroup')
+        self.assertEqual(user_to_add, group.user_set.get(id=user_to_add.id))
+
+    def test_get_group_change(self):
+        group = Group.objects.create(name='testgroup')
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.get(reverse('turkle_admin:auth_group_change', args=(group.id,)))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(b'error' in response.content)
+
+    def test_post_group_change(self):
+        group = Group.objects.create(name='testgroup')
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.post(reverse('turkle_admin:auth_group_change', args=(group.id,)), {
+            'name': 'newname',
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('turkle_admin:auth_group_changelist'))
+        group.refresh_from_db()
+        self.assertEqual(group.name, 'newname')
+
+    def test_post_group_change_update_users(self):
+        user_to_add = User.objects.create_user('user_to_add', password='secret')
+        user_to_remove = User.objects.create_user('user_to_remove', password='secret')
+        group = Group.objects.create(name='testgroup')
+        group.user_set.add(user_to_remove)
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.post(reverse('turkle_admin:auth_group_change', args=(group.id,)), {
+            'name': 'newname',
+            'users': [user_to_add.id],
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('turkle_admin:auth_group_changelist'))
+        group.refresh_from_db()
+        self.assertEqual(group.name, 'newname')
+        self.assertEqual(1, group.user_set.filter(username='user_to_add').count())
+        self.assertEqual(0, group.user_set.filter(username='user_to_remove').count())
+
+    def test_get_group_changelist(self):
+        group = Group.objects.create(name='testgroup')
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.get(reverse('turkle_admin:auth_group_changelist'))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(b'error' in response.content)
+        self.assertTrue(group.name in response.content)
 
 
 class TestProject(django.test.TestCase):
