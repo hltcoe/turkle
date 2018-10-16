@@ -15,7 +15,8 @@ Turkle's features include:
 
 - Authentication support for Users
 - Projects can be restricted to Users who are members of a particular Group
-- Each Task in a Project can be assigned to multiple users (redundant annotation)
+- Projects can be configured so that each Task needs to be completed by
+  multiple Workers (redundant annotations)
 - An admin GUI for managing Users, Groups, Projects, and Batches of Tasks
 - Scripts to automate the creation of Users, Projects, and Batches of Tasks
 - Docker images using the SQLite and MySQL database backends
