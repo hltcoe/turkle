@@ -15,6 +15,7 @@ except NameError:
 
 from django.conf.urls import url
 from django.contrib import admin, messages
+from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.auth.models import Group, User
 from django.core.exceptions import ObjectDoesNotExist
@@ -34,6 +35,71 @@ from turkle.models import Batch, Project
 class TurkleAdminSite(admin.AdminSite):
     app_index_template = 'admin/turkle/app_index.html'
     site_header = 'Turkle administration'
+
+
+class CustomGroupAdminForm(ModelForm):
+    """Hides 'Permissions' section, adds 'Group Members' section
+    """
+    users = ModelMultipleChoiceField(
+        label='Group Members',
+        queryset=User.objects.all(),
+        required=False,
+        widget=FilteredSelectMultiple('User', False),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(CustomGroupAdminForm, self).__init__(*args, **kwargs)
+        if self.instance.id:
+            self.fields['users'].initial = self.instance.user_set.all()
+
+
+class CustomGroupAdmin(GroupAdmin):
+    """Hides 'Permissions' section, adds 'Group Members' section
+    """
+    # We have to use custom logic to add a Users widget to GroupAdmin
+    # that is not required when adding a Groups widget to UserAdmin.
+    #
+    # There is a ManyToMany relationship between Users and Groups, but
+    # Django does not treat the two halves of a ManyToManyField
+    # identically.  The relationship between the two models is
+    # declared in just one of the models, e.g.:
+    #
+    #   class User(models.Model):
+    #       groups = models.ManyToManyField(Group, related_name='user_set')
+    #
+    # This creates a "forward" relationship from User to Group, and a
+    # "reverse" relationship from Group to User.
+    #
+    # ModelForm behaves very differently for the forward vs. reverse
+    # halves of a ManyToManyField relationship.  The default Django
+    # UserAdmin just lists 'groups' as one of the fields, and
+    # ModelForm renders a FilterSelect widget showing all available
+    # Groups.  But if we try to use 'user_set' as one of the fields
+    # for GroupAdmin, Django raises a FieldError exception with the
+    # message "Unknown field(s) (user_set)".  From Django's
+    # perspective, 'groups' is a field of User, but 'user_set' is not
+    # a field of Group.
+
+    fields = ('name', 'users')
+    form = CustomGroupAdminForm
+    list_display = ('name', 'total_members')
+
+    def save_model(self, request, obj, form, change):
+        super(CustomGroupAdmin, self).save_model(request, obj, form, change)
+        if u'users' in form.data:
+            existing_users = set(obj.user_set.all())
+            form_users = set(form.cleaned_data[u'users'])
+            users_to_add = form_users.difference(existing_users)
+            users_to_remove = existing_users.difference(form_users)
+            for user in users_to_add:
+                obj.user_set.add(user)
+            for user in users_to_remove:
+                obj.user_set.remove(user)
+        else:
+            obj.user_set.all().delete()
+
+    def total_members(self, obj):
+        return obj.user_set.count()
 
 
 class CustomUserAdmin(UserAdmin):
@@ -383,7 +449,7 @@ class ProjectAdmin(GuardedModelAdmin):
 
 
 admin_site = TurkleAdminSite(name='turkle_admin')
-admin_site.register(Group, GroupAdmin)
+admin_site.register(Group, CustomGroupAdmin)
 admin_site.register(User, CustomUserAdmin)
 admin_site.register(Batch, BatchAdmin)
 admin_site.register(Project, ProjectAdmin)
