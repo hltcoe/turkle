@@ -104,12 +104,14 @@ class CustomGroupAdmin(GroupAdmin):
 
 
 class CustomUserAdmin(UserAdmin):
-    # The 'email' field should be displayed on the Add User page
     add_fieldsets = UserAdmin.add_fieldsets + (
-        (None, {
-            'fields': ('email',),
-        }),
+        ('Personal info', {'fields': ('first_name', 'last_name', 'email')}),
+        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser',
+                                    'groups', 'user_permissions')}),
     )
+
+    def response_add(self, request, obj, post_url_continue=None):
+        return redirect(reverse('turkle_admin:auth_user_changelist'))
 
 
 class CustomButtonFileWidget(FileInput):
