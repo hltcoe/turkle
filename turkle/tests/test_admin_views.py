@@ -362,13 +362,13 @@ class TestGroupAdmin(django.test.TestCase):
         self.assertEqual(0, group.user_set.filter(username='user_to_remove').count())
 
     def test_get_group_changelist(self):
-        group = Group.objects.create(name='testgroup')
+        Group.objects.create(name='testgroup')
         client = django.test.Client()
         client.login(username='admin', password='secret')
         response = client.get(reverse('turkle_admin:auth_group_changelist'))
         self.assertEqual(response.status_code, 200)
         self.assertFalse(b'error' in response.content)
-        self.assertTrue(group.name in response.content)
+        self.assertTrue(b'testgroup' in response.content)
 
 
 class TestProject(django.test.TestCase):
