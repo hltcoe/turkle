@@ -96,7 +96,7 @@ class CustomGroupAdmin(GroupAdmin):
             for user in users_to_remove:
                 obj.user_set.remove(user)
         else:
-            obj.user_set.all().delete()
+            obj.user_set.clear()
 
     def total_members(self, obj):
         return obj.user_set.count()
