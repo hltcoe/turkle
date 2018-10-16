@@ -402,7 +402,7 @@ class TestBatchAvailableHITs(django.test.TestCase):
 
 
 class TestBatchExpireAssignments(django.test.TestCase):
-    def batch_expire_assignments(self):
+    def test_batch_expire_assignments(self):
         t = timezone.now()
         dt = datetime.timedelta(hours=2)
         past = t - dt
