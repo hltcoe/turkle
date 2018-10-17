@@ -17,33 +17,33 @@
 <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
 <script>
 $(function () {
-  function preview_iframe_url(hit_id) {
-    var original_url = '{% url 'preview_iframe' first_hit_id %}';
-    var original_hit_id = '{{ first_hit_id }}';
-    return original_url.replace(original_hit_id, hit_id);
+  function preview_iframe_url(task_id) {
+    var original_url = '{% url 'preview_iframe' first_task_id %}';
+    var original_task_id = '{{ first_task_id }}';
+    return original_url.replace(original_task_id, task_id);
   }
 
-  function update_task_counter(hit_index, total_hits) {
-    $('#task_counter').text('Task ' + (hit_index + 1) + '/' + total_hits);
+  function update_task_counter(task_index, total_tasks) {
+    $('#task_counter').text('Task ' + (task_index + 1) + '/' + total_tasks);
   }
 
-  var hit_ids = {{ hit_ids_as_json }};
-  var hit_index = 0;
+  var task_ids = {{ task_ids_as_json }};
+  var task_index = 0;
 
-  update_task_counter(0, hit_ids.length);
+  update_task_counter(0, task_ids.length);
 
   $('#next_task').click(function() {
-    hit_index = (hit_index + 1) % hit_ids.length;
-    $('#preview_iframe').attr('src', preview_iframe_url(hit_ids[hit_index]));
-    update_task_counter(hit_index, hit_ids.length);
+    task_index = (task_index + 1) % task_ids.length;
+    $('#preview_iframe').attr('src', preview_iframe_url(task_ids[task_index]));
+    update_task_counter(task_index, task_ids.length);
   });
   $('#previous_task').click(function() {
-    hit_index -= 1;
-    if (hit_index < 0) {
-      hit_index += hit_ids.length;
+    task_index -= 1;
+    if (task_index < 0) {
+      task_index += task_ids.length;
     }
-    $('#preview_iframe').attr('src', preview_iframe_url(hit_ids[hit_index]));
-    update_task_counter(hit_index, hit_ids.length);
+    $('#preview_iframe').attr('src', preview_iframe_url(task_ids[task_index]));
+    update_task_counter(task_index, task_ids.length);
   });
 });
 </script>
@@ -56,7 +56,7 @@ $(function () {
   {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 
   <div style="height: 500px;">
-    <iframe src="{% url 'preview_iframe' first_hit_id %}"
+    <iframe src="{% url 'preview_iframe' first_task_id %}"
             style="top: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: 0; box-sizing: inherit; background: #fff;"
             id="preview_iframe">
     </iframe>

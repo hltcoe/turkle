@@ -64,7 +64,7 @@ class TurkleClient(object):
             resp = session.get(url)
             soup = BeautifulSoup(resp.text, features='html.parser')
             for row in soup.find('table', id='result_list').tbody.findAll('tr'):
-                finished_col = row.find('td', {'class': 'field-total_finished_hits'}).string
+                finished_col = row.find('td', {'class': 'field-total_finished_tasks'}).string
                 download_col = row.findAll('td')[-1].a
                 if finished_col != '0':
                     resp = session.get(self.format_url(download_col['href']))
@@ -94,7 +94,7 @@ class TurkleClient(object):
         session.get(url)
         payload = {
             'name': options.project_name,
-            'assignments_per_hit': options.num,
+            'assignments_per_task': options.num,
             'filename': options.template,
             'html_template': options.form,
             'active': 1,
@@ -118,7 +118,7 @@ class TurkleClient(object):
             # we just upload a project so we assume that its last in list
             'project': ids[-1],
             'name': options.batch_name,
-            'assignments_per_hit': options.num,
+            'assignments_per_task': options.num,
             'active': 1,
             'csrfmiddlewaretoken': session.cookies['csrftoken']
         }

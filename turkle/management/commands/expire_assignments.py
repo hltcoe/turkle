@@ -3,7 +3,7 @@ import logging
 
 from django.core.management.base import BaseCommand
 
-from turkle.models import HitAssignment
+from turkle.models import TaskAssignment
 
 
 class Command(BaseCommand):
@@ -11,7 +11,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         t0 = datetime.now()
-        (total_deleted, _) = HitAssignment.expire_all_abandoned()
+        (total_deleted, _) = TaskAssignment.expire_all_abandoned()
         t = datetime.now()
         dt = (t - t0).total_seconds()
         logging.basicConfig(format="%(asctime)-15s %(message)s", level=logging.INFO)

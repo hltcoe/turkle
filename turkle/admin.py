@@ -155,9 +155,9 @@ class BatchForm(ModelForm):
         super(BatchForm, self).__init__(*args, **kwargs)
 
         self.fields['allotted_assignment_time'].label = 'Allotted assignment time (hours)'
-        self.fields['allotted_assignment_time'].help_text = 'If a user abandons a HIT, ' + \
+        self.fields['allotted_assignment_time'].help_text = 'If a user abandons a Task, ' + \
             'this determines how long it takes until their assignment is deleted and ' + \
-            'someone else can work on the HIT.'
+            'someone else can work on the Task.'
         self.fields['csv_file'].help_text = 'You can Drag-and-Drop a CSV file onto this ' + \
             'window, or use the "Choose File" button to browse for the file'
         self.fields['csv_file'].widget = CustomButtonFileWidget()
@@ -256,8 +256,8 @@ class BatchAdmin(admin.ModelAdmin):
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
     list_display = (
-        'name', 'filename', 'total_hits', 'assignments_per_hit',
-        'total_finished_hits', 'active', 'download_csv')
+        'name', 'filename', 'total_tasks', 'assignments_per_task',
+        'total_finished_tasks', 'active', 'download_csv')
 
     def cancel_batch(self, request, batch_id):
         try:
@@ -275,17 +275,17 @@ class BatchAdmin(admin.ModelAdmin):
     def get_fields(self, request, obj):
         # Display different fields when adding (when obj is None) vs changing a Batch
         if not obj:
-            return ('project', 'name', 'assignments_per_hit',
+            return ('project', 'name', 'assignments_per_task',
                     'allotted_assignment_time', 'csv_file')
         else:
-            return ('active', 'project', 'name', 'assignments_per_hit',
+            return ('active', 'project', 'name', 'assignments_per_task',
                     'allotted_assignment_time', 'filename')
 
     def get_readonly_fields(self, request, obj):
         if not obj:
             return []
         else:
-            return ('assignments_per_hit', 'filename')
+            return ('assignments_per_task', 'filename')
 
     def get_urls(self):
         urls = super(BatchAdmin, self).get_urls()
@@ -320,12 +320,12 @@ class BatchAdmin(admin.ModelAdmin):
             messages.error(request, u'Cannot find Batch with ID {}'.format(batch_id))
             return redirect(reverse('turkle_admin:turkle_batch_changelist'))
 
-        hit_ids = list(batch.hit_set.values_list('id', flat=True))
-        hit_ids_as_json = json.dumps(hit_ids)
+        task_ids = list(batch.task_set.values_list('id', flat=True))
+        task_ids_as_json = json.dumps(task_ids)
         return render(request, 'admin/turkle/review_batch.html', {
             'batch_id': batch_id,
-            'first_hit_id': hit_ids[0],
-            'hit_ids_as_json': hit_ids_as_json,
+            'first_task_id': task_ids[0],
+            'task_ids_as_json': task_ids_as_json,
             'site_header': self.admin_site.site_header,
             'site_title': self.admin_site.site_title,
         })
@@ -341,7 +341,7 @@ class BatchAdmin(admin.ModelAdmin):
             csv_text = request.FILES['csv_file'].read()
             super(BatchAdmin, self).save_model(request, obj, form, change)
             csv_fh = StringIO(csv_text)
-            obj.create_hits_from_csv(csv_fh)
+            obj.create_tasks_from_csv(csv_fh)
         else:
             super(BatchAdmin, self).save_model(request, obj, form, change)
 
@@ -365,8 +365,8 @@ class ProjectForm(ModelForm):
         #   turkle/templates/admin/turkle/project/change_form.html
         self.fields['filename'].widget = HiddenInput()
 
-        self.fields['assignments_per_hit'].label = 'Assignments per Task'
-        self.fields['assignments_per_hit'].help_text = 'This parameter sets the default ' + \
+        self.fields['assignments_per_task'].label = 'Assignments per Task'
+        self.fields['assignments_per_task'].help_text = 'This parameter sets the default ' + \
             'number of Assignments per Task for new Batches of Tasks.  Changing this ' + \
             'parameter DOES NOT change the number of Assignments per Task for already ' + \
             'published batches of Tasks.'
@@ -386,7 +386,7 @@ class ProjectAdmin(GuardedModelAdmin):
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
-    list_display = ('name', 'filename', 'date_modified', 'active', 'publish_hits')
+    list_display = ('name', 'filename', 'date_modified', 'active', 'publish_tasks')
 
     # Fieldnames are extracted from form text, and should not be edited directly
     exclude = ('fieldnames',)
@@ -401,7 +401,7 @@ class ProjectAdmin(GuardedModelAdmin):
             # Adding
             return (
                 (None, {
-                    'fields': ('name', 'assignments_per_hit')
+                    'fields': ('name', 'assignments_per_task')
                 }),
                 ('HTML Template', {
                     'fields': ('html_template', 'template_file_upload', 'filename')
@@ -415,7 +415,7 @@ class ProjectAdmin(GuardedModelAdmin):
             # Changing
             return (
                 (None, {
-                    'fields': ('name', 'assignments_per_hit')
+                    'fields': ('name', 'assignments_per_task')
                 }),
                 ('HTML Template', {
                     'fields': ('html_template', 'template_file_upload', 'filename',
@@ -427,14 +427,14 @@ class ProjectAdmin(GuardedModelAdmin):
                 }),
             )
 
-    def publish_hits(self, instance):
-        publish_hits_url = '%s?project=%d&assignments_per_hit=%d' % (
+    def publish_tasks(self, instance):
+        publish_tasks_url = '%s?project=%d&assignments_per_task=%d' % (
             reverse('admin:turkle_batch_add'),
             instance.id,
-            instance.assignments_per_hit)
+            instance.assignments_per_task)
         return format_html('<a href="{}" class="button">Publish Tasks</a>'.
-                           format(publish_hits_url))
-    publish_hits.short_description = 'Publish Tasks'
+                           format(publish_tasks_url))
+    publish_tasks.short_description = 'Publish Tasks'
 
     def save_model(self, request, obj, form, change):
         super(ProjectAdmin, self).save_model(request, obj, form, change)

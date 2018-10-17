@@ -16,9 +16,8 @@ import unicodecsv
 unicodecsv.field_size_limit(sys.maxsize)
 
 
-class Hit(models.Model):
-    """
-    Human Intelligence Task
+class Task(models.Model):
+    """Human Intelligence Task
     """
     class Meta:
         verbose_name = "Task"
@@ -38,8 +37,8 @@ class Hit(models.Model):
 
         Returns:
             String containing the HTML template for the Project associated with
-            this Hit, with all template variables replaced with the template
-            variable values stored in this Hit's input_csv_fields.
+            this Task, with all template variables replaced with the template
+            variable values stored in this Task's input_csv_fields.
         """
         result = self.batch.project.html_template
         for field in self.input_csv_fields.keys():
@@ -50,7 +49,9 @@ class Hit(models.Model):
         return result
 
 
-class HitAssignment(models.Model):
+class TaskAssignment(models.Model):
+    """Task Assignment
+    """
     class Meta:
         verbose_name = "Task Assignment"
 
@@ -59,7 +60,7 @@ class HitAssignment(models.Model):
     completed = models.BooleanField(db_index=True, default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(null=True)
-    hit = models.ForeignKey(Hit, on_delete=models.CASCADE)
+    task = models.ForeignKey(Task, on_delete=models.CASCADE)
     updated_at = models.DateTimeField(auto_now=True)
 
     @classmethod
@@ -71,17 +72,17 @@ class HitAssignment(models.Model):
 
     def save(self, *args, **kwargs):
         self.expires_at = timezone.now() + \
-            datetime.timedelta(hours=self.hit.batch.allotted_assignment_time)
+            datetime.timedelta(hours=self.task.batch.allotted_assignment_time)
 
         if 'csrfmiddlewaretoken' in self.answers:
             del self.answers['csrfmiddlewaretoken']
-        super(HitAssignment, self).save(*args, **kwargs)
+        super(TaskAssignment, self).save(*args, **kwargs)
 
         # Mark Task as completed if all Assignments have been completed
-        if self.hit.hitassignment_set.filter(completed=True).count() >= \
-           self.hit.batch.assignments_per_hit:
-            self.hit.completed = True
-            self.hit.save()
+        if self.task.taskassignment_set.filter(completed=True).count() >= \
+           self.task.batch.assignments_per_task:
+            self.task.completed = True
+            self.task.save()
 
 
 class Batch(models.Model):
@@ -91,13 +92,13 @@ class Batch(models.Model):
 
     active = models.BooleanField(db_index=True, default=True)
     allotted_assignment_time = models.IntegerField(default=24)
-    assignments_per_hit = models.IntegerField(default=1, verbose_name='Assignments per Task')
+    assignments_per_task = models.IntegerField(default=1, verbose_name='Assignments per Task')
     date_published = models.DateTimeField(auto_now_add=True)
     filename = models.CharField(max_length=1024)
     project = models.ForeignKey('Project', on_delete=models.CASCADE)
     name = models.CharField(max_length=1024)
 
-    def available_hits_for(self, user):
+    def available_tasks_for(self, user):
         """Retrieve a list of all Tasks in this batch available for the user.
 
         This list DOES NOT include Tasks in the batch that have been assigned
@@ -107,26 +108,27 @@ class Batch(models.Model):
             user (User|AnonymousUser):
 
         Returns:
-            QuerySet of Hit objects
+            QuerySet of Task objects
         """
         if not user.is_authenticated and self.project.login_required:
-            return Hit.objects.none()
+            return Task.objects.none()
 
-        hs = self.hit_set.filter(completed=False)
+        hs = self.task_set.filter(completed=False)
 
         # Exclude Tasks that have already been assigned to this user.
         if user.is_authenticated:
             # If the user is not authenticated, then user.id is None,
             # and the query below would exclude all uncompleted Tasks.
-            hs = hs.exclude(hitassignment__assigned_to_id=user.id)
+            hs = hs.exclude(taskassignment__assigned_to_id=user.id)
 
-        # Only include Tasks whose total (possibly not completed) assignments < assignments_per_hit
-        hs = hs.annotate(ac=models.Count('hitassignment')).filter(ac__lt=self.assignments_per_hit)
+        # Only include Tasks whose total (possibly incomplete) assignments < assignments_per_task
+        hs = hs.annotate(ac=models.Count('taskassignment')).\
+            filter(ac__lt=self.assignments_per_task)
 
         return hs
 
-    def available_hit_ids_for(self, user):
-        return self.available_hits_for(user).values_list('id', flat=True)
+    def available_task_ids_for(self, user):
+        return self.available_tasks_for(user).values_list('id', flat=True)
 
     def clean(self):
         # Without this guard condition for project_id, a
@@ -137,7 +139,7 @@ class Batch(models.Model):
         # exception, instead of catching the ValidationError and
         # displaying a form with a "Field required" warning.
         if self.project_id:
-            if not self.project.login_required and self.assignments_per_hit != 1:
+            if not self.project.login_required and self.assignments_per_task != 1:
                 raise ValidationError('When login is not required to access a Project, ' +
                                       'the number of Assignments per Task must be 1')
 
@@ -149,7 +151,7 @@ class Batch(models.Model):
         # We are following Mechanical Turk's naming conventions for results files
         return "{}-Batch_{}_results{}".format(batch_filename, self.id, extension)
 
-    def create_hits_from_csv(self, csv_fh):
+    def create_tasks_from_csv(self, csv_fh):
         """
         Args:
             csv_fh (file-like object): File handle for CSV input
@@ -159,46 +161,46 @@ class Batch(models.Model):
         """
         header, data_rows = self._parse_csv(csv_fh)
 
-        num_created_hits = 0
+        num_created_tasks = 0
         for row in data_rows:
             if not row:
                 continue
-            hit = Hit(
+            task = Task(
                 batch=self,
                 input_csv_fields=dict(zip(header, row)),
             )
-            hit.save()
-            num_created_hits += 1
+            task.save()
+            num_created_tasks += 1
 
-        return num_created_hits
+        return num_created_tasks
 
     def expire_assignments(self):
-        HitAssignment.objects.\
+        TaskAssignment.objects.\
             filter(completed=False).\
-            filter(hit__batch_id=self.id).\
+            filter(task__batch_id=self.id).\
             filter(expires_at__lt=timezone.now()).\
             delete()
 
-    def finished_hits(self):
+    def finished_tasks(self):
         """
         Returns:
-            QuerySet of all Hit objects associated with this Batch
+            QuerySet of all Task objects associated with this Batch
             that have been completed.
         """
-        return self.hit_set.filter(completed=True).order_by('-id')
+        return self.task_set.filter(completed=True).order_by('-id')
 
-    def next_available_hit_for(self, user):
+    def next_available_task_for(self, user):
         """Returns next available Task for the user, or None if no Tasks available
 
         Args:
             user (User):
 
         Returns:
-            Hit|None
+            Task|None
         """
-        return self.available_hits_for(user).first()
+        return self.available_tasks_for(user).first()
 
-    def total_available_hits_for(self, user):
+    def total_available_tasks_for(self, user):
         """Returns number of Tasks available for the user
 
         Args:
@@ -207,35 +209,35 @@ class Batch(models.Model):
         Returns:
             Number of Tasks available for user
         """
-        return self.available_hits_for(user).count()
+        return self.available_tasks_for(user).count()
 
-    def total_finished_hits(self):
-        return self.finished_hits().count()
-    total_finished_hits.short_description = 'Total finished Tasks'
+    def total_finished_tasks(self):
+        return self.finished_tasks().count()
+    total_finished_tasks.short_description = 'Total finished Tasks'
 
-    def total_hits(self):
-        return self.hit_set.count()
-    total_hits.short_description = 'Total Tasks'
+    def total_tasks(self):
+        return self.task_set.count()
+    total_tasks.short_description = 'Total Tasks'
 
     def to_csv(self, csv_fh):
-        """Write CSV output to file handle for every Hit in batch
+        """Write CSV output to file handle for every Task in batch
 
         Args:
             csv_fh (file-like object): File handle for CSV output
         """
-        fieldnames, rows = self._results_data(self.finished_hits())
+        fieldnames, rows = self._results_data(self.finished_tasks())
         writer = unicodecsv.DictWriter(csv_fh, fieldnames, quoting=unicodecsv.QUOTE_ALL)
         writer.writeheader()
         for row in rows:
             writer.writerow(row)
 
-    def unfinished_hits(self):
+    def unfinished_tasks(self):
         """
         Returns:
-            QuerySet of all Hit objects associated with this Batch
+            QuerySet of all Task objects associated with this Batch
             that have NOT been completed.
         """
-        return self.hit_set.filter(completed=False).order_by('id')
+        return self.task_set.filter(completed=False).order_by('id')
 
     def _parse_csv(self, csv_fh):
         """
@@ -252,10 +254,10 @@ class Batch(models.Model):
         header = next(rows)
         return header, rows
 
-    def _get_csv_fieldnames(self, hits):
+    def _get_csv_fieldnames(self, tasks):
         """
         Args:
-            hits (List of Hit objects):
+            tasks (List of Task objects):
 
         Returns:
             A tuple of strings specifying the fieldnames to be used in
@@ -263,10 +265,10 @@ class Batch(models.Model):
         """
         input_field_set = set()
         answer_field_set = set()
-        for hit in hits:
-            for hit_assignment in hit.hitassignment_set.all():
-                input_field_set.update(hit.input_csv_fields.keys())
-                answer_field_set.update(hit_assignment.answers.keys())
+        for task in tasks:
+            for task_assignment in task.taskassignment_set.all():
+                input_field_set.update(task.input_csv_fields.keys())
+                answer_field_set.update(task_assignment.answers.keys())
         return tuple(
             [u'HITId', u'HITTypeId', u'Title', u'CreationTime', u'MaxAssignments',
              u'AssignmentDurationInSeconds', u'AssignmentId', u'WorkerId',
@@ -275,13 +277,13 @@ class Batch(models.Model):
             [u'Answer.' + k for k in sorted(answer_field_set)]
         )
 
-    def _results_data(self, hits):
+    def _results_data(self, tasks):
         """
         All completed Tasks must come from the same project so that they have the
         same field names.
 
         Args:
-            hits (List of Hit objects):
+            tasks (List of Task objects):
 
         Returns:
             A tuple where the first value is a list of fieldname strings, and
@@ -290,30 +292,30 @@ class Batch(models.Model):
         """
         rows = []
         time_format = '%a %b %m %H:%M:%S %Z %Y'
-        for hit in hits:
-            for hit_assignment in hit.hitassignment_set.all():
-                batch = hit.batch
-                project = hit.batch.project
+        for task in tasks:
+            for task_assignment in task.taskassignment_set.all():
+                batch = task.batch
+                project = task.batch.project
 
                 row = {
-                    'HITId': hit.id,
+                    'HITId': task.id,
                     'HITTypeId': project.id,
                     'Title': project.name,
                     'CreationTime': batch.date_published.strftime(time_format),
-                    'MaxAssignments': batch.assignments_per_hit,
+                    'MaxAssignments': batch.assignments_per_task,
                     'AssignmentDurationInSeconds': batch.allotted_assignment_time * 3600,
-                    'AssignmentId': hit_assignment.id,
-                    'WorkerId': hit_assignment.assigned_to_id,
-                    'AcceptTime': hit_assignment.created_at.strftime(time_format),
-                    'SubmitTime': hit_assignment.updated_at.strftime(time_format),
-                    'WorkTimeInSeconds': int((hit_assignment.updated_at -
-                                              hit_assignment.created_at).total_seconds()),
+                    'AssignmentId': task_assignment.id,
+                    'WorkerId': task_assignment.assigned_to_id,
+                    'AcceptTime': task_assignment.created_at.strftime(time_format),
+                    'SubmitTime': task_assignment.updated_at.strftime(time_format),
+                    'WorkTimeInSeconds': int((task_assignment.updated_at -
+                                              task_assignment.created_at).total_seconds()),
                 }
-                row.update({u'Input.' + k: v for k, v in hit.input_csv_fields.items()})
-                row.update({u'Answer.' + k: v for k, v in hit_assignment.answers.items()})
+                row.update({u'Input.' + k: v for k, v in task.input_csv_fields.items()})
+                row.update({u'Answer.' + k: v for k, v in task_assignment.answers.items()})
                 rows.append(row)
 
-        return self._get_csv_fieldnames(hits), rows
+        return self._get_csv_fieldnames(tasks), rows
 
     def __unicode__(self):
         return 'Batch: {}'.format(self.name)
@@ -330,7 +332,7 @@ class Project(models.Model):
         verbose_name = "Project"
 
     active = models.BooleanField(db_index=True, default=True)
-    assignments_per_hit = models.IntegerField(db_index=True, default=1)
+    assignments_per_task = models.IntegerField(db_index=True, default=1)
     custom_permissions = models.BooleanField(default=False)
     date_modified = models.DateTimeField(auto_now=True)
     filename = models.CharField(max_length=1024, blank=True)
@@ -386,7 +388,7 @@ class Project(models.Model):
         return batches
 
     def clean(self):
-        if not self.login_required and self.assignments_per_hit != 1:
+        if not self.login_required and self.assignments_per_task != 1:
             raise ValidationError('When login is not required to access the Project, ' +
                                   'the number of Assignments per Task must be 1')
 
@@ -401,7 +403,7 @@ class Project(models.Model):
 
     def to_csv(self, csv_fh):
         """
-        Writes CSV output to file handle for every Hit associated with project
+        Writes CSV output to file handle for every Task associated with project
 
         Args:
             csv_fh (file-like object): File handle for CSV output
@@ -412,7 +414,7 @@ class Project(models.Model):
             writer = unicodecsv.DictWriter(csv_fh, fieldnames, quoting=unicodecsv.QUOTE_ALL)
             writer.writeheader()
             for batch in batches:
-                _, rows = batch._results_data(batch.finished_hits())
+                _, rows = batch._results_data(batch.finished_tasks())
                 for row in rows:
                     writer.writerow(row)
 
@@ -428,10 +430,10 @@ class Project(models.Model):
         input_field_set = set()
         answer_field_set = set()
         for batch in batches:
-            for hit in batch.hit_set.all():
-                for hit_assignment in hit.hitassignment_set.all():
-                    input_field_set.update(hit.input_csv_fields.keys())
-                    answer_field_set.update(hit_assignment.answers.keys())
+            for task in batch.task_set.all():
+                for task_assignment in task.taskassignment_set.all():
+                    input_field_set.update(task.input_csv_fields.keys())
+                    answer_field_set.update(task_assignment.answers.keys())
         return tuple(
             [u'HITId', u'HITTypeId', u'Title', u'CreationTime', u'MaxAssignments',
              u'AssignmentDurationInSeconds', u'AssignmentId', u'WorkerId',
