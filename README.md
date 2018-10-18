@@ -237,13 +237,17 @@ Turkle UI.  If your Project's HTML template code does not include an
 HTML 'Submit' button, then Turkle will add a 'Submit' button to the
 combined document.
 
-There are example HTML and CSV files in the `examples` directory.
-`translate_minimal.html` uses just HTML elements without any
-JavaScript.  `translate_validate.html` uses third-party JavaScript
-libraries to perform form validation.  `lda-lemmas.html` is a more
-complicated example that uses custom JavaScript to dynamically
-generate HTML elements and CSV files that store data structures as
-JSON strings.
+There are example HTML and CSV files in the `examples` directory:
+
+- `translate_minimal.html` uses just HTML elements without any
+  JavaScript.  The corresponding CSV file is `translate_two_cities.csv`.
+- `translate_validate.html` uses third-party JavaScript libraries to
+  perform form validation.  The corresponding CSV file is
+  `translate_two_cities.csv`.
+- `lda-lemmas.html` is a more complicated example that uses custom
+  JavaScript to dynamically generate HTML elements and CSV files that
+  store data structures as JSON strings.  The corresponding CSV files
+  are `lda-lemmas-0.csv` and `lda-lemmas-1.csv`.
 
 
 ## Creating Projects and Publishing Batches of Tasks ##
@@ -261,8 +265,13 @@ Publish a Batch of Tasks:
 
 * Click on the `Turkle administration` link in the top-left corner of
   the screen
-* In the `Batches` row, click the `Add` button, fill out the form
-  (selecting a Project and uploading a CSV file) and submit
+* In the `Batches` row, click the `Add` button to go to the Add
+  Project page.  Fill out the form on this page (selecting a Project
+  and uploading a CSV file), and then click `Review Batch`.  The
+  Review Batch page lets you to browse through all Tasks in the Batch,
+  and verify that the Task Template functions as expected.  You can
+  click `Publish Batch` if everything works, or `Cancel Batch` if
+  the Project's HTML template needs to be updated.
 
 
 ### Using the scripts
