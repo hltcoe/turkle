@@ -21,7 +21,7 @@ Turkle's features include:
 - Scripts to automate the creation of Users, Projects, and Batches of Tasks
 - Docker images using the SQLite and MySQL database backends
 
-## Turkle Overview ##
+## Turkle Workflow Overview ##
 
 Turkle provides a Task-oriented interface for **Workers**, and an
 administrative interface for **Requesters**.
@@ -70,11 +70,26 @@ boxes, radio buttons, and check boxes.  When the Worker submits a Task
 Assignment, the values of the form fields are saved to the Turkle database.
 
 Task Assignment data can be exported to CSV files.  Each row of the
-CSV file contains both the template variable input fields and the
-Worker-submitted form fields.  For each template variable
-`${foo}`, the CSV file will contain a column named `Input.foo`.  For
-each submitted form field named `bar`, the CSV file will contain a
-column named `Answer.bar`.
+CSV results file contains the template variable input fields, the
+Worker-submitted form fields, and some metadata fields.  For each
+template variable `${foo}`, the CSV file will contain a column named
+`Input.foo`.  For each submitted form field named `bar`, the CSV file
+will contain a column named `Answer.bar`.  The CSV file will also have
+the fields:
+
+- `HITId` - Task ID
+- `HITTypeId` - Project ID
+- `Title` - Project name
+- `CreationTime` - Time when the Task was created from CSV input file
+- `MaxAssignments` - Number of *requested* Assignments per Task
+- `AssignmentDurationInSeconds` - Amount of time before a Task
+  Assignment expires
+- `AssignmentId` - Task Assignment ID
+- `WorkerId`
+- `AcceptTime` - Time when User accepted an Assignment for a Task
+- `SubmitTime` - Time when User submitted an Assignment for a Task
+- `WorkTimeInSeconds` - Length of time between when User accepted
+   a Task Assignment and when User submitted that Assignment
 
 
 # Installation #
