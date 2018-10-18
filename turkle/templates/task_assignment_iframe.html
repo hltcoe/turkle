@@ -6,12 +6,12 @@
   </head>
   <body>
     <form name="mturk_form" method="post" id="mturk_form" target="_parent"
-          action="{% url 'hit_assignment' hit.id hit_assignment.id %}">
+          action="{% url 'task_assignment' task.id task_assignment.id %}">
 
       {% csrf_token %}
-      {% autoescape off %}{{ hit.populate_html_template }}{% endautoescape %}
+      {% autoescape off %}{{ task.populate_html_template }}{% endautoescape %}
 
-      {% if not hit.batch.project.html_template_has_submit_button %}
+      {% if not task.batch.project.html_template_has_submit_button %}
       <p class="text-center">
         <input type="submit" id="submitButton" class="btn btn-primary" value="Submit" />
       </p>

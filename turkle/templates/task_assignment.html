@@ -1,4 +1,4 @@
-{% extends "hit_base.html" %}
+{% extends "task_base.html" %}
 {% load staticfiles %}
 
 {% block header %}
@@ -25,14 +25,14 @@ $(function () {
     $.post("{% url 'update_auto_accept' %}", {'auto_accept': this.checked});
   });
 
-  $("#expiration-timer").countdown('{{ hit_assignment.expires_at|date:'Y-m-d H:i' }}')
+  $("#expiration-timer").countdown('{{ task_assignment.expires_at|date:'Y-m-d H:i' }}')
                         .on('update.countdown', function(event) {
                           $(this).text(event.strftime('Expires in %H:%M'))
                         })
                         .on('finish.countdown', function(event) {
                           // "Gray out" background of iFrame
                           $('#iframe_container').css('background', '#000');
-                          $('#hit_assignment_iframe').css('background', '#fff')
+                          $('#task_assignment_iframe').css('background', '#fff')
                                                      .css('opacity', '0.8');
                           $('#messages_container').append(
                             $('<div>').addClass('alert alert-error').attr('role', 'alert')
@@ -49,9 +49,9 @@ $(function () {
   {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 
   <div id="iframe_container" style="height: 500px;">
-    <iframe src="{% url 'hit_assignment_iframe' hit.id hit_assignment.id %}"
+    <iframe src="{% url 'task_assignment_iframe' task.id task_assignment.id %}"
             style="top: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: 0; box-sizing: inherit;"
-            id="hit_assignment_iframe">
+            id="task_assignment_iframe">
     </iframe>
   </div>
 
@@ -67,12 +67,12 @@ $(function () {
 </span>
 
 <span class="inline-form-buttons">
-  <form method="post" action="{% url 'return_hit_assignment' hit.id hit_assignment.id %}">
+  <form method="post" action="{% url 'return_task_assignment' task.id task_assignment.id %}">
     {% csrf_token %}
     <input type="submit" id="submitButton" class="btn btn-sm btn-danger" value="Return Task" />
   </form>
 
-  <form method="post" action="{% url 'skip_and_accept_next_hit' hit.batch_id hit.id hit_assignment.id %}">
+  <form method="post" action="{% url 'skip_and_accept_next_task' task.batch_id task.id task_assignment.id %}">
     {% csrf_token %}
     <input type="submit" id="submitButton" class="btn btn-sm btn-danger" value="Skip Task" />
   </form>

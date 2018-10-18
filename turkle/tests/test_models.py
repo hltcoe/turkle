@@ -16,7 +16,7 @@ import django.test
 from django.utils import timezone
 from guardian.shortcuts import assign_perm
 
-from turkle.models import Hit, HitAssignment, Batch, Project
+from turkle.models import Task, TaskAssignment, Batch, Project
 
 # hack to add unicode() to python3 for backward compatibility
 try:
@@ -25,63 +25,63 @@ except NameError:
     unicode = str
 
 
-class TestHitAssignment(django.test.TestCase):
-    def test_hit_marked_as_completed(self):
-        # When assignment_per_hit==1, completing 1 Assignment marks Task as complete
+class TestTaskAssignment(django.test.TestCase):
+    def test_task_marked_as_completed(self):
+        # When assignment_per_task==1, completing 1 Assignment marks Task as complete
         project = Project(name='test', html_template='<p>${number} - ${letter}</p>')
         project.save()
         batch = Batch(project=project)
         batch.save()
 
-        hit = Hit(
+        task = Task(
             batch=batch,
             input_csv_fields={'number': '1', 'letter': 'a'}
         )
-        hit.save()
+        task.save()
 
-        self.assertEqual(batch.assignments_per_hit, 1)
-        self.assertFalse(hit.completed)
+        self.assertEqual(batch.assignments_per_task, 1)
+        self.assertFalse(task.completed)
 
-        HitAssignment(
+        TaskAssignment(
             assigned_to=None,
             completed=True,
-            hit=hit
+            task=task
         ).save()
 
-        hit.refresh_from_db()
-        self.assertTrue(hit.completed)
+        task.refresh_from_db()
+        self.assertTrue(task.completed)
 
-    def test_hit_marked_as_completed_two_way_redundancy(self):
-        # When assignment_per_hit==2, completing 2 Assignments marks Task as complete
+    def test_task_marked_as_completed_two_way_redundancy(self):
+        # When assignment_per_task==2, completing 2 Assignments marks Task as complete
         project = Project(name='test', html_template='<p>${number} - ${letter}</p>')
         project.save()
         batch = Batch(project=project)
-        batch.assignments_per_hit = 2
+        batch.assignments_per_task = 2
         batch.save()
 
-        hit = Hit(
+        task = Task(
             batch=batch,
             input_csv_fields={'number': '1', 'letter': 'a'}
         )
-        hit.save()
+        task.save()
 
-        self.assertFalse(hit.completed)
+        self.assertFalse(task.completed)
 
-        HitAssignment(
+        TaskAssignment(
             assigned_to=None,
             completed=True,
-            hit=hit
+            task=task
         ).save()
-        hit.refresh_from_db()
-        self.assertFalse(hit.completed)
+        task.refresh_from_db()
+        self.assertFalse(task.completed)
 
-        HitAssignment(
+        TaskAssignment(
             assigned_to=None,
             completed=True,
-            hit=hit
+            task=task
         ).save()
-        hit.refresh_from_db()
-        self.assertTrue(hit.completed)
+        task.refresh_from_db()
+        self.assertTrue(task.completed)
 
     def test_expire_all_abandoned(self):
         t = timezone.now()
@@ -95,18 +95,18 @@ class TestHitAssignment(django.test.TestCase):
             project=project
         )
         batch.save()
-        hit = Hit(batch=batch)
-        hit.save()
-        ha = HitAssignment(
+        task = Task(batch=batch)
+        task.save()
+        ha = TaskAssignment(
             completed=False,
             expires_at=past,
-            hit=hit,
+            task=task,
         )
-        # Bypass HitAssignment's save(), which updates expires_at
-        super(HitAssignment, ha).save()
-        self.assertEqual(HitAssignment.objects.count(), 1)
-        HitAssignment.expire_all_abandoned()
-        self.assertEqual(HitAssignment.objects.count(), 0)
+        # Bypass TaskAssignment's save(), which updates expires_at
+        super(TaskAssignment, ha).save()
+        self.assertEqual(TaskAssignment.objects.count(), 1)
+        TaskAssignment.expire_all_abandoned()
+        self.assertEqual(TaskAssignment.objects.count(), 0)
 
     def test_expire_all_abandoned__dont_delete_completed(self):
         t = timezone.now()
@@ -120,18 +120,18 @@ class TestHitAssignment(django.test.TestCase):
             project=project
         )
         batch.save()
-        hit = Hit(batch=batch)
-        hit.save()
-        ha = HitAssignment(
+        task = Task(batch=batch)
+        task.save()
+        ha = TaskAssignment(
             completed=True,
             expires_at=past,
-            hit=hit,
+            task=task,
         )
-        # Bypass HitAssignment's save(), which updates expires_at
-        super(HitAssignment, ha).save()
-        self.assertEqual(HitAssignment.objects.count(), 1)
-        HitAssignment.expire_all_abandoned()
-        self.assertEqual(HitAssignment.objects.count(), 1)
+        # Bypass TaskAssignment's save(), which updates expires_at
+        super(TaskAssignment, ha).save()
+        self.assertEqual(TaskAssignment.objects.count(), 1)
+        TaskAssignment.expire_all_abandoned()
+        self.assertEqual(TaskAssignment.objects.count(), 1)
 
     def test_expire_all_abandoned__dont_delete_non_expired(self):
         t = timezone.now()
@@ -145,18 +145,18 @@ class TestHitAssignment(django.test.TestCase):
             project=project
         )
         batch.save()
-        hit = Hit(batch=batch)
-        hit.save()
-        ha = HitAssignment(
+        task = Task(batch=batch)
+        task.save()
+        ha = TaskAssignment(
             completed=False,
             expires_at=future,
-            hit=hit,
+            task=task,
         )
-        # Bypass HitAssignment's save(), which updates expires_at
-        super(HitAssignment, ha).save()
-        self.assertEqual(HitAssignment.objects.count(), 1)
-        HitAssignment.expire_all_abandoned()
-        self.assertEqual(HitAssignment.objects.count(), 1)
+        # Bypass TaskAssignment's save(), which updates expires_at
+        super(TaskAssignment, ha).save()
+        self.assertEqual(TaskAssignment.objects.count(), 1)
+        TaskAssignment.expire_all_abandoned()
+        self.assertEqual(TaskAssignment.objects.count(), 1)
 
 
 class TestBatch(django.test.TestCase):
@@ -167,30 +167,30 @@ class TestBatch(django.test.TestCase):
         batch = Batch(project=project)
         batch.save()
 
-        hit1 = Hit(
+        task1 = Task(
             batch=batch,
             completed=True,
             input_csv_fields={'number': '1', 'letter': 'a'},
         )
-        hit1.save()
-        HitAssignment(
+        task1.save()
+        TaskAssignment(
             answers={'combined': '1a'},
             assigned_to=None,
             completed=True,
-            hit=hit1
+            task=task1
         ).save()
 
-        hit2 = Hit(
+        task2 = Task(
             batch=batch,
             completed=True,
             input_csv_fields={'number': '2', 'letter': 'b'},
         )
-        hit2.save()
-        HitAssignment(
+        task2.save()
+        TaskAssignment(
             answers={'combined': '2b'},
             assigned_to=None,
             completed=True,
-            hit=hit2
+            task=task2
         ).save()
 
         csv_output = StringIO()
@@ -206,43 +206,43 @@ class TestBatch(django.test.TestCase):
         batch = Batch(project=project)
         batch.save()
 
-        hit1 = Hit(
+        task1 = Task(
             batch=batch,
             completed=True,
             input_csv_fields={'letter': 'a'},
         )
-        hit1.save()
-        HitAssignment(
+        task1.save()
+        TaskAssignment(
             answers={'1': 1, '2': 2},
             assigned_to=None,
             completed=True,
-            hit=hit1,
+            task=task1,
         ).save()
 
-        hit2 = Hit(
+        task2 = Task(
             batch=batch,
             completed=True,
             input_csv_fields={'letter': 'b'},
         )
-        hit2.save()
-        HitAssignment(
+        task2.save()
+        TaskAssignment(
             answers={'3': 3, '4': 4},
             assigned_to=None,
             completed=True,
-            hit=hit2
+            task=task2
         ).save()
 
-        hit3 = Hit(
+        task3 = Task(
             batch=batch,
             completed=True,
             input_csv_fields={'letter': 'c'},
         )
-        hit3.save()
-        HitAssignment(
+        task3.save()
+        TaskAssignment(
             answers={'3': 3, '2': 2},
             assigned_to=None,
             completed=True,
-            hit=hit3
+            task=task3
         ).save()
 
         csv_output = StringIO()
@@ -260,14 +260,14 @@ class TestBatch(django.test.TestCase):
         batch.save()
 
         csv_fh = open(os.path.abspath('turkle/tests/resources/emoji.csv'), 'rb')
-        batch.create_hits_from_csv(csv_fh)
+        batch.create_tasks_from_csv(csv_fh)
 
-        self.assertEqual(batch.total_hits(), 3)
-        hits = batch.hit_set.all()
-        self.assertEqual(hits[0].input_csv_fields['emoji'], u'😀')
-        self.assertEqual(hits[0].input_csv_fields['more_emoji'], u'😃')
-        self.assertEqual(hits[2].input_csv_fields['emoji'], u'🤔')
-        self.assertEqual(hits[2].input_csv_fields['more_emoji'], u'🤭')
+        self.assertEqual(batch.total_tasks(), 3)
+        tasks = batch.task_set.all()
+        self.assertEqual(tasks[0].input_csv_fields['emoji'], u'😀')
+        self.assertEqual(tasks[0].input_csv_fields['more_emoji'], u'😃')
+        self.assertEqual(tasks[2].input_csv_fields['emoji'], u'🤔')
+        self.assertEqual(tasks[2].input_csv_fields['more_emoji'], u'🤭')
 
     def test_login_required_validation_1(self):
         # No ValidationError thrown
@@ -276,7 +276,7 @@ class TestBatch(django.test.TestCase):
         )
         project.save()
         Batch(
-            assignments_per_hit=1,
+            assignments_per_task=1,
             project=project,
         ).clean()
 
@@ -287,7 +287,7 @@ class TestBatch(django.test.TestCase):
         )
         project.save()
         Batch(
-            assignments_per_hit=2,
+            assignments_per_task=2,
             project=project,
         ).clean()
 
@@ -298,77 +298,77 @@ class TestBatch(django.test.TestCase):
             )
             project.save()
             Batch(
-                assignments_per_hit=2,
+                assignments_per_task=2,
                 project=project,
             ).clean()
 
 
-class TestBatchAvailableHITs(django.test.TestCase):
+class TestBatchAvailableTASKs(django.test.TestCase):
     def setUp(self):
         self.user = User.objects.create_user('testuser', password='secret')
 
         self.project = Project(name='test', html_template='<p>${number} - ${letter}</p>')
         self.project.save()
 
-    def test_available_hits_for__aph_is_1(self):
+    def test_available_tasks_for__aph_is_1(self):
         batch = Batch(
-            assignments_per_hit=1,
+            assignments_per_task=1,
             project=self.project
         )
         batch.save()
-        self.assertEqual(batch.total_available_hits_for(self.user), 0)
-        self.assertEqual(batch.next_available_hit_for(self.user), None)
+        self.assertEqual(batch.total_available_tasks_for(self.user), 0)
+        self.assertEqual(batch.next_available_task_for(self.user), None)
 
-        hit = Hit(
+        task = Task(
             batch=batch,
         )
-        hit.save()
-        self.assertEqual(batch.total_available_hits_for(self.user), 1)
-        self.assertEqual(batch.next_available_hit_for(self.user), hit)
+        task.save()
+        self.assertEqual(batch.total_available_tasks_for(self.user), 1)
+        self.assertEqual(batch.next_available_task_for(self.user), task)
 
-        hit_assignment = HitAssignment(
+        task_assignment = TaskAssignment(
             assigned_to=self.user,
             completed=False,
-            hit=hit,
+            task=task,
         )
-        hit_assignment.save()
-        self.assertEqual(batch.total_available_hits_for(self.user), 0)
-        self.assertEqual(batch.next_available_hit_for(self.user), None)
+        task_assignment.save()
+        self.assertEqual(batch.total_available_tasks_for(self.user), 0)
+        self.assertEqual(batch.next_available_task_for(self.user), None)
 
-    def test_available_hits_for__aph_is_2(self):
+    def test_available_tasks_for__aph_is_2(self):
         batch = Batch(
-            assignments_per_hit=2,
+            assignments_per_task=2,
             project=self.project
         )
         batch.save()
-        self.assertEqual(batch.total_available_hits_for(self.user), 0)
+        self.assertEqual(batch.total_available_tasks_for(self.user), 0)
 
-        hit = Hit(
+        task = Task(
             batch=batch,
         )
-        hit.save()
-        self.assertEqual(batch.total_available_hits_for(self.user), 1)
+        task.save()
+        self.assertEqual(batch.total_available_tasks_for(self.user), 1)
 
-        hit_assignment = HitAssignment(
+        task_assignment = TaskAssignment(
             assigned_to=self.user,
             completed=False,
-            hit=hit,
+            task=task,
         )
-        hit_assignment.save()
-        self.assertEqual(batch.total_available_hits_for(self.user), 0)
+        task_assignment.save()
+        self.assertEqual(batch.total_available_tasks_for(self.user), 0)
 
         other_user = User.objects.create_user('other_user', password='secret')
-        self.assertEqual(batch.total_available_hits_for(other_user), 1)
+        self.assertEqual(batch.total_available_tasks_for(other_user), 1)
 
-        hit_assignment = HitAssignment(
+        task_assignment = TaskAssignment(
             assigned_to=other_user,
             completed=False,
-            hit=hit,
+            task=task,
         )
-        hit_assignment.save()
-        self.assertEqual(batch.total_available_hits_for(other_user), 0)
+        task_assignment.save()
+        self.assertEqual(batch.total_available_tasks_for(other_user), 0)
 
-    def test_available_hits_for_anon_user(self):
+    def test_available_tasks_for_anon_user(self):
         anonymous_user = AnonymousUser()
         user = User.objects.create_user('user', password='secret')
 
@@ -381,9 +381,9 @@ class TestBatchAvailableHITs(django.test.TestCase):
         self.assertEqual(len(Project.all_available_for(user)), 2)  # Project created by setUp
         batch_protected = Batch(project=project_protected)
         batch_protected.save()
-        Hit(batch=batch_protected).save()
-        self.assertEqual(len(batch_protected.available_hits_for(anonymous_user)), 0)
-        self.assertEqual(len(batch_protected.available_hits_for(user)), 1)
+        Task(batch=batch_protected).save()
+        self.assertEqual(len(batch_protected.available_tasks_for(anonymous_user)), 0)
+        self.assertEqual(len(batch_protected.available_tasks_for(user)), 1)
 
         project_unprotected = Project(
             active=True,
@@ -392,13 +392,13 @@ class TestBatchAvailableHITs(django.test.TestCase):
         project_unprotected.save()
         batch_unprotected = Batch(project=project_unprotected)
         batch_unprotected.save()
-        Hit(batch=batch_unprotected).save()
+        Task(batch=batch_unprotected).save()
         self.assertEqual(len(Project.all_available_for(anonymous_user)), 1)
         self.assertEqual(len(Project.all_available_for(user)), 3)
         self.assertEqual(len(project_unprotected.batches_available_for(anonymous_user)), 1)
         self.assertEqual(len(project_unprotected.batches_available_for(user)), 1)
-        self.assertEqual(len(batch_unprotected.available_hits_for(anonymous_user)), 1)
-        self.assertEqual(len(batch_unprotected.available_hits_for(user)), 1)
+        self.assertEqual(len(batch_unprotected.available_tasks_for(anonymous_user)), 1)
+        self.assertEqual(len(batch_unprotected.available_tasks_for(user)), 1)
 
 
 class TestBatchExpireAssignments(django.test.TestCase):
@@ -414,18 +414,18 @@ class TestBatchExpireAssignments(django.test.TestCase):
             project=project
         )
         batch.save()
-        hit = Hit(batch=batch)
-        hit.save()
-        ha = HitAssignment(
+        task = Task(batch=batch)
+        task.save()
+        ha = TaskAssignment(
             completed=False,
             expires_at=past,
-            hit=hit,
+            task=task,
         )
-        # Bypass HitAssignment's save(), which updates expires_at
-        super(HitAssignment, ha).save()
-        self.assertEqual(HitAssignment.objects.count(), 1)
+        # Bypass TaskAssignment's save(), which updates expires_at
+        super(TaskAssignment, ha).save()
+        self.assertEqual(TaskAssignment.objects.count(), 1)
         batch.expire_assignments()
-        self.assertEqual(HitAssignment.objects.count(), 0)
+        self.assertEqual(TaskAssignment.objects.count(), 0)
 
 
 class TestProject(django.test.TestCase):
@@ -538,21 +538,21 @@ class TestProject(django.test.TestCase):
     def test_login_required_validation_1(self):
         # No ValidationError thrown
         Project(
-            assignments_per_hit=1,
+            assignments_per_task=1,
             login_required=False,
         ).clean()
 
     def test_login_required_validation_2(self):
         # No ValidationError thrown
         Project(
-            assignments_per_hit=2,
+            assignments_per_task=2,
             login_required=True,
         ).clean()
 
     def test_login_required_validation_3(self):
         with self.assertRaisesMessage(ValidationError, 'Assignments per Task must be 1'):
             Project(
-                assignments_per_hit=2,
+                assignments_per_task=2,
                 login_required=False,
             ).clean()
 
@@ -561,24 +561,24 @@ class TestModels(django.test.TestCase):
 
     def setUp(self):
         """
-        Sets up Project, Hit objects, and saves them to the DB.
+        Sets up Project, Task objects, and saves them to the DB.
         The Project form HTML only displays the one input variable.
-        The Hit has inputs and answers and refers to the Project form.
+        The Task has inputs and answers and refers to the Project form.
         """
         project = Project(name='test', html_template="<p>${foo}</p>")
         project.save()
         batch = Batch(project=project)
         batch.save()
 
-        hit = Hit(
+        task = Task(
             batch=batch,
             input_csv_fields={u'foo': u'bar'},
             completed=True,
         )
-        hit.save()
-        self.hit = hit
+        task.save()
+        self.task = task
 
-        self.hit_assignment = HitAssignment(
+        self.task_assignment = TaskAssignment(
             answers={
                 u"comment": u"\u221e", u"userDisplayLanguage": u"",
                 u"sentence_textbox_3_verb1": u"", u"city": u"",
@@ -611,14 +611,14 @@ class TestModels(django.test.TestCase):
             },
             assigned_to=None,
             completed=True,
-            hit=hit
+            task=task
         )
-        self.hit_assignment.save()
+        self.task_assignment.save()
 
     def test_extract_fieldnames_from_form_html(self):
         self.assertEqual(
             {u'foo': True},
-            self.hit.batch.project.fieldnames
+            self.task.batch.project.fieldnames
         )
 
         project = Project(name='test', html_template='<p>${foo} - ${bar}</p>')
@@ -634,32 +634,32 @@ class TestModels(django.test.TestCase):
         batch_one = Batch(project=project)
         batch_one.save()
 
-        hit1 = Hit(
+        task1 = Task(
             batch=batch_one,
             completed=True,
             input_csv_fields={'number': '1', 'letter': 'a'},
         )
-        hit1.save()
-        HitAssignment(
+        task1.save()
+        TaskAssignment(
             answers={'combined': '1a'},
             assigned_to=None,
             completed=True,
-            hit=hit1
+            task=task1
         ).save()
 
         batch_two = Batch(project=project)
         batch_two.save()
-        hit2 = Hit(
+        task2 = Task(
             batch=batch_two,
             completed=True,
             input_csv_fields={'number': '2', 'letter': 'b'}
         )
-        hit2.save()
-        HitAssignment(
+        task2.save()
+        TaskAssignment(
             answers={'combined': '2b'},
             assigned_to=None,
             completed=True,
-            hit=hit2
+            task=task2
         ).save()
 
         csv_output = StringIO()
@@ -677,32 +677,32 @@ class TestModels(django.test.TestCase):
         batch_one = Batch(project=project)
         batch_one.save()
 
-        hit1 = Hit(
+        task1 = Task(
             batch=batch_one,
             completed=True,
             input_csv_fields={'letter': 'a'},
         )
-        hit1.save()
-        HitAssignment(
+        task1.save()
+        TaskAssignment(
             answers={'1': 1, '2': 2},
             assigned_to=None,
             completed=True,
-            hit=hit1
+            task=task1
         ).save()
 
         batch_two = Batch(project=project)
         batch_two.save()
-        hit2 = Hit(
+        task2 = Task(
             batch=batch_two,
             completed=True,
             input_csv_fields={'letter': 'b'},
         )
-        hit2.save()
-        HitAssignment(
+        task2.save()
+        TaskAssignment(
             answers={'3': 3, '4': 4},
             assigned_to=None,
             completed=True,
-            hit=hit2
+            task=task2
         ).save()
 
         csv_output = StringIO()
@@ -714,33 +714,33 @@ class TestModels(django.test.TestCase):
         self.assertTrue(b'"a","1","2","",""' in rows[1])
         self.assertTrue(b'"b","","","3","4"' in rows[2])
 
-    def test_new_hit(self):
+    def test_new_task(self):
         """
-        unicode(hit) should return the template's title followed by :id of the
-        hit.
+        unicode(task) should return the template's title followed by :id of the
+        task.
         """
-        self.assertEqual('Task id:1', unicode(self.hit))
+        self.assertEqual('Task id:1', unicode(self.task))
 
     def test_result_to_dict_Answer(self):
         self.assertEqual(
             'foo',
-            self.hit_assignment.answers['sentence_drop_1_verb1']
+            self.task_assignment.answers['sentence_drop_1_verb1']
         )
 
     def test_result_to_dict_ignore_csrfmiddlewaretoken(self):
         with self.assertRaises(KeyError):
-            self.hit_assignment.answers['Answer.csrfmiddlewaretoken']
+            self.task_assignment.answers['Answer.csrfmiddlewaretoken']
 
     def test_result_to_dict_should_include_inputs(self):
         self.assertEqual(
             'foo',
-            self.hit_assignment.answers['sentence_drop_1_verb1']
+            self.task_assignment.answers['sentence_drop_1_verb1']
         )
 
     def test_result_to_dict_unicode(self):
         self.assertEqual(
             u'∞',
-            self.hit_assignment.answers['comment']
+            self.task_assignment.answers['comment']
         )
 
 
@@ -779,11 +779,11 @@ class TestGenerateForm(django.test.TestCase):
             u"&nbsp;,gusta,&nbsp;,&nbsp;,357,OSCAR WILDE&QUOT;, &quot; @ ifilosofia : Las " + \
             u"pequeñas acciones de cada día son las que hacen o deshacen el carácter.&quot; , " + \
             u"bueno !!!! Es así,bueno,&nbsp;,&nbsp;",
-        self.hit = Hit(
+        self.task = Task(
             batch=self.batch,
             input_csv_fields=dict(zip(field_names, values))
         )
-        self.hit.save()
+        self.task.save()
 
     def test_populate_html_template(self):
         with open('turkle/tests/resources/form_0_filled.html') as f:
@@ -795,7 +795,7 @@ class TestGenerateForm(django.test.TestCase):
                 pass
 
         expect = form
-        actual = self.hit.populate_html_template()
+        actual = self.task.populate_html_template()
         self.assertNotEqual(expect, actual)
 
     def test_map_fields_csv_row(self):
@@ -808,7 +808,7 @@ class TestGenerateForm(django.test.TestCase):
         project.save()
         batch = Batch(project=project)
         batch.save()
-        hit = Hit(
+        task = Task(
             batch=batch,
             input_csv_fields=dict(
                 zip(
@@ -817,10 +817,10 @@ class TestGenerateForm(django.test.TestCase):
                 )
             ),
         )
-        hit.save()
+        task.save()
         expect = u"""</select> con relaci&oacute;n a <span style="color:""" + \
             u""" rgb(0, 0, 255);">SANTOS</span> en este mensaje.</p>"""
-        actual = hit.populate_html_template()
+        actual = task.populate_html_template()
         self.assertEqual(expect, actual)
 
 

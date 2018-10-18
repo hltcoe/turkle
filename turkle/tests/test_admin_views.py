@@ -81,7 +81,7 @@ class TestBatchAdmin(django.test.TestCase):
             response = client.post(
                 u'/admin/turkle/batch/add/',
                 {
-                    'assignments_per_hit': 1,
+                    'assignments_per_task': 1,
                     'project': project.id,
                     'name': 'batch_save',
                     'csv_file': fp
@@ -92,7 +92,7 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertTrue(Batch.objects.filter(name='batch_save').exists())
         matching_batch = Batch.objects.filter(name='batch_save').first()
         self.assertEqual(matching_batch.filename, u'form_1_vals.csv')
-        self.assertEqual(matching_batch.total_hits(), 1)
+        self.assertEqual(matching_batch.total_tasks(), 1)
         self.assertEqual(matching_batch.allotted_assignment_time,
                          Batch._meta.get_field('allotted_assignment_time').get_default())
 
@@ -108,7 +108,7 @@ class TestBatchAdmin(django.test.TestCase):
             response = client.post(
                 u'/admin/turkle/batch/add/',
                 {
-                    'assignments_per_hit': 1,
+                    'assignments_per_task': 1,
                     'project': project.id,
                     'name': 'batch_save',
                     'csv_file': fp
@@ -120,12 +120,12 @@ class TestBatchAdmin(django.test.TestCase):
         matching_batch = Batch.objects.filter(name='batch_save').first()
         self.assertEqual(matching_batch.filename, u'emoji.csv')
 
-        self.assertEqual(matching_batch.total_hits(), 3)
-        hits = matching_batch.hit_set.all()
-        self.assertEqual(hits[0].input_csv_fields['emoji'], u'😀')
-        self.assertEqual(hits[0].input_csv_fields['more_emoji'], u'😃')
-        self.assertEqual(hits[2].input_csv_fields['emoji'], u'🤔')
-        self.assertEqual(hits[2].input_csv_fields['more_emoji'], u'🤭')
+        self.assertEqual(matching_batch.total_tasks(), 3)
+        tasks = matching_batch.task_set.all()
+        self.assertEqual(tasks[0].input_csv_fields['emoji'], u'😀')
+        self.assertEqual(tasks[0].input_csv_fields['more_emoji'], u'😃')
+        self.assertEqual(tasks[2].input_csv_fields['emoji'], u'🤔')
+        self.assertEqual(tasks[2].input_csv_fields['more_emoji'], u'🤭')
 
     def test_batch_add_empty_allotted_assignment_time(self):
         project = Project(name='foo', html_template='<p>${foo}: ${bar}</p>')
@@ -138,7 +138,7 @@ class TestBatchAdmin(django.test.TestCase):
                 u'/admin/turkle/batch/add/',
                 {
                     'allotted_assignment_time': '',
-                    'assignments_per_hit': 1,
+                    'assignments_per_task': 1,
                     'project': project.id,
                     'name': 'batch_save',
                     'csv_file': fp
@@ -159,7 +159,7 @@ class TestBatchAdmin(django.test.TestCase):
             response = client.post(
                 u'/admin/turkle/batch/add/',
                 {
-                    'assignments_per_hit': 1,
+                    'assignments_per_task': 1,
                     'name': 'batch_save',
                     'csv_file': fp
                 })
@@ -178,7 +178,7 @@ class TestBatchAdmin(django.test.TestCase):
         response = client.post(
             u'/admin/turkle/batch/add/',
             {
-                'assignments_per_hit': 1,
+                'assignments_per_task': 1,
                 'project': project.id,
                 'name': 'batch_save',
             })
@@ -199,7 +199,7 @@ class TestBatchAdmin(django.test.TestCase):
             response = client.post(
                 u'/admin/turkle/batch/add/',
                 {
-                    'assignments_per_hit': 1,
+                    'assignments_per_task': 1,
                     'project': project.id,
                     'name': 'batch_save',
                     'csv_file': fp
@@ -274,7 +274,7 @@ class TestBatchAdmin(django.test.TestCase):
         response = client.post(
             u'/admin/turkle/batch/%d/change/' % batch.id,
             {
-                'assignments_per_hit': 1,
+                'assignments_per_task': 1,
                 'project': batch.project.id,
                 'name': 'batch_save_modified',
             })
@@ -389,7 +389,7 @@ class TestProject(django.test.TestCase):
         client.login(username='admin', password='secret')
         response = client.post(reverse('turkle_admin:turkle_project_add'),
                                {
-                                   'assignments_per_hit': 1,
+                                   'assignments_per_task': 1,
                                    'name': 'foo',
                                    'html_template': '<p>${foo}: ${bar}</p>',
                                })
@@ -417,7 +417,7 @@ class TestProject(django.test.TestCase):
         response = client.post(reverse('turkle_admin:turkle_project_change',
                                        args=(project.id,)),
                                {
-                                   'assignments_per_hit': 1,
+                                   'assignments_per_task': 1,
                                    'name': 'newname',
                                    'html_template': '<p>${foo}: ${bar}</p>',
                                })
@@ -438,7 +438,7 @@ class TestProject(django.test.TestCase):
         response = client.post(reverse('turkle_admin:turkle_project_change',
                                        args=(project.id,)),
                                {
-                                   'assignments_per_hit': 1,
+                                   'assignments_per_task': 1,
                                    'custom_permissions': True,
                                    'html_template': '<p>${foo}: ${bar}</p>',
                                    'name': 'newname',
@@ -463,7 +463,7 @@ class TestProject(django.test.TestCase):
         response = client.post(reverse('turkle_admin:turkle_project_change',
                                        args=(project.id,)),
                                {
-                                   'assignments_per_hit': 1,
+                                   'assignments_per_task': 1,
                                    'custom_permissions': True,
                                    'html_template': '<p>${foo}: ${bar}</p>',
                                    'name': 'newname',
@@ -491,7 +491,7 @@ class TestProject(django.test.TestCase):
         response = client.post(reverse('turkle_admin:turkle_project_change',
                                        args=(project.id,)),
                                {
-                                   'assignments_per_hit': 1,
+                                   'assignments_per_task': 1,
                                    'custom_permissions': True,
                                    'html_template': '<p>${foo}: ${bar}</p>',
                                    'name': 'newname',
