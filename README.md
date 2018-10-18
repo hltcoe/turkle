@@ -151,7 +151,7 @@ python manage.py createsuperuser
 If a user takes a Task Assignment but never submits the Assignment,
 the Task Assignment eventually expires.  The expiration time is
 determined by a Batch-level parameter called "Allotted assignment
-time".  Expired Tasks Assignments can be deleted using the "Expire
+time".  Expired Task Assignments can be deleted using the "Expire
 Abandoned Assignments" button in the Admin UI, or by running the
 script:
 
@@ -265,13 +265,13 @@ Publish a Batch of Tasks:
 
 * Click on the `Turkle administration` link in the top-left corner of
   the screen
-* In the `Batches` row, click the `Add` button to go to the Add
-  Project page.  Fill out the form on this page (selecting a Project
-  and uploading a CSV file), and then click `Review Batch`.  The
-  Review Batch page lets you to browse through all Tasks in the Batch,
-  and verify that the Task Template functions as expected.  You can
-  click `Publish Batch` if everything works, or `Cancel Batch` if
-  the Project's HTML template needs to be updated.
+* In the `Batches` row, click the `Add` button to go to the Add Batch
+  page.  Fill out the form on this page (selecting a Project and
+  uploading a CSV file), and then click `Review Batch`.  The Review
+  Batch page lets you browse through all Tasks in the Batch, and
+  verify that the Project's HTML Template functions as expected.  You
+  can click `Publish Batch` if everything works, or `Cancel Batch` if
+  the template needs to be updated.
 
 
 ### Using the scripts
@@ -291,7 +291,7 @@ should use the admin UI to publish additional Batches of Tasks.
 * Click on the `Turkle administration` link in the top-left corner of
   the screen
 * Click on the `Batches` link to view a table of all Batches
-* Click on the `Download CSV results file` for the Batch you are
+* Click on the `Download CSV results file` link for the Batch you are
   interested in
 
 ![Batch list](docs/images/Batch_list.png)
@@ -395,7 +395,9 @@ DATABASES = {
     }
 }
 ```
-The last step is running the Turkle install steps (migrate and createsuperuser).
+The last step is running the Turkle install steps (migrate and
+createsuperuser) described in the "One-time Configuration Steps"
+section above.
 
 
 ## Production Webserver Configuration
@@ -489,8 +491,8 @@ You will still need to configure nginx to serve the static files as we did with 
 # Docker usage
 
 Instead of installing Turkle and dependencies directly, you can run
-Turkle as a Docker container, using scripts to manage Projects and
-Batches of Tasks.
+Turkle as a Docker container, using the admin UI or scripts to manage
+Projects and Batches of Tasks.
 
 This repo comes with two Dockerfiles.  The default file `Dockerfile`
 uses SQLite as the database backend.  The file `Dockerfile-MySQL` uses
