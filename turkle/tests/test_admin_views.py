@@ -417,7 +417,7 @@ class TestProject(django.test.TestCase):
         response = client.post(reverse('turkle_admin:turkle_project_change',
                                        args=(project.id,)),
                                {
-                                   'assignments_per_hit': 1,
+                                   'assignments_per_task': 1,
                                    'name': 'newname',
                                    'html_template': '<p>${foo}: ${bar}</p>',
                                })
@@ -438,7 +438,7 @@ class TestProject(django.test.TestCase):
         response = client.post(reverse('turkle_admin:turkle_project_change',
                                        args=(project.id,)),
                                {
-                                   'assignments_per_hit': 1,
+                                   'assignments_per_task': 1,
                                    'custom_permissions': True,
                                    'html_template': '<p>${foo}: ${bar}</p>',
                                    'name': 'newname',
@@ -463,7 +463,7 @@ class TestProject(django.test.TestCase):
         response = client.post(reverse('turkle_admin:turkle_project_change',
                                        args=(project.id,)),
                                {
-                                   'assignments_per_hit': 1,
+                                   'assignments_per_task': 1,
                                    'custom_permissions': True,
                                    'html_template': '<p>${foo}: ${bar}</p>',
                                    'name': 'newname',
@@ -491,7 +491,7 @@ class TestProject(django.test.TestCase):
         response = client.post(reverse('turkle_admin:turkle_project_change',
                                        args=(project.id,)),
                                {
-                                   'assignments_per_hit': 1,
+                                   'assignments_per_task': 1,
                                    'custom_permissions': True,
                                    'html_template': '<p>${foo}: ${bar}</p>',
                                    'name': 'newname',
