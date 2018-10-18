@@ -375,12 +375,19 @@ class TestProject(django.test.TestCase):
     def setUp(self):
         User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
 
-    def test_add_project(self):
+    def test_get_add_project(self):
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.get(reverse('turkle_admin:turkle_project_add'))
+        self.assertTrue(b'error' not in response.content)
+        self.assertEqual(response.status_code, 200)
+
+    def test_post_add_project(self):
         self.assertEqual(Project.objects.filter(name='foo').count(), 0)
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.post(reverse('admin:turkle_project_add'),
+        response = client.post(reverse('turkle_admin:turkle_project_add'),
                                {
                                    'assignments_per_task': 1,
                                    'name': 'foo',
@@ -390,6 +397,112 @@ class TestProject(django.test.TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], u'/admin/turkle/project/')
         self.assertEqual(Project.objects.filter(name='foo').count(), 1)
+
+    def test_get_change_project(self):
+        project = Project.objects.create(name='testproject')
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.get(reverse('turkle_admin:turkle_project_change',
+                                      args=(project.id,)))
+        self.assertTrue(b'error' not in response.content)
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(b'testproject' in response.content)
+
+    def test_post_change_project(self):
+        project = Project.objects.create(name='testproject')
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.post(reverse('turkle_admin:turkle_project_change',
+                                       args=(project.id,)),
+                               {
+                                   'assignments_per_hit': 1,
+                                   'name': 'newname',
+                                   'html_template': '<p>${foo}: ${bar}</p>',
+                               })
+        self.assertTrue(b'error' not in response.content)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], u'/admin/turkle/project/')
+        self.assertEqual(Project.objects.filter(name='newname').count(), 1)
+
+    def test_post_change_project_custom_permissions(self):
+        project = Project.objects.create(name='testproject')
+        user = User.objects.create_user('testuser', password='secret')
+        group = Group.objects.create(name='testgroup')
+        user.groups.add(group)
+        self.assertFalse(user.has_perm('can_work_on', project))
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.post(reverse('turkle_admin:turkle_project_change',
+                                       args=(project.id,)),
+                               {
+                                   'assignments_per_hit': 1,
+                                   'custom_permissions': True,
+                                   'html_template': '<p>${foo}: ${bar}</p>',
+                                   'name': 'newname',
+                                   'worker_permissions': [group.id],
+                               })
+        self.assertTrue(b'error' not in response.content)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], u'/admin/turkle/project/')
+        self.assertEqual(Project.objects.filter(name='newname').count(), 1)
+        self.assertTrue(user.has_perm('can_work_on', project))
+
+    def test_post_change_project_remove_all_groups(self):
+        project = Project.objects.create(name='testproject')
+        user = User.objects.create_user('testuser', password='secret')
+        group = Group.objects.create(name='testgroup')
+        user.groups.add(group)
+        group.add_obj_perm('can_work_on', project)
+        self.assertTrue(user.has_perm('can_work_on', project))
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.post(reverse('turkle_admin:turkle_project_change',
+                                       args=(project.id,)),
+                               {
+                                   'assignments_per_hit': 1,
+                                   'custom_permissions': True,
+                                   'html_template': '<p>${foo}: ${bar}</p>',
+                                   'name': 'newname',
+                               })
+        self.assertTrue(b'error' not in response.content)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], u'/admin/turkle/project/')
+        self.assertEqual(Project.objects.filter(name='newname').count(), 1)
+        self.assertFalse(user.has_perm('can_work_on', project))
+
+    def test_post_change_project_remove_and_add_group(self):
+        project = Project.objects.create(name='testproject')
+        group_to_add = Group.objects.create(name='group_to_add')
+        group_to_remove = Group.objects.create(name='group_to_remove')
+        user_for_add = User.objects.create_user('user_for_add', password='secret')
+        user_for_remove = User.objects.create_user('user_for_remove', password='secret')
+        group_to_remove.add_obj_perm('can_work_on', project)
+        user_for_add.groups.add(group_to_add)
+        user_for_remove.groups.add(group_to_remove)
+        self.assertFalse(user_for_add.has_perm('can_work_on', project))
+        self.assertTrue(user_for_remove.has_perm('can_work_on', project))
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.post(reverse('turkle_admin:turkle_project_change',
+                                       args=(project.id,)),
+                               {
+                                   'assignments_per_hit': 1,
+                                   'custom_permissions': True,
+                                   'html_template': '<p>${foo}: ${bar}</p>',
+                                   'name': 'newname',
+                                   'worker_permissions': [group_to_add.id],
+                               })
+        self.assertTrue(b'error' not in response.content)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], u'/admin/turkle/project/')
+        self.assertEqual(Project.objects.filter(name='newname').count(), 1)
+        self.assertTrue(user_for_add.has_perm('can_work_on', project))
+        self.assertFalse(user_for_remove.has_perm('can_work_on', project))
 
 
 class TestReviewBatch(django.test.TestCase):
