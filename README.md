@@ -21,7 +21,7 @@ Turkle's features include:
 - Scripts to automate the creation of Users, Projects, and Batches of Tasks
 - Docker images using the SQLite and MySQL database backends
 
-## Turkle Overview ##
+## Turkle Workflow Overview ##
 
 Turkle provides a Task-oriented interface for **Workers**, and an
 administrative interface for **Requesters**.
@@ -70,11 +70,26 @@ boxes, radio buttons, and check boxes.  When the Worker submits a Task
 Assignment, the values of the form fields are saved to the Turkle database.
 
 Task Assignment data can be exported to CSV files.  Each row of the
-CSV file contains both the template variable input fields and the
-Worker-submitted form fields.  For each template variable
-`${foo}`, the CSV file will contain a column named `Input.foo`.  For
-each submitted form field named `bar`, the CSV file will contain a
-column named `Answer.bar`.
+CSV results file contains the template variable input fields, the
+Worker-submitted form fields, and some metadata fields.  For each
+template variable `${foo}`, the CSV file will contain a column named
+`Input.foo`.  For each submitted form field named `bar`, the CSV file
+will contain a column named `Answer.bar`.  The CSV file will also have
+the fields:
+
+- `HITId` - Task ID
+- `HITTypeId` - Project ID
+- `Title` - Project name
+- `CreationTime` - Time when the Task was created from CSV input file
+- `MaxAssignments` - Number of *requested* Assignments per Task
+- `AssignmentDurationInSeconds` - Amount of time before a Task
+  Assignment expires
+- `AssignmentId` - Task Assignment ID
+- `WorkerId`
+- `AcceptTime` - Time when User accepted an Assignment for a Task
+- `SubmitTime` - Time when User submitted an Assignment for a Task
+- `WorkTimeInSeconds` - Length of time between when User accepted
+   a Task Assignment and when User submitted that Assignment
 
 
 # Installation #
@@ -136,7 +151,7 @@ python manage.py createsuperuser
 If a user takes a Task Assignment but never submits the Assignment,
 the Task Assignment eventually expires.  The expiration time is
 determined by a Batch-level parameter called "Allotted assignment
-time".  Expired Tasks Assignments can be deleted using the "Expire
+time".  Expired Task Assignments can be deleted using the "Expire
 Abandoned Assignments" button in the Admin UI, or by running the
 script:
 
@@ -222,13 +237,17 @@ Turkle UI.  If your Project's HTML template code does not include an
 HTML 'Submit' button, then Turkle will add a 'Submit' button to the
 combined document.
 
-There are example HTML and CSV files in the `examples` directory.
-`translate_minimal.html` uses just HTML elements without any
-JavaScript.  `translate_validate.html` uses third-party JavaScript
-libraries to perform form validation.  `lda-lemmas.html` is a more
-complicated example that uses custom JavaScript to dynamically
-generate HTML elements and CSV files that store data structures as
-JSON strings.
+There are example HTML and CSV files in the `examples` directory:
+
+- `translate_minimal.html` uses just HTML elements without any
+  JavaScript.  The corresponding CSV file is `translate_two_cities.csv`.
+- `translate_validate.html` uses third-party JavaScript libraries to
+  perform form validation.  The corresponding CSV file is
+  `translate_two_cities.csv`.
+- `lda-lemmas.html` is a more complicated example that uses custom
+  JavaScript to dynamically generate HTML elements and CSV files that
+  store data structures as JSON strings.  The corresponding CSV files
+  are `lda-lemmas-0.csv` and `lda-lemmas-1.csv`.
 
 
 ## Creating Projects and Publishing Batches of Tasks ##
@@ -246,8 +265,13 @@ Publish a Batch of Tasks:
 
 * Click on the `Turkle administration` link in the top-left corner of
   the screen
-* In the `Batches` row, click the `Add` button, fill out the form
-  (selecting a Project and uploading a CSV file) and submit
+* In the `Batches` row, click the `Add` button to go to the Add Batch
+  page.  Fill out the form on this page (selecting a Project and
+  uploading a CSV file), and then click `Review Batch`.  The Review
+  Batch page lets you browse through all Tasks in the Batch, and
+  verify that the Project's HTML Template functions as expected.  You
+  can click `Publish Batch` if everything works, or `Cancel Batch` if
+  the template needs to be updated.
 
 
 ### Using the scripts
@@ -267,7 +291,7 @@ should use the admin UI to publish additional Batches of Tasks.
 * Click on the `Turkle administration` link in the top-left corner of
   the screen
 * Click on the `Batches` link to view a table of all Batches
-* Click on the `Download CSV results file` for the Batch you are
+* Click on the `Download CSV results file` link for the Batch you are
   interested in
 
 ![Batch list](docs/images/Batch_list.png)
@@ -371,7 +395,9 @@ DATABASES = {
     }
 }
 ```
-The last step is running the Turkle install steps (migrate and createsuperuser).
+The last step is running the Turkle install steps (migrate and
+createsuperuser) described in the "One-time Configuration Steps"
+section above.
 
 
 ## Production Webserver Configuration
@@ -465,8 +491,8 @@ You will still need to configure nginx to serve the static files as we did with 
 # Docker usage
 
 Instead of installing Turkle and dependencies directly, you can run
-Turkle as a Docker container, using scripts to manage Projects and
-Batches of Tasks.
+Turkle as a Docker container, using the admin UI or scripts to manage
+Projects and Batches of Tasks.
 
 This repo comes with two Dockerfiles.  The default file `Dockerfile`
 uses SQLite as the database backend.  The file `Dockerfile-MySQL` uses
