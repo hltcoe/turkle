@@ -189,6 +189,14 @@ class Batch(models.Model):
         """
         return self.task_set.filter(completed=True).order_by('-id')
 
+    def finished_task_assignments(self):
+        """
+        Returns:
+            QuerySet of all Task Assignment objects associated with this Batch
+            that have been completed.
+        """
+        return TaskAssignment.objects.filter(task__batch_id=self.id)
+
     def next_available_task_for(self, user):
         """Returns next available Task for the user, or None if no Tasks available
 
@@ -215,6 +223,10 @@ class Batch(models.Model):
         return self.finished_tasks().count()
     total_finished_tasks.short_description = 'Total finished Tasks'
 
+    def total_finished_task_assignments(self):
+        return self.finished_task_assignments().count()
+    total_finished_task_assignments.short_description = 'Total finished Task Assignments'
+
     def total_tasks(self):
         return self.task_set.count()
     total_tasks.short_description = 'Total Tasks'
@@ -225,7 +237,7 @@ class Batch(models.Model):
         Args:
             csv_fh (file-like object): File handle for CSV output
         """
-        fieldnames, rows = self._results_data(self.finished_tasks())
+        fieldnames, rows = self._results_data(self.task_set.all())
         writer = unicodecsv.DictWriter(csv_fh, fieldnames, quoting=unicodecsv.QUOTE_ALL)
         writer.writeheader()
         for row in rows:

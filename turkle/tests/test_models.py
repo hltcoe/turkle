@@ -253,6 +253,41 @@ class TestBatch(django.test.TestCase):
         self.assertTrue(any([b'"b","","","3","4"' in row for row in rows[1:]]))
         self.assertTrue(any([b'"c","","2","3",""' in row for row in rows[1:]]))
 
+    def test_batch_to_csv_partially_completed_task(self):
+        project = Project.objects.create(
+            name='test', html_template='<p>${number} - ${letter}</p>')
+        batch = Batch.objects.create(
+            assignments_per_task=2,
+            project=project
+        )
+        task = Task.objects.create(
+            batch=batch,
+            input_csv_fields={'number': '1', 'letter': 'a'},
+        )
+
+        csv_output = StringIO()
+        batch.to_csv(csv_output)
+        rows = csv_output.getvalue().splitlines()
+        self.assertEqual(len(rows), 1)
+
+        TaskAssignment.objects.create(
+            answers={'combined': '1a'},
+            task=task,
+        )
+        csv_output = StringIO()
+        batch.to_csv(csv_output)
+        rows = csv_output.getvalue().splitlines()
+        self.assertEqual(len(rows), 2)
+
+        TaskAssignment.objects.create(
+            answers={'combined': '1a'},
+            task=task,
+        )
+        csv_output = StringIO()
+        batch.to_csv(csv_output)
+        rows = csv_output.getvalue().splitlines()
+        self.assertEqual(len(rows), 3)
+
     def test_batch_from_emoji_csv(self):
         project = Project(name='test', html_template='<p>${emoji} - ${more_emoji}</p>')
         project.save()
