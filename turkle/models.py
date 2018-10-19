@@ -195,7 +195,8 @@ class Batch(models.Model):
             QuerySet of all Task Assignment objects associated with this Batch
             that have been completed.
         """
-        return TaskAssignment.objects.filter(task__batch_id=self.id)
+        return TaskAssignment.objects.filter(task__batch_id=self.id)\
+                                     .filter(completed=True)
 
     def next_available_task_for(self, user):
         """Returns next available Task for the user, or None if no Tasks available
@@ -305,7 +306,7 @@ class Batch(models.Model):
         rows = []
         time_format = '%a %b %m %H:%M:%S %Z %Y'
         for task in tasks:
-            for task_assignment in task.taskassignment_set.all():
+            for task_assignment in task.taskassignment_set.filter(completed=True):
                 batch = task.batch
                 project = task.batch.project
 

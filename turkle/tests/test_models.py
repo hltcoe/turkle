@@ -270,10 +270,18 @@ class TestBatch(django.test.TestCase):
         rows = csv_output.getvalue().splitlines()
         self.assertEqual(len(rows), 1)
 
-        TaskAssignment.objects.create(
+        # Task Assignments that have not been completed should not generate CSV lines
+        ta = TaskAssignment.objects.create(
             answers={'combined': '1a'},
             task=task,
         )
+        csv_output = StringIO()
+        batch.to_csv(csv_output)
+        rows = csv_output.getvalue().splitlines()
+        self.assertEqual(len(rows), 1)
+
+        ta.completed = True
+        ta.save()
         csv_output = StringIO()
         batch.to_csv(csv_output)
         rows = csv_output.getvalue().splitlines()
@@ -281,6 +289,7 @@ class TestBatch(django.test.TestCase):
 
         TaskAssignment.objects.create(
             answers={'combined': '1a'},
+            completed=True,
             task=task,
         )
         csv_output = StringIO()
