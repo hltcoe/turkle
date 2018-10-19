@@ -259,7 +259,7 @@ class BatchAdmin(admin.ModelAdmin):
     }
     list_display = (
         'name', 'filename', 'total_tasks', 'assignments_per_task',
-        'total_finished_tasks', 'active', 'download_csv')
+        'task_assignments_completed', 'total_finished_tasks', 'active', 'download_csv')
 
     def cancel_batch(self, request, batch_id):
         try:
@@ -346,6 +346,10 @@ class BatchAdmin(admin.ModelAdmin):
             obj.create_tasks_from_csv(csv_fh)
         else:
             super(BatchAdmin, self).save_model(request, obj, form, change)
+
+    def task_assignments_completed(self, obj):
+        return '{} / {}'.format(obj.total_finished_task_assignments(),
+                                obj.assignments_per_task * obj.total_tasks())
 
 
 class ProjectForm(ModelForm):
