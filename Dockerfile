@@ -17,6 +17,7 @@ COPY manage.py /opt/turkle/manage.py
 COPY scripts /opt/turkle/scripts
 COPY turkle_site /opt/turkle/turkle_site
 COPY docker-config/enable_whitenoise.patch /opt/turkle/enable_whitenoise.patch
+COPY docker-config/create_turkle_admin.sh /opt/turkle/create_turkle_admin.sh
 
 COPY docker-config/turkle.crontab /etc/cron.d/turkle
 RUN crontab /etc/cron.d/turkle
@@ -25,7 +26,7 @@ RUN patch turkle_site/settings.py enable_whitenoise.patch
 
 RUN python manage.py collectstatic
 RUN python manage.py migrate
-RUN scripts/create_turkle_admin.sh
+RUN ./create_turkle_admin.sh
 
 VOLUME /opt/turkle
 
