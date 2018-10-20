@@ -232,14 +232,15 @@ class Batch(models.Model):
         return self.task_set.count()
     total_tasks.short_description = 'Total Tasks'
 
-    def to_csv(self, csv_fh):
+    def to_csv(self, csv_fh, lineterminator='\r\n'):
         """Write CSV output to file handle for every Task in batch
 
         Args:
             csv_fh (file-like object): File handle for CSV output
         """
         fieldnames, rows = self._results_data(self.task_set.all())
-        writer = unicodecsv.DictWriter(csv_fh, fieldnames, quoting=unicodecsv.QUOTE_ALL)
+        writer = unicodecsv.DictWriter(csv_fh, fieldnames, lineterminator=lineterminator,
+                                       quoting=unicodecsv.QUOTE_ALL)
         writer.writeheader()
         for row in rows:
             writer.writerow(row)
@@ -414,7 +415,7 @@ class Project(models.Model):
         self.fieldnames = dict((fn, True) for fn in unique_fieldnames)
         super(Project, self).save(*args, **kwargs)
 
-    def to_csv(self, csv_fh):
+    def to_csv(self, csv_fh, lineterminator='\r\n'):
         """
         Writes CSV output to file handle for every Task associated with project
 
@@ -424,7 +425,8 @@ class Project(models.Model):
         batches = self.batch_set.all()
         if batches:
             fieldnames = self._get_csv_fieldnames(batches)
-            writer = unicodecsv.DictWriter(csv_fh, fieldnames, quoting=unicodecsv.QUOTE_ALL)
+            writer = unicodecsv.DictWriter(csv_fh, fieldnames, lineterminator=lineterminator,
+                                           quoting=unicodecsv.QUOTE_ALL)
             writer.writeheader()
             for batch in batches:
                 _, rows = batch._results_data(batch.finished_tasks())
