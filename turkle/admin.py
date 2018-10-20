@@ -334,6 +334,9 @@ class BatchAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         if obj._state.adding:
+            if request.user.is_authenticated:
+                obj.created_by = request.user
+
             # If Batch active flag not explicitly set, make inactive until Batch reviewed
             if u'active' not in request.POST:
                 obj.active = False
@@ -392,7 +395,7 @@ class ProjectAdmin(GuardedModelAdmin):
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
-    list_display = ('name', 'filename', 'date_modified', 'active', 'publish_tasks')
+    list_display = ('name', 'filename', 'updated_at', 'active', 'publish_tasks')
 
     # Fieldnames are extracted from form text, and should not be edited directly
     exclude = ('fieldnames',)
@@ -443,6 +446,11 @@ class ProjectAdmin(GuardedModelAdmin):
     publish_tasks.short_description = 'Publish Tasks'
 
     def save_model(self, request, obj, form, change):
+        if request.user.is_authenticated:
+            obj.updated_by = request.user
+            if obj._state.adding:
+                obj.created_by = request.user
+
         super(ProjectAdmin, self).save_model(request, obj, form, change)
         if u'custom_permissions' in form.data:
             if u'worker_permissions' in form.data:
