@@ -8,6 +8,12 @@ from django.urls import reverse
 
 from turkle.models import Batch, Project
 
+# hack to add unicode() to python3 for backward compatibility
+try:
+    unicode('')
+except NameError:
+    unicode = str
+
 
 class TestCancelOrPublishBatch(django.test.TestCase):
     def setUp(self):
@@ -187,7 +193,7 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(b'This field is required' in response.content)
 
-    def test_batch_add_validation_extra_fields(self):
+    def test_batch_add_validation_extra_csv_fields(self):
         project = Project(name='foo', html_template='<p>${f2}</p>')
         project.save()
 
@@ -205,12 +211,17 @@ class TestBatchAdmin(django.test.TestCase):
                     'name': 'batch_save',
                     'csv_file': fp
                 })
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(b'error' in response.content)
-        self.assertTrue(b'extra fields' in response.content)
-        self.assertTrue(b'missing fields' not in response.content)
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Batch.objects.filter(name='batch_save').exists())
+        matching_batch = Batch.objects.filter(name='batch_save').first()
+        self.assertEqual(response['Location'], reverse('turkle_admin:review_batch',
+                                                       kwargs={'batch_id': matching_batch.id}))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertTrue(u'The CSV file contained fields that are not in the HTML template.'
+                        in unicode(messages[0]))
 
-    def test_batch_add_validation_missing_fields(self):
+    def test_batch_add_validation_missing_csv_fields(self):
         project = Project(name='foo', html_template='<p>${f1} ${f2} ${f3}</p>')
         project.save()
 
