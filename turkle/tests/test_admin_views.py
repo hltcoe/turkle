@@ -67,7 +67,7 @@ class TestCancelOrPublishBatch(django.test.TestCase):
 
 class TestBatchAdmin(django.test.TestCase):
     def setUp(self):
-        User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+        self.user = User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
 
     def test_batch_add(self):
         project = Project(name='foo', html_template='<p>${foo}: ${bar}</p>')
@@ -95,6 +95,7 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertEqual(matching_batch.total_tasks(), 1)
         self.assertEqual(matching_batch.allotted_assignment_time,
                          Batch._meta.get_field('allotted_assignment_time').get_default())
+        self.assertEqual(matching_batch.created_by, self.user)
 
     def test_batch_add_csv_with_emoji(self):
         project = Project(name='foo', html_template='<p>${emoji}: ${more_emoji}</p>')
@@ -373,7 +374,7 @@ class TestGroupAdmin(django.test.TestCase):
 
 class TestProject(django.test.TestCase):
     def setUp(self):
-        User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+        self.user = User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
 
     def test_get_add_project(self):
         client = django.test.Client()
@@ -397,6 +398,9 @@ class TestProject(django.test.TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], u'/admin/turkle/project/')
         self.assertEqual(Project.objects.filter(name='foo').count(), 1)
+        project = Project.objects.get(name='foo')
+        self.assertEqual(project.created_by, self.user)
+        self.assertEqual(project.updated_by, self.user)
 
     def test_get_change_project(self):
         project = Project.objects.create(name='testproject')
