@@ -93,7 +93,8 @@ class Batch(models.Model):
     active = models.BooleanField(db_index=True, default=True)
     allotted_assignment_time = models.IntegerField(default=24)
     assignments_per_task = models.IntegerField(default=1, verbose_name='Assignments per Task')
-    date_published = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, null=True)
     filename = models.CharField(max_length=1024)
     project = models.ForeignKey('Project', on_delete=models.CASCADE)
     name = models.CharField(max_length=1024)
@@ -315,7 +316,7 @@ class Batch(models.Model):
                     'HITId': task.id,
                     'HITTypeId': project.id,
                     'Title': project.name,
-                    'CreationTime': batch.date_published.strftime(time_format),
+                    'CreationTime': batch.created_at.strftime(time_format),
                     'MaxAssignments': batch.assignments_per_task,
                     'AssignmentDurationInSeconds': batch.allotted_assignment_time * 3600,
                     'AssignmentId': task_assignment.id,
@@ -347,13 +348,16 @@ class Project(models.Model):
 
     active = models.BooleanField(db_index=True, default=True)
     assignments_per_task = models.IntegerField(db_index=True, default=1)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(User, null=True, related_name='created_projects')
     custom_permissions = models.BooleanField(default=False)
-    date_modified = models.DateTimeField(auto_now=True)
     filename = models.CharField(max_length=1024, blank=True)
     html_template = models.TextField()
     html_template_has_submit_button = models.BooleanField(default=False)
     login_required = models.BooleanField(db_index=True, default=True)
     name = models.CharField(max_length=1024)
+    updated_at = models.DateTimeField(auto_now=True)
+    updated_by = models.ForeignKey(User, null=True, related_name='updated_projects')
 
     # Fieldnames are automatically extracted from html_template text
     fieldnames = JSONField(blank=True)

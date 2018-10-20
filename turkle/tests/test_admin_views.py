@@ -8,6 +8,12 @@ from django.urls import reverse
 
 from turkle.models import Batch, Project
 
+# hack to add unicode() to python3 for backward compatibility
+try:
+    unicode('')
+except NameError:
+    unicode = str
+
 
 class TestCancelOrPublishBatch(django.test.TestCase):
     def setUp(self):
@@ -67,7 +73,7 @@ class TestCancelOrPublishBatch(django.test.TestCase):
 
 class TestBatchAdmin(django.test.TestCase):
     def setUp(self):
-        User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+        self.user = User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
 
     def test_batch_add(self):
         project = Project(name='foo', html_template='<p>${foo}: ${bar}</p>')
@@ -95,6 +101,7 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertEqual(matching_batch.total_tasks(), 1)
         self.assertEqual(matching_batch.allotted_assignment_time,
                          Batch._meta.get_field('allotted_assignment_time').get_default())
+        self.assertEqual(matching_batch.created_by, self.user)
 
     def test_batch_add_csv_with_emoji(self):
         project = Project(name='foo', html_template='<p>${emoji}: ${more_emoji}</p>')
@@ -186,7 +193,7 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(b'This field is required' in response.content)
 
-    def test_batch_add_validation_extra_fields(self):
+    def test_batch_add_validation_extra_csv_fields(self):
         project = Project(name='foo', html_template='<p>${f2}</p>')
         project.save()
 
@@ -204,12 +211,17 @@ class TestBatchAdmin(django.test.TestCase):
                     'name': 'batch_save',
                     'csv_file': fp
                 })
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(b'error' in response.content)
-        self.assertTrue(b'extra fields' in response.content)
-        self.assertTrue(b'missing fields' not in response.content)
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(Batch.objects.filter(name='batch_save').exists())
+        matching_batch = Batch.objects.filter(name='batch_save').first()
+        self.assertEqual(response['Location'], reverse('turkle_admin:review_batch',
+                                                       kwargs={'batch_id': matching_batch.id}))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertTrue(u'The CSV file contained fields that are not in the HTML template.'
+                        in unicode(messages[0]))
 
-    def test_batch_add_validation_missing_fields(self):
+    def test_batch_add_validation_missing_csv_fields(self):
         project = Project(name='foo', html_template='<p>${f1} ${f2} ${f3}</p>')
         project.save()
 
@@ -373,7 +385,7 @@ class TestGroupAdmin(django.test.TestCase):
 
 class TestProject(django.test.TestCase):
     def setUp(self):
-        User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+        self.user = User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
 
     def test_get_add_project(self):
         client = django.test.Client()
@@ -397,6 +409,9 @@ class TestProject(django.test.TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], u'/admin/turkle/project/')
         self.assertEqual(Project.objects.filter(name='foo').count(), 1)
+        project = Project.objects.get(name='foo')
+        self.assertEqual(project.created_by, self.user)
+        self.assertEqual(project.updated_by, self.user)
 
     def test_get_change_project(self):
         project = Project.objects.create(name='testproject')

@@ -261,7 +261,7 @@ def index(request):
                 batch_rows.append({
                     'project_name': project.name,
                     'batch_name': batch.name,
-                    'batch_published': batch.date_published,
+                    'batch_published': batch.created_at,
                     'assignments_available': total_tasks_available,
                     'preview_next_task_url': reverse('preview_next_task',
                                                      kwargs={'batch_id': batch.id}),

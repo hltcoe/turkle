@@ -205,13 +205,6 @@ class BatchForm(ModelForm):
         csv_fields = set(header)
         template_fields = set(project.fieldnames)
         if csv_fields != template_fields:
-            csv_but_not_template = csv_fields.difference(template_fields)
-            if csv_but_not_template:
-                validation_errors.append(
-                    ValidationError(
-                        'The CSV file contained fields that are not in the HTML template. '
-                        'These extra fields are: %s' %
-                        ', '.join(csv_but_not_template)))
             template_but_not_csv = template_fields.difference(csv_fields)
             if template_but_not_csv:
                 validation_errors.append(
@@ -334,6 +327,9 @@ class BatchAdmin(admin.ModelAdmin):
 
     def save_model(self, request, obj, form, change):
         if obj._state.adding:
+            if request.user.is_authenticated:
+                obj.created_by = request.user
+
             # If Batch active flag not explicitly set, make inactive until Batch reviewed
             if u'active' not in request.POST:
                 obj.active = False
@@ -343,6 +339,18 @@ class BatchAdmin(admin.ModelAdmin):
             csv_text = request.FILES['csv_file'].read()
             super(BatchAdmin, self).save_model(request, obj, form, change)
             csv_fh = StringIO(csv_text)
+
+            csv_fields = set(next(unicodecsv.reader(csv_fh)))
+            csv_fh.seek(0)
+            template_fields = set(obj.project.fieldnames)
+            if csv_fields != template_fields:
+                csv_but_not_template = csv_fields.difference(template_fields)
+                if csv_but_not_template:
+                    messages.warning(
+                        request,
+                        'The CSV file contained fields that are not in the HTML template. '
+                        'These extra fields are: %s' %
+                        ', '.join(csv_but_not_template))
             obj.create_tasks_from_csv(csv_fh)
         else:
             super(BatchAdmin, self).save_model(request, obj, form, change)
@@ -392,7 +400,7 @@ class ProjectAdmin(GuardedModelAdmin):
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
-    list_display = ('name', 'filename', 'date_modified', 'active', 'publish_tasks')
+    list_display = ('name', 'filename', 'updated_at', 'active', 'publish_tasks')
 
     # Fieldnames are extracted from form text, and should not be edited directly
     exclude = ('fieldnames',)
@@ -443,6 +451,11 @@ class ProjectAdmin(GuardedModelAdmin):
     publish_tasks.short_description = 'Publish Tasks'
 
     def save_model(self, request, obj, form, change):
+        if request.user.is_authenticated:
+            obj.updated_by = request.user
+            if obj._state.adding:
+                obj.created_by = request.user
+
         super(ProjectAdmin, self).save_model(request, obj, form, change)
         if u'custom_permissions' in form.data:
             if u'worker_permissions' in form.data:
