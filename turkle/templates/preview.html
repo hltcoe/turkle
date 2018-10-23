@@ -16,7 +16,7 @@
 
 {% endblock %}
 
-{% block right_half_footer %}
+{% block right_half_header_row %}
 <span class="inline-form-buttons">
   <form method="post" action="{% url 'accept_task' task.batch_id task.id %}">
     {% csrf_token %}

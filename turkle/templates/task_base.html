@@ -21,25 +21,32 @@ body {
   padding-left: 1em;
   padding-right: 1em;
 }
+.header-row {
+/*   background-color: #f8f9fa;*/
+  padding-bottom: 5px;
+  padding-top: 5px;
+  padding-left: 16px;
+  padding-right: 16px;
+}
 </style>
 {% endblock %}
-
 
 {% block body %}
 {% endblock %}
 
-{% block footer %}
-<footer class="footer">
+{% block header_row %}
+<div style="background-color: #373b44; width: 100%; height: 7px;"></div>
+<div class="bg-light clearfix header-row" >
   <div class="float-left">
     <span>
       <b>Project:</b> {{ task.batch.project.name }}</li> /
-      <b>Batch:</b> {{ task.batch.name }}</li> /
-      <b>Task:</b> {{ task.id }}</li>
+      <b>Batch:</b> {{ task.batch.name }}</li>
     </span>
   </div>
   <div class="float-right">
-    {% block right_half_footer %}
+    {% block right_half_header_row %}
     {% endblock %}
   </div>
-</footer>
+</div>
+<div style="background-color: #373b44; width: 100%; height: 2px;"></div>
 {% endblock %}
