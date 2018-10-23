@@ -51,7 +51,29 @@ $(function () {
 
 {% block content %}
 
-<div class="container-fluid">
+<div class="clearfix container" style="padding-left: 1em; padding-right: 1em; height: 40px;">
+  <div class="float-right">
+    <span class="inline-form-buttons">
+      <span id="task_counter" style="font-size: 1.2em; margin-right: 2em;"></span>
+
+      <a href="#" id="previous_task" role="button" class="btn btn-sm btn-info">Previous Task</a>
+
+      <a href="#" id="next_task" role="button" class="btn btn-sm btn-info">Next Task</a>
+
+      <form method="post" action="{% url 'turkle_admin:publish_batch' batch_id  %}">
+        {% csrf_token %}
+        <input type="submit" id="submitButton" value="Publish Batch" />
+      </form>
+
+      <form method="post" action="{% url 'turkle_admin:cancel_batch' batch_id %}">
+        {% csrf_token %}
+        <input type="submit" id="submitButton" value="Cancel Batch" />
+      </form>
+    </span>
+  </div>
+</div>
+
+<div class="container-fluid" style="padding-top: 5px;">
 
   {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 
@@ -64,30 +86,4 @@ $(function () {
 
 </div><!-- /.container-fluid -->
 
-{% endblock %}
-
-{% block footer %}
-<footer class="footer">
-  <div class="container" style="padding-left: 2em; padding-right: 2em;">
-    <div class="float-right">
-      <span class="inline-form-buttons">
-        <span id="task_counter" style="font-size: 1.2em; margin-right: 2em;"></span>
-
-        <a href="#" id="previous_task" role="button" class="btn btn-sm btn-info">Previous Task</a>
-
-        <a href="#" id="next_task" role="button" class="btn btn-sm btn-info">Next Task</a>
-
-        <form method="post" action="{% url 'turkle_admin:publish_batch' batch_id  %}">
-          {% csrf_token %}
-          <input type="submit" id="submitButton" value="Publish Batch" />
-        </form>
-
-        <form method="post" action="{% url 'turkle_admin:cancel_batch' batch_id %}">
-          {% csrf_token %}
-          <input type="submit" id="submitButton" value="Cancel Batch" />
-        </form>
-      </span>
-    </div>
-  </div>
-</footer>
 {% endblock %}
