@@ -33,8 +33,8 @@ urlpatterns = [
     url(r'^batch/(?P<batch_id>\d+)/accept_task/(?P<task_id>\d+)/$',
         accept_task, name='accept_task'),
     url(r'^batch/(?P<batch_id>\d+)/skip_task/(?P<task_id>\d+)/$', skip_task, name='skip_task'),
-    url(r'^batch/(?P<batch_id>\d+)/skip_and_accept_next_task/(?P<task_id>\d+)/'
-        '(?P<task_assignment_id>\d+)/$',
+    url(r'^batch/(?P<batch_id>\d+)/skip_and_accept_next_task/(?P<task_id>\d+)/' +
+        r'(?P<task_assignment_id>\d+)/$',
         skip_and_accept_next_task, name='skip_and_accept_next_task'),
     url(r'^batch/(?P<batch_id>\d+)/accept_next_task/$', accept_next_task, name='accept_next_task'),
     url(r'^batch/(?P<batch_id>\d+)/preview_next_task/$',
