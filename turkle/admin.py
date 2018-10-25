@@ -22,6 +22,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.forms import (FileField, FileInput, HiddenInput, IntegerField,
                           ModelForm, ModelMultipleChoiceField, TextInput, ValidationError, Widget)
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
@@ -263,9 +264,16 @@ class BatchAdmin(admin.ModelAdmin):
 
         return redirect(reverse('turkle_admin:turkle_batch_changelist'))
 
+    def changelist_view(self, request):
+        c = {
+            'csv_unix_line_endings': request.session.get('csv_unix_line_endings', False)
+        }
+        return super(BatchAdmin, self).changelist_view(request, extra_context=c)
+
     def download_csv(self, obj):
         download_url = reverse('download_batch_csv', kwargs={'batch_id': obj.id})
-        return format_html('<a href="{}">Download CSV results file</a>'.format(download_url))
+        return format_html('<a href="{}" class="button">Download CSV results file</a>'.
+                           format(download_url))
 
     def get_fields(self, request, obj):
         # Display different fields when adding (when obj is None) vs changing a Batch
@@ -291,6 +299,9 @@ class BatchAdmin(admin.ModelAdmin):
                 self.admin_site.admin_view(self.review_batch), name='review_batch'),
             url(r'^(?P<batch_id>\d+)/publish/$',
                 self.admin_site.admin_view(self.publish_batch), name='publish_batch'),
+            url(r'^update_csv_line_endings',
+                self.admin_site.admin_view(self.update_csv_line_endings),
+                name='update_csv_line_endings'),
         ]
         return my_urls + urls
 
@@ -358,6 +369,11 @@ class BatchAdmin(admin.ModelAdmin):
     def task_assignments_completed(self, obj):
         return '{} / {}'.format(obj.total_finished_task_assignments(),
                                 obj.assignments_per_task * obj.total_tasks())
+
+    def update_csv_line_endings(self, request):
+        csv_unix_line_endings = (request.POST[u'csv_unix_line_endings'] == u'true')
+        request.session['csv_unix_line_endings'] = csv_unix_line_endings
+        return JsonResponse({})
 
 
 class ProjectForm(ModelForm):

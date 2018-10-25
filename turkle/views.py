@@ -127,7 +127,10 @@ def download_batch_csv(request, batch_id):
     """
     batch = Batch.objects.get(id=batch_id)
     csv_output = StringIO()
-    batch.to_csv(csv_output)
+    if request.session.get('csv_unix_line_endings', False):
+        batch.to_csv(csv_output, lineterminator='\n')
+    else:
+        batch.to_csv(csv_output)
     csv_string = csv_output.getvalue()
     response = HttpResponse(csv_string, content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="{}"'.format(

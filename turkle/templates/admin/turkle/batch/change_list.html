@@ -1,0 +1,39 @@
+{% extends 'admin/change_list.html' %}
+{% load static %}
+
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
+<script>
+$(function () {
+  var csrftoken = $("[name=csrfmiddlewaretoken]").val();
+
+  function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+  }
+  $.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+      if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+        xhr.setRequestHeader("X-CSRFToken", csrftoken);
+      }
+    }
+  });
+
+  $('#csv_unix_line_endings').change(function() {
+    $.post("{% url 'turkle_admin:update_csv_line_endings' %}", {'csv_unix_line_endings': this.checked});
+  });
+});
+</script>
+{% endblock %}
+
+{% block content %}
+{{ block.super }}
+<div>
+  <span style="float: right;">
+    <input type="checkbox" id="csv_unix_line_endings"
+           {% if csv_unix_line_endings %} checked="checked" {% endif %} >
+    <label for="csv_unix_line_endings">Use UNIX (\n) line endings for CSV results file</label>
+  </span>
+</div>
+{% endblock %}
