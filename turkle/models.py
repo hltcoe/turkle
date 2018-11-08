@@ -462,7 +462,7 @@ class Project(models.Model):
         )
 
     def __unicode__(self):
-        return 'Project: {}'.format(self.name)
+        return self.name
 
     def __str__(self):
-        return 'Project: {}'.format(self.name)
+        return self.name

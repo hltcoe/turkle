@@ -252,7 +252,7 @@ class BatchAdmin(admin.ModelAdmin):
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
     list_display = (
-        'name', 'filename', 'total_tasks', 'assignments_per_task',
+        'name', 'project', 'filename', 'total_tasks', 'assignments_per_task',
         'task_assignments_completed', 'total_finished_tasks', 'active', 'download_csv')
 
     def cancel_batch(self, request, batch_id):
