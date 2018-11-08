@@ -283,7 +283,10 @@ class Batch(models.Model):
         for task in tasks:
             for task_assignment in task.taskassignment_set.all():
                 input_field_set.update(task.input_csv_fields.keys())
-                answer_field_set.update(task_assignment.answers.keys())
+
+                # If the answers JSONField is empty, it evaluates as a string instead of a dict
+                if task_assignment.answers != u'':
+                    answer_field_set.update(task_assignment.answers.keys())
         return tuple(
             [u'HITId', u'HITTypeId', u'Title', u'CreationTime', u'MaxAssignments',
              u'AssignmentDurationInSeconds', u'AssignmentId', u'WorkerId',
@@ -462,7 +465,7 @@ class Project(models.Model):
         )
 
     def __unicode__(self):
-        return 'Project: {}'.format(self.name)
+        return self.name
 
     def __str__(self):
-        return 'Project: {}'.format(self.name)
+        return self.name
