@@ -1,0 +1,57 @@
+# use glob syntax
+syntax: glob
+
+wwwroot/app/**
+wwwroot/bin/**
+wwwroot/js/**
+wwwroot/scripts/**
+wwwroot/styles/**
+wwwroot/dist/main-client.*
+ClientApp/dist/main-server.*
+
+node_modules/**
+[Ss]cripts/[Aa]pp/*.js
+[Ss]cripts/[Aa]pp_old/*.js
+
+[Mm]igrations/**
+
+.tscache/**
+.vs/
+
+*.mwb.bak	# MySQL Workbench .BAK file
+*.dbmdl		# VS2010 Database Projects cache file
+*.obj
+*.pdb
+*.user
+*.aps
+*.pch
+*.vspscc
+*.vssscc
+*_i.c
+*_p.c
+*.ncb
+*.suo
+*.tlb
+*.tlh
+*.bak
+*.[Cc]ache
+*.ilk
+*.log
+*.lib
+*.sbr
+*.scc
+*.DotSettings
+[Bb]in
+[Dd]ebug*/**
+obj/
+[Rr]elease*/**
+_ReSharper*/**
+NDependOut/**
+packages/**
+[Tt]humbs.db
+[Tt]est[Rr]esult*
+[Bb]uild[Ll]og.*
+*.[Pp]ublish.xml
+*.resharper
+*.ncrunch*
+*.ndproj

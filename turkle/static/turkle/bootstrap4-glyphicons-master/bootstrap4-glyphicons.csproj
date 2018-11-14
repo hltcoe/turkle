@@ -1,0 +1,88 @@
+﻿<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{7AD4108B-F11E-4628-8794-38B1E049BD82}</ProjectGuid>
+    <OutputType>Library</OutputType>
+    <NoStandardLibraries>false</NoStandardLibraries>
+    <AssemblyName>ClassLibrary</AssemblyName>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <FileAlignment>512</FileAlignment>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>bin\Debug\</OutputPath>
+    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <DefineConstants>TRACE</DefineConstants>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
+  </PropertyGroup>
+  <PropertyGroup>
+    <RootNamespace>bootstrap4_glyphicons</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Data" />
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xml.Linq" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="bootstrap4-glyphicons\bootstrap-glyphicons.zip" />
+    <None Include="bootstrap4-glyphicons\fonts\fontawesome\fa-brands-400.eot" />
+    <None Include="bootstrap4-glyphicons\fonts\fontawesome\fa-brands-400.ttf" />
+    <None Include="bootstrap4-glyphicons\fonts\fontawesome\fa-brands-400.woff" />
+    <None Include="bootstrap4-glyphicons\fonts\fontawesome\fa-brands-400.woff2" />
+    <None Include="bootstrap4-glyphicons\fonts\fontawesome\fa-regular-400.eot" />
+    <None Include="bootstrap4-glyphicons\fonts\fontawesome\fa-regular-400.ttf" />
+    <None Include="bootstrap4-glyphicons\fonts\fontawesome\fa-regular-400.woff" />
+    <None Include="bootstrap4-glyphicons\fonts\fontawesome\fa-regular-400.woff2" />
+    <None Include="bootstrap4-glyphicons\fonts\fontawesome\fa-solid-900.eot" />
+    <None Include="bootstrap4-glyphicons\fonts\fontawesome\fa-solid-900.ttf" />
+    <None Include="bootstrap4-glyphicons\fonts\fontawesome\fa-solid-900.woff" />
+    <None Include="bootstrap4-glyphicons\fonts\fontawesome\fa-solid-900.woff2" />
+    <None Include="bootstrap4-glyphicons\fonts\glyphicons\glyphicons-halflings-regular.eot" />
+    <None Include="bootstrap4-glyphicons\fonts\glyphicons\glyphicons-halflings-regular.ttf" />
+    <None Include="bootstrap4-glyphicons\fonts\glyphicons\glyphicons-halflings-regular.woff" />
+    <None Include="bootstrap4-glyphicons\fonts\glyphicons\glyphicons-halflings-regular.woff2" />
+    <None Include="bootstrap4-glyphicons\maps\glyphicons-fontawesome.less" />
+    <None Include="bundleconfig.json" />
+    <None Include="compilerconfig.json" />
+    <None Include="compilerconfig.json.defaults">
+      <DependentUpon>compilerconfig.json</DependentUpon>
+    </None>
+    <None Include="README.md" />
+  </ItemGroup>
+  <ItemGroup />
+  <ItemGroup>
+    <Content Include="bootstrap4-glyphicons\css\bootstrap-glyphicons.css" />
+    <Content Include="bootstrap4-glyphicons\css\bootstrap-glyphicons.min.css">
+      <DependentUpon>bootstrap-glyphicons.css</DependentUpon>
+    </Content>
+    <Content Include="bootstrap4-glyphicons\fonts\fontawesome\fa-brands-400.svg" />
+    <Content Include="bootstrap4-glyphicons\fonts\fontawesome\fa-regular-400.svg" />
+    <Content Include="bootstrap4-glyphicons\fonts\fontawesome\fa-solid-900.svg" />
+    <Content Include="bootstrap4-glyphicons\fonts\glyphicons\glyphicons-halflings-regular.svg" />
+    <Content Include="bootstrap4-glyphicons\maps\glyphicons-fontawesome.css">
+      <DependentUpon>glyphicons-fontawesome.less</DependentUpon>
+    </Content>
+    <Content Include="bootstrap4-glyphicons\maps\glyphicons-fontawesome.min.css">
+      <DependentUpon>glyphicons-fontawesome.css</DependentUpon>
+    </Content>
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSHARP.Targets" />
+  <ProjectExtensions>
+    <VisualStudio AllowExistingFolder="true" />
+  </ProjectExtensions>
+</Project>

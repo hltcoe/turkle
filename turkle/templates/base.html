@@ -1,12 +1,12 @@
-<!DOCTYPE html>
+\<!DOCTYPE html>
 <html>
   <head>
     <title>{{turkle_site_name}}</title>
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css">
     {% load staticfiles %}
     <meta charset="utf-8">
     <link href="{% static "turkle/css/turkle.css" %}" rel="stylesheet" type="text/css"/>
-    <!--<link href="{% static "turkle/bootstrap-4.1.3/css/bootstrap.min.css" %}" rel="stylesheet" type="text/css"/> -->
+    <link href="{% static "turkle/bootstrap-4.1.3/css/bootstrap.min.css" %}" rel="stylesheet" type="text/css"/> 
+    <link href="{% static "turkle/bootstrap4-glyphicons-master/bootstrap4-glyphicons/css/bootstrap-glyphicons.min.css" %}" rel="stylesheet" type="text/css"/>
     {% block header %}
     {% endblock %}
   </head>
@@ -27,7 +27,7 @@
           <a href="{% url 'password_change' %}">Change Password</a> -
           <a href="{% url 'logout' %}?next=/">Logout</a>
           {% else %}
-          <a href="{% url 'login' %}?next=/">Login</a>
+          <a href="{% url 'login' %}">Login</a>
           {% endif %}
         </span>
       </nav>

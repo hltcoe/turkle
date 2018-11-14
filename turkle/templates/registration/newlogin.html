@@ -21,6 +21,8 @@
         </h5>
         {% else %}
         <h5 class="card-title" align = "center" >Please login to see this page.</h5>
+       <!-- {% else %}
+         <h5 class="card-title" align = "center" >Login page.</h5> -->
         {% endif %}
         {% endif %}
 
@@ -29,25 +31,26 @@
         <div class="col-md-4 offset-md-4">
           <div class="panel panel-primary">
               <div class="form-group">
-                  <label for="username">Username</label>
-                  <div class="input-group mb-3">
-                      <div class="input-group-prepend">
-                          <span class="input-group-text"> <i class="glyphicon glyphicon-user"></i></span>
-                      </div>
-                      <input type="text" name="username" class="form-control" required="required"/>
-                  </div>
-              </div>
-              <div class="form-group">
-                <label for="password">Password</label>
+                <label for="username">Username</label>
+               
                 <div class="input-group mb-3">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text"> <i class="glyphicon glyphicon-lock"></i></span>
-                    </div>
-                    <input type="password" name="password" class="form-control" required="required"/>
+                   <div class="input-group-prepend">
+		     <span class="input-group-text"> <i class="glyphicon glyphicon-user"></i></span> 
+                  </div> 
+                <input type="text" name="username" class="form-control" required="required"/>
                 </div>
               </div>
               <div class="form-group">
-                   <button class="btn btn-primary form-control"> <span class="glyphicon glyphicon-log-in"></span> Login </button>
+                <label for="password">Password</label>
+               <div class="input-group mb-3">
+                   <div class="input-group-prepend">
+                     <span class="input-group-text"> <i class="glyphicon glyphicon-lock"></i></span>
+                  </div>
+                <input type="password" name="password" class="form-control" required="required"/>
+              </div>
+              </div>
+              <div class="form-group">
+                <button class="btn btn-primary form-control"><span class="glyphicon glyphicon-log-in"></span> Login</button>
               </div>
             </div>
           </div>
