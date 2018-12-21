@@ -399,6 +399,40 @@ The last step is running the Turkle install steps (migrate and
 createsuperuser) described in the "One-time Configuration Steps"
 section above.
 
+## Database Backups
+
+To backup the database, edit the configuration in settings.py for backups.
+Then run the command:
+
+```bash
+python manage.py dbbackup
+```
+
+To restore the database:
+
+```bash
+python manage.py dbrestore -i [path to dump file]
+```
+
+There is [documentation](https://django-dbbackup.readthedocs.io/en/stable/commands.html) available on the these commands
+including how to automatically compress the dump file or remove old dump files.
+
+You will likely want to add a cron job that dumps the database each hour or day.
+
+```
+@hourly /path/to/my/script.sh
+```
+
+The script needs to access the python running Turkle:
+
+```bash
+#!/bin/bash
+
+source /path/to/venv/bin/activate
+cd /path/to/turkle
+
+python manage.py dbbackup -c -z
+```
 
 ## Production Webserver Configuration
 

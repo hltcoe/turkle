@@ -118,6 +118,7 @@ INSTALLED_APPS = (
     # 'django.contrib.admindocs',
     'django_nose',
     'guardian',
+    'dbbackup'
 )
 
 AUTHENTICATION_BACKENDS = (
@@ -189,3 +190,7 @@ TURKLE_EMAIL_ENABLED = False
 # configure if authenticating to MTA
 # EMAIL_HOST_USER = ''
 # EMAIL_HOST_PASSWORD = ''
+
+# Uncomment and configure (Note: this does not work for sqlite databases)
+# DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
+# DBBACKUP_STORAGE_OPTIONS = {'location': '/opt/backups'}
