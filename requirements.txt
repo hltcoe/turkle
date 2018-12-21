@@ -1,5 +1,6 @@
 beautifulsoup4
 Django~=1.11.15
+django-dbbackup
 django-guardian==1.4.9
 django-nose==1.4.5
 jsonfield==2.0.2
