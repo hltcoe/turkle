@@ -22,7 +22,7 @@
         </a>
         <form method="post" action="{% url 'return_task_assignment' aa.task.id aa.task_assignment_id %}">
           {% csrf_token %}
-          <input type="submit" id="submitButton" class="btn btn-sm btn-primary" value="Return Task" />
+          <input type="submit" id="returnButton" class="btn btn-sm btn-primary" value="Return Task" />
         </form>
       </span>
     </span>
@@ -60,7 +60,7 @@
       <td>
         <form method="post" action="{{ batch_row.accept_next_task_url }}">
           {% csrf_token %}
-          <input type="submit" id="submitButton" class="btn btn-sm btn-primary" value="Accept next Task" />
+          <input type="submit" id="acceptButton" class="btn btn-sm btn-primary" value="Accept next Task" />
         </form>
       </td>
     </tr>

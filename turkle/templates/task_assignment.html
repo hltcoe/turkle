@@ -69,12 +69,12 @@ $(function () {
 <span class="inline-form-buttons">
   <form method="post" action="{% url 'return_task_assignment' task.id task_assignment.id %}">
     {% csrf_token %}
-    <input type="submit" id="submitButton" class="btn btn-sm btn-danger" value="Return Task" />
+    <input type="submit" id="returnButton" class="btn btn-sm btn-danger" value="Return Task" />
   </form>
 
   <form method="post" action="{% url 'skip_and_accept_next_task' task.batch_id task.id task_assignment.id %}">
     {% csrf_token %}
-    <input type="submit" id="submitButton" class="btn btn-sm btn-danger" value="Skip Task" />
+    <input type="submit" id="skipButton" class="btn btn-sm btn-danger" value="Skip Task" />
   </form>
 </span>
 

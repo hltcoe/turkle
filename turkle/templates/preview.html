@@ -20,12 +20,12 @@
 <span class="inline-form-buttons">
   <form method="post" action="{% url 'accept_task' task.batch_id task.id %}">
     {% csrf_token %}
-    <input type="submit" id="submitButton" class="btn btn-sm btn-primary" value="Accept Task" />
+    <input type="submit" id="acceptButton" class="btn btn-sm btn-primary" value="Accept Task" />
   </form>
 
   <form method="post" action="{% url 'skip_task' task.batch_id task.id %}">
     {% csrf_token %}
-    <input type="submit" id="submitButton" class="btn btn-sm btn-danger" value="Skip Task" />
+    <input type="submit" id="skipButton" class="btn btn-sm btn-danger" value="Skip Task" />
   </form>
 
   <a href="{% url 'index' %}" role="button" class="btn btn-sm btn-danger">Stop Preview</a>
