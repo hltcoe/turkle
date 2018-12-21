@@ -37,6 +37,7 @@ from turkle.utils import get_site_name
 class TurkleAdminSite(admin.AdminSite):
     app_index_template = 'admin/turkle/app_index.html'
     site_header = get_site_name() + ' administration'
+    site_title = get_site_name() + ' site admin'
 
 
 class CustomGroupAdminForm(ModelForm):
