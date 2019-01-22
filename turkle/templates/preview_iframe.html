@@ -3,15 +3,8 @@
   <head>
     <title>Task</title>
     <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-    <script>
-    // Disable all Submit buttons
-    window.addEventListener("load", function(event) {
-      var submitButtons = document.querySelectorAll('input[type="submit"]');
-      for (var i in submitButtons) {
-        submitButtons[i].disabled = true;
-      }
-    });
-    </script>
+    {% load staticfiles %}
+    <script src="{% static 'turkle/iframe-resizer-3.6.2/iframeResizer.contentWindow.min.js' %}"></script>
   </head>
   <body>
     <form name="mturk_form" method="post" id="mturk_form" target="_parent"
