@@ -2,67 +2,54 @@
 
 {% block body %}
 
-<!--<div class="container">-->
-  <!--<div style="margin-top: 2em;">
-    {% block content %}
-<!--
-   <div class="card w-50">
-      <div class="card-body">
-             -->
-        {% if form.errors %}
-        <h5 class="card-title" align = "center">Your username and password didn't match. Please try again.</h5>
-        {% endif %}
+{% if form.errors %}
+<h5 class="card-title" align="center">Your username and password didn't match. Please try again.</h5>
+{% endif %}
 
-        {% if next %}
-        {% if user.is_authenticated %}
-        <h5 class="card-title" align = "center">
-          Your account doesn't have access to this page. To proceed,
-          please login with an account that has access.
-        </h5>
-        {% else %}
-        <h5 class="card-title" align = "center" >Please login to see this page.</h5>
-        {% endif %}
-        {% endif %}
+{% if next %}
+  <h5 class="card-title" align="center">
+  {% if user.is_authenticated %}
+    Your account doesn't have access to this page. To proceed,
+    please login with an account that has access.
+  {% else %}
+    Please login to see this page.
+  {% endif %}
+  </h5>
+{% endif %}
 
-        <form method="post" action="{% url 'login' %}">
-          {% csrf_token %}
-        <div class="col-md-4 offset-md-4">
-          <div class="panel panel-primary">
-              <div class="form-group">
-                  <label for="username">Username</label>
-                  <div class="input-group mb-3">
-                      <div class="input-group-prepend">
-                          <span class="input-group-text"> <i class="glyphicon glyphicon-user"></i></span>
-                      </div>
-                      <input type="text" name="username" class="form-control" required="required"/>
-                  </div>
-              </div>
-              <div class="form-group">
-                <label for="password">Password</label>
-                <div class="input-group mb-3">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text"> <i class="glyphicon glyphicon-lock"></i></span>
-                    </div>
-                    <input type="password" name="password" class="form-control" required="required"/>
-                </div>
-              </div>
-              <div class="form-group">
-                   <button class="btn btn-primary form-control"> Login </button>
-              </div>
-            </div>
+<form method="post" action="{% url 'login' %}">
+  {% csrf_token %}
+  <div class="col-md-4 offset-md-4">
+    <div class="panel panel-primary">
+      <div class="form-group">
+        <label for="username">Username</label>
+        <div class="input-group mb-3">
+          <div class="input-group-prepend">
+            <span class="input-group-text"><i class="glyphicon glyphicon-user"></i></span>
           </div>
-          {% if TURKLE_EMAIL_ENABLED %}
-          <span style="margin-left: 2em;">
-            <a href="{% url 'password_reset' %}">Reset your Password</a>
-          </span>
-          {% endif %}
-          <input type="hidden" name="next" value="{{ next }}" />
-        </form>
-        {% endblock %}
-     <!--</div> <!--/.card-body
-    </div><!-- /.card
-  </div> -->
-
-<!--</div>/.container -->
+          <input type="text" name="username" class="form-control" required="required"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <div class="input-group mb-3">
+          <div class="input-group-prepend">
+            <span class="input-group-text"><i class="glyphicon glyphicon-lock"></i></span>
+          </div>
+          <input type="password" name="password" class="form-control" required="required"/>
+        </div>
+      </div>
+      <div class="form-group">
+        <button class="btn btn-primary form-control">Login</button>
+      </div>
+    </div>
+  </div>
+  {% if TURKLE_EMAIL_ENABLED %}
+  <span style="margin-left: 2em;">
+    <a href="{% url 'password_reset' %}">Reset your Password</a>
+  </span>
+  {% endif %}
+  <input type="hidden" name="next" value="{{ next }}" />
+</form>
 
 {% endblock %}
