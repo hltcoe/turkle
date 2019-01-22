@@ -62,12 +62,12 @@ $(function () {
 
       <form method="post" action="{% url 'turkle_admin:publish_batch' batch_id  %}">
         {% csrf_token %}
-        <input type="submit" id="submitButton" value="Publish Batch" />
+        <input type="submit" id="publishButton" value="Publish Batch" />
       </form>
 
       <form method="post" action="{% url 'turkle_admin:cancel_batch' batch_id %}">
         {% csrf_token %}
-        <input type="submit" id="submitButton" value="Cancel Batch" />
+        <input type="submit" id="cancelButton" value="Cancel Batch" />
       </form>
     </span>
   </div>

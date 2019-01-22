@@ -4,9 +4,16 @@
 {% block header %}
 {{ block.super }}
 <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'turkle/iframe-resizer-3.6.2/iframeResizer.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'turkle/jquery.countdown-2.2.0.js' %}"></script>
 <script>
 $(function () {
+  $('#task_assignment_iframe').iFrameResize({
+    heightCalculationMethod: 'max',
+    log: true,
+    minHeight: '600px'
+  });
+
   var csrftoken = $("[name=csrfmiddlewaretoken]").val();
 
   function csrfSafeMethod(method) {
@@ -43,20 +50,19 @@ $(function () {
 {% endblock %}
 
 {% block body %}
-
 <div class="container-fluid">
 
   {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 
-  <div id="iframe_container" style="height: 500px;">
+  <div id="iframe_container">
     <iframe src="{% url 'task_assignment_iframe' task.id task_assignment.id %}"
+            id="task_assignment_iframe"
             style="top: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: 0; box-sizing: inherit;"
-            id="task_assignment_iframe">
+            scrolling="no">
     </iframe>
   </div>
 
 </div><!-- /.container-fluid -->
-
 {% endblock %}
 
 {% block right_half_header_row %}
@@ -69,17 +75,16 @@ $(function () {
 <span class="inline-form-buttons">
   <form method="post" action="{% url 'return_task_assignment' task.id task_assignment.id %}">
     {% csrf_token %}
-    <input type="submit" id="submitButton" class="btn btn-sm btn-danger" value="Return Task" />
+    <input type="submit" id="returnButton" class="btn btn-sm btn-danger" value="Return Task" />
   </form>
 
   <form method="post" action="{% url 'skip_and_accept_next_task' task.batch_id task.id task_assignment.id %}">
     {% csrf_token %}
-    <input type="submit" id="submitButton" class="btn btn-sm btn-danger" value="Skip Task" />
+    <input type="submit" id="skipButton" class="btn btn-sm btn-danger" value="Skip Task" />
   </form>
 </span>
 
 <span style="padding-left: 2em; font-size: 0.8em;">
   <span id="expiration-timer"></span>
 </span>
-
 {% endblock %}

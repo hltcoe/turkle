@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Prefetch
 from django.utils import timezone
 from jsonfield import JSONField
 import unicodecsv
@@ -269,10 +270,10 @@ class Batch(models.Model):
         header = next(rows)
         return header, rows
 
-    def _get_csv_fieldnames(self, tasks):
+    def _get_csv_fieldnames(self, task_queryset):
         """
         Args:
-            tasks (List of Task objects):
+            task_queryset (QuerySet):
 
         Returns:
             A tuple of strings specifying the fieldnames to be used in
@@ -280,9 +281,14 @@ class Batch(models.Model):
         """
         input_field_set = set()
         answer_field_set = set()
-        for task in tasks:
-            for task_assignment in task.taskassignment_set.all():
-                input_field_set.update(task.input_csv_fields.keys())
+        task_assignments = TaskAssignment.objects.\
+            filter(task__in=task_queryset).\
+            prefetch_related(Prefetch('task', queryset=task_queryset))
+        for task_assignment in task_assignments:
+            input_field_set.update(task_assignment.task.input_csv_fields.keys())
+
+            # If the answers JSONField is empty, it evaluates as a string instead of a dict
+            if task_assignment.answers != u'':
                 answer_field_set.update(task_assignment.answers.keys())
         return tuple(
             [u'HITId', u'HITTypeId', u'Title', u'CreationTime', u'MaxAssignments',
@@ -292,13 +298,13 @@ class Batch(models.Model):
             [u'Answer.' + k for k in sorted(answer_field_set)]
         )
 
-    def _results_data(self, tasks):
+    def _results_data(self, task_queryset):
         """
         All completed Tasks must come from the same project so that they have the
         same field names.
 
         Args:
-            tasks (List of Task objects):
+            task_queryset (QuerySet):
 
         Returns:
             A tuple where the first value is a list of fieldname strings, and
@@ -307,30 +313,34 @@ class Batch(models.Model):
         """
         rows = []
         time_format = '%a %b %m %H:%M:%S %Z %Y'
-        for task in tasks:
-            for task_assignment in task.taskassignment_set.filter(completed=True):
-                batch = task.batch
-                project = task.batch.project
+        task_assignments = TaskAssignment.objects.\
+            filter(task__in=task_queryset).\
+            filter(completed=True).\
+            prefetch_related(Prefetch('task', queryset=task_queryset))
+        for task_assignment in task_assignments:
+            task = task_assignment.task
+            batch = task.batch
+            project = task.batch.project
 
-                row = {
-                    'HITId': task.id,
-                    'HITTypeId': project.id,
-                    'Title': project.name,
-                    'CreationTime': batch.created_at.strftime(time_format),
-                    'MaxAssignments': batch.assignments_per_task,
-                    'AssignmentDurationInSeconds': batch.allotted_assignment_time * 3600,
-                    'AssignmentId': task_assignment.id,
-                    'WorkerId': task_assignment.assigned_to_id,
-                    'AcceptTime': task_assignment.created_at.strftime(time_format),
-                    'SubmitTime': task_assignment.updated_at.strftime(time_format),
-                    'WorkTimeInSeconds': int((task_assignment.updated_at -
-                                              task_assignment.created_at).total_seconds()),
-                }
-                row.update({u'Input.' + k: v for k, v in task.input_csv_fields.items()})
-                row.update({u'Answer.' + k: v for k, v in task_assignment.answers.items()})
-                rows.append(row)
+            row = {
+                'HITId': task.id,
+                'HITTypeId': project.id,
+                'Title': project.name,
+                'CreationTime': batch.created_at.strftime(time_format),
+                'MaxAssignments': batch.assignments_per_task,
+                'AssignmentDurationInSeconds': batch.allotted_assignment_time * 3600,
+                'AssignmentId': task_assignment.id,
+                'WorkerId': task_assignment.assigned_to_id,
+                'AcceptTime': task_assignment.created_at.strftime(time_format),
+                'SubmitTime': task_assignment.updated_at.strftime(time_format),
+                'WorkTimeInSeconds': int((task_assignment.updated_at -
+                                          task_assignment.created_at).total_seconds()),
+            }
+            row.update({u'Input.' + k: v for k, v in task.input_csv_fields.items()})
+            row.update({u'Answer.' + k: v for k, v in task_assignment.answers.items()})
+            rows.append(row)
 
-        return self._get_csv_fieldnames(tasks), rows
+        return self._get_csv_fieldnames(task_queryset), rows
 
     def __unicode__(self):
         return 'Batch: {}'.format(self.name)
@@ -462,7 +472,7 @@ class Project(models.Model):
         )
 
     def __unicode__(self):
-        return 'Project: {}'.format(self.name)
+        return self.name
 
     def __str__(self):
-        return 'Project: {}'.format(self.name)
+        return self.name
