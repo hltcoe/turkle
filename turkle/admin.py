@@ -30,7 +30,7 @@ from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 import unicodecsv
 
-from turkle.models import Batch, Project
+from turkle.models import Batch, Project, TaskAssignment
 from turkle.utils import get_site_name
 
 
@@ -38,6 +38,20 @@ class TurkleAdminSite(admin.AdminSite):
     app_index_template = 'admin/turkle/app_index.html'
     site_header = get_site_name() + ' administration'
     site_title = get_site_name() + ' site admin'
+
+    def expire_abandoned_assignments(self, request):
+        (total_deleted, _) = TaskAssignment.expire_all_abandoned()
+        messages.info(request, u'All {} abandoned Tasks have been expired'.format(total_deleted))
+        return redirect(reverse('turkle_admin:index'))
+
+    def get_urls(self):
+        urls = super(TurkleAdminSite, self).get_urls()
+        my_urls = [
+            url(r'^expire_abandoned_assignments/$',
+                self.admin_view(self.expire_abandoned_assignments),
+                name='expire_abandoned_assignments'),
+        ]
+        return my_urls + urls
 
 
 class CustomGroupAdminForm(ModelForm):

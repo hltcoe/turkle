@@ -4,7 +4,6 @@ from turkle.views import (
     accept_task,
     accept_next_task,
     download_batch_csv,
-    expire_abandoned_assignments,
     task_assignment,
     task_assignment_iframe,
     index,
@@ -19,8 +18,6 @@ from turkle.views import (
 
 urlpatterns = [
     url(r'^$', index, name='index'),
-    url(r'^expire_abandoned_assignments/$', expire_abandoned_assignments,
-        name='expire_abandoned_assignments'),
     url(r'^update_auto_accept/$', update_auto_accept, name='update_auto_accept'),
     url(r'^task/(?P<task_id>\d+)/$', preview, name='preview'),
     url(r'^task/(?P<task_id>\d+)/iframe/$', preview_iframe, name='preview_iframe'),
