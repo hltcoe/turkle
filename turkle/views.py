@@ -138,17 +138,6 @@ def download_batch_csv(request, batch_id):
     return response
 
 
-@staff_member_required
-def expire_abandoned_assignments(request):
-    """
-    Security behavior:
-    - Access to this page is limited to requesters.
-    """
-    (total_deleted, _) = TaskAssignment.expire_all_abandoned()
-    messages.info(request, u'All {} abandoned Tasks have been expired'.format(total_deleted))
-    return redirect('/admin/turkle')
-
-
 def task_assignment(request, task_id, task_assignment_id):
     """
     Security behavior:
