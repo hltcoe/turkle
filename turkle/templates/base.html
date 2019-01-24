@@ -26,7 +26,7 @@
           <a href="{% url 'password_change' %}">Change Password</a> -
           <a href="{% url 'logout' %}?next=/">Logout</a>
           {% else %}
-          <a href="{% url 'login' %}?next=/">Login</a>
+          <a href="{% url 'login' %}">Login</a>
           {% endif %}
         </span>
       </nav>
