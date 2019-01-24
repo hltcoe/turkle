@@ -16,7 +16,7 @@
         <ul class="navbar-nav mr-auto">
           {% if user.is_staff %}
           <li class="nav-item active">
-            <a class="nav-link" href="/admin/" title="Administration">Admin</a>
+            <a class="nav-link" href="{% url 'turkle_admin:index' %}" title="Administration">Admin</a>
           </li>
           {% endif %}
         </ul>
