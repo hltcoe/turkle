@@ -172,7 +172,7 @@ AUTHENTICATION_BACKENDS = (
 DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600
 FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600
 
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = 'index'
 
 # If True, the "Password Reset" link will be added to the login form.
 # This requires MTA configuration below.
