@@ -605,6 +605,8 @@ docker run -d --name [container_name] -p 8080:8080 -e TURKLE_PREFIX='annotate' h
 ```
 
 This passes the URL prefix to the Turkle application through an environment variable.
+Note that the application will be functional when directly hitting the application server.
+If that is required, use `SCRIPT_NAME` with your own Docker image.
 
 
 ## Using scripts with Dockerized Turkle ##

@@ -13,10 +13,11 @@ parser = argparse.ArgumentParser(
 parser.add_argument("-u", help="admin username", required=True)
 parser.add_argument("-p", help="admin password")
 parser.add_argument("--server", help="hostname:port", default="localhost:8000")
+parser.add_argument("--prefix", help="URL prefix of the application", default="")
 parser.add_argument("--dir", help="directory to save files", default=".")
 args = parser.parse_args()
 
-client = TurkleClient(args.server, args.u, args.p)
+client = TurkleClient(args.server, args.prefix, args.u, args.p)
 result = client.download(args.dir)
 if result:
     print("Success")
