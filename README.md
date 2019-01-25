@@ -584,6 +584,29 @@ container by:
 - clicking on the `CHANGE PASSWORD` link at the top right of the screen
 - filling out and submitting the Change Password form
 
+## Running Dockerized Turkle with a URL prefix ##
+
+If you want to reverse proxy the Turkle container so that Turkle is not available
+at the root of the web server, you need to pass an environment to the container.
+
+If this is your reverse proxy configuration for Apache:
+
+```
+<Location "/annotate">
+    ProxyPass http://localhost:8080
+    ProxyPassReverse http://localhost:8080
+</Location>
+```
+
+Then run the docker container:
+
+```bash
+docker run -d --name [container_name] -p 8080:8080 -e TURKLE_PREFIX='annotate' hltcoe/turkle
+```
+
+This passes the URL prefix to the Turkle application through an environment variable.
+
+
 ## Using scripts with Dockerized Turkle ##
 
 The scripts for creating users (`scripts/add_user.py`,
