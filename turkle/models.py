@@ -100,6 +100,17 @@ class Batch(models.Model):
     project = models.ForeignKey('Project', on_delete=models.CASCADE)
     name = models.CharField(max_length=1024)
 
+    def assignments_completed_by(self, user):
+        """
+        Returns:
+            QuerySet of all TaskAssignments completed by specified user
+            that are part of this Batch
+        """
+        return TaskAssignment.objects.\
+            filter(completed=True).\
+            filter(assigned_to_id=user.id).\
+            filter(task__batch=self)
+
     def available_tasks_for(self, user):
         """Retrieve a list of all Tasks in this batch available for the user.
 
@@ -211,6 +222,14 @@ class Batch(models.Model):
         """
         return self.available_tasks_for(user).first()
 
+    def total_assignments_completed_by(self, user):
+        """
+        Returns:
+            Integer of total number of TaskAssignments completed by
+            specified user that are part of this Batch
+        """
+        return self.assignments_completed_by(user).count()
+
     def total_available_tasks_for(self, user):
         """Returns number of Tasks available for the user
 
@@ -234,6 +253,14 @@ class Batch(models.Model):
         return self.task_set.count()
     total_tasks.short_description = 'Total Tasks'
 
+    def total_users_that_completed_tasks(self):
+        """
+        Returns:
+            Integer counting number of Users that have completed
+            TaskAssignments that are part of this Batch
+        """
+        return self.users_that_completed_tasks().count()
+
     def to_csv(self, csv_fh, lineterminator='\r\n'):
         """Write CSV output to file handle for every Task in batch
 
@@ -254,6 +281,17 @@ class Batch(models.Model):
             that have NOT been completed.
         """
         return self.task_set.filter(completed=False).order_by('id')
+
+    def users_that_completed_tasks(self):
+        """
+        Returns:
+            QuerySet of all Users who have completed TaskAssignments
+            that are part of this Batch
+        """
+        return User.objects.\
+            filter(taskassignment__task__batch=self).\
+            filter(taskassignment__completed=True).\
+            distinct()
 
     def _parse_csv(self, csv_fh):
         """

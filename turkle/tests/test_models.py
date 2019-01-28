@@ -472,6 +472,52 @@ class TestBatchExpireAssignments(django.test.TestCase):
         self.assertEqual(TaskAssignment.objects.count(), 0)
 
 
+class TestBatchReportFunctions(django.test.TestCase):
+    def setUp(self):
+        project = Project.objects.create(name='test')
+        self.batch = Batch.objects.create(
+            assignments_per_task=2,
+            project=project,
+        )
+        self.task_1 = Task.objects.create(
+            batch=self.batch,
+            input_csv_fields={'number': '1', 'letter': 'a'}
+        )
+        self.task_2 = Task.objects.create(
+            batch=self.batch,
+            input_csv_fields={'number': '2', 'letter': 'b'}
+        )
+        self.user_1 = User.objects.create_user('user_1', password='secret')
+        self.user_2 = User.objects.create_user('user_2', password='secret')
+
+    def test_assignments_completed(self):
+        self.assertEqual(self.batch.total_users_that_completed_tasks(), 0)
+        ta_1 = TaskAssignment.objects.create(
+            assigned_to=self.user_1,
+            completed=False,
+            task=self.task_1,
+        )
+        self.assertEqual(self.batch.total_users_that_completed_tasks(), 0)
+        self.assertEqual(self.batch.total_assignments_completed_by(self.user_1), 0)
+        self.assertEqual(self.batch.total_assignments_completed_by(self.user_2), 0)
+
+        ta_1.completed = True
+        ta_1.save()
+        self.assertEqual(self.batch.total_users_that_completed_tasks(), 1)
+        self.assertEqual(self.batch.users_that_completed_tasks()[0], self.user_1)
+        self.assertEqual(self.batch.total_assignments_completed_by(self.user_1), 1)
+        self.assertEqual(self.batch.assignments_completed_by(self.user_1)[0], ta_1)
+        self.assertEqual(self.batch.total_assignments_completed_by(self.user_2), 0)
+
+        ta_2 = TaskAssignment.objects.create(
+            assigned_to=self.user_2,
+            completed=True,
+            task=self.task_1,
+        )
+        self.assertEqual(self.batch.total_users_that_completed_tasks(), 2)
+        self.assertEqual(self.batch.assignments_completed_by(self.user_2)[0], ta_2)
+
+
 class TestProject(django.test.TestCase):
 
     def test_available_for_active_flag(self):
