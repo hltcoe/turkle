@@ -85,6 +85,28 @@ class TaskAssignment(models.Model):
             self.task.completed = True
             self.task.save()
 
+    def work_time_in_seconds(self):
+        """Return number of seconds elapsed between Task assignment and submission
+
+        We compute the time elapsed in Python instead of in SQL
+        because "there are no native date/time fields in SQLite and
+        Django currently emulates these features using a text field,"
+        per the Django Docs:
+          https://docs.djangoproject.com/en/2.1/ref/models/querysets/#aggregation-functions
+
+        Returns:
+            Integer for seconds elapsed between Task assignment and submission
+
+        Raises:
+            ValueError if TaskAssignment is not completed
+        """
+        if self.completed:
+            return int((self.updated_at - self.created_at).total_seconds())
+        else:
+            raise ValueError(
+                'Cannot compute work_time_in_seconds for incomplete TaskAssignment %d' %
+                self.id)
+
 
 class Batch(models.Model):
     class Meta:
@@ -371,8 +393,7 @@ class Batch(models.Model):
                 'WorkerId': task_assignment.assigned_to_id,
                 'AcceptTime': task_assignment.created_at.strftime(time_format),
                 'SubmitTime': task_assignment.updated_at.strftime(time_format),
-                'WorkTimeInSeconds': int((task_assignment.updated_at -
-                                          task_assignment.created_at).total_seconds()),
+                'WorkTimeInSeconds': task_assignment.work_time_in_seconds(),
             }
             row.update({u'Input.' + k: v for k, v in task.input_csv_fields.items()})
             row.update({u'Answer.' + k: v for k, v in task_assignment.answers.items()})

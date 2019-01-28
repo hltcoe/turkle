@@ -158,6 +158,20 @@ class TestTaskAssignment(django.test.TestCase):
         TaskAssignment.expire_all_abandoned()
         self.assertEqual(TaskAssignment.objects.count(), 1)
 
+    def test_work_time_in_seconds(self):
+        project = Project.objects.create()
+        batch = Batch.objects.create(project=project)
+        task = Task.objects.create(batch=batch)
+        ta = TaskAssignment.objects.create(task=task)
+
+        em = 'Cannot compute work_time_in_seconds for incomplete TaskAssignment %d' % ta.id
+        with self.assertRaisesMessage(ValueError, em):
+            ta.work_time_in_seconds()
+
+        ta.completed = True
+        ta.save()
+        self.assertEqual(float(ta.work_time_in_seconds()).is_integer(), True)
+
 
 class TestBatch(django.test.TestCase):
 
