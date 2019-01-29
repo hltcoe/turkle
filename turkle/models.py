@@ -234,22 +234,30 @@ class Batch(models.Model):
         return TaskAssignment.objects.filter(task__batch_id=self.id)\
                                      .filter(completed=True)
 
-    def median_work_time_in_seconds(self):
-        """
-        Returns:
-            Integer for median work time (in seconds) for completed Tasks in this Batch
-        """
-        # np.median returns a float but we convert back to int computed by work_time_in_seconds()
-        return int(np.median(
-            [ta.work_time_in_seconds() for ta in self.finished_task_assignments()]
-        ))
-
     def mean_work_time_in_seconds(self):
         """
         Returns:
             Float for mean work time (in seconds) for completed Tasks in this Batch
         """
-        return np.mean([ta.work_time_in_seconds() for ta in self.finished_task_assignments()])
+        finished_assignments = self.finished_task_assignments()
+        if finished_assignments.count() > 0:
+            return np.mean([ta.work_time_in_seconds() for ta in self.finished_task_assignments()])
+        else:
+            return 0
+
+    def median_work_time_in_seconds(self):
+        """
+        Returns:
+            Integer for median work time (in seconds) for completed Tasks in this Batch
+        """
+        finished_assignments = self.finished_task_assignments()
+        if finished_assignments.count() > 0:
+            # np.median returns float but we convert back to int computed by work_time_in_seconds()
+            return int(np.median(
+                [ta.work_time_in_seconds() for ta in self.finished_task_assignments()]
+            ))
+        else:
+            return 0
 
     def next_available_task_for(self, user):
         """Returns next available Task for the user, or None if no Tasks available

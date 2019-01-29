@@ -551,6 +551,11 @@ class TestBatchReportFunctions(django.test.TestCase):
         self.batch.mean_work_time_in_seconds()
         self.batch.total_work_time_in_seconds()
 
+    def test_work_time_in_seconds_stats_with_no_completed_assignments(self):
+        self.batch.median_work_time_in_seconds()
+        self.batch.mean_work_time_in_seconds()
+        self.batch.total_work_time_in_seconds()
+
 
 class TestProject(django.test.TestCase):
 
