@@ -1,0 +1,43 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrastyle %}
+<style>
+.inline-form-buttons > form,
+.inline-form-buttons > a[role="button"]
+{
+  display: inline-block;
+  margin-left: 1em;
+}
+</style>
+{% endblock %}
+
+{% block extrahead %}
+{{ block.super }}
+<script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
+<script>
+$(function () {
+});
+</script>
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid" style="padding-top: 5px;">
+
+  {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
+  <div>
+    <h1>Batch {{ batch.name }}</h1>
+
+    <ul>
+      <li>Total Work Time: {{ batch.total_work_time_in_seconds }}s</li>
+      <li>Mean Work Time: {{ batch.mean_work_time_in_seconds }}s</li>
+      <li>Median Work Time: {{ batch.median_work_time_in_seconds }}s</li>
+    </ul>
+
+  </div>
+
+</div><!-- /.container-fluid -->
+
+{% endblock %}

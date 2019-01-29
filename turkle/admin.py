@@ -268,7 +268,19 @@ class BatchAdmin(admin.ModelAdmin):
     }
     list_display = (
         'name', 'project', 'filename', 'total_tasks', 'assignments_per_task',
-        'task_assignments_completed', 'total_finished_tasks', 'active', 'download_csv')
+        'task_assignments_completed', 'total_finished_tasks', 'active', 'stats_button',
+        'download_csv')
+
+    def batch_stats(self, request, batch_id):
+        try:
+            batch = Batch.objects.get(id=batch_id)
+        except ObjectDoesNotExist:
+            messages.error(request, u'Cannot find Batch with ID {}'.format(batch_id))
+            return redirect(reverse('turkle_admin:turkle_batch_changelist'))
+
+        return render(request, 'admin/turkle/batch_stats.html', {
+            'batch': batch,
+        })
 
     def cancel_batch(self, request, batch_id):
         try:
@@ -314,6 +326,8 @@ class BatchAdmin(admin.ModelAdmin):
                 self.admin_site.admin_view(self.review_batch), name='review_batch'),
             url(r'^(?P<batch_id>\d+)/publish/$',
                 self.admin_site.admin_view(self.publish_batch), name='publish_batch'),
+            url(r'^(?P<batch_id>\d+)/stats/$',
+                self.admin_site.admin_view(self.batch_stats), name='batch_stats'),
             url(r'^update_csv_line_endings',
                 self.admin_site.admin_view(self.update_csv_line_endings),
                 name='update_csv_line_endings'),
@@ -380,6 +394,11 @@ class BatchAdmin(admin.ModelAdmin):
             obj.create_tasks_from_csv(csv_fh)
         else:
             super(BatchAdmin, self).save_model(request, obj, form, change)
+
+    def stats_button(self, obj):
+        stats_url = reverse('turkle_admin:batch_stats', kwargs={'batch_id': obj.id})
+        return format_html('<a href="{}" class="button">Stats</a>'.
+                           format(stats_url))
 
     def task_assignments_completed(self, obj):
         return '{} / {}'.format(obj.total_finished_task_assignments(),
