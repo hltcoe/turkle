@@ -10,6 +10,7 @@ from django.db import models
 from django.db.models import Prefetch
 from django.utils import timezone
 from jsonfield import JSONField
+import numpy as np
 import unicodecsv
 
 
@@ -233,6 +234,23 @@ class Batch(models.Model):
         return TaskAssignment.objects.filter(task__batch_id=self.id)\
                                      .filter(completed=True)
 
+    def median_work_time_in_seconds(self):
+        """
+        Returns:
+            Integer for median work time (in seconds) for completed Tasks in this Batch
+        """
+        # np.median returns a float but we convert back to int computed by work_time_in_seconds()
+        return int(np.median(
+            [ta.work_time_in_seconds() for ta in self.finished_task_assignments()]
+        ))
+
+    def mean_work_time_in_seconds(self):
+        """
+        Returns:
+            Float for mean work time (in seconds) for completed Tasks in this Batch
+        """
+        return np.mean([ta.work_time_in_seconds() for ta in self.finished_task_assignments()])
+
     def next_available_task_for(self, user):
         """Returns next available Task for the user, or None if no Tasks available
 
@@ -282,6 +300,14 @@ class Batch(models.Model):
             TaskAssignments that are part of this Batch
         """
         return self.users_that_completed_tasks().count()
+
+    def total_work_time_in_seconds(self):
+        """
+        Returns:
+            Integer sum of work_time_in_seconds() for all completed
+            TaskAssignments in this Batch
+        """
+        return sum([ta.work_time_in_seconds() for ta in self.finished_task_assignments()])
 
     def to_csv(self, csv_fh, lineterminator='\r\n'):
         """Write CSV output to file handle for every Task in batch

@@ -4,5 +4,6 @@ django-dbbackup
 django-guardian==1.4.9
 django-nose==1.4.5
 jsonfield==2.0.2
+numpy
 requests
 unicodecsv==0.14.1

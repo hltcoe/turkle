@@ -531,6 +531,26 @@ class TestBatchReportFunctions(django.test.TestCase):
         self.assertEqual(self.batch.total_users_that_completed_tasks(), 2)
         self.assertEqual(self.batch.assignments_completed_by(self.user_2)[0], ta_2)
 
+    def test_work_time_in_seconds_stats(self):
+        TaskAssignment.objects.create(
+            assigned_to=self.user_1,
+            completed=True,
+            task=self.task_1,
+        )
+        TaskAssignment.objects.create(
+            assigned_to=self.user_1,
+            completed=True,
+            task=self.task_1,
+        )
+        TaskAssignment.objects.create(
+            assigned_to=self.user_1,
+            completed=True,
+            task=self.task_1,
+        )
+        self.batch.median_work_time_in_seconds()
+        self.batch.mean_work_time_in_seconds()
+        self.batch.total_work_time_in_seconds()
+
 
 class TestProject(django.test.TestCase):
 
