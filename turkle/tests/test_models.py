@@ -1,13 +1,7 @@
 # -*- coding: utf-8 -*-
-try:
-    from cStringIO import StringIO
-except ImportError:
-    try:
-        from StringIO import StringIO
-    except ImportError:
-        from io import BytesIO
-        StringIO = BytesIO
+
 import datetime
+from io import BytesIO
 import os.path
 
 from django.contrib.auth.models import AnonymousUser, Group, User
@@ -17,12 +11,6 @@ from django.utils import timezone
 from guardian.shortcuts import assign_perm
 
 from turkle.models import Task, TaskAssignment, Batch, Project
-
-# hack to add unicode() to python3 for backward compatibility
-try:
-    unicode('')
-except NameError:
-    unicode = str
 
 
 class TestTaskAssignment(django.test.TestCase):
@@ -207,7 +195,7 @@ class TestBatch(django.test.TestCase):
             task=task2
         ).save()
 
-        csv_output = StringIO()
+        csv_output = BytesIO()
         batch.to_csv(csv_output)
         csv_string = csv_output.getvalue()
         self.assertTrue(b'"Input.letter","Input.number","Answer.combined"\r\n' in csv_string)
@@ -259,7 +247,7 @@ class TestBatch(django.test.TestCase):
             task=task3
         ).save()
 
-        csv_output = StringIO()
+        csv_output = BytesIO()
         batch.to_csv(csv_output)
         rows = csv_output.getvalue().split()
         self.assertTrue(b'"Input.letter","Answer.1","Answer.2","Answer.3","Answer.4"' in rows[0])
@@ -279,7 +267,7 @@ class TestBatch(django.test.TestCase):
             input_csv_fields={'number': '1', 'letter': 'a'},
         )
 
-        csv_output = StringIO()
+        csv_output = BytesIO()
         batch.to_csv(csv_output)
         rows = csv_output.getvalue().splitlines()
         self.assertEqual(len(rows), 1)
@@ -289,14 +277,14 @@ class TestBatch(django.test.TestCase):
             answers={'combined': '1a'},
             task=task,
         )
-        csv_output = StringIO()
+        csv_output = BytesIO()
         batch.to_csv(csv_output)
         rows = csv_output.getvalue().splitlines()
         self.assertEqual(len(rows), 1)
 
         ta.completed = True
         ta.save()
-        csv_output = StringIO()
+        csv_output = BytesIO()
         batch.to_csv(csv_output)
         rows = csv_output.getvalue().splitlines()
         self.assertEqual(len(rows), 2)
@@ -306,7 +294,7 @@ class TestBatch(django.test.TestCase):
             completed=True,
             task=task,
         )
-        csv_output = StringIO()
+        csv_output = BytesIO()
         batch.to_csv(csv_output)
         rows = csv_output.getvalue().splitlines()
         self.assertEqual(len(rows), 3)
@@ -791,7 +779,7 @@ class TestModels(django.test.TestCase):
             task=task2
         ).save()
 
-        csv_output = StringIO()
+        csv_output = BytesIO()
         project.to_csv(csv_output)
 
         rows = csv_output.getvalue().split(b'\r\n')
@@ -834,7 +822,7 @@ class TestModels(django.test.TestCase):
             task=task2
         ).save()
 
-        csv_output = StringIO()
+        csv_output = BytesIO()
         project.to_csv(csv_output)
 
         rows = csv_output.getvalue().split(b'\r\n')
@@ -845,10 +833,10 @@ class TestModels(django.test.TestCase):
 
     def test_new_task(self):
         """
-        unicode(task) should return the template's title followed by :id of the
+        str(task) should return the template's title followed by :id of the
         task.
         """
-        self.assertEqual('Task id:1', unicode(self.task))
+        self.assertEqual('Task id:1', str(self.task))
 
     def test_result_to_dict_Answer(self):
         self.assertEqual(
@@ -878,11 +866,6 @@ class TestGenerateForm(django.test.TestCase):
     def setUp(self):
         with open('turkle/tests/resources/form_0.html') as f:
             html_template = f.read()
-            # python 2 compat hack
-            try:
-                html_template = html_template.decode('utf-8')
-            except AttributeError:
-                pass
 
         self.project = Project(name="filepath", html_template=html_template)
         self.project.save()
@@ -917,11 +900,6 @@ class TestGenerateForm(django.test.TestCase):
     def test_populate_html_template(self):
         with open('turkle/tests/resources/form_0_filled.html') as f:
             form = f.read()
-            # python 2 compat hack
-            try:
-                form = form.decode('utf-8')
-            except AttributeError:
-                pass
 
         expect = form
         actual = self.task.populate_html_template()

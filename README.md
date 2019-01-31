@@ -94,7 +94,7 @@ the fields:
 
 # Installation #
 
-Turkle works with either Python 2.7 or Python 3.5+.
+Turkle works with Python 3.5+.
 
 This Installation section covers the quickest and easiest way to use
 Turkle with a handful of users on your local network - using the
