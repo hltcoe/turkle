@@ -1,6 +1,7 @@
 import datetime
 import os.path
 import re
+import statistics
 import sys
 
 from bs4 import BeautifulSoup
@@ -10,7 +11,6 @@ from django.db import models
 from django.db.models import Prefetch
 from django.utils import timezone
 from jsonfield import JSONField
-import numpy as np
 import unicodecsv
 
 
@@ -241,7 +241,8 @@ class Batch(models.Model):
         """
         finished_assignments = self.finished_task_assignments()
         if finished_assignments.count() > 0:
-            return np.mean([ta.work_time_in_seconds() for ta in self.finished_task_assignments()])
+            return statistics.mean(
+                [ta.work_time_in_seconds() for ta in self.finished_task_assignments()])
         else:
             return 0
 
@@ -253,7 +254,7 @@ class Batch(models.Model):
         finished_assignments = self.finished_task_assignments()
         if finished_assignments.count() > 0:
             # np.median returns float but we convert back to int computed by work_time_in_seconds()
-            return int(np.median(
+            return int(statistics.median(
                 [ta.work_time_in_seconds() for ta in self.finished_task_assignments()]
             ))
         else:
