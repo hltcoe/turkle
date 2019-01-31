@@ -1,17 +1,5 @@
-try:
-    from cStringIO import StringIO
-except ImportError:
-    try:
-        from StringIO import StringIO
-    except ImportError:
-        from io import BytesIO
-        StringIO = BytesIO
+from io import BytesIO
 import json
-# hack to add unicode() to python3 for backward compatibility
-try:
-    unicode('')
-except NameError:
-    unicode = str
 
 from django.conf.urls import url
 from django.contrib import admin, messages
@@ -255,7 +243,7 @@ class BatchForm(ModelForm):
         data = self.data.get('allotted_assignment_time')
         if data is None:
             return Batch._meta.get_field('allotted_assignment_time').get_default()
-        elif data.strip() is u'':
+        elif data.strip() == u'':
             raise ValidationError('This field is required.')
         else:
             return data
@@ -364,7 +352,7 @@ class BatchAdmin(admin.ModelAdmin):
             obj.filename = request.FILES['csv_file']._name
             csv_text = request.FILES['csv_file'].read()
             super(BatchAdmin, self).save_model(request, obj, form, change)
-            csv_fh = StringIO(csv_text)
+            csv_fh = BytesIO(csv_text)
 
             csv_fields = set(next(unicodecsv.reader(csv_fh)))
             csv_fh.seek(0)
@@ -420,7 +408,7 @@ class ProjectForm(ModelForm):
         self.fields['html_template'].help_text = 'You can edit the template text directly, ' + \
             'Drag-and-Drop a template file onto this window, or use the "Choose File" button below'
 
-        initial_ids = [unicode(id)
+        initial_ids = [str(id)
                        for id in get_groups_with_perms(self.instance).values_list('id', flat=True)]
         self.fields['worker_permissions'].initial = initial_ids
 

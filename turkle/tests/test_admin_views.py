@@ -10,12 +10,6 @@ from django.utils import timezone
 
 from turkle.models import Batch, Project, Task, TaskAssignment
 
-# hack to add unicode() to python3 for backward compatibility
-try:
-    unicode('')
-except NameError:
-    unicode = str
-
 
 class TestCancelOrPublishBatch(django.test.TestCase):
     def setUp(self):
@@ -258,7 +252,7 @@ class TestBatchAdmin(django.test.TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertTrue(u'The CSV file contained fields that are not in the HTML template.'
-                        in unicode(messages[0]))
+                        in str(messages[0]))
 
     def test_batch_add_validation_missing_csv_fields(self):
         project = Project(name='foo', html_template='<p>${f1} ${f2} ${f3}</p>')

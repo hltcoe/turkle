@@ -1,9 +1,4 @@
 # -*- coding: utf-8 -*-
-# hack to add unicode() to python3 for backward compatibility
-try:
-    unicode('')
-except NameError:
-    unicode = str
 
 import django.test
 from django.contrib.auth.models import Group, User
@@ -162,7 +157,7 @@ class TestAcceptNextTask(TestCase):
         #     https://docs.djangoproject.com/en/1.11/topics/testing/tools/#persistent-state
         s = client.session
         s.update({
-            'skipped_tasks_in_batch': {unicode(self.batch.id): [unicode(self.task.id)]}
+            'skipped_tasks_in_batch': {str(self.batch.id): [str(self.task.id)]}
         })
         s.save()
 
