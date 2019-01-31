@@ -1,22 +1,3 @@
-python2-stylecheck:
-  image: python:2.7-alpine
-  stage: test
-  script:
-    - pip install flake8
-    - flake8
-  tags:
-    - docker
-
-python2-tests:
-  image: python:2.7-alpine
-  stage: test
-  script:
-    - pip install -r requirements.txt
-    - python manage.py test
-  tags:
-    - docker
-
-
 python3-stylecheck:
   image: python:3.5-alpine
   stage: test
