@@ -24,5 +24,6 @@ docker-build:
     - docker info
   script:
     - docker build -t turkle .
+    - docker build -t turkle.mysql -f Dockerfile-MySQL .
   tags:
     - docker
