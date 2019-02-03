@@ -37,6 +37,14 @@ $(function () {
         <td>{{ batch.project.name }}</td>
       </tr>
       <tr>
+        <th>Created at</th>
+        <td>{{ batch.created_at }}</td>
+      </tr>
+      <tr>
+        <th>Created by</th>
+        <td>{{ batch.created_by.full_name }} ({{ batch.created_by.username }})</td>
+      </tr>
+      <tr>
         <th>Active?</th>
         <td>{% if batch.active %} Yes {% else %} No {% endif %}
         </td>
@@ -47,11 +55,11 @@ $(function () {
       </tr>
       <tr>
         <th>Tasks Completed</th>
-        <td>{{ batch.total_finished_tasks }}/{{ batch.total_tasks }}</td>
+        <td>{{ batch.total_finished_tasks }} / {{ batch.total_tasks }}</td>
       </tr>
       <tr>
         <th>Task Assignments Completed</th>
-        <td>{{ batch.total_finished_task_assignments }}/{{ batch.total_task_assignments }}</td>
+        <td>{{ batch.total_finished_task_assignments }} / {{ batch.total_task_assignments }}</td>
       </tr>
       <tr>
         <th>Total Work Time</th>
