@@ -12,12 +12,13 @@ parser = argparse.ArgumentParser(
 parser.add_argument("-u", help="admin username", required=True)
 parser.add_argument("-p", help="admin password")
 parser.add_argument("--server", help="hostname:port", default="localhost:8000")
+parser.add_argument("--prefix", help="URL prefix of the application", default="")
 parser.add_argument("--email", help="new user's email address")
 parser.add_argument("username", help="new username")
 parser.add_argument("password", help="new user's password")
 args = parser.parse_args()
 
-client = TurkleClient(args.server, args.u, args.p)
+client = TurkleClient(args.server, args.prefix, args.u, args.p)
 result = client.add_user(args.username, args.password, args.email)
 if result:
     print("Success")

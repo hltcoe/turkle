@@ -8,6 +8,27 @@ ALLOWED_HOSTS = ['*']
 
 TURKLE_SITE_NAME = 'Turkle'
 
+# Absolute path to the directory static files should be collected to.
+# Don't put anything in this directory yourself; store your static files
+# in apps' "static/" subdirectories and in STATICFILES_DIRS.
+# Example: "/home/media/media.lawrence.com/static/"
+STATIC_ROOT = ''
+
+# URL prefix for static files.
+# Example: "http://media.lawrence.com/static/"
+STATIC_URL = '/static/'
+
+# Running with a URL prefix ("sub-directory").
+# Configure your reverse proxy appropriately.
+# Set the environment variable 'TURKLE_PREFIX' to the URL prefix
+# Warning: this could break templates that depend on using Turkle JS or CSS files.
+if 'TURKLE_PREFIX' in os.environ:
+    FORCE_SCRIPT_NAME = os.environ['TURKLE_PREFIX']
+    if FORCE_SCRIPT_NAME[0] != '/':
+        FORCE_SCRIPT_NAME = '/' + FORCE_SCRIPT_NAME
+    # If manually configuring location of static files, comment line below
+    STATIC_URL = FORCE_SCRIPT_NAME + STATIC_URL
+
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
@@ -51,16 +72,6 @@ USE_L10N = True
 
 # If you set this to False, Django will not use timezone-aware datetimes.
 USE_TZ = True
-
-# Absolute path to the directory static files should be collected to.
-# Don't put anything in this directory yourself; store your static files
-# in apps' "static/" subdirectories and in STATICFILES_DIRS.
-# Example: "/home/media/media.lawrence.com/static/"
-STATIC_ROOT = ''
-
-# URL prefix for static files.
-# Example: "http://media.lawrence.com/static/"
-STATIC_URL = '/static/'
 
 # Make this unique, and don't share it with anybody.
 SECRET_KEY = 'imdcm3*5i8lov-m=0qu9-yxjuk!_qk$ykgde&amp;cxq(8n(l_a63*'
@@ -172,7 +183,7 @@ AUTHENTICATION_BACKENDS = (
 DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600
 FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600
 
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = 'index'
 
 # If True, the "Password Reset" link will be added to the login form.
 # This requires MTA configuration below.

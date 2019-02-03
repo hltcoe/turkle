@@ -24,13 +24,15 @@ class TurkleClient(object):
     ADD_BATCH_URL = "/admin/turkle/batch/add/"
     LIST_BATCH_URL = "/admin/turkle/batch/"
 
-    def __init__(self, server, admin, password=None):
+    def __init__(self, server, prefix, admin, password=None):
+        # prefix is for when the app is not run in the base of the web server
         if not password:
             self.password = getpass.getpass(prompt="Admin password: ")
         else:
             self.password = password
         self.admin = admin
         self.server = server
+        self.prefix = prefix
         if 'http://' in self.server:
             self.server = self.server.replace('http://', '')
 
@@ -67,7 +69,7 @@ class TurkleClient(object):
                 finished_col = row.find('td', {'class': 'field-total_finished_tasks'}).string
                 download_col = row.findAll('td')[-1].a
                 if finished_col != '0':
-                    resp = session.get(self.format_url(download_col['href']))
+                    resp = session.get(self.format_url(download_col['href'], False))
                     info = resp.headers['content-disposition']
                     filename = re.findall(r'filename="(.+)"', info)[0]
                     filename = os.path.join(directory, filename)
@@ -183,5 +185,9 @@ class TurkleClient(object):
             result = False
         return result
 
-    def format_url(self, path):
-        return "http://" + self.server + path
+    def format_url(self, path, include_prefix=True):
+        if self.prefix and include_prefix:
+            server = self.server + '/' + self.prefix
+        else:
+            server = self.server
+        return "http://" + server + path

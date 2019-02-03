@@ -17,7 +17,7 @@
         <ul class="navbar-nav mr-auto">
           {% if user.is_staff %}
           <li class="nav-item active">
-            <a class="nav-link" href="/admin/" title="Administration">Admin</a>
+            <a class="nav-link" href="{% url 'turkle_admin:index' %}" title="Administration">Admin</a>
           </li>
           {% endif %}
         </ul>
@@ -25,7 +25,7 @@
           {% if user.is_authenticated %}
           Logged in as <b>{{ user.username }}</b> -
           <a href="{% url 'password_change' %}">Change Password</a> -
-          <a href="{% url 'logout' %}?next=/">Logout</a>
+          <a href="{% url 'logout' %}?next={% url 'index' %}">Logout</a>
           {% else %}
           <a href="{% url 'login' %}">Login</a>
           {% endif %}

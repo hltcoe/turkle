@@ -1,17 +1,4 @@
-try:
-    from cStringIO import StringIO
-except ImportError:
-    try:
-        from StringIO import StringIO
-    except ImportError:
-        from io import BytesIO
-        StringIO = BytesIO
-
-# hack to add unicode() to python3 for backward compatibility
-try:
-    unicode('')
-except NameError:
-    unicode = str
+from io import BytesIO
 
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
@@ -126,7 +113,7 @@ def download_batch_csv(request, batch_id):
       download any CSV file.
     """
     batch = Batch.objects.get(id=batch_id)
-    csv_output = StringIO()
+    csv_output = BytesIO()
     if request.session.get('csv_unix_line_endings', False):
         batch.to_csv(csv_output, lineterminator='\n')
     else:
@@ -136,17 +123,6 @@ def download_batch_csv(request, batch_id):
     response['Content-Disposition'] = 'attachment; filename="{}"'.format(
         batch.csv_results_filename())
     return response
-
-
-@staff_member_required
-def expire_abandoned_assignments(request):
-    """
-    Security behavior:
-    - Access to this page is limited to requesters.
-    """
-    (total_deleted, _) = TaskAssignment.expire_all_abandoned()
-    messages.info(request, u'All {} abandoned Tasks have been expired'.format(total_deleted))
-    return redirect('/admin/turkle')
 
 
 def task_assignment(request, task_id, task_assignment_id):
@@ -390,8 +366,8 @@ def _add_task_id_to_skip_session(session, batch_id, task_id):
     """Add Task ID to session variable tracking Tasks the user has skipped
     """
     # The Django session store converts dictionary keys from ints to strings
-    batch_id = unicode(batch_id)
-    task_id = unicode(task_id)
+    batch_id = str(batch_id)
+    task_id = str(task_id)
 
     if 'skipped_tasks_in_batch' not in session:
         session['skipped_tasks_in_batch'] = {}
@@ -462,7 +438,7 @@ def _skip_aware_next_available_task_id(request, batch):
         Task ID (int), or None if no more Tasks are available
     """
     def _get_skipped_task_ids_for_batch(session, batch_id):
-        batch_id = unicode(batch_id)
+        batch_id = str(batch_id)
         if 'skipped_tasks_in_batch' in session and \
            batch_id in session['skipped_tasks_in_batch']:
             return session['skipped_tasks_in_batch'][batch_id]
@@ -482,7 +458,7 @@ def _skip_aware_next_available_task_id(request, batch):
                 # Once all remaining Tasks have been marked as skipped, we clear
                 # their skipped status.  If we don't take this step, then a Task
                 # cannot be skipped a second time.
-                request.session['skipped_tasks_in_batch'][unicode(batch.id)] = []
+                request.session['skipped_tasks_in_batch'][str(batch.id)] = []
                 request.session.modified = True
     else:
         task_id = available_task_ids.first()

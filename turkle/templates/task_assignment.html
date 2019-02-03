@@ -10,9 +10,8 @@
 $(function () {
   $('#task_assignment_iframe').iFrameResize({
     heightCalculationMethod: 'max',
-    log: true,
     minHeight: '600px'
-  });
+  }).focus();
 
   var csrftoken = $("[name=csrfmiddlewaretoken]").val();
 

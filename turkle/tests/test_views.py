@@ -1,17 +1,10 @@
 # -*- coding: utf-8 -*-
-# hack to add unicode() to python3 for backward compatibility
-try:
-    unicode('')
-except NameError:
-    unicode = str
-import datetime
 
 import django.test
 from django.contrib.auth.models import Group, User
 from django.contrib.messages import get_messages
 from django.test import TestCase
 from django.urls import reverse
-from django.utils import timezone
 from guardian.shortcuts import assign_perm
 
 from turkle.models import Task, TaskAssignment, Batch, Project
@@ -164,7 +157,7 @@ class TestAcceptNextTask(TestCase):
         #     https://docs.djangoproject.com/en/1.11/topics/testing/tools/#persistent-state
         s = client.session
         s.update({
-            'skipped_tasks_in_batch': {unicode(self.batch.id): [unicode(self.task.id)]}
+            'skipped_tasks_in_batch': {str(self.batch.id): [str(self.task.id)]}
         })
         s.save()
 
@@ -212,43 +205,6 @@ class TestDownloadBatchCSV(TestCase):
         response = client.get(download_url)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], u'/admin/login/?next=%s' % download_url)
-
-
-class TestExpireAbandonedAssignments(django.test.TestCase):
-    def test_expire_abandoned_assignments(self):
-        t = timezone.now()
-        dt = datetime.timedelta(hours=2)
-        past = t - dt
-
-        project = Project(login_required=False)
-        project.save()
-        batch = Batch(
-            allotted_assignment_time=1,
-            project=project
-        )
-        batch.save()
-        task = Task(batch=batch)
-        task.save()
-        ha = TaskAssignment(
-            completed=False,
-            expires_at=past,
-            task=task,
-        )
-        # Bypass TaskAssignment's save(), which updates expires_at
-        super(TaskAssignment, ha).save()
-        self.assertEqual(TaskAssignment.objects.count(), 1)
-
-        User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
-        client = django.test.Client()
-        client.login(username='admin', password='secret')
-        response = client.get(reverse('expire_abandoned_assignments'))
-        self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], '/admin/turkle')
-        self.assertEqual(TaskAssignment.objects.count(), 0)
-        messages = list(get_messages(response.wsgi_request))
-        self.assertEqual(len(messages), 1)
-        self.assertEqual(str(messages[0]),
-                         u'All 1 abandoned Tasks have been expired')
 
 
 class TestIndex(django.test.TestCase):

@@ -1,18 +1,14 @@
 # -*- coding: utf-8 -*-
+import datetime
 import os.path
 
 import django.test
 from django.contrib.auth.models import Group, User
 from django.contrib.messages import get_messages
 from django.urls import reverse
+from django.utils import timezone
 
-from turkle.models import Batch, Project
-
-# hack to add unicode() to python3 for backward compatibility
-try:
-    unicode('')
-except NameError:
-    unicode = str
+from turkle.models import Batch, Project, Task, TaskAssignment
 
 
 class TestCancelOrPublishBatch(django.test.TestCase):
@@ -69,6 +65,43 @@ class TestCancelOrPublishBatch(django.test.TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]), u'Cannot find Batch with ID 666')
+
+
+class TestExpireAbandonedAssignments(django.test.TestCase):
+    def test_expire_abandoned_assignments(self):
+        t = timezone.now()
+        dt = datetime.timedelta(hours=2)
+        past = t - dt
+
+        project = Project(login_required=False)
+        project.save()
+        batch = Batch(
+            allotted_assignment_time=1,
+            project=project
+        )
+        batch.save()
+        task = Task(batch=batch)
+        task.save()
+        ha = TaskAssignment(
+            completed=False,
+            expires_at=past,
+            task=task,
+        )
+        # Bypass TaskAssignment's save(), which updates expires_at
+        super(TaskAssignment, ha).save()
+        self.assertEqual(TaskAssignment.objects.count(), 1)
+
+        User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.get(reverse('turkle_admin:expire_abandoned_assignments'))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], '/admin/')
+        self.assertEqual(TaskAssignment.objects.count(), 0)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         u'All 1 abandoned Tasks have been expired')
 
 
 class TestBatchAdmin(django.test.TestCase):
@@ -219,7 +252,7 @@ class TestBatchAdmin(django.test.TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertTrue(u'The CSV file contained fields that are not in the HTML template.'
-                        in unicode(messages[0]))
+                        in str(messages[0]))
 
     def test_batch_add_validation_missing_csv_fields(self):
         project = Project(name='foo', html_template='<p>${f1} ${f2} ${f3}</p>')
