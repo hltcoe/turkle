@@ -3,7 +3,9 @@
 {% block body %}
 
 {% if form.errors %}
-<h5 class="card-title" align="center">Your username and password didn't match. Please try again.</h5>
+<div class="alert alert-error" role="alert">
+  <h5 class="card-title" align="center">Your username and password didn't match. Please try again.</h5>
+</div>
 {% endif %}
 
 {% if next %}
@@ -43,12 +45,12 @@
         <button class="btn btn-primary form-control">Login</button>
       </div>
     </div>
+    {% if TURKLE_EMAIL_ENABLED %}
+    <div>
+      <a href="{% url 'password_reset' %}">Reset your Password</a>
+    </div>
+    {% endif %}
   </div>
-  {% if TURKLE_EMAIL_ENABLED %}
-  <span style="margin-left: 2em;">
-    <a href="{% url 'password_reset' %}">Reset your Password</a>
-  </span>
-  {% endif %}
   <input type="hidden" name="next" value="{{ next }}" />
 </form>
 
