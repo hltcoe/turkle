@@ -42,7 +42,11 @@ $(function () {
       </tr>
       <tr>
         <th>Created by</th>
-        <td>{{ batch.created_by.full_name }} ({{ batch.created_by.username }})</td>
+        <td>{{ batch.created_by.get_full_name }} ({{ batch.created_by.username }})</td>
+      </tr>
+      <tr>
+        <th>Input CSV Filename</th>
+        <td>{{ batch.filename }}</td>
       </tr>
       <tr>
         <th>Active?</th>
