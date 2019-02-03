@@ -298,6 +298,9 @@ class Batch(models.Model):
         return self.finished_task_assignments().count()
     total_finished_task_assignments.short_description = 'Total finished Task Assignments'
 
+    def total_task_assignments(self):
+        return self.assignments_per_task * self.total_tasks()
+
     def total_tasks(self):
         return self.task_set.count()
     total_tasks.short_description = 'Total Tasks'
