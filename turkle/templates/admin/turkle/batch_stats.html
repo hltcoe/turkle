@@ -1,7 +1,7 @@
-{% extends "admin/base_site.html" %}
+{% extends "admin/base_bootcamp.html" %}
 {% load static %}
 
-{% block extrastyle %}
+{% block header %}
 <style>
 .inline-form-buttons > form,
 .inline-form-buttons > a[role="button"]
@@ -10,34 +10,93 @@
   margin-left: 1em;
 }
 </style>
-{% endblock %}
-
-{% block extrahead %}
-{{ block.super }}
 <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
+
 <script>
 $(function () {
 });
 </script>
 {% endblock %}
 
-{% block content %}
+{% block body %}
 
-<div class="container-fluid" style="padding-top: 5px;">
+<div class="container" style="padding-top: 5px;">
 
   {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 
+  <h2>Batch Statistics</h2>
+
   <div>
-    <h1>Batch {{ batch.name }}</h1>
-
-    <ul>
-      <li>Total Work Time: {{ batch.total_work_time_in_seconds }}s</li>
-      <li>Mean Work Time: {{ batch.mean_work_time_in_seconds }}s</li>
-      <li>Median Work Time: {{ batch.median_work_time_in_seconds }}s</li>
-    </ul>
-
+    <table class="table table-sm table-bordered thead-light">
+      <tr>
+        <th scope="col" style="width: 30%">Batch Name</th>
+        <td scope="col">{{ batch.name }}</td>
+      </tr>
+      <tr>
+        <th>Project Name</th>
+        <td>{{ batch.project.name }}</td>
+      </tr>
+      <tr>
+        <th>Active?</th>
+        <td>{% if batch.active %} Yes {% else %} No {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <th>Assignments per Task</th>
+        <td>{{ batch.assignments_per_task }}</td>
+      </tr>
+      <tr>
+        <th>Tasks Completed</th>
+        <td>{{ batch.total_finished_tasks }}/{{ batch.total_tasks }}</td>
+      </tr>
+      <tr>
+        <th>Task Assignments Completed</th>
+        <td>{{ batch.total_finished_task_assignments }}/{{ batch.total_task_assignments }}</td>
+      </tr>
+      <tr>
+        <th>Total Work Time</th>
+        <td>{{ batch_total_work_time }} ({{ batch.total_work_time_in_seconds }}s)</td>
+      </tr>
+      <tr>
+        <th>Mean Work Time</th>
+        <td>{{ batch_mean_work_time }} ({{ batch.mean_work_time_in_seconds }}s)</td>
+      </tr>
+      <tr>
+        <th>Median Work Time</th>
+        <td>{{ batch_median_work_time}} ({{ batch.median_work_time_in_seconds }}s)</td>
+      </tr>
+      <!--
+      <tr>
+        <th></th>
+        <td></td>
+      </tr>
+      -->
+    </table>
   </div>
 
-</div><!-- /.container-fluid -->
+  <h2>User Statistics</h2>
+
+  <div>
+    <table class="table table-sm table-bordered">
+      <thead class="thead-light">
+        <tr>
+          <th>Username</th>
+          <th>Name</th>
+          <th># Assignments Completed</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for stats_user in stats_users %}
+        <tr>
+          <td>{{ stats_user.username }}</td>
+          <td>{{ stats_user.full_name }}</td>
+          <td>{{ stats_user.assignments_completed }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /.container -->
 
 {% endblock %}

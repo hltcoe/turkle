@@ -16,6 +16,7 @@ from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
+import humanfriendly
 import unicodecsv
 
 from turkle.models import Batch, Project, TaskAssignment
@@ -266,8 +267,23 @@ class BatchAdmin(admin.ModelAdmin):
             messages.error(request, u'Cannot find Batch with ID {}'.format(batch_id))
             return redirect(reverse('turkle_admin:turkle_batch_changelist'))
 
+        stats_users = []
+        for user in batch.users_that_completed_tasks():
+            stats_users.append({
+                'username': user.username,
+                'full_name': user.get_full_name(),
+                'assignments_completed': batch.total_assignments_completed_by(user),
+            })
+
         return render(request, 'admin/turkle/batch_stats.html', {
             'batch': batch,
+            'batch_total_work_time': humanfriendly.format_timespan(
+                batch.total_work_time_in_seconds(), max_units=6),
+            'batch_mean_work_time': humanfriendly.format_timespan(
+                batch.mean_work_time_in_seconds(), max_units=6),
+            'batch_median_work_time': humanfriendly.format_timespan(
+                batch.median_work_time_in_seconds(), max_units=6),
+            'stats_users': stats_users,
         })
 
     def cancel_batch(self, request, batch_id):
