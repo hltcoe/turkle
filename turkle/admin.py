@@ -256,9 +256,12 @@ class BatchAdmin(admin.ModelAdmin):
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
     list_display = (
-        'name', 'project', 'filename', 'total_tasks', 'assignments_per_task',
-        'task_assignments_completed', 'total_finished_tasks', 'active', 'stats_button',
-        'download_csv')
+        'name', 'project', 'active', 'stats', 'download_csv',
+        'tasks_completed', 'assignments_completed')
+
+    def assignments_completed(self, obj):
+        return '{} / {}'.format(obj.total_finished_task_assignments(),
+                                obj.assignments_per_task * obj.total_tasks())
 
     def batch_stats(self, request, batch_id):
         try:
@@ -303,7 +306,7 @@ class BatchAdmin(admin.ModelAdmin):
 
     def download_csv(self, obj):
         download_url = reverse('download_batch_csv', kwargs={'batch_id': obj.id})
-        return format_html('<a href="{}" class="button">Download CSV results file</a>'.
+        return format_html('<a href="{}" class="button">CSV results</a>'.
                            format(download_url))
 
     def get_fields(self, request, obj):
@@ -399,14 +402,13 @@ class BatchAdmin(admin.ModelAdmin):
         else:
             super(BatchAdmin, self).save_model(request, obj, form, change)
 
-    def stats_button(self, obj):
+    def stats(self, obj):
         stats_url = reverse('turkle_admin:batch_stats', kwargs={'batch_id': obj.id})
         return format_html('<a href="{}" class="button">Stats</a>'.
                            format(stats_url))
 
-    def task_assignments_completed(self, obj):
-        return '{} / {}'.format(obj.total_finished_task_assignments(),
-                                obj.assignments_per_task * obj.total_tasks())
+    def tasks_completed(self, obj):
+        return '{} / {}'.format(obj.total_finished_tasks(), obj.total_tasks())
 
     def update_csv_line_endings(self, request):
         csv_unix_line_endings = (request.POST[u'csv_unix_line_endings'] == u'true')
