@@ -268,7 +268,7 @@ class BatchAdmin(admin.ModelAdmin):
             return redirect(reverse('turkle_admin:turkle_batch_changelist'))
 
         stats_users = []
-        for user in batch.users_that_completed_tasks():
+        for user in batch.users_that_completed_tasks().order_by('username'):
             stats_users.append({
                 'username': user.username,
                 'full_name': user.get_full_name(),
