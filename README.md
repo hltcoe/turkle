@@ -90,6 +90,7 @@ the fields:
 - `SubmitTime` - Time when User submitted an Assignment for a Task
 - `WorkTimeInSeconds` - Length of time between when User accepted
    a Task Assignment and when User submitted that Assignment
+- `Turkle.Username` - Username of User who completed Assignment
 
 
 # Installation #
