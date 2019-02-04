@@ -67,9 +67,9 @@ class TurkleClient(object):
             soup = BeautifulSoup(resp.text, features='html.parser')
             for row in soup.find('table', id='result_list').tbody.findAll('tr'):
                 finished_col = row.find('td', {'class': 'field-total_finished_tasks'}).string
-                download_col = row.findAll('td')[-1].a
+                download_link = row.find('td', {'class': 'field-download_csv'}).a
                 if finished_col != '0':
-                    resp = session.get(self.format_url(download_col['href'], False))
+                    resp = session.get(self.format_url(download_link['href'], False))
                     info = resp.headers['content-disposition']
                     filename = re.findall(r'filename="(.+)"', info)[0]
                     filename = os.path.join(directory, filename)
