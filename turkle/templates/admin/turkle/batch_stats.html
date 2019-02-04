@@ -29,7 +29,7 @@ $(function () {
   <div>
     <table class="table table-sm table-bordered thead-light">
       <tr>
-        <th scope="col" style="width: 30%">Batch Name</th>
+        <th scope="col" style="width: 40%">Batch Name</th>
         <td scope="col">{{ batch.name }}</td>
       </tr>
       <tr>
@@ -66,15 +66,23 @@ $(function () {
         <td>{{ batch.total_finished_task_assignments }} / {{ batch.total_task_assignments }}</td>
       </tr>
       <tr>
+        <th>First Assignment Completed at</th>
+        <td>{{ first_finished_time }}</td>
+      </tr>
+      <tr>
+        <th>Most Recent Assignment Completed at</th>
+        <td>{{ last_finished_time }}</td>
+      </tr>
+      <tr>
         <th>Total Work Time</th>
         <td>{{ batch_total_work_time }} ({{ batch.total_work_time_in_seconds }}s)</td>
       </tr>
       <tr>
-        <th>Mean Work Time</th>
+        <th>Mean Time / Assignment</th>
         <td>{{ batch_mean_work_time }} ({{ batch.mean_work_time_in_seconds|floatformat }}s)</td>
       </tr>
       <tr>
-        <th>Median Work Time</th>
+        <th>Median Time / Assignment</th>
         <td>{{ batch_median_work_time}} ({{ batch.median_work_time_in_seconds }}s)</td>
       </tr>
       <!--

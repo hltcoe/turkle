@@ -278,6 +278,10 @@ class BatchAdmin(admin.ModelAdmin):
                 'assignments_completed': batch.total_assignments_completed_by(user),
             })
 
+        finished_assignments = batch.finished_task_assignments().order_by('updated_at')
+        first_finished_time = finished_assignments.first().created_at
+        last_finished_time = finished_assignments.last().created_at
+
         return render(request, 'admin/turkle/batch_stats.html', {
             'batch': batch,
             'batch_total_work_time': humanfriendly.format_timespan(
@@ -286,6 +290,8 @@ class BatchAdmin(admin.ModelAdmin):
                 batch.mean_work_time_in_seconds(), max_units=6),
             'batch_median_work_time': humanfriendly.format_timespan(
                 batch.median_work_time_in_seconds(), max_units=6),
+            'first_finished_time': first_finished_time,
+            'last_finished_time': last_finished_time,
             'stats_users': stats_users,
         })
 
