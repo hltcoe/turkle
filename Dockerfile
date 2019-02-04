@@ -3,14 +3,14 @@ MAINTAINER Craig Harman <craig@craigharman.net>
 LABEL Description="Image for running a Turkle interface"
 
 RUN yum install epel-release -y && \
-    yum install crontabs git patch python-pip -y && \
+    yum install crontabs git patch python36 python36-pip -y && \
     yum clean all -y
 
 WORKDIR /opt/turkle
 
 COPY requirements.txt /opt/turkle/requirements.txt
-RUN pip install --upgrade -r requirements.txt
-RUN pip install gunicorn whitenoise
+RUN pip3.6 install --upgrade -r requirements.txt
+RUN pip3.6 install gunicorn whitenoise
 
 COPY turkle /opt/turkle/turkle
 COPY manage.py /opt/turkle/manage.py
@@ -24,8 +24,8 @@ RUN crontab /etc/cron.d/turkle
 
 RUN patch turkle_site/settings.py enable_whitenoise.patch
 
-RUN python manage.py collectstatic
-RUN python manage.py migrate
+RUN python3.6 manage.py collectstatic
+RUN python3.6 manage.py migrate
 RUN ./create_turkle_admin.sh
 
 VOLUME /opt/turkle
