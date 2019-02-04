@@ -836,7 +836,7 @@ class TestModels(django.test.TestCase):
         str(task) should return the template's title followed by :id of the
         task.
         """
-        self.assertEqual('Task id:1', str(self.task))
+        self.assertEqual('Task id:{}'.format(self.task.id), str(self.task))
 
     def test_result_to_dict_Answer(self):
         self.assertEqual(
