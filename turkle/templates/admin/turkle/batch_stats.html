@@ -79,7 +79,7 @@ $(function () {
       </tr>
       <tr>
         <th>Mean Time / Assignment</th>
-        <td>{{ batch_mean_work_time }} ({{ batch.mean_work_time_in_seconds|floatformat }}s)</td>
+        <td>{{ batch_mean_work_time }} ({{ batch.mean_work_time_in_seconds | floatformat }}s)</td>
       </tr>
       <tr>
         <th>Median Time / Assignment</th>
@@ -102,7 +102,10 @@ $(function () {
         <tr>
           <th>Username</th>
           <th>Name</th>
-          <th># Assignments Completed</th>
+          <th># Assignments</th>
+          <th>Mean Time</th>
+          <th>Median Time</th>
+          <th>Most Recent Assignment</th>
         </tr>
       </thead>
       <tbody>
@@ -111,6 +114,9 @@ $(function () {
           <td>{{ stats_user.username }}</td>
           <td>{{ stats_user.full_name }}</td>
           <td>{{ stats_user.assignments_completed }}</td>
+          <td>{{ stats_user.mean_work_time | floatformat }}s</td>
+          <td>{{ stats_user.median_work_time }}s</td>
+          <td>{{ stats_user.last_finished_time }}</td>
         </tr>
         {% endfor %}
       </tbody>

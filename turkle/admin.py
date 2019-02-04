@@ -1,5 +1,6 @@
 from io import BytesIO
 import json
+import statistics
 
 from django.conf.urls import url
 from django.contrib import admin, messages
@@ -272,10 +273,20 @@ class BatchAdmin(admin.ModelAdmin):
 
         stats_users = []
         for user in batch.users_that_completed_tasks().order_by('username'):
+            assignments = batch.assignments_completed_by(user)
+            last_finished_time = assignments.order_by('updated_at').last().created_at
+            mean_work_time = statistics.mean(
+                [ta.work_time_in_seconds() for ta in assignments])
+            median_work_time = int(statistics.median(
+                [ta.work_time_in_seconds() for ta in assignments]))
+
             stats_users.append({
                 'username': user.username,
                 'full_name': user.get_full_name(),
                 'assignments_completed': batch.total_assignments_completed_by(user),
+                'mean_work_time': mean_work_time,
+                'median_work_time': median_work_time,
+                'last_finished_time': last_finished_time,
             })
 
         finished_assignments = batch.finished_task_assignments().order_by('updated_at')
