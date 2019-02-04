@@ -257,7 +257,7 @@ class BatchAdmin(admin.ModelAdmin):
     }
     list_display = (
         'name', 'project', 'active', 'stats', 'download_csv',
-        'tasks_completed', 'assignments_completed')
+        'tasks_completed', 'assignments_completed', 'total_finished_tasks')
 
     def assignments_completed(self, obj):
         return '{} / {}'.format(obj.total_finished_task_assignments(),
