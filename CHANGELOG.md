@@ -7,6 +7,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Bootstrap 4 support for the glyphicons from Bootstrap 3
+- New results CSV column `Turkle.username`
 
 ### Changed
 - Login page less fugly

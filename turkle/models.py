@@ -295,7 +295,8 @@ class Batch(models.Model):
              u'AssignmentDurationInSeconds', u'AssignmentId', u'WorkerId',
              u'AcceptTime', u'SubmitTime', u'WorkTimeInSeconds'] +
             [u'Input.' + k for k in sorted(input_field_set)] +
-            [u'Answer.' + k for k in sorted(answer_field_set)]
+            [u'Answer.' + k for k in sorted(answer_field_set)] +
+            [u'Turkle.Username']
         )
 
     def _results_data(self, task_queryset):
@@ -322,6 +323,11 @@ class Batch(models.Model):
             batch = task.batch
             project = task.batch.project
 
+            if task_assignment.assigned_to:
+                username = task_assignment.assigned_to.username
+            else:
+                username = ''
+
             row = {
                 'HITId': task.id,
                 'HITTypeId': project.id,
@@ -335,6 +341,7 @@ class Batch(models.Model):
                 'SubmitTime': task_assignment.updated_at.strftime(time_format),
                 'WorkTimeInSeconds': int((task_assignment.updated_at -
                                           task_assignment.created_at).total_seconds()),
+                'Turkle.Username': username,
             }
             row.update({u'Input.' + k: v for k, v in task.input_csv_fields.items()})
             row.update({u'Answer.' + k: v for k, v in task_assignment.answers.items()})
@@ -468,7 +475,8 @@ class Project(models.Model):
              u'AssignmentDurationInSeconds', u'AssignmentId', u'WorkerId',
              u'AcceptTime', u'SubmitTime', u'WorkTimeInSeconds'] +
             [u'Input.' + k for k in sorted(input_field_set)] +
-            [u'Answer.' + k for k in sorted(answer_field_set)]
+            [u'Answer.' + k for k in sorted(answer_field_set)] +
+            [u'Turkle.Username']
         )
 
     def __unicode__(self):
