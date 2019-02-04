@@ -127,9 +127,10 @@ class TestBatchAdmin(django.test.TestCase):
                 })
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], u'/admin/turkle/batch/1/review/')
         self.assertTrue(Batch.objects.filter(name='batch_save').exists())
-        matching_batch = Batch.objects.filter(name='batch_save').first()
+        matching_batch = Batch.objects.filter(name='batch_save').last()
+        self.assertEqual(response['Location'],
+                         u'/admin/turkle/batch/{}/review/'.format(matching_batch.id))
         self.assertEqual(matching_batch.filename, u'form_1_vals.csv')
         self.assertEqual(matching_batch.total_tasks(), 1)
         self.assertEqual(matching_batch.allotted_assignment_time,
@@ -155,9 +156,10 @@ class TestBatchAdmin(django.test.TestCase):
                 })
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], u'/admin/turkle/batch/1/review/')
         self.assertTrue(Batch.objects.filter(name='batch_save').exists())
-        matching_batch = Batch.objects.filter(name='batch_save').first()
+        matching_batch = Batch.objects.filter(name='batch_save').last()
+        self.assertEqual(response['Location'],
+                         u'/admin/turkle/batch/{}/review/'.format(matching_batch.id))
         self.assertEqual(matching_batch.filename, u'emoji.csv')
 
         self.assertEqual(matching_batch.total_tasks(), 3)

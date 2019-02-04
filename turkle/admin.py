@@ -1,5 +1,6 @@
 from io import BytesIO
 import json
+import statistics
 
 from django.conf.urls import url
 from django.contrib import admin, messages
@@ -16,6 +17,7 @@ from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
+import humanfriendly
 import unicodecsv
 
 from turkle.models import Batch, Project, TaskAssignment
@@ -255,8 +257,54 @@ class BatchAdmin(admin.ModelAdmin):
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
     list_display = (
-        'name', 'project', 'filename', 'total_tasks', 'assignments_per_task',
-        'task_assignments_completed', 'total_finished_tasks', 'active', 'download_csv')
+        'name', 'project', 'active', 'stats', 'download_csv',
+        'tasks_completed', 'assignments_completed', 'total_finished_tasks')
+
+    def assignments_completed(self, obj):
+        return '{} / {}'.format(obj.total_finished_task_assignments(),
+                                obj.assignments_per_task * obj.total_tasks())
+
+    def batch_stats(self, request, batch_id):
+        try:
+            batch = Batch.objects.get(id=batch_id)
+        except ObjectDoesNotExist:
+            messages.error(request, u'Cannot find Batch with ID {}'.format(batch_id))
+            return redirect(reverse('turkle_admin:turkle_batch_changelist'))
+
+        stats_users = []
+        for user in batch.users_that_completed_tasks().order_by('username'):
+            assignments = batch.assignments_completed_by(user)
+            last_finished_time = assignments.order_by('updated_at').last().created_at
+            mean_work_time = statistics.mean(
+                [ta.work_time_in_seconds() for ta in assignments])
+            median_work_time = int(statistics.median(
+                [ta.work_time_in_seconds() for ta in assignments]))
+
+            stats_users.append({
+                'username': user.username,
+                'full_name': user.get_full_name(),
+                'assignments_completed': batch.total_assignments_completed_by(user),
+                'mean_work_time': mean_work_time,
+                'median_work_time': median_work_time,
+                'last_finished_time': last_finished_time,
+            })
+
+        finished_assignments = batch.finished_task_assignments().order_by('updated_at')
+        first_finished_time = finished_assignments.first().created_at
+        last_finished_time = finished_assignments.last().created_at
+
+        return render(request, 'admin/turkle/batch_stats.html', {
+            'batch': batch,
+            'batch_total_work_time': humanfriendly.format_timespan(
+                batch.total_work_time_in_seconds(), max_units=6),
+            'batch_mean_work_time': humanfriendly.format_timespan(
+                batch.mean_work_time_in_seconds(), max_units=6),
+            'batch_median_work_time': humanfriendly.format_timespan(
+                batch.median_work_time_in_seconds(), max_units=6),
+            'first_finished_time': first_finished_time,
+            'last_finished_time': last_finished_time,
+            'stats_users': stats_users,
+        })
 
     def cancel_batch(self, request, batch_id):
         try:
@@ -275,7 +323,7 @@ class BatchAdmin(admin.ModelAdmin):
 
     def download_csv(self, obj):
         download_url = reverse('download_batch_csv', kwargs={'batch_id': obj.id})
-        return format_html('<a href="{}" class="button">Download CSV results file</a>'.
+        return format_html('<a href="{}" class="button">CSV results</a>'.
                            format(download_url))
 
     def get_fields(self, request, obj):
@@ -302,6 +350,8 @@ class BatchAdmin(admin.ModelAdmin):
                 self.admin_site.admin_view(self.review_batch), name='review_batch'),
             url(r'^(?P<batch_id>\d+)/publish/$',
                 self.admin_site.admin_view(self.publish_batch), name='publish_batch'),
+            url(r'^(?P<batch_id>\d+)/stats/$',
+                self.admin_site.admin_view(self.batch_stats), name='batch_stats'),
             url(r'^update_csv_line_endings',
                 self.admin_site.admin_view(self.update_csv_line_endings),
                 name='update_csv_line_endings'),
@@ -369,9 +419,13 @@ class BatchAdmin(admin.ModelAdmin):
         else:
             super(BatchAdmin, self).save_model(request, obj, form, change)
 
-    def task_assignments_completed(self, obj):
-        return '{} / {}'.format(obj.total_finished_task_assignments(),
-                                obj.assignments_per_task * obj.total_tasks())
+    def stats(self, obj):
+        stats_url = reverse('turkle_admin:batch_stats', kwargs={'batch_id': obj.id})
+        return format_html('<a href="{}" class="button">Stats</a>'.
+                           format(stats_url))
+
+    def tasks_completed(self, obj):
+        return '{} / {}'.format(obj.total_finished_tasks(), obj.total_tasks())
 
     def update_csv_line_endings(self, request):
         csv_unix_line_endings = (request.POST[u'csv_unix_line_endings'] == u'true')

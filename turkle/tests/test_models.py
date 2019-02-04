@@ -146,6 +146,20 @@ class TestTaskAssignment(django.test.TestCase):
         TaskAssignment.expire_all_abandoned()
         self.assertEqual(TaskAssignment.objects.count(), 1)
 
+    def test_work_time_in_seconds(self):
+        project = Project.objects.create()
+        batch = Batch.objects.create(project=project)
+        task = Task.objects.create(batch=batch)
+        ta = TaskAssignment.objects.create(task=task)
+
+        em = 'Cannot compute work_time_in_seconds for incomplete TaskAssignment %d' % ta.id
+        with self.assertRaisesMessage(ValueError, em):
+            ta.work_time_in_seconds()
+
+        ta.completed = True
+        ta.save()
+        self.assertEqual(float(ta.work_time_in_seconds()).is_integer(), True)
+
 
 class TestBatch(django.test.TestCase):
 
@@ -461,6 +475,77 @@ class TestBatchExpireAssignments(django.test.TestCase):
         self.assertEqual(TaskAssignment.objects.count(), 0)
 
 
+class TestBatchReportFunctions(django.test.TestCase):
+    def setUp(self):
+        project = Project.objects.create(name='test')
+        self.batch = Batch.objects.create(
+            assignments_per_task=2,
+            project=project,
+        )
+        self.task_1 = Task.objects.create(
+            batch=self.batch,
+            input_csv_fields={'number': '1', 'letter': 'a'}
+        )
+        self.task_2 = Task.objects.create(
+            batch=self.batch,
+            input_csv_fields={'number': '2', 'letter': 'b'}
+        )
+        self.user_1 = User.objects.create_user('user_1', password='secret')
+        self.user_2 = User.objects.create_user('user_2', password='secret')
+
+    def test_assignments_completed(self):
+        self.assertEqual(self.batch.total_users_that_completed_tasks(), 0)
+        ta_1 = TaskAssignment.objects.create(
+            assigned_to=self.user_1,
+            completed=False,
+            task=self.task_1,
+        )
+        self.assertEqual(self.batch.total_users_that_completed_tasks(), 0)
+        self.assertEqual(self.batch.total_assignments_completed_by(self.user_1), 0)
+        self.assertEqual(self.batch.total_assignments_completed_by(self.user_2), 0)
+
+        ta_1.completed = True
+        ta_1.save()
+        self.assertEqual(self.batch.total_users_that_completed_tasks(), 1)
+        self.assertEqual(self.batch.users_that_completed_tasks()[0], self.user_1)
+        self.assertEqual(self.batch.total_assignments_completed_by(self.user_1), 1)
+        self.assertEqual(self.batch.assignments_completed_by(self.user_1)[0], ta_1)
+        self.assertEqual(self.batch.total_assignments_completed_by(self.user_2), 0)
+
+        ta_2 = TaskAssignment.objects.create(
+            assigned_to=self.user_2,
+            completed=True,
+            task=self.task_1,
+        )
+        self.assertEqual(self.batch.total_users_that_completed_tasks(), 2)
+        self.assertEqual(self.batch.assignments_completed_by(self.user_2)[0], ta_2)
+
+    def test_work_time_in_seconds_stats(self):
+        TaskAssignment.objects.create(
+            assigned_to=self.user_1,
+            completed=True,
+            task=self.task_1,
+        )
+        TaskAssignment.objects.create(
+            assigned_to=self.user_1,
+            completed=True,
+            task=self.task_1,
+        )
+        TaskAssignment.objects.create(
+            assigned_to=self.user_1,
+            completed=True,
+            task=self.task_1,
+        )
+        self.batch.median_work_time_in_seconds()
+        self.batch.mean_work_time_in_seconds()
+        self.batch.total_work_time_in_seconds()
+
+    def test_work_time_in_seconds_stats_with_no_completed_assignments(self):
+        self.batch.median_work_time_in_seconds()
+        self.batch.mean_work_time_in_seconds()
+        self.batch.total_work_time_in_seconds()
+
+
 class TestProject(django.test.TestCase):
 
     def test_available_for_active_flag(self):
@@ -752,7 +837,7 @@ class TestModels(django.test.TestCase):
         str(task) should return the template's title followed by :id of the
         task.
         """
-        self.assertEqual('Task id:1', str(self.task))
+        self.assertEqual('Task id:{}'.format(self.task.id), str(self.task))
 
     def test_result_to_dict_Answer(self):
         self.assertEqual(

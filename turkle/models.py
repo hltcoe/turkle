@@ -1,6 +1,7 @@
 import datetime
 import os.path
 import re
+import statistics
 import sys
 
 from bs4 import BeautifulSoup
@@ -85,6 +86,28 @@ class TaskAssignment(models.Model):
             self.task.completed = True
             self.task.save()
 
+    def work_time_in_seconds(self):
+        """Return number of seconds elapsed between Task assignment and submission
+
+        We compute the time elapsed in Python instead of in SQL
+        because "there are no native date/time fields in SQLite and
+        Django currently emulates these features using a text field,"
+        per the Django Docs:
+          https://docs.djangoproject.com/en/2.1/ref/models/querysets/#aggregation-functions
+
+        Returns:
+            Integer for seconds elapsed between Task assignment and submission
+
+        Raises:
+            ValueError if TaskAssignment is not completed
+        """
+        if self.completed:
+            return int((self.updated_at - self.created_at).total_seconds())
+        else:
+            raise ValueError(
+                'Cannot compute work_time_in_seconds for incomplete TaskAssignment %d' %
+                self.id)
+
 
 class Batch(models.Model):
     class Meta:
@@ -99,6 +122,17 @@ class Batch(models.Model):
     filename = models.CharField(max_length=1024)
     project = models.ForeignKey('Project', on_delete=models.CASCADE)
     name = models.CharField(max_length=1024)
+
+    def assignments_completed_by(self, user):
+        """
+        Returns:
+            QuerySet of all TaskAssignments completed by specified user
+            that are part of this Batch
+        """
+        return TaskAssignment.objects.\
+            filter(completed=True).\
+            filter(assigned_to_id=user.id).\
+            filter(task__batch=self)
 
     def available_tasks_for(self, user):
         """Retrieve a list of all Tasks in this batch available for the user.
@@ -200,6 +234,32 @@ class Batch(models.Model):
         return TaskAssignment.objects.filter(task__batch_id=self.id)\
                                      .filter(completed=True)
 
+    def mean_work_time_in_seconds(self):
+        """
+        Returns:
+            Float for mean work time (in seconds) for completed Tasks in this Batch
+        """
+        finished_assignments = self.finished_task_assignments()
+        if finished_assignments.count() > 0:
+            return statistics.mean(
+                [ta.work_time_in_seconds() for ta in self.finished_task_assignments()])
+        else:
+            return 0
+
+    def median_work_time_in_seconds(self):
+        """
+        Returns:
+            Integer for median work time (in seconds) for completed Tasks in this Batch
+        """
+        finished_assignments = self.finished_task_assignments()
+        if finished_assignments.count() > 0:
+            # np.median returns float but we convert back to int computed by work_time_in_seconds()
+            return int(statistics.median(
+                [ta.work_time_in_seconds() for ta in self.finished_task_assignments()]
+            ))
+        else:
+            return 0
+
     def next_available_task_for(self, user):
         """Returns next available Task for the user, or None if no Tasks available
 
@@ -210,6 +270,14 @@ class Batch(models.Model):
             Task|None
         """
         return self.available_tasks_for(user).first()
+
+    def total_assignments_completed_by(self, user):
+        """
+        Returns:
+            Integer of total number of TaskAssignments completed by
+            specified user that are part of this Batch
+        """
+        return self.assignments_completed_by(user).count()
 
     def total_available_tasks_for(self, user):
         """Returns number of Tasks available for the user
@@ -230,9 +298,28 @@ class Batch(models.Model):
         return self.finished_task_assignments().count()
     total_finished_task_assignments.short_description = 'Total finished Task Assignments'
 
+    def total_task_assignments(self):
+        return self.assignments_per_task * self.total_tasks()
+
     def total_tasks(self):
         return self.task_set.count()
     total_tasks.short_description = 'Total Tasks'
+
+    def total_users_that_completed_tasks(self):
+        """
+        Returns:
+            Integer counting number of Users that have completed
+            TaskAssignments that are part of this Batch
+        """
+        return self.users_that_completed_tasks().count()
+
+    def total_work_time_in_seconds(self):
+        """
+        Returns:
+            Integer sum of work_time_in_seconds() for all completed
+            TaskAssignments in this Batch
+        """
+        return sum([ta.work_time_in_seconds() for ta in self.finished_task_assignments()])
 
     def to_csv(self, csv_fh, lineterminator='\r\n'):
         """Write CSV output to file handle for every Task in batch
@@ -254,6 +341,17 @@ class Batch(models.Model):
             that have NOT been completed.
         """
         return self.task_set.filter(completed=False).order_by('id')
+
+    def users_that_completed_tasks(self):
+        """
+        Returns:
+            QuerySet of all Users who have completed TaskAssignments
+            that are part of this Batch
+        """
+        return User.objects.\
+            filter(taskassignment__task__batch=self).\
+            filter(taskassignment__completed=True).\
+            distinct()
 
     def _parse_csv(self, csv_fh):
         """
@@ -339,8 +437,7 @@ class Batch(models.Model):
                 'WorkerId': task_assignment.assigned_to_id,
                 'AcceptTime': task_assignment.created_at.strftime(time_format),
                 'SubmitTime': task_assignment.updated_at.strftime(time_format),
-                'WorkTimeInSeconds': int((task_assignment.updated_at -
-                                          task_assignment.created_at).total_seconds()),
+                'WorkTimeInSeconds': task_assignment.work_time_in_seconds(),
                 'Turkle.Username': username,
             }
             row.update({u'Input.' + k: v for k, v in task.input_csv_fields.items()})
