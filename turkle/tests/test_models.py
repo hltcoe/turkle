@@ -164,10 +164,9 @@ class TestTaskAssignment(django.test.TestCase):
 class TestBatch(django.test.TestCase):
 
     def test_batch_to_csv(self):
-        project = Project(name='test', html_template='<p>${number} - ${letter}</p>')
-        project.save()
-        batch = Batch(project=project)
-        batch.save()
+        project = Project.objects.create(name='test', html_template='<p>${number} - ${letter}</p>')
+        batch = Batch.objects.create(project=project)
+        user = User.objects.create(username='joe')
 
         task1 = Task(
             batch=batch,
@@ -177,7 +176,7 @@ class TestBatch(django.test.TestCase):
         task1.save()
         TaskAssignment(
             answers={'combined': '1a'},
-            assigned_to=None,
+            assigned_to=user,
             completed=True,
             task=task1
         ).save()
@@ -190,7 +189,7 @@ class TestBatch(django.test.TestCase):
         task2.save()
         TaskAssignment(
             answers={'combined': '2b'},
-            assigned_to=None,
+            assigned_to=user,
             completed=True,
             task=task2
         ).save()
@@ -198,9 +197,11 @@ class TestBatch(django.test.TestCase):
         csv_output = BytesIO()
         batch.to_csv(csv_output)
         csv_string = csv_output.getvalue()
-        self.assertTrue(b'"Input.letter","Input.number","Answer.combined"\r\n' in csv_string)
-        self.assertTrue(b'"b","2","2b"\r\n' in csv_string)
-        self.assertTrue(b'"a","1","1a"\r\n' in csv_string)
+        self.assertTrue(
+            b'"Input.letter","Input.number","Answer.combined","Turkle.Username"\r\n'
+            in csv_string)
+        self.assertTrue(b'"b","2","2b","joe"\r\n' in csv_string)
+        self.assertTrue(b'"a","1","1a","joe"\r\n' in csv_string)
 
     def test_batch_to_csv_variable_number_of_answers(self):
         project = Project(name='test', html_template='<p>${letter}</p>')
