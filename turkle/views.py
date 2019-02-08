@@ -1,4 +1,5 @@
 from io import BytesIO
+import urllib
 
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
@@ -161,11 +162,20 @@ def task_assignment(request, task_id, task_assignment_id):
     auto_accept_status = request.session.get('auto_accept_status', False)
 
     if request.method == 'GET':
+        http_get_params = "?assignmentId={}&hitId={}&workerId={}&urlSubmitTo={}".format(
+            task_assignment.id,
+            task.id,
+            request.user.id,
+            urllib.parse.quote(
+                reverse('task_assignment', kwargs={
+                    'task_id': task.id, 'task_assignment_id': task_assignment.id}),
+                safe=''))
         return render(
             request,
             'task_assignment.html',
             {
                 'auto_accept_status': auto_accept_status,
+                'http_get_params': http_get_params,
                 'task': task,
                 'task_assignment': task_assignment,
             },
@@ -269,7 +279,12 @@ def preview(request, task_id):
         messages.error(request, u'You do not have permission to view this Task')
         return redirect(index)
 
-    return render(request, 'preview.html', {'task': task})
+    http_get_params = "?assignmentId=ASSIGNMENT_ID_NOT_AVAILABLE&hitId={}".format(
+        task.id)
+    return render(request, 'preview.html', {
+        'http_get_params': http_get_params,
+        'task': task
+    })
 
 
 def preview_iframe(request, task_id):
