@@ -18,37 +18,14 @@ STATIC_ROOT = ''
 # Example: "http://media.lawrence.com/static/"
 STATIC_URL = '/static/'
 
-# Running with a URL prefix ("sub-directory").
-# Configure your reverse proxy appropriately.
-# Set the environment variable 'TURKLE_PREFIX' to the URL prefix
-# Warning: this could break templates that depend on using Turkle JS or CSS files.
-if 'TURKLE_PREFIX' in os.environ:
-    FORCE_SCRIPT_NAME = os.environ['TURKLE_PREFIX']
-    if FORCE_SCRIPT_NAME[0] != '/':
-        FORCE_SCRIPT_NAME = '/' + FORCE_SCRIPT_NAME
-    # If manually configuring location of static files, comment line below
-    STATIC_URL = FORCE_SCRIPT_NAME + STATIC_URL
-
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
-
-if 'TURKLE_DB_ENGINE' in os.environ and os.environ['TURKLE_DB_ENGINE'].lower() == 'mysql':
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.mysql',
-            'NAME': os.environ['TURKLE_DB_NAME'],
-            'USER': os.environ['TURKLE_DB_USER'],
-            'PASSWORD': os.environ['TURKLE_DB_PASSWORD'],
-            'HOST': os.environ['TURKLE_DB_HOST'],
-        }
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'db.sqlite3',
     }
-else:
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.sqlite3',
-            'NAME': 'db.sqlite3',
-        }
-    }
+}
 
 TEST_RUNNER = 'django_nose.NoseTestSuiteRunner'
 
@@ -205,3 +182,34 @@ TURKLE_EMAIL_ENABLED = False
 # Uncomment and configure (Note: this does not work for sqlite databases)
 # DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
 # DBBACKUP_STORAGE_OPTIONS = {'location': '/opt/backups'}
+
+
+# Docker specific configuration
+
+# Running with a URL prefix ("sub-directory").
+# Configure your reverse proxy appropriately.
+# Set the environment variable 'TURKLE_PREFIX' to the URL prefix
+# Warning: this could break templates that depend on using Turkle JS or CSS files.
+# Note: this is intended for the Docker image runtime configuration
+if 'TURKLE_PREFIX' in os.environ:
+    FORCE_SCRIPT_NAME = os.environ['TURKLE_PREFIX']
+    if FORCE_SCRIPT_NAME[0] != '/':
+        FORCE_SCRIPT_NAME = '/' + FORCE_SCRIPT_NAME
+    # If manually configuring location of static files, comment line below
+    STATIC_URL = FORCE_SCRIPT_NAME + STATIC_URL
+
+# override database configuration when running as under Docker with MySQL
+if 'TURKLE_DB_ENGINE' in os.environ and os.environ['TURKLE_DB_ENGINE'].lower() == 'mysql':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.environ['TURKLE_DB_NAME'],
+            'USER': os.environ['TURKLE_DB_USER'],
+            'PASSWORD': os.environ['TURKLE_DB_PASSWORD'],
+            'HOST': os.environ['TURKLE_DB_HOST'],
+        }
+    }
+
+if 'TURKLE_DOCKER' in os.environ:
+    MIDDLEWARE = ('whitenoise.middleware.WhiteNoiseMiddleware', *MIDDLEWARE)
+    STATIC_ROOT = os.path.join(os.getcwd(), 'staticfiles')
