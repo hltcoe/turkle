@@ -24,6 +24,7 @@ services:
       - "8080:8080"
     restart: always
     environment:
+      TURKLE_DOCKER: 1
       TURKLE_DB_ENGINE: MySQL
       TURKLE_DB_HOST: db
       TURKLE_DB_USER: turkleuser
