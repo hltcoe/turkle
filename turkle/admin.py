@@ -274,11 +274,16 @@ class BatchAdmin(admin.ModelAdmin):
         stats_users = []
         for user in batch.users_that_completed_tasks().order_by('username'):
             assignments = batch.assignments_completed_by(user)
-            last_finished_time = assignments.order_by('updated_at').last().created_at
-            mean_work_time = statistics.mean(
-                [ta.work_time_in_seconds() for ta in assignments])
-            median_work_time = int(statistics.median(
-                [ta.work_time_in_seconds() for ta in assignments]))
+            if assignments:
+                last_finished_time = assignments.order_by('updated_at').last().created_at
+                mean_work_time = statistics.mean(
+                    [ta.work_time_in_seconds() for ta in assignments])
+                median_work_time = int(statistics.median(
+                    [ta.work_time_in_seconds() for ta in assignments]))
+            else:
+                last_finished_time = 'N/A'
+                mean_work_time = 'N/A'
+                median_work_time = 'N/A'
 
             stats_users.append({
                 'username': user.username,
@@ -290,8 +295,12 @@ class BatchAdmin(admin.ModelAdmin):
             })
 
         finished_assignments = batch.finished_task_assignments().order_by('updated_at')
-        first_finished_time = finished_assignments.first().created_at
-        last_finished_time = finished_assignments.last().created_at
+        if finished_assignments:
+            first_finished_time = finished_assignments.first().created_at
+            last_finished_time = finished_assignments.last().created_at
+        else:
+            first_finished_time = 'N/A'
+            last_finished_time = 'N/A'
 
         return render(request, 'admin/turkle/batch_stats.html', {
             'batch': batch,

@@ -331,6 +331,15 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
         self.assertTrue(Batch.objects.filter(name='batch_save_modified').exists())
 
+    def test_batch_stats_view(self):
+        self.test_batch_add()
+        batch = Batch.objects.get(name='batch_save')
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.get(reverse('turkle_admin:batch_stats', kwargs={'batch_id': batch.id}))
+        self.assertEqual(response.status_code, 200)
+
 
 class TestGroupAdmin(django.test.TestCase):
     def setUp(self):
