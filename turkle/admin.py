@@ -276,10 +276,10 @@ class BatchAdmin(admin.ModelAdmin):
             assignments = batch.assignments_completed_by(user)
             if assignments:
                 last_finished_time = assignments.order_by('updated_at').last().created_at
-                mean_work_time = statistics.mean(
-                    [ta.work_time_in_seconds() for ta in assignments])
-                median_work_time = int(statistics.median(
+                mean_work_time = '%.2f' % float(statistics.mean(
                     [ta.work_time_in_seconds() for ta in assignments]))
+                median_work_time = '{}s'.format(int(statistics.median(
+                    [ta.work_time_in_seconds() for ta in assignments])))
             else:
                 last_finished_time = 'N/A'
                 mean_work_time = 'N/A'
