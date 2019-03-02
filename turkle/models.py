@@ -1,8 +1,8 @@
+import ctypes
 import datetime
 import os.path
 import re
 import statistics
-import sys
 
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import User
@@ -15,7 +15,7 @@ import unicodecsv
 
 
 # The default field size limit is 131072 characters
-unicodecsv.field_size_limit(sys.maxsize)
+unicodecsv.field_size_limit(int(ctypes.c_ulong(-1).value // 2))
 
 
 class Task(models.Model):
