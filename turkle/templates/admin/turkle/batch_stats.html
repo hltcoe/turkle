@@ -37,11 +37,15 @@ $(function () {
         <td>{{ batch.project.name }}</td>
       </tr>
       <tr>
-        <th>Created at</th>
+        <th>Project Created by</th>
+        <td>{{ batch.project.created_by.get_full_name }} ({{ batch.project.created_by.username }})</td>
+      </tr>
+      <tr>
+        <th>Batch Created at</th>
         <td>{{ batch.created_at }}</td>
       </tr>
       <tr>
-        <th>Created by</th>
+        <th>Batch Created by</th>
         <td>{{ batch.created_by.get_full_name }} ({{ batch.created_by.username }})</td>
       </tr>
       <tr>
