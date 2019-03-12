@@ -44,12 +44,17 @@ class TurkleAdminSite(admin.AdminSite):
         return my_urls + urls
 
 
+class CustomGroupMultipleChoiceField(ModelMultipleChoiceField):
+    def label_from_instance(self, user):
+        return '%s (%s)' % (user.get_full_name(), user.username)
+
+
 class CustomGroupAdminForm(ModelForm):
     """Hides 'Permissions' section, adds 'Group Members' section
     """
-    users = ModelMultipleChoiceField(
+    users = CustomGroupMultipleChoiceField(
         label='Group Members',
-        queryset=User.objects.all(),
+        queryset=User.objects.order_by('last_name'),
         required=False,
         widget=FilteredSelectMultiple('User', False),
     )
