@@ -568,6 +568,7 @@ with the commands:
     docker-compose run turkle python3.6 manage.py createsuperuser
 
 This will stand up a Turkle server listening on port 8080.
+The database files are stored in a docker volume called turkle_db_data.
 
 ## Changing the admin password ##
 
