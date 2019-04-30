@@ -213,3 +213,18 @@ if 'TURKLE_DB_ENGINE' in os.environ and os.environ['TURKLE_DB_ENGINE'].lower() =
 if 'TURKLE_DOCKER' in os.environ:
     MIDDLEWARE = ('whitenoise.middleware.WhiteNoiseMiddleware', *MIDDLEWARE)
     STATIC_ROOT = os.path.join(os.getcwd(), 'staticfiles')
+    LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': False,
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+            }
+        },
+        'loggers': {
+            'django': {
+                'handlers': ['console'],
+                'level': 'WARNING',
+            },
+        },
+    }
