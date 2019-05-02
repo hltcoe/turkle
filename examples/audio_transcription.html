@@ -1,19 +1,28 @@
-<!-- Create a CSV file with a single column with a label of audio_url.
-     Fill the column with the URLs to your mp3 audio files.
-     You will need to serve the audio files using a web server. -->
+<!--
+    HTML template for audio transcription.
+
+    Uses Bootstrap CSS loaded from a public CDN.
+
+    Uses the HTML5 audio element. The audio files must be served from another server.
+    The example CSV file points to an mp3 file in turkle's Github repository.
+    Most browsers will support wave or mp3 files.
+
+    The input CSV file is a single column with the heading of audio_url.
+    The output CSV file contains Input.audio_url and Output.transcript.
+-->
 
 <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 
-<h1>Instructions</h1>
-<p>Transcribe the audio</p>
-<p>Ignore "umms", "hmms", "uhs" and other non-textual phrases</p>
+<div class="container mt-2">
+  <h3>Instructions</h3>
+  <p>Transcribe the audio</p>
+  <p>Ignore "umms", "hmms", "uhs" and other non-textual phrases</p>
 
-<div class="form-group">
-    <audio controls="">
-        <source src="${audio_url}" type="audio/mpeg" />
-    </audio>
-</div>
+  <div class="form-group">
+    <audio controls src="${audio_url}">Your browser does not support this task</audio>
+  </div>
 
-<div class="form-group">
-    <input type="text" name="transcription" class="form-control" placeholder="Transcribe the audio here..." />
+  <div class="form-group">
+    <input type="text" name="transcript" class="form-control" placeholder="Transcribe the audio here..." />
+  </div>
 </div>
