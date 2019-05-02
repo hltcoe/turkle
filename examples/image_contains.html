@@ -1,0 +1,52 @@
+<!--
+    HTML template that uses images and variable in instructions.
+
+    This template uses Bootstrap and jQuery.
+    The JavaScript and CSS are loaded from public CDNs.
+
+    The CSV input file should have two columns "object" and "image_url".
+    The template then uses ${object} in the instructions and ${image_url} in an img tag.
+
+    The CSV output file will have columns for Input.object, Input.image_url and Answer.answer
+    in addition to metadata columns.
+-->
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+<script>
+$(document).ready(function() {
+  // process a click on an option button
+  $('.option').on('click', function(event) {
+    // copy answer to hidden input
+    $('input[name="answer"]').val($(this).html());
+    // erase any selected button
+    $('.option').removeClass('btn-info');
+    // highlight the current button
+    $(this).addClass('btn-info');
+    // don't submit the form
+    event.preventDefault();
+  });
+});
+</script>
+
+<div class="container mt-2">
+  <h4>Does the image contain any ${object}?</h4>
+  <div class="row">
+    <div class="col-8">
+      <img src="${image_url}" class="img-fluid" alt="Responsive image">
+    </div>
+    <div class="col-4">
+      <h5>Select an option</h5>
+      <div class="form-group">
+        <div class="btn-group-vertical">
+          <button class="btn btn-secondary option">Yes</button>
+          <button class="btn btn-secondary option">No</button>
+          <button class="btn btn-secondary option">Cannot Determine</button>
+        </div>
+      </div>
+      <input type="hidden" name="answer">
+      <div class="form-group">
+        <input type="submit" class="btn btn-primary" value="Submit">
+      </div>
+    </div>
+  </div>
+</div>
