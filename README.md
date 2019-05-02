@@ -26,56 +26,24 @@ Turkle's features include:
 Turkle provides a Task-oriented interface for **Workers**, and an
 administrative interface for **Requesters**.
 
-Requesters create **Projects** that have an HTML template with a form.
+Requesters create **Projects** that have an HTML template with a form body.
 Once a Project has been created, requesters can create a **Batch** of
 **Tasks** by uploading a CSV file.  A separate Task is generated for
 each row in the CSV file (excluding the header).  When a Batch is
 created, the Requester can specify how many **Assignments** per Task
-they need.  Each Worker is limited to one Assignment per Task.
+they need.  Each User is limited to one Assignment per Task.
 
-The HTML template will include template variables, which have the form
-`${variable_name}`.  The CSV files used to create Task Batches include
-a header row with the names of the template variables.  When a Worker
-visits a Task web page, the variables in the HTML template will be
-replaced with the corresponding values from a row of the CSV file.
+[Documentation on creating templates](examples/README.md) is found
+in the examples directory.
 
-If a Project's HTML template file uses template variables named
-`${foo}` and `${bar}`:
-
-``` html
-  <p>The variable 'foo' has the value: ${foo}</p>
-  <p>The variable 'bar' has the value: ${bar}</p>
-  <input type="text" name="my_input" />
-```
-
-then the CSV input file's header row should have fields named 'foo'
-and 'bar':
-
-    "foo","bar"
-	"1","one"
-	"2","two"
-
-When a Worker views the web page for a Task or Task Assignment, the
-template variables will be replaced with the corresponding values from
-a row of the CSV file:
-
-``` html
-  <p>The variable 'foo' has the value: 1</p>
-  <p>The variable 'bar' has the value: one</p>
-  <input type="text" name="my_input" />
-```
-
-The HTML template can include any HTML form input fields, such as text
-boxes, radio buttons, and check boxes.  When the Worker submits a Task
-Assignment, the values of the form fields are saved to the Turkle database.
-
-Task Assignment data can be exported to CSV files.  Each row of the
-CSV results file contains the template variable input fields, the
-Worker-submitted form fields, and some metadata fields.  For each
-template variable `${foo}`, the CSV file will contain a column named
-`Input.foo`.  For each submitted form field named `bar`, the CSV file
-will contain a column named `Answer.bar`.  The CSV file will also have
-the fields:
+When the Worker submits a Task Assignment, the values of the form fields
+are saved to the Turkle database. The Task Assignment data can be
+exported to CSV files.  Each row of the CSV results file contains 
+the template variable input fields, the Worker-submitted form fields,
+and some metadata fields.  For each template variable `${foo}`, the 
+CSV file will contain a column named `Input.foo`.  For each submitted 
+form field named `bar`, the CSV file will contain a column named `Answer.bar`.
+The CSV file will also have the fields:
 
 - `HITId` - Task ID
 - `HITTypeId` - Project ID
