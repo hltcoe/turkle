@@ -7,7 +7,7 @@
     The CSV input file should have a single column titled "text".
     The template then uses ${text} to display the text in a blockquote.
 
-    The CSV output file will have columns for Input.text and Output.emotion
+    The CSV output file will have columns for Input.text and Answer.emotion
     in addition to metadata columns.
 -->
 <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
@@ -29,25 +29,25 @@ $(document).ready(function() {
 </script>
 
 <div class="container mt-2">
-    <h3>Instructions</h3>
-    <p>
-        Select the <b>primary</b> emotion the text is expressing.
-    </p>
-    <div class="row">
-        <div class="col-8">
-            <blockquote class="blockquote jumbotron">${text}</blockquote>
-        </div>
-        <div class="col-4">
-            <h5>Select an option</h5>
-            <div class="btn-group-vertical">
-                <button class="btn btn-secondary option">Anger</button>
-                <button class="btn btn-secondary option">Disgust</button>
-                <button class="btn btn-secondary option">Fear</button>
-                <button class="btn btn-secondary option">Happiness</button>
-                <button class="btn btn-secondary option">Sadness</button>
-                <button class="btn btn-secondary option">Surprise</button>
-            </div>
-            <input type="hidden" name="emotion">
-        </div>
+  <h3>Instructions</h3>
+  <p>
+    Select the <b>primary</b> emotion the text is expressing.
+  </p>
+  <div class="row">
+    <div class="col-8">
+      <blockquote class="blockquote jumbotron">${text}</blockquote>
     </div>
+    <div class="col-4">
+      <h5>Select an option</h5>
+      <div class="btn-group-vertical">
+        <button class="btn btn-secondary option">Anger</button>
+        <button class="btn btn-secondary option">Disgust</button>
+        <button class="btn btn-secondary option">Fear</button>
+        <button class="btn btn-secondary option">Happiness</button>
+        <button class="btn btn-secondary option">Sadness</button>
+        <button class="btn btn-secondary option">Surprise</button>
+      </div>
+      <input type="hidden" name="emotion">
+    </div>
+  </div>
 </div>
