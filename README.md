@@ -174,51 +174,6 @@ username1,password1,email1@example.com
 username2,password2,email2@example.com
 ```
 
-## Creating HTML Templates ##
-
-The HTML template code that you write should not be a complete HTML
-document with `head` and `body` tags.  Turkle renders the page for a
-Task by inserting your HTML template code into an HTML `form` element
-in the body of an HTML document.  The document looks like this:
-
-``` html
-<!DOCTYPE html>
-<html>
-  <head>
-    <title></title>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-  </head>
-  <body>
-    <form name="mturk_form" method="post" id="mturk_form"
-          target="_parent" action='/some/submit/url'>
-      <!-- YOUR HTML IS INSERTED HERE -->
-      {% if not project_html_template.has_submit_button %}
-      <input type="submit" id="submitButton" value="Submit" />
-      {% endif %}
-    </form>
-  </body>
-</html>
-```
-
-Turkle displays the combined HTML document in an iframe, so that your
-code is isolated from any CSS and JavaScript libraries used by the
-Turkle UI.  If your Project's HTML template code does not include an
-HTML 'Submit' button, then Turkle will add a 'Submit' button to the
-combined document.
-
-There are example HTML and CSV files in the `examples` directory:
-
-- `translate_minimal.html` uses just HTML elements without any
-  JavaScript.  The corresponding CSV file is `translate_two_cities.csv`.
-- `translate_validate.html` uses third-party JavaScript libraries to
-  perform form validation.  The corresponding CSV file is
-  `translate_two_cities.csv`.
-- `lda-lemmas.html` is a more complicated example that uses custom
-  JavaScript to dynamically generate HTML elements and CSV files that
-  store data structures as JSON strings.  The corresponding CSV files
-  are `lda-lemmas-0.csv` and `lda-lemmas-1.csv`.
-
-
 ## Creating Projects and Publishing Batches of Tasks ##
 
 ### Using the admin UI
