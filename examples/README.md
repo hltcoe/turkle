@@ -1,4 +1,38 @@
-# Creating Templates #
+# Turkle Template Guide #
+
+## How Turkle renders Templates ##
+
+The HTML template code that you write should not be a complete HTML
+document with `head` and `body` tags.  Turkle renders the page for a
+Task by inserting your HTML template code into an HTML `form` element
+in the body of an HTML document.  The document looks like this:
+
+``` html
+<!DOCTYPE html>
+<html>
+  <head>
+    <title></title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+  </head>
+  <body>
+    <form name="mturk_form" method="post" id="mturk_form"
+          target="_parent" action='/some/submit/url'>
+      <!-- YOUR HTML IS INSERTED HERE -->
+      {% if not project_html_template.has_submit_button %}
+      <input type="submit" id="submitButton" value="Submit" />
+      {% endif %}
+    </form>
+  </body>
+</html>
+```
+
+Turkle displays the combined HTML document in an iframe, so that your
+code is isolated from any CSS and JavaScript libraries used by the
+Turkle UI.  If your Project's HTML template code does not include an
+HTML 'Submit' button, then Turkle will add a 'Submit' button to the
+combined document.
+
+## Template Variables ##
 
 An HTML template includes template variables, which have the form
 `${variable_name}`.  The CSV files used to create Task Batches include
@@ -35,16 +69,15 @@ a row of the CSV file:
 The HTML template can include any HTML form input fields, such as text
 boxes, radio buttons, and check boxes.
 
-
 ## JavaScript and CSS ##
 
 JavaScript and CSS can be placed in the template itself or linked to from
 another web server. If the users will have access to the Internet, using
-public CDNs are an excellent option. Otherwise, a local web server could
+public CDNs is an excellent option. Otherwise, a local web server could
 be used to host common JavaScript and CSS files.
 
-The `emotion detection` and `image contains` template examples include
-Bootstrap and jQuery. The `translate validate` template includes the
+The `emotion detection` and `image contains` template examples uses
+Bootstrap and jQuery. The `translate validate` template uses the
 Parsley validation library.
 
 ## Serialized Data ##
@@ -67,6 +100,38 @@ $('input[type="submit"]').on("click", function(event) {
 ```
 The data is then available in the output CSV as JSON as the variable Answer.output.
 
+## Preventing Default Browser Behavior that Frustrates Users ##
+
+Users will accidentally trigger form submission by pressing the Enter
+key outside of a text field.  Some browsers use the Backspace key to
+trigger the "Back" action.  Users will accidentally navigate away from
+the form (discarding their work) if they hit Backspace outside of a
+text field.
+
+This jQuery-based code disables the default behavior for the Enter and
+Backspace keys when the user is not editing a text field:
+
+```javascript
+$(document).ready(function() {
+  $(document).on('keydown', function(e) {
+    var keyCode = e.keyCode || e.which;
+
+    // Disable use of enter key UNLESS used within a textarea
+    if (keyCode == 13 && !$(document.activeElement).is('textarea')) {
+      e.preventDefault();
+      return false;
+    }
+
+    // Disable backspace key outside of input and textarea fields, since some browsers
+    // (such as Firefox on Windows) trigger the "Back" action when backspace is pressed
+    if (keyCode == 8 && !$(document.activeElement).is('input') && !$(document.activeElement).is('textarea')) {
+      e.preventDefault();
+      return false;
+    }
+  });
+});
+```
+
 ## Gotchas ##
 
 Do not include text like this `%{variable}` in your template unless it is 
@@ -75,6 +140,15 @@ in your JavaScript code will cause Turkle's template rendering to modify it.
 
 Do not include a form in your template. The template is inserted into a form
 element and a form in a form is invalid HTML.
+
+Because your entire HTML template is wrapped in a form element, the
+default behavior for any buttons in your template will be to trigger
+form submission.  To prevent a button from submitting the form, use
+the CSS "button" class:
+
+``` html
+<button class="button">
+```
 
 Do not use JavaScript or CSS resources included with Turkle. There is no
 guarantee that those resources will be there in the future. 
