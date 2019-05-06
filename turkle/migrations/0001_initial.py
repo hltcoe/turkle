@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('active', models.BooleanField(db_index=True, default=True)),
                 ('allotted_assignment_time', models.IntegerField(default=24)),
-                ('assignments_per_task', models.IntegerField(default=1, verbose_name=b'Assignments per Task')),
+                ('assignments_per_task', models.IntegerField(default=1, verbose_name='Assignments per Task')),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('filename', models.CharField(max_length=1024)),
                 ('name', models.CharField(max_length=1024)),
