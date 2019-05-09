@@ -33,8 +33,8 @@ each row in the CSV file (excluding the header).  When a Batch is
 created, the Requester can specify how many **Assignments** per Task
 they need.  Each User is limited to one Assignment per Task.
 
-[Documentation on creating templates](examples/README.md) is found
-in the examples directory.
+[Documentation on creating templates](docs/TEMPLATE-GUIDE.md) is found
+in the docs directory.
 
 When the Worker submits a Task Assignment, the values of the form fields
 are saved to the Turkle database. The Task Assignment data can be
