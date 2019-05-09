@@ -520,18 +520,26 @@ class Project(models.Model):
         return batches
 
     def clean(self):
+        super(Project, self).clean()
         if not self.login_required and self.assignments_per_task != 1:
             raise ValidationError('When login is not required to access the Project, ' +
                                   'the number of Assignments per Task must be 1')
+        self.process_template()
 
-    def save(self, *args, **kwargs):
+    def process_template(self):
         soup = BeautifulSoup(self.html_template, 'html.parser')
         self.html_template_has_submit_button = bool(soup.select('input[type=submit]'))
 
         # Extract fieldnames from html_template text, save fieldnames as keys of JSON dict
         unique_fieldnames = set(re.findall(r'\${(\w+)}', self.html_template))
         self.fieldnames = dict((fn, True) for fn in unique_fieldnames)
-        super(Project, self).save(*args, **kwargs)
+
+        # Matching mTurk we confirm at least one input, select, or textarea
+        if soup.find('input') is None and soup.find('select') is None \
+                and soup.find('textarea') is None:
+            msg = "Template does not contain any fields for responses. " + \
+                  "Please include at least one field (input, select, or textarea)"
+            raise ValidationError({'html_template': msg}, code='invalid')
 
     def to_csv(self, csv_fh, lineterminator='\r\n'):
         """
