@@ -151,15 +151,19 @@ class Batch(models.Model):
 
         hs = self.task_set.filter(completed=False)
 
-        # Exclude Tasks that have already been assigned to this user.
-        if user.is_authenticated:
-            # If the user is not authenticated, then user.id is None,
-            # and the query below would exclude all uncompleted Tasks.
-            hs = hs.exclude(taskassignment__assigned_to_id=user.id)
+        if self.assignments_per_task > 1:
+            # Exclude Tasks that have already been assigned to this user.
+            if user.is_authenticated:
+                # If the user is not authenticated, then user.id is None,
+                # and the query below would exclude all uncompleted Tasks.
+                hs = hs.exclude(taskassignment__assigned_to_id=user.id)
 
-        # Only include Tasks whose total (possibly incomplete) assignments < assignments_per_task
-        hs = hs.annotate(ac=models.Count('taskassignment')).\
-            filter(ac__lt=self.assignments_per_task)
+            # Only include Tasks when # of (possibly incomplete) assignments < assignments_per_task
+            hs = hs.annotate(ac=models.Count('taskassignment')).\
+                filter(ac__lt=self.assignments_per_task)
+        elif self.assignments_per_task == 1:
+            # Only returns Tasks that have not been assigned to anyone (including this user)
+            hs = hs.filter(taskassignment=None)
 
         return hs
 
