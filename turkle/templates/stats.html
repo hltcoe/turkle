@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block header %}
+
+<link href="{% static "turkle/bootstrap-datepicker-1.8.0/css/bootstrap-datepicker.css" %}" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
+<script type="text/javascript" src="{% static "turkle/bootstrap-datepicker-1.8.0/js/bootstrap-datepicker.js" %}"></script>
+
+<script>
+$(document).ready(function() {
+  $('.datepicker').datepicker({
+    format: 'yyyy-mm-dd',
+  });
+});
+</script>
+
+{% endblock %}
+
+{% block body %}
+
+<div class="container-fluid">
+  <div style="margin-top: 2em;"></div>
+
+  <h2>Statistics</h2>
+
+  <form>
+    <div class="row">
+      <div class="col-sm">
+        <label for="start_date">Start Date:</label>
+        <input id="start_date" name="start_date" class="datepicker" placeholder="YYYY-MM-DD" size="12"
+               {% if start_date %}value="{{ start_date }}"{% endif %}>
+      </div>
+      <div class="col-sm">
+        <label for="end_date">End Date:</label>
+        <input id="end_date" name="end_date" class="datepicker" placeholder="YYYY-MM-DD" size="12"
+               {% if end_date %}value="{{ end_date }}"{% endif %}>
+      </div>
+      <div class="col-sm">
+        <input type="submit" id="submitButton" class="btn btn-primary" value="Compute Statistics">
+      </div>
+    </div>
+  </form>
+
+  <hr />
+
+  <p>
+    <h3>Total Task Assignments: {{ total_completed }}</h3>
+  </p>
+
+  <div>
+    <table class="table table-sm table-bordered thead-light">
+      <tr>
+        <th scope="col" style="width: 40%">Batch Name</th>
+        <th scope="col"># Task Assignments</th>
+        <th scope="col">Elapsed Time</th>
+      </tr>
+      {% for batch_stat in batch_stats %}
+      <tr>
+        <td>
+          {{ batch_stat.batch_name }}
+        </td>
+        <td>
+          {{ batch_stat.total_completed }}
+        </td>
+        <td>
+          {{ batch_stat.elapsed_time }}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+</div>
+
+{% endblock %}

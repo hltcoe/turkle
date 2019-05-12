@@ -1,3 +1,5 @@
+from functools import wraps
+import humanfriendly
 from io import BytesIO
 import urllib
 
@@ -9,7 +11,7 @@ from django.db.utils import OperationalError
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
-from functools import wraps
+from django.utils.dateparse import parse_date
 
 from turkle.models import Task, TaskAssignment, Batch, Project
 
@@ -363,6 +365,46 @@ def skip_task(request, batch_id, task_id):
     """
     _add_task_id_to_skip_session(request.session, batch_id, task_id)
     return redirect(preview_next_task, batch_id)
+
+
+def stats(request):
+    if not request.user.is_authenticated:
+        messages.error(
+            request,
+            u'You must be logged in to view the user statistics page')
+        return redirect(index)
+
+    start_date = parse_date(request.GET['start_date'])
+    end_date = parse_date(request.GET['end_date'])
+
+    tas = TaskAssignment.objects.filter(completed=True).filter(assigned_to=request.user)
+    if start_date:
+        tas = tas.filter(updated_at__gte=start_date)
+    if end_date:
+        tas = tas.filter(updated_at__lte=end_date)
+
+    batches = Batch.objects.filter(task__taskassignment__in=tas).distinct()
+
+    batch_stats = []
+    for batch in batches:
+        batch_tas = tas.filter(task__batch=batch)
+        batch_stats.append({
+            'batch_name': batch.name,
+            'total_completed': batch_tas.count(),
+            'elapsed_time': humanfriendly.format_timespan(
+                sum([ta.work_time_in_seconds() for ta in batch_tas]), max_units=3),
+        })
+
+    return render(
+        request,
+        'stats.html',
+        {
+            'batch_stats': batch_stats,
+            'end_date': request.GET['end_date'],
+            'start_date': request.GET['start_date'],
+            'total_completed': tas.count(),
+        }
+    )
 
 
 def update_auto_accept(request):

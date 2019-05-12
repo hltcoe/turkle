@@ -24,6 +24,7 @@
         <span class="navbar-text">
           {% if user.is_authenticated %}
           Logged in as <b>{{ user.username }}</b> -
+          <a href="{% url 'stats' %}">Stats</a> -
           <a href="{% url 'password_change' %}">Change Password</a> -
           <a href="{% url 'logout' %}?next={% url 'index' %}">Logout</a>
           {% else %}
