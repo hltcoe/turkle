@@ -11,6 +11,7 @@ from django.db.utils import OperationalError
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
+from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.dateparse import parse_date
 
 from turkle.models import Task, TaskAssignment, Batch, Project
@@ -374,8 +375,14 @@ def stats(request):
             u'You must be logged in to view the user statistics page')
         return redirect(index)
 
-    start_date = parse_date(request.GET['start_date'])
-    end_date = parse_date(request.GET['end_date'])
+    try:
+        start_date = parse_date(request.GET['start_date'])
+    except MultiValueDictKeyError:
+        start_date = None
+    try:
+        end_date = parse_date(request.GET['end_date'])
+    except MultiValueDictKeyError:
+        end_date = None
 
     tas = TaskAssignment.objects.filter(completed=True).filter(assigned_to=request.user)
     if start_date:
@@ -400,8 +407,8 @@ def stats(request):
         'stats.html',
         {
             'batch_stats': batch_stats,
-            'end_date': request.GET['end_date'],
-            'start_date': request.GET['start_date'],
+            'end_date': end_date,
+            'start_date': start_date,
             'total_completed': tas.count(),
         }
     )
