@@ -538,7 +538,9 @@ class Project(models.Model):
         if soup.find('input') is None and soup.find('select') is None \
                 and soup.find('textarea') is None:
             msg = "Template does not contain any fields for responses. " + \
-                  "Please include at least one field (input, select, or textarea)"
+                  "Please include at least one field (input, select, or textarea)." + \
+                  "This usually means you are generating HTML with JavaScript." + \
+                  "If so, add an unused hidden input."
             raise ValidationError({'html_template': msg}, code='invalid')
 
     def to_csv(self, csv_fh, lineterminator='\r\n'):
