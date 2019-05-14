@@ -6,6 +6,7 @@ from django.contrib.messages import get_messages
 from django.test import TestCase
 from django.urls import reverse
 from guardian.shortcuts import assign_perm
+from .utility import save_model
 
 from turkle.models import Task, TaskAssignment, Batch, Project
 
@@ -73,7 +74,7 @@ class TestAcceptTask(TestCase):
 class TestAcceptNextTask(TestCase):
     def setUp(self):
         project = Project(login_required=False, name='foo',
-                          html_template='<p>${foo}: ${bar}</p>')
+                          html_template='<p>${foo}: ${bar}</p><textarea>')
         project.save()
 
         self.batch = Batch(project=project, name='foo', filename='foo.csv')
@@ -169,7 +170,7 @@ class TestAcceptNextTask(TestCase):
 
 class TestDownloadBatchCSV(TestCase):
     def setUp(self):
-        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p>')
+        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
         project.save()
 
         self.batch = Batch(project=project, name='foo', filename='foo.csv')
@@ -360,7 +361,7 @@ class TestIndexAbandonedAssignments(TestCase):
 
 class TestTaskAssignment(TestCase):
     def setUp(self):
-        project = Project(login_required=False, name='foo', html_template='<p></p>')
+        project = Project(login_required=False, name='foo', html_template='<p></p><textarea>')
         project.save()
         batch = Batch(project=project)
         batch.save()
@@ -472,7 +473,11 @@ class TestTaskAssignment(TestCase):
 
 class TestTaskAssignmentIFrame(TestCase):
     def setUp(self):
-        self.project = Project(login_required=False)
+        self.user = User.objects.create_user('testuser', password='secret')
+        self.admin = User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+        self.project = Project(name="Test", login_required=False)
+        self.project.created_by = self.admin
+        self.project.updated_by = self.admin
         self.project.save()
         batch = Batch(project=self.project)
         batch.save()
@@ -482,9 +487,8 @@ class TestTaskAssignmentIFrame(TestCase):
         self.task_assignment.save()
 
     def test_get_task_assignment_iframe_with_wrong_user(self):
-        user = User.objects.create_user('testuser', password='secret')
         User.objects.create_user('wrong_user', password='secret')
-        self.task_assignment.assigned_to = user
+        self.task_assignment.assigned_to = self.user
         self.task_assignment.save()
 
         client = django.test.Client()
@@ -502,7 +506,7 @@ class TestTaskAssignmentIFrame(TestCase):
     def test_template_with_submit_button(self):
         self.project.html_template = \
             '<input id="my_submit_button" type="submit" value="MySubmit" />'
-        self.project.save()
+        save_model(self.project)
         self.project.refresh_from_db()
         self.assertTrue(self.project.html_template_has_submit_button)
 
@@ -531,7 +535,7 @@ class TestTaskAssignmentIFrame(TestCase):
 
 class TestPreview(TestCase):
     def setUp(self):
-        self.project = Project(html_template='<p>${foo}: ${bar}</p>',
+        self.project = Project(html_template='<p>${foo}: ${bar}</p><textarea>',
                                login_required=False, name='foo')
         self.project.save()
         self.batch = Batch(filename='foo.csv', project=self.project, name='foo')
@@ -618,7 +622,7 @@ class TestPreview(TestCase):
 
 class TestReturnTaskAssignment(TestCase):
     def setUp(self):
-        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p>')
+        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
         project.save()
 
         batch = Batch(project=project, name='foo', filename='foo.csv')

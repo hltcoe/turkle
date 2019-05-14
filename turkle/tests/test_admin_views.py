@@ -7,6 +7,7 @@ from django.contrib.auth.models import Group, User
 from django.contrib.messages import get_messages
 from django.urls import reverse
 from django.utils import timezone
+from .utility import save_model
 
 from turkle.models import Batch, Project, Task, TaskAssignment
 
@@ -14,7 +15,7 @@ from turkle.models import Batch, Project, Task, TaskAssignment
 class TestCancelOrPublishBatch(django.test.TestCase):
     def setUp(self):
         User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
-        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p>')
+        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
         project.save()
         self.batch = Batch(active=False, project=project, name='MY_BATCH_NAME')
         self.batch.save()
@@ -109,7 +110,7 @@ class TestBatchAdmin(django.test.TestCase):
         self.user = User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
 
     def test_batch_add(self):
-        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p>')
+        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
         project.save()
 
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
@@ -138,7 +139,7 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertEqual(matching_batch.created_by, self.user)
 
     def test_batch_add_csv_with_emoji(self):
-        project = Project(name='foo', html_template='<p>${emoji}: ${more_emoji}</p>')
+        project = Project(name='foo', html_template='<p>${emoji}: ${more_emoji}</p><textarea>')
         project.save()
 
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
@@ -170,7 +171,7 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertEqual(tasks[2].input_csv_fields['more_emoji'], u'🤭')
 
     def test_batch_add_empty_allotted_assignment_time(self):
-        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p>')
+        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
         project.save()
 
         client = django.test.Client()
@@ -190,7 +191,7 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertTrue(b'This field is required.' in response.content)
 
     def test_batch_add_missing_project(self):
-        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p>')
+        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
         project.save()
 
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
@@ -210,7 +211,7 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertTrue(b'This field is required' in response.content)
 
     def test_batch_add_missing_file_field(self):
-        project = Project(name='foo', html_template='<p>${emoji}: ${more_emoji}</p>')
+        project = Project(name='foo', html_template='<p>${emoji}: ${more_emoji}</p><textarea>')
         project.save()
 
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
@@ -229,7 +230,7 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertTrue(b'This field is required' in response.content)
 
     def test_batch_add_validation_extra_csv_fields(self):
-        project = Project(name='foo', html_template='<p>${f2}</p>')
+        project = Project(name='foo', html_template='<p>${f2}</p><textarea>')
         project.save()
 
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
@@ -257,8 +258,10 @@ class TestBatchAdmin(django.test.TestCase):
                         in str(messages[0]))
 
     def test_batch_add_validation_missing_csv_fields(self):
-        project = Project(name='foo', html_template='<p>${f1} ${f2} ${f3}</p>')
-        project.save()
+        project = Project(name='foo', html_template='<p>${f1} ${f2} ${f3}</p><textarea>')
+        project.created_by = self.user
+        project.updated_by = self.user
+        save_model(project)
 
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
 
@@ -274,12 +277,13 @@ class TestBatchAdmin(django.test.TestCase):
                     'csv_file': fp
                 })
         self.assertEqual(response.status_code, 200)
+        print(response.content)
         self.assertTrue(b'error' in response.content)
         self.assertTrue(b'extra fields' not in response.content)
         self.assertTrue(b'missing fields' in response.content)
 
     def test_batch_add_validation_variable_fields_per_row(self):
-        project = Project(name='foo', html_template='<p>${f1} ${f2} ${f3}</p>')
+        project = Project(name='foo', html_template='<p>${f1} ${f2} ${f3}</p><textarea>')
         project.save()
 
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
@@ -447,7 +451,7 @@ class TestProject(django.test.TestCase):
                                {
                                    'assignments_per_task': 1,
                                    'name': 'foo',
-                                   'html_template': '<p>${foo}: ${bar}</p>',
+                                   'html_template': '<p>${foo}: ${bar}</p><textarea>',
                                })
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 302)
@@ -478,7 +482,7 @@ class TestProject(django.test.TestCase):
                                {
                                    'assignments_per_task': 1,
                                    'name': 'newname',
-                                   'html_template': '<p>${foo}: ${bar}</p>',
+                                   'html_template': '<p>${foo}: ${bar}</p><textarea>',
                                })
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 302)
@@ -499,7 +503,7 @@ class TestProject(django.test.TestCase):
                                {
                                    'assignments_per_task': 1,
                                    'custom_permissions': True,
-                                   'html_template': '<p>${foo}: ${bar}</p>',
+                                   'html_template': '<p>${foo}: ${bar}</p><textarea>',
                                    'name': 'newname',
                                    'worker_permissions': [group.id],
                                })
@@ -524,7 +528,7 @@ class TestProject(django.test.TestCase):
                                {
                                    'assignments_per_task': 1,
                                    'custom_permissions': True,
-                                   'html_template': '<p>${foo}: ${bar}</p>',
+                                   'html_template': '<p>${foo}: ${bar}</p><textarea>',
                                    'name': 'newname',
                                })
         self.assertTrue(b'error' not in response.content)
@@ -552,7 +556,7 @@ class TestProject(django.test.TestCase):
                                {
                                    'assignments_per_task': 1,
                                    'custom_permissions': True,
-                                   'html_template': '<p>${foo}: ${bar}</p>',
+                                   'html_template': '<p>${foo}: ${bar}</p><textarea>',
                                    'name': 'newname',
                                    'worker_permissions': [group_to_add.id],
                                })

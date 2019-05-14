@@ -151,4 +151,9 @@ the CSS "button" class:
 ```
 
 Do not use JavaScript or CSS resources included with Turkle. There is no
-guarantee that those resources will be there in the future. 
+guarantee that those resources will be there in the future.
+
+Mechanical Turk requires at least one element of type input, select, or textarea.
+Turkle requires the same to maintain compatibility. If generating your form
+body using JavaScript, add a dummy hidden field in the template to pass this
+validation check.
