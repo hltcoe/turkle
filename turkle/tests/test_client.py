@@ -24,6 +24,9 @@ class TestClient(django.test.LiveServerTestCase):
     def test_add_user(self):
         self.assertTrue(self.client.add_user("tony", "password"))
 
+    def test_add_user_invalid_username(self):
+        self.assertFalse(self.client.add_user("tony#", "password"))
+
     def test_download(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             self.client.download(tmpdir)
