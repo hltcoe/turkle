@@ -47,6 +47,7 @@ class TurkleClient(object):
                 'username': user,
                 'password1': password,
                 'password2': password,
+                'is_active': True,
                 'csrfmiddlewaretoken': session.cookies['csrftoken']
             }
             if email:
