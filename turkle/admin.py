@@ -122,7 +122,10 @@ class CustomUserAdmin(UserAdmin):
     )
 
     def response_add(self, request, obj, post_url_continue=None):
-        return redirect(reverse('turkle_admin:auth_user_changelist'))
+        # if user clicks save, send to list of users rather than edit screen
+        if '_save' in request.POST:
+            return redirect(reverse('turkle_admin:auth_user_changelist'))
+        return super().response_add(request, obj, post_url_continue)
 
 
 class CustomButtonFileWidget(FileInput):
