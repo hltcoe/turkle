@@ -130,28 +130,40 @@ AUTHENTICATION_BACKENDS = (
 #             '()': 'django.utils.log.RequireDebugFalse'
 #         }
 #     },
+#     'formatters': {
+#         'simple': {
+#             'format': '%(asctime)s %(levelname)s: %(message)s',
+#             'datefmt': '%Y-%m-%d %H:%M:%S',
+#         },
+#     },
 #     'handlers': {
 #         'file': {
 #             'level': 'INFO',
 #             'class': 'logging.FileHandler',
 #             'filename': os.path.join(os.path.dirname(__file__), os.pardir, 'logs', 'turkle.log'),
+#             'formatter': 'simple',
 #         },
 #         'mail_admins': {
 #             'level': 'ERROR',
-#             'filters': ['require_debug_false'],
 #             'class': 'django.utils.log.AdminEmailHandler'
+#             'filters': ['require_debug_false'],
 #         }
 #     },
 #     'loggers': {
 #         'django': {
 #             'handlers': ['file'],
-#             'level': 'INFO',
+#             'level': 'WARNING',
 #             'propagate': True,
 #         },
 #         'django.request': {
 #             'handlers': ['mail_admins'],
 #             'level': 'ERROR',
 #             'propagate': False,
+#         },
+#         'turkle': {
+#             'handlers': ['file'],
+#             'level': 'INFO',
+#             'propagate': True,
 #         },
 #     }
 # }
@@ -216,15 +228,28 @@ if 'TURKLE_DOCKER' in os.environ:
     LOGGING = {
         'version': 1,
         'disable_existing_loggers': False,
+        'formatters': {
+            'simple': {
+                'format': '%(asctime)s %(levelname)s: %(message)s',
+                'datefmt': '%Y-%m-%d %H:%M:%S',
+            },
+        },
         'handlers': {
             'console': {
                 'class': 'logging.StreamHandler',
+                'formatter': 'simple',
             }
         },
         'loggers': {
             'django': {
                 'handlers': ['console'],
                 'level': 'WARNING',
+                'propagate': True,
+            },
+            'turkle': {
+                'handlers': ['console'],
+                'level': 'INFO',
+                'propagate': True,
             },
         },
     }
