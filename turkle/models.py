@@ -78,7 +78,7 @@ class TaskAssignment(models.Model):
 
         if 'csrfmiddlewaretoken' in self.answers:
             del self.answers['csrfmiddlewaretoken']
-        super(TaskAssignment, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
         # Mark Task as completed if all Assignments have been completed
         if self.task.taskassignment_set.filter(completed=True).count() >= \
@@ -555,7 +555,7 @@ class Project(models.Model):
         return batches
 
     def clean(self):
-        super(Project, self).clean()
+        super().clean()
         if not self.login_required and self.assignments_per_task != 1:
             raise ValidationError('When login is not required to access the Project, ' +
                                   'the number of Assignments per Task must be 1')

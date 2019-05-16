@@ -35,7 +35,7 @@ class TurkleAdminSite(admin.AdminSite):
         return redirect(reverse('turkle_admin:index'))
 
     def get_urls(self):
-        urls = super(TurkleAdminSite, self).get_urls()
+        urls = super().get_urls()
         my_urls = [
             url(r'^expire_abandoned_assignments/$',
                 self.admin_view(self.expire_abandoned_assignments),
@@ -60,7 +60,7 @@ class CustomGroupAdminForm(ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
-        super(CustomGroupAdminForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         if self.instance.id:
             self.fields['users'].initial = self.instance.user_set.all()
 
@@ -97,10 +97,10 @@ class CustomGroupAdmin(GroupAdmin):
     list_display = ('name', 'total_members')
 
     def save_model(self, request, obj, form, change):
-        super(CustomGroupAdmin, self).save_model(request, obj, form, change)
-        if u'users' in form.data:
+        super().save_model(request, obj, form, change)
+        if 'users' in form.data:
             existing_users = set(obj.user_set.all())
-            form_users = set(form.cleaned_data[u'users'])
+            form_users = set(form.cleaned_data['users'])
             users_to_add = form_users.difference(existing_users)
             users_to_remove = existing_users.difference(form_users)
             for user in users_to_add:
@@ -147,7 +147,7 @@ class ProjectNameReadOnlyWidget(Widget):
     def __init__(self, project, attrs=None):
         self.project_id = project.id
         self.project_name = project.name
-        super(ProjectNameReadOnlyWidget, self).__init__(attrs)
+        super().__init__(attrs)
 
     def render(self, name, value, attrs=None):
         return format_html(
@@ -168,7 +168,7 @@ class BatchForm(ModelForm):
         required=False)
 
     def __init__(self, *args, **kwargs):
-        super(BatchForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.fields['allotted_assignment_time'].label = 'Allotted assignment time (hours)'
         self.fields['allotted_assignment_time'].help_text = 'If a user abandons a Task, ' + \
@@ -203,7 +203,7 @@ class BatchForm(ModelForm):
         - fieldnames in CSV file are identical to fieldnames in Project
         - number of fields in each row matches number of fields in CSV header
         """
-        cleaned_data = super(BatchForm, self).clean()
+        cleaned_data = super().clean()
 
         csv_file = cleaned_data.get("csv_file", False)
         project = cleaned_data.get("project")
@@ -337,7 +337,7 @@ class BatchAdmin(admin.ModelAdmin):
         c = {
             'csv_unix_line_endings': request.session.get('csv_unix_line_endings', False)
         }
-        return super(BatchAdmin, self).changelist_view(request, extra_context=c)
+        return super().changelist_view(request, extra_context=c)
 
     def download_csv(self, obj):
         download_url = reverse('download_batch_csv', kwargs={'batch_id': obj.id})
@@ -360,7 +360,7 @@ class BatchAdmin(admin.ModelAdmin):
             return ('assignments_per_task', 'filename')
 
     def get_urls(self):
-        urls = super(BatchAdmin, self).get_urls()
+        urls = super().get_urls()
         my_urls = [
             url(r'^(?P<batch_id>\d+)/cancel/$',
                 self.admin_site.admin_view(self.cancel_batch), name='cancel_batch'),
@@ -419,7 +419,7 @@ class BatchAdmin(admin.ModelAdmin):
             # Only use CSV file when adding Batch, not when changing
             obj.filename = request.FILES['csv_file']._name
             csv_text = request.FILES['csv_file'].read()
-            super(BatchAdmin, self).save_model(request, obj, form, change)
+            super().save_model(request, obj, form, change)
             # ToDo inefficient to read entire file to get header
             csv_fh = StringIO(csv_text.decode('utf-8'))
             csv_fields = set(next(csv.reader(csv_fh)))
@@ -436,7 +436,7 @@ class BatchAdmin(admin.ModelAdmin):
                         ', '.join(csv_but_not_template))
             obj.create_tasks_from_csv(csv_fh)
         else:
-            super(BatchAdmin, self).save_model(request, obj, form, change)
+            super().save_model(request, obj, form, change)
 
     def stats(self, obj):
         stats_url = reverse('turkle_admin:batch_stats', kwargs={'batch_id': obj.id})
@@ -462,7 +462,7 @@ class ProjectForm(ModelForm):
     )
 
     def __init__(self, *args, **kwargs):
-        super(ProjectForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.fields['template_file_upload'].widget = CustomButtonFileWidget()
 
@@ -548,11 +548,11 @@ class ProjectAdmin(GuardedModelAdmin):
             if obj._state.adding:
                 obj.created_by = request.user
 
-        super(ProjectAdmin, self).save_model(request, obj, form, change)
-        if u'custom_permissions' in form.data:
-            if u'worker_permissions' in form.data:
+        super().save_model(request, obj, form, change)
+        if 'custom_permissions' in form.data:
+            if 'worker_permissions' in form.data:
                 existing_groups = set(get_groups_with_perms(obj))
-                form_groups = set(form.cleaned_data[u'worker_permissions'])
+                form_groups = set(form.cleaned_data['worker_permissions'])
                 groups_to_add = form_groups.difference(existing_groups)
                 groups_to_remove = existing_groups.difference(form_groups)
                 for group in groups_to_add:
