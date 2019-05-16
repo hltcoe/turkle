@@ -1,5 +1,4 @@
 from functools import wraps
-import humanfriendly
 from io import BytesIO
 import urllib
 
@@ -369,6 +368,10 @@ def skip_task(request, batch_id, task_id):
 
 
 def stats(request):
+    def format_seconds(s):
+        """Converts seconds to string"""
+        return '%dh %dm' % (s//3600, (s//60) % 60)
+
     if not request.user.is_authenticated:
         messages.error(
             request,
@@ -390,26 +393,53 @@ def stats(request):
     if end_date:
         tas = tas.filter(updated_at__lte=end_date)
 
-    batches = Batch.objects.filter(task__taskassignment__in=tas).distinct()
+    projects = Project.objects.filter(batch__task__taskassignment__assigned_to=request.user).\
+        distinct()
+    batches = Batch.objects.filter(task__taskassignment__assigned_to=request.user).distinct()
 
-    batch_stats = []
-    for batch in batches:
-        batch_tas = tas.filter(task__batch=batch)
-        batch_stats.append({
-            'batch_name': batch.name,
-            'total_completed': batch_tas.count(),
-            'elapsed_time': humanfriendly.format_timespan(
-                sum([ta.work_time_in_seconds() for ta in batch_tas]), max_units=3),
-        })
+    elapsed_seconds_overall = 0
+    project_stats = []
+    for project in projects:
+        project_batches = [b for b in batches if b.project_id == project.id]
+
+        batch_stats = []
+        elapsed_seconds_project = 0
+        total_completed_project = 0
+        for batch in project_batches:
+            batch_tas = tas.filter(task__batch=batch)
+            total_completed_batch = batch_tas.count()
+            total_completed_project += total_completed_batch
+            elapsed_seconds_batch = sum([ta.work_time_in_seconds() for ta in batch_tas])
+            elapsed_seconds_project += elapsed_seconds_batch
+            elapsed_seconds_overall += elapsed_seconds_batch
+            if total_completed_batch > 0:
+                batch_stats.append({
+                    'batch_name': batch.name,
+                    'elapsed_time_batch': format_seconds(elapsed_seconds_batch),
+                    'total_completed_batch': total_completed_batch,
+                })
+        if total_completed_project > 0:
+            project_stats.append({
+                'project_name': project.name,
+                'batch_stats': batch_stats,
+                'elapsed_time_project': format_seconds(elapsed_seconds_project),
+                'total_completed_project': total_completed_project,
+            })
+
+    if start_date:
+        start_date = start_date.strftime('%Y-%m-%d')
+    if end_date:
+        end_date = end_date.strftime('%Y-%m-%d')
 
     return render(
         request,
         'stats.html',
         {
-            'batch_stats': batch_stats,
+            'project_stats': project_stats,
             'end_date': end_date,
             'start_date': start_date,
             'total_completed': tas.count(),
+            'total_elapsed_time': format_seconds(elapsed_seconds_overall),
         }
     )
 

@@ -45,30 +45,73 @@ $(document).ready(function() {
   <hr />
 
   <p>
-    <h3>Total Task Assignments: {{ total_completed }}</h3>
+    <h3>
+      Total Task Assignments: {{ total_completed }}
+      {% if not start_date and not end_date %}
+      (All time)
+      {% else %}
+      ({% if start_date %}{{ start_date }}{% endif %} -
+       {% if end_date %}{{ end_date }}{% endif %})
+      {% endif %}
+    </h3>
+    <h3>Total Elapsed Time: {{ total_elapsed_time }}</h3>
   </p>
 
   <div>
     <table class="table table-sm table-bordered thead-light">
-      <tr>
-        <th scope="col" style="width: 40%">Batch Name</th>
-        <th scope="col"># Task Assignments</th>
-        <th scope="col">Elapsed Time</th>
+      <tr class="thead-dark">
+        <th scope="col" style="width: 50%"></th>
+        <th scope="col"># Tasks (Project)</th>
+        <th scope="col"># Tasks (Batch)</th>
+        <th scope="col">Elapsed Time (Project)</th>
+        <th scope="col">Elapsed Time (Batch)</th>
       </tr>
-      {% for batch_stat in batch_stats %}
+      {% for project in project_stats %}
+      <tr class="thead-light">
+        <th>
+          PROJECT: {{ project.project_name }}
+        </th>
+        <th>
+          {{ project.total_completed_project }}
+        </th>
+        <th></th>
+        <th>
+          {{ project.elapsed_time_project }}
+        </th>
+        <th></th>
+      </tr>
+      {% if project.batch_stats|length > 1 %}
+      {% for batch in project.batch_stats %}
       <tr>
         <td>
-          {{ batch_stat.batch_name }}
+          <span style="margin-left: 2em; font-style: italic">
+            BATCH: {{ batch.batch_name }}
+          </span>
         </td>
+        <td></td>
         <td>
-          {{ batch_stat.total_completed }}
+          {{ batch.total_completed_batch }}
         </td>
+        <td></td>
         <td>
-          {{ batch_stat.elapsed_time }}
+          {{ batch.elapsed_time_batch }}
         </td>
       </tr>
       {% endfor %}
+      {% endif %}
+      {% endfor %}
     </table>
+  </div>
+
+  <hr>
+
+  <div>
+    <b>Elapsed Time</b> is the time between when you Accept a Task
+    Assignment and when you Submit that Task Assignment.  Elapsed Time
+    is not the same thing as "time worked".  If you Accept a Task
+    Assignment, leave for lunch, and then Submit the task after lunch,
+    the amount of Elapsed Time will be longer than the amount of time
+    you spent working on the Task.
   </div>
 
 </div>
