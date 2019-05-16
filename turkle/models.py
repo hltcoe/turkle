@@ -333,7 +333,7 @@ class Batch(models.Model):
         """
         fieldnames, rows = self._results_data(self.task_set.all())
         writer = csv.DictWriter(csv_fh, fieldnames, lineterminator=lineterminator,
-                                       quoting=csv.QUOTE_ALL)
+                                quoting=csv.QUOTE_ALL)
         writer.writeheader()
         for row in rows:
             writer.writerow(row)
@@ -589,7 +589,7 @@ class Project(models.Model):
         if batches:
             fieldnames = self._get_csv_fieldnames(batches)
             writer = csv.DictWriter(csv_fh, fieldnames, lineterminator=lineterminator,
-                                           quoting=csv.QUOTE_ALL)
+                                    quoting=csv.QUOTE_ALL)
             writer.writeheader()
             for batch in batches:
                 _, rows = batch._results_data(batch.finished_tasks())
