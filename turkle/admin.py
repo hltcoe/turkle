@@ -31,7 +31,7 @@ class TurkleAdminSite(admin.AdminSite):
 
     def expire_abandoned_assignments(self, request):
         (total_deleted, _) = TaskAssignment.expire_all_abandoned()
-        messages.info(request, u'All {} abandoned Tasks have been expired'.format(total_deleted))
+        messages.info(request, 'All {} abandoned Tasks have been expired'.format(total_deleted))
         return redirect(reverse('turkle_admin:index'))
 
     def get_urls(self):
@@ -254,7 +254,7 @@ class BatchForm(ModelForm):
         data = self.data.get('allotted_assignment_time')
         if data is None:
             return Batch._meta.get_field('allotted_assignment_time').get_default()
-        elif data.strip() == u'':
+        elif data.strip() == '':
             raise ValidationError('This field is required.')
         else:
             return data
@@ -277,7 +277,7 @@ class BatchAdmin(admin.ModelAdmin):
         try:
             batch = Batch.objects.get(id=batch_id)
         except ObjectDoesNotExist:
-            messages.error(request, u'Cannot find Batch with ID {}'.format(batch_id))
+            messages.error(request, 'Cannot find Batch with ID {}'.format(batch_id))
             return redirect(reverse('turkle_admin:turkle_batch_changelist'))
 
         stats_users = []
@@ -329,7 +329,7 @@ class BatchAdmin(admin.ModelAdmin):
             batch = Batch.objects.get(id=batch_id)
             batch.delete()
         except ObjectDoesNotExist:
-            messages.error(request, u'Cannot find Batch with ID {}'.format(batch_id))
+            messages.error(request, 'Cannot find Batch with ID {}'.format(batch_id))
 
         return redirect(reverse('turkle_admin:turkle_batch_changelist'))
 
@@ -382,7 +382,7 @@ class BatchAdmin(admin.ModelAdmin):
             batch.active = True
             batch.save()
         except ObjectDoesNotExist:
-            messages.error(request, u'Cannot find Batch with ID {}'.format(batch_id))
+            messages.error(request, 'Cannot find Batch with ID {}'.format(batch_id))
 
         return redirect(reverse('turkle_admin:turkle_batch_changelist'))
 
@@ -394,7 +394,7 @@ class BatchAdmin(admin.ModelAdmin):
         try:
             batch = Batch.objects.get(id=batch_id)
         except ObjectDoesNotExist:
-            messages.error(request, u'Cannot find Batch with ID {}'.format(batch_id))
+            messages.error(request, 'Cannot find Batch with ID {}'.format(batch_id))
             return redirect(reverse('turkle_admin:turkle_batch_changelist'))
 
         task_ids = list(batch.task_set.values_list('id', flat=True))
@@ -413,7 +413,7 @@ class BatchAdmin(admin.ModelAdmin):
                 obj.created_by = request.user
 
             # If Batch active flag not explicitly set, make inactive until Batch reviewed
-            if u'active' not in request.POST:
+            if 'active' not in request.POST:
                 obj.active = False
 
             # Only use CSV file when adding Batch, not when changing
@@ -447,7 +447,7 @@ class BatchAdmin(admin.ModelAdmin):
         return '{} / {}'.format(obj.total_finished_tasks(), obj.total_tasks())
 
     def update_csv_line_endings(self, request):
-        csv_unix_line_endings = (request.POST[u'csv_unix_line_endings'] == u'true')
+        csv_unix_line_endings = (request.POST['csv_unix_line_endings'] == 'true')
         request.session['csv_unix_line_endings'] = csv_unix_line_endings
         return JsonResponse({})
 

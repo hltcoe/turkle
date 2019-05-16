@@ -390,15 +390,15 @@ class Batch(models.Model):
             input_field_set.update(task_assignment.task.input_csv_fields.keys())
 
             # If the answers JSONField is empty, it evaluates as a string instead of a dict
-            if task_assignment.answers != u'':
+            if task_assignment.answers != '':
                 answer_field_set.update(task_assignment.answers.keys())
         return tuple(
-            [u'HITId', u'HITTypeId', u'Title', u'CreationTime', u'MaxAssignments',
-             u'AssignmentDurationInSeconds', u'AssignmentId', u'WorkerId',
-             u'AcceptTime', u'SubmitTime', u'WorkTimeInSeconds'] +
-            [u'Input.' + k for k in sorted(input_field_set)] +
-            [u'Answer.' + k for k in sorted(answer_field_set)] +
-            [u'Turkle.Username']
+            ['HITId', 'HITTypeId', 'Title', 'CreationTime', 'MaxAssignments',
+             'AssignmentDurationInSeconds', 'AssignmentId', 'WorkerId',
+             'AcceptTime', 'SubmitTime', 'WorkTimeInSeconds'] +
+            ['Input.' + k for k in sorted(input_field_set)] +
+            ['Answer.' + k for k in sorted(answer_field_set)] +
+            ['Turkle.Username']
         )
 
     def _results_data(self, task_queryset):
@@ -444,8 +444,8 @@ class Batch(models.Model):
                 'WorkTimeInSeconds': task_assignment.work_time_in_seconds(),
                 'Turkle.Username': username,
             }
-            row.update({u'Input.' + k: v for k, v in task.input_csv_fields.items()})
-            row.update({u'Answer.' + k: v for k, v in task_assignment.answers.items()})
+            row.update({'Input.' + k: v for k, v in task.input_csv_fields.items()})
+            row.update({'Answer.' + k: v for k, v in task_assignment.answers.items()})
             rows.append(row)
 
         return self._get_csv_fieldnames(task_queryset), rows
@@ -613,12 +613,12 @@ class Project(models.Model):
                     input_field_set.update(task.input_csv_fields.keys())
                     answer_field_set.update(task_assignment.answers.keys())
         return tuple(
-            [u'HITId', u'HITTypeId', u'Title', u'CreationTime', u'MaxAssignments',
-             u'AssignmentDurationInSeconds', u'AssignmentId', u'WorkerId',
-             u'AcceptTime', u'SubmitTime', u'WorkTimeInSeconds'] +
-            [u'Input.' + k for k in sorted(input_field_set)] +
-            [u'Answer.' + k for k in sorted(answer_field_set)] +
-            [u'Turkle.Username']
+            ['HITId', 'HITTypeId', 'Title', 'CreationTime', 'MaxAssignments',
+             'AssignmentDurationInSeconds', 'AssignmentId', 'WorkerId',
+             'AcceptTime', 'SubmitTime', 'WorkTimeInSeconds'] +
+            ['Input.' + k for k in sorted(input_field_set)] +
+            ['Answer.' + k for k in sorted(answer_field_set)] +
+            ['Turkle.Username']
         )
 
     def __unicode__(self):

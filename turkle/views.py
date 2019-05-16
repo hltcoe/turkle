@@ -135,27 +135,27 @@ def task_assignment(request, task_id, task_assignment_id):
     try:
         task = Task.objects.get(id=task_id)
     except ObjectDoesNotExist:
-        messages.error(request, u'Cannot find Task with ID {}'.format(task_id))
+        messages.error(request, 'Cannot find Task with ID {}'.format(task_id))
         return redirect(index)
     try:
         task_assignment = TaskAssignment.objects.get(id=task_assignment_id)
     except ObjectDoesNotExist:
         messages.error(request,
-                       u'Cannot find Task Assignment with ID {}'.format(task_assignment_id))
+                       'Cannot find Task Assignment with ID {}'.format(task_assignment_id))
         return redirect(index)
 
     if request.user.is_authenticated:
         if request.user != task_assignment.assigned_to:
             messages.error(
                 request,
-                u'You do not have permission to work on the Task Assignment with ID {}'.
+                'You do not have permission to work on the Task Assignment with ID {}'.
                 format(task_assignment.id))
             return redirect(index)
     else:
         if task_assignment.assigned_to is not None:
             messages.error(
                 request,
-                u'You do not have permission to work on the Task Assignment with ID {}'.
+                'You do not have permission to work on the Task Assignment with ID {}'.
                 format(task_assignment.id))
             return redirect(index)
 
@@ -200,20 +200,20 @@ def task_assignment_iframe(request, task_id, task_assignment_id):
     try:
         task = Task.objects.get(id=task_id)
     except ObjectDoesNotExist:
-        messages.error(request, u'Cannot find Task with ID {}'.format(task_id))
+        messages.error(request, 'Cannot find Task with ID {}'.format(task_id))
         return redirect(index)
     try:
         task_assignment = TaskAssignment.objects.get(id=task_assignment_id)
     except ObjectDoesNotExist:
         messages.error(request,
-                       u'Cannot find Task Assignment with ID {}'.format(task_assignment_id))
+                       'Cannot find Task Assignment with ID {}'.format(task_assignment_id))
         return redirect(index)
 
     if request.user.is_authenticated:
         if request.user != task_assignment.assigned_to:
             messages.error(
                 request,
-                u'You do not have permission to work on the Task Assignment with ID {}'.
+                'You do not have permission to work on the Task Assignment with ID {}'.
                 format(task_assignment.id))
             return redirect(index)
 
@@ -272,11 +272,11 @@ def preview(request, task_id):
     try:
         task = Task.objects.get(id=task_id)
     except ObjectDoesNotExist:
-        messages.error(request, u'Cannot find Task with ID {}'.format(task_id))
+        messages.error(request, 'Cannot find Task with ID {}'.format(task_id))
         return redirect(index)
 
     if not task.batch.project.available_for(request.user):
-        messages.error(request, u'You do not have permission to view this Task')
+        messages.error(request, 'You do not have permission to view this Task')
         return redirect(index)
 
     http_get_params = "?assignmentId=ASSIGNMENT_ID_NOT_AVAILABLE&hitId={}".format(
@@ -296,11 +296,11 @@ def preview_iframe(request, task_id):
     try:
         task = Task.objects.get(id=task_id)
     except ObjectDoesNotExist:
-        messages.error(request, u'Cannot find Task with ID {}'.format(task_id))
+        messages.error(request, 'Cannot find Task with ID {}'.format(task_id))
         return redirect(index)
 
     if not task.batch.project.available_for(request.user):
-        messages.error(request, u'You do not have permission to view this Task')
+        messages.error(request, 'You do not have permission to view this Task')
         return redirect(index)
 
     return render(request, 'preview_iframe.html', {'task': task})
@@ -315,7 +315,7 @@ def preview_next_task(request, batch_id):
     try:
         batch = Batch.objects.get(id=batch_id)
     except ObjectDoesNotExist:
-        messages.error(request, u'Cannot find Task Batch with ID {}'.format(batch_id))
+        messages.error(request, 'Cannot find Task Batch with ID {}'.format(batch_id))
         return redirect(index)
 
     task_id = _skip_aware_next_available_task_id(request, batch)
@@ -324,7 +324,7 @@ def preview_next_task(request, batch_id):
         return redirect(preview, task_id)
     else:
         messages.error(request,
-                       u'No more Tasks are available for Batch "{}"'.format(batch.name))
+                       'No more Tasks are available for Batch "{}"'.format(batch.name))
         return redirect(index)
 
 
@@ -372,7 +372,7 @@ def update_auto_accept(request):
       not Task Assignments are auto-accepted.  Users cannot modify other
       users session variables.
     """
-    accept_status = (request.POST[u'auto_accept'] == u'true')
+    accept_status = (request.POST['auto_accept'] == 'true')
     request.session['auto_accept_status'] = accept_status
     return JsonResponse({})
 
@@ -410,13 +410,13 @@ def _delete_task_assignment(request, task_id, task_assignment_id):
     try:
         task = Task.objects.get(id=task_id)
     except ObjectDoesNotExist:
-        messages.error(request, u'Cannot find Task with ID {}'.format(task_id))
+        messages.error(request, 'Cannot find Task with ID {}'.format(task_id))
         return redirect(index)
     try:
         task_assignment = TaskAssignment.objects.get(id=task_assignment_id)
     except ObjectDoesNotExist:
         messages.error(request,
-                       u'Cannot find Task Assignment with ID {}'.format(task_assignment_id))
+                       'Cannot find Task Assignment with ID {}'.format(task_assignment_id))
         return redirect(index)
 
     if task_assignment.completed:
@@ -424,14 +424,14 @@ def _delete_task_assignment(request, task_id, task_assignment_id):
         return redirect(index)
     if request.user.is_authenticated:
         if task_assignment.assigned_to != request.user:
-            messages.error(request, u'The Task you are trying to return belongs to another user')
+            messages.error(request, 'The Task you are trying to return belongs to another user')
             return redirect(index)
     else:
         if task_assignment.assigned_to is not None:
-            messages.error(request, u'The Task you are trying to return belongs to another user')
+            messages.error(request, 'The Task you are trying to return belongs to another user')
             return redirect(index)
         if task.batch.project.login_required:
-            messages.error(request, u'You do not have permission to access this Task')
+            messages.error(request, 'You do not have permission to access this Task')
             return redirect(index)
 
     with transaction.atomic():
@@ -468,7 +468,7 @@ def _skip_aware_next_available_task_id(request, batch):
         if not task_id:
             task_id = available_task_ids.filter(id__in=skipped_ids).first()
             if task_id:
-                messages.info(request, u'Only previously skipped Tasks are available')
+                messages.info(request, 'Only previously skipped Tasks are available')
 
                 # Once all remaining Tasks have been marked as skipped, we clear
                 # their skipped status.  If we don't take this step, then a Task
