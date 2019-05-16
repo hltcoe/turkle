@@ -68,7 +68,7 @@ class TestAcceptTask(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         u'The Task with ID {} is no longer available'.format(self.task.id))
+                         'The Task with ID {} is no longer available'.format(self.task.id))
 
 
 class TestAcceptNextTask(TestCase):
@@ -124,7 +124,7 @@ class TestAcceptNextTask(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         u'Cannot find Task Batch with ID {}'.format(666))
+                         'Cannot find Task Batch with ID {}'.format(666))
 
     def test_accept_next_task__no_more_tasks(self):
         User.objects.create_user('testuser', password='secret')
@@ -142,7 +142,7 @@ class TestAcceptNextTask(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         u'No more Tasks available from Batch {}'.format(self.batch.id))
+                         'No more Tasks available from Batch {}'.format(self.batch.id))
 
     def test_accept_next_task__respect_skip(self):
         task_two = Task(batch=self.batch)
@@ -205,7 +205,7 @@ class TestDownloadBatchCSV(TestCase):
         download_url = reverse('download_batch_csv', kwargs={'batch_id': self.batch.id})
         response = client.get(download_url)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], u'/admin/login/?next=%s' % download_url)
+        self.assertEqual(response['Location'], '/admin/login/?next=%s' % download_url)
 
 
 class TestIndex(django.test.TestCase):
@@ -214,14 +214,14 @@ class TestIndex(django.test.TestCase):
 
     def test_get_index(self):
         client = django.test.Client()
-        response = client.get(u'/')
+        response = client.get('/')
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 200)
 
     def test_index_login_prompt(self):
         # Display 'Login' link when NOT logged in
         client = django.test.Client()
-        response = client.get(u'/')
+        response = client.get('/')
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(b'Login' in response.content)
@@ -230,7 +230,7 @@ class TestIndex(django.test.TestCase):
         # Display 'Logout' link and username when logged in
         client = django.test.Client()
         client.login(username='ms.admin', password='secret')
-        response = client.get(u'/')
+        response = client.get('/')
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(b'Logout' in response.content)
@@ -393,7 +393,7 @@ class TestTaskAssignment(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         u'Cannot find Task with ID {}'.format(666))
+                         'Cannot find Task with ID {}'.format(666))
 
     def test_get_task_assignment_with_bad_task_assignment_id(self):
         client = django.test.Client()
@@ -405,7 +405,7 @@ class TestTaskAssignment(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         u'Cannot find Task Assignment with ID {}'.format(666))
+                         'Cannot find Task Assignment with ID {}'.format(666))
 
     def test_get_task_assignment_with_wrong_user(self):
         user = User.objects.create_user('testuser', password='secret')
@@ -422,7 +422,7 @@ class TestTaskAssignment(TestCase):
         self.assertEqual(response['Location'], reverse('index'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
-        self.assertTrue(u'You do not have permission to work on the Task Assignment with ID'
+        self.assertTrue('You do not have permission to work on the Task Assignment with ID'
                         in str(messages[0]))
 
     def test_get_task_assignment_owned_by_user_as_anonymous(self):
@@ -438,7 +438,7 @@ class TestTaskAssignment(TestCase):
         self.assertEqual(response['Location'], reverse('index'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
-        self.assertTrue(u'You do not have permission to work on the Task Assignment with ID'
+        self.assertTrue('You do not have permission to work on the Task Assignment with ID'
                         in str(messages[0]))
 
     def test_submit_assignment_without_auto_accept(self):
@@ -451,7 +451,7 @@ class TestTaskAssignment(TestCase):
         response = client.post(reverse('task_assignment',
                                        kwargs={'task_id': self.task.id,
                                                'task_assignment_id': self.task_assignment.id}),
-                               {u'foo': u'bar'})
+                               {'foo': 'bar'})
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('index'))
 
@@ -465,7 +465,7 @@ class TestTaskAssignment(TestCase):
         response = client.post(reverse('task_assignment',
                                        kwargs={'task_id': self.task.id,
                                                'task_assignment_id': self.task_assignment.id}),
-                               {u'foo': u'bar'})
+                               {'foo': 'bar'})
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('accept_next_task',
                                                        kwargs={'batch_id': self.task.batch_id}))
@@ -500,7 +500,7 @@ class TestTaskAssignmentIFrame(TestCase):
         self.assertEqual(response['Location'], reverse('index'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
-        self.assertTrue(u'You do not have permission to work on the Task Assignment with ID'
+        self.assertTrue('You do not have permission to work on the Task Assignment with ID'
                         in str(messages[0]))
 
     def test_template_with_submit_button(self):
@@ -561,7 +561,7 @@ class TestPreview(TestCase):
         self.assertEqual(response['Location'], reverse('index'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
-        self.assertEqual(str(messages[0]), u'You do not have permission to view this Task')
+        self.assertEqual(str(messages[0]), 'You do not have permission to view this Task')
 
     def test_get_preview_bad_task_id(self):
         client = django.test.Client()
@@ -571,7 +571,7 @@ class TestPreview(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         u'Cannot find Task with ID {}'.format(666))
+                         'Cannot find Task with ID {}'.format(666))
 
     def test_get_preview_iframe(self):
         client = django.test.Client()
@@ -586,7 +586,7 @@ class TestPreview(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         u'Cannot find Task with ID {}'.format(666))
+                         'Cannot find Task with ID {}'.format(666))
 
     def test_get_preview_iframe_as_anonymous_but_login_required(self):
         self.project.login_required = True
@@ -599,7 +599,7 @@ class TestPreview(TestCase):
         self.assertEqual(response['Location'], reverse('index'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
-        self.assertEqual(str(messages[0]), u'You do not have permission to view this Task')
+        self.assertEqual(str(messages[0]), 'You do not have permission to view this Task')
 
     def test_preview_next_task(self):
         client = django.test.Client()
@@ -617,7 +617,7 @@ class TestPreview(TestCase):
         self.assertEqual(response['Location'], reverse('index'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
-        self.assertTrue(u'No more Tasks are available for Batch' in str(messages[0]))
+        self.assertTrue('No more Tasks are available for Batch' in str(messages[0]))
 
 
 class TestReturnTaskAssignment(TestCase):
@@ -668,7 +668,7 @@ class TestReturnTaskAssignment(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         u"The Task can't be returned because it has been completed")
+                         "The Task can't be returned because it has been completed")
 
     def test_return_task_assignment_as_anonymous_user(self):
         task_assignment = TaskAssignment(
@@ -702,7 +702,7 @@ class TestReturnTaskAssignment(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         u'The Task you are trying to return belongs to another user')
+                         'The Task you are trying to return belongs to another user')
 
     def test_return_task_assignment__user_returns_anon_users_task(self):
         User.objects.create_user('testuser', password='secret')
@@ -723,7 +723,7 @@ class TestReturnTaskAssignment(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         u'The Task you are trying to return belongs to another user')
+                         'The Task you are trying to return belongs to another user')
 
 
 class TestSkipTask(TestCase):
@@ -800,7 +800,7 @@ class TestSkipTask(TestCase):
                                                        kwargs={'task_id': self.task_one.id}))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
-        self.assertEqual(str(messages[0]), u'Only previously skipped Tasks are available')
+        self.assertEqual(str(messages[0]), 'Only previously skipped Tasks are available')
 
     def test_skip_and_accept_next_task(self):
         client = django.test.Client()
@@ -857,7 +857,7 @@ class TestSkipTask(TestCase):
         self.assertTrue('{}/assignment/'.format(self.task_one.id) in response['Location'])
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
-        self.assertEqual(str(messages[0]), u'Only previously skipped Tasks are available')
+        self.assertEqual(str(messages[0]), 'Only previously skipped Tasks are available')
 
         # Skip task_one for a second time
         ha_one = self.task_one.taskassignment_set.first()

@@ -1,8 +1,9 @@
-import ctypes
+import csv
 import datetime
 import os.path
 import re
 import statistics
+import sys
 
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import User
@@ -12,10 +13,9 @@ from django.db.models import Prefetch
 from django.utils import timezone
 from guardian.core import ObjectPermissionChecker
 from jsonfield import JSONField
-import unicodecsv
 
 # The default field size limit is 131072 characters
-unicodecsv.field_size_limit(int(ctypes.c_ulong(-1).value // 2))
+csv.field_size_limit(sys.maxsize)
 
 
 class Task(models.Model):
@@ -78,7 +78,7 @@ class TaskAssignment(models.Model):
 
         if 'csrfmiddlewaretoken' in self.answers:
             del self.answers['csrfmiddlewaretoken']
-        super(TaskAssignment, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
         # Mark Task as completed if all Assignments have been completed
         if self.task.taskassignment_set.filter(completed=True).count() >= \
@@ -332,8 +332,8 @@ class Batch(models.Model):
             csv_fh (file-like object): File handle for CSV output
         """
         fieldnames, rows = self._results_data(self.task_set.all())
-        writer = unicodecsv.DictWriter(csv_fh, fieldnames, lineterminator=lineterminator,
-                                       quoting=unicodecsv.QUOTE_ALL)
+        writer = csv.DictWriter(csv_fh, fieldnames, lineterminator=lineterminator,
+                                quoting=csv.QUOTE_ALL)
         writer.writeheader()
         for row in rows:
             writer.writerow(row)
@@ -368,7 +368,7 @@ class Batch(models.Model):
             that returns a list of values for the rest of the roww in
             the CSV file.
         """
-        rows = unicodecsv.reader(csv_fh)
+        rows = csv.reader(csv_fh)
         header = next(rows)
         return header, rows
 
@@ -390,15 +390,15 @@ class Batch(models.Model):
             input_field_set.update(task_assignment.task.input_csv_fields.keys())
 
             # If the answers JSONField is empty, it evaluates as a string instead of a dict
-            if task_assignment.answers != u'':
+            if task_assignment.answers != '':
                 answer_field_set.update(task_assignment.answers.keys())
         return tuple(
-            [u'HITId', u'HITTypeId', u'Title', u'CreationTime', u'MaxAssignments',
-             u'AssignmentDurationInSeconds', u'AssignmentId', u'WorkerId',
-             u'AcceptTime', u'SubmitTime', u'WorkTimeInSeconds'] +
-            [u'Input.' + k for k in sorted(input_field_set)] +
-            [u'Answer.' + k for k in sorted(answer_field_set)] +
-            [u'Turkle.Username']
+            ['HITId', 'HITTypeId', 'Title', 'CreationTime', 'MaxAssignments',
+             'AssignmentDurationInSeconds', 'AssignmentId', 'WorkerId',
+             'AcceptTime', 'SubmitTime', 'WorkTimeInSeconds'] +
+            ['Input.' + k for k in sorted(input_field_set)] +
+            ['Answer.' + k for k in sorted(answer_field_set)] +
+            ['Turkle.Username']
         )
 
     def _results_data(self, task_queryset):
@@ -444,8 +444,8 @@ class Batch(models.Model):
                 'WorkTimeInSeconds': task_assignment.work_time_in_seconds(),
                 'Turkle.Username': username,
             }
-            row.update({u'Input.' + k: v for k, v in task.input_csv_fields.items()})
-            row.update({u'Answer.' + k: v for k, v in task_assignment.answers.items()})
+            row.update({'Input.' + k: v for k, v in task.input_csv_fields.items()})
+            row.update({'Answer.' + k: v for k, v in task_assignment.answers.items()})
             rows.append(row)
 
         return self._get_csv_fieldnames(task_queryset), rows
@@ -555,7 +555,7 @@ class Project(models.Model):
         return batches
 
     def clean(self):
-        super(Project, self).clean()
+        super().clean()
         if not self.login_required and self.assignments_per_task != 1:
             raise ValidationError('When login is not required to access the Project, ' +
                                   'the number of Assignments per Task must be 1')
@@ -588,8 +588,8 @@ class Project(models.Model):
         batches = self.batch_set.all()
         if batches:
             fieldnames = self._get_csv_fieldnames(batches)
-            writer = unicodecsv.DictWriter(csv_fh, fieldnames, lineterminator=lineterminator,
-                                           quoting=unicodecsv.QUOTE_ALL)
+            writer = csv.DictWriter(csv_fh, fieldnames, lineterminator=lineterminator,
+                                    quoting=csv.QUOTE_ALL)
             writer.writeheader()
             for batch in batches:
                 _, rows = batch._results_data(batch.finished_tasks())
@@ -613,12 +613,12 @@ class Project(models.Model):
                     input_field_set.update(task.input_csv_fields.keys())
                     answer_field_set.update(task_assignment.answers.keys())
         return tuple(
-            [u'HITId', u'HITTypeId', u'Title', u'CreationTime', u'MaxAssignments',
-             u'AssignmentDurationInSeconds', u'AssignmentId', u'WorkerId',
-             u'AcceptTime', u'SubmitTime', u'WorkTimeInSeconds'] +
-            [u'Input.' + k for k in sorted(input_field_set)] +
-            [u'Answer.' + k for k in sorted(answer_field_set)] +
-            [u'Turkle.Username']
+            ['HITId', 'HITTypeId', 'Title', 'CreationTime', 'MaxAssignments',
+             'AssignmentDurationInSeconds', 'AssignmentId', 'WorkerId',
+             'AcceptTime', 'SubmitTime', 'WorkTimeInSeconds'] +
+            ['Input.' + k for k in sorted(input_field_set)] +
+            ['Answer.' + k for k in sorted(answer_field_set)] +
+            ['Turkle.Username']
         )
 
     def __unicode__(self):
