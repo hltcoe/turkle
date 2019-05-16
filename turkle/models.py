@@ -10,9 +10,9 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Prefetch
 from django.utils import timezone
+from guardian.core import ObjectPermissionChecker
 from jsonfield import JSONField
 import unicodecsv
-
 
 # The default field size limit is 131072 characters
 unicodecsv.field_size_limit(int(ctypes.c_ulong(-1).value // 2))
@@ -457,6 +457,34 @@ class Batch(models.Model):
         return 'Batch: {}'.format(self.name)
 
 
+class TurklePermissionChecker(ObjectPermissionChecker):
+    """
+    Wrapper for django-guardian's permissions checker.
+
+    Handles projects that don't have custom permissions.
+    """
+
+    def has_perm(self, perm, obj):
+        """
+        Checks if user/group has given permission for object.
+        :param perm: permission as string, may or may not contain app_label
+          prefix (if not prefixed, we grab app_label from ``obj``)
+        :param obj: Django model instance for which permission should be checked
+        """
+        if self.user and not self.user.is_active:
+            return False
+        elif self.user and self.user.is_superuser:
+            return True
+        elif not self.user.is_authenticated and obj.login_required:
+            return False
+        elif obj.custom_permissions:
+            if '.' in perm:
+                _, perm = perm.split('.', 1)
+            return perm in self.get_perms(obj)
+        else:
+            return True
+
+
 class Project(models.Model):
     class Meta:
         permissions = (
@@ -494,8 +522,11 @@ class Project(models.Model):
         if not user.is_authenticated:
             projects = projects.filter(login_required=False)
 
-        projects = [p for p in projects if p.available_for(user)]
-        return projects
+        # Can implement our own prefetch_perms() in future for efficiency
+        checker = TurklePermissionChecker(user)
+        checker.prefetch_perms(projects)
+
+        return [p for p in projects if checker.has_perm('can_work_on', p)]
 
     def available_for(self, user):
         """
