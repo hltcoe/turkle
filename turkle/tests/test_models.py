@@ -573,7 +573,7 @@ class TestProject(django.test.TestCase):
     def setUp(self):
         self.admin = User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
 
-    def test_available_for_active_flag(self):
+    def test_all_available_for_active_flag(self):
         user = User.objects.create_user('testuser', password='secret')
 
         self.assertEqual(len(Project.all_available_for(user)), 0)
@@ -588,7 +588,7 @@ class TestProject(django.test.TestCase):
         ).save()
         self.assertEqual(len(Project.all_available_for(user)), 1)
 
-    def test_available_for_login_required(self):
+    def test_all_available_for_login_required(self):
         anonymous_user = AnonymousUser()
 
         self.assertEqual(len(Project.all_available_for(anonymous_user)), 0)
@@ -600,6 +600,23 @@ class TestProject(django.test.TestCase):
 
         authenticated_user = User.objects.create_user('testuser', password='secret')
         self.assertEqual(len(Project.all_available_for(authenticated_user)), 1)
+
+    def test_all_available_for_custom_permissions(self):
+        user = User.objects.create_user('testuser', password='secret')
+        group = Group.objects.create(name='testgroup')
+        user.groups.add(group)
+        project = Project(custom_permissions=True)
+        project.save()
+
+        self.assertEqual(len(project.all_available_for(user)), 0)
+
+        # Verify that giving the group access also gives the group members access
+        self.assertFalse(user.has_perm('can_work_on', project))
+        assign_perm('can_work_on', group, project)
+        self.assertEqual(len(project.all_available_for(user)), 1)
+
+        # add superusers should have access to it
+        self.assertEqual(len(project.all_available_for(self.admin)), 1)
 
     def test_batches_available_for(self):
         user = User.objects.create_user('testuser', password='secret')
