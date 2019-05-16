@@ -1,4 +1,5 @@
-from io import BytesIO
+from io import StringIO
+import csv
 import json
 import statistics
 
@@ -18,7 +19,6 @@ from django.utils.html import format_html, format_html_join
 from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 import humanfriendly
-import unicodecsv
 
 from turkle.models import Batch, Project, TaskAssignment
 from turkle.utils import get_site_name
@@ -213,7 +213,8 @@ class BatchForm(ModelForm):
 
         validation_errors = []
 
-        rows = unicodecsv.reader(csv_file)
+        # django InMemoryUploadedFile returns bytes and we need strings
+        rows = csv.reader(StringIO(csv_file.read().decode('utf-8')))
         header = next(rows)
 
         csv_fields = set(header)
@@ -419,10 +420,11 @@ class BatchAdmin(admin.ModelAdmin):
             obj.filename = request.FILES['csv_file']._name
             csv_text = request.FILES['csv_file'].read()
             super(BatchAdmin, self).save_model(request, obj, form, change)
-            csv_fh = BytesIO(csv_text)
-
-            csv_fields = set(next(unicodecsv.reader(csv_fh)))
+            # ToDo inefficient to read entire file to get header
+            csv_fh = StringIO(csv_text.decode('utf-8'))
+            csv_fields = set(next(csv.reader(csv_fh)))
             csv_fh.seek(0)
+
             template_fields = set(obj.project.fieldnames)
             if csv_fields != template_fields:
                 csv_but_not_template = csv_fields.difference(template_fields)

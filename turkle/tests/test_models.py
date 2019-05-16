@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import datetime
-from io import BytesIO
+from io import StringIO
 import os.path
 
 from django.contrib.auth.models import AnonymousUser, Group, User
@@ -199,14 +199,14 @@ class TestBatch(django.test.TestCase):
             task=task2
         ).save()
 
-        csv_output = BytesIO()
+        csv_output = StringIO()
         batch.to_csv(csv_output)
         csv_string = csv_output.getvalue()
         self.assertTrue(
-            b'"Input.letter","Input.number","Answer.combined","Turkle.Username"\r\n'
+            '"Input.letter","Input.number","Answer.combined","Turkle.Username"\r\n'
             in csv_string)
-        self.assertTrue(b'"b","2","2b","joe"\r\n' in csv_string)
-        self.assertTrue(b'"a","1","1a","joe"\r\n' in csv_string)
+        self.assertTrue('"b","2","2b","joe"\r\n' in csv_string)
+        self.assertTrue('"a","1","1a","joe"\r\n' in csv_string)
 
     def test_batch_to_csv_variable_number_of_answers(self):
         project = Project(name='test', html_template='<p>${letter}</p><textarea>')
@@ -253,13 +253,13 @@ class TestBatch(django.test.TestCase):
             task=task3
         ).save()
 
-        csv_output = BytesIO()
+        csv_output = StringIO()
         batch.to_csv(csv_output)
         rows = csv_output.getvalue().split()
-        self.assertTrue(b'"Input.letter","Answer.1","Answer.2","Answer.3","Answer.4"' in rows[0])
-        self.assertTrue(any([b'"a","1","2","",""' in row for row in rows[1:]]))
-        self.assertTrue(any([b'"b","","","3","4"' in row for row in rows[1:]]))
-        self.assertTrue(any([b'"c","","2","3",""' in row for row in rows[1:]]))
+        self.assertTrue('"Input.letter","Answer.1","Answer.2","Answer.3","Answer.4"' in rows[0])
+        self.assertTrue(any(['"a","1","2","",""' in row for row in rows[1:]]))
+        self.assertTrue(any(['"b","","","3","4"' in row for row in rows[1:]]))
+        self.assertTrue(any(['"c","","2","3",""' in row for row in rows[1:]]))
 
     def test_batch_to_csv_partially_completed_task(self):
         project = Project.objects.create(
@@ -273,7 +273,7 @@ class TestBatch(django.test.TestCase):
             input_csv_fields={'number': '1', 'letter': 'a'},
         )
 
-        csv_output = BytesIO()
+        csv_output = StringIO()
         batch.to_csv(csv_output)
         rows = csv_output.getvalue().splitlines()
         self.assertEqual(len(rows), 1)
@@ -283,14 +283,14 @@ class TestBatch(django.test.TestCase):
             answers={'combined': '1a'},
             task=task,
         )
-        csv_output = BytesIO()
+        csv_output = StringIO()
         batch.to_csv(csv_output)
         rows = csv_output.getvalue().splitlines()
         self.assertEqual(len(rows), 1)
 
         ta.completed = True
         ta.save()
-        csv_output = BytesIO()
+        csv_output = StringIO()
         batch.to_csv(csv_output)
         rows = csv_output.getvalue().splitlines()
         self.assertEqual(len(rows), 2)
@@ -300,7 +300,7 @@ class TestBatch(django.test.TestCase):
             completed=True,
             task=task,
         )
-        csv_output = BytesIO()
+        csv_output = StringIO()
         batch.to_csv(csv_output)
         rows = csv_output.getvalue().splitlines()
         self.assertEqual(len(rows), 3)
@@ -312,15 +312,15 @@ class TestBatch(django.test.TestCase):
         batch = Batch(project=project)
         batch.save()
 
-        csv_fh = open(os.path.abspath('turkle/tests/resources/emoji.csv'), 'rb')
+        csv_fh = open(os.path.abspath('turkle/tests/resources/emoji.csv'), 'r')
         batch.create_tasks_from_csv(csv_fh)
 
         self.assertEqual(batch.total_tasks(), 3)
         tasks = batch.task_set.all()
-        self.assertEqual(tasks[0].input_csv_fields['emoji'], u'😀')
-        self.assertEqual(tasks[0].input_csv_fields['more_emoji'], u'😃')
-        self.assertEqual(tasks[2].input_csv_fields['emoji'], u'🤔')
-        self.assertEqual(tasks[2].input_csv_fields['more_emoji'], u'🤭')
+        self.assertEqual(tasks[0].input_csv_fields['emoji'], '😀')
+        self.assertEqual(tasks[0].input_csv_fields['more_emoji'], '😃')
+        self.assertEqual(tasks[2].input_csv_fields['emoji'], '🤔')
+        self.assertEqual(tasks[2].input_csv_fields['more_emoji'], '🤭')
 
     def test_login_required_validation_1(self):
         # No ValidationError thrown
@@ -755,7 +755,7 @@ class TestModels(django.test.TestCase):
 
         task = Task(
             batch=batch,
-            input_csv_fields={u'foo': u'bar'},
+            input_csv_fields={'foo': 'bar'},
             completed=True,
         )
         task.save()
@@ -763,34 +763,34 @@ class TestModels(django.test.TestCase):
 
         self.task_assignment = TaskAssignment(
             answers={
-                u"comment": u"\u221e", u"userDisplayLanguage": u"",
-                u"sentence_textbox_3_verb1": u"", u"city": u"",
-                u"sentence_textbox_1_verb6": u"",
-                u"sentence_textbox_1_verb7": u"",
-                u"sentence_textbox_1_verb4": u"",
-                u"sentence_textbox_1_verb5": u"",
-                u"sentence_textbox_1_verb2": u"",
-                u"sentence_textbox_1_verb3": u"",
-                u"sentence_textbox_1_verb1": u"",
-                u"sentence_textbox_2_verb4": u"",
-                u"csrfmiddlewaretoken": u"7zxQ9Yyug6Nsnm4nLky9p8ObJwNipdu8",
-                u"sentence_drop_2_verb3": u"foo",
-                u"sentence_drop_2_verb2": u"foo",
-                u"sentence_drop_2_verb1": u"foo",
-                u"sentence_textbox_2_verb1": u"",
-                u"sentence_textbox_2_verb3": u"",
-                u"sentence_drop_2_verb4": u"foo",
-                u"sentence_textbox_2_verb2": u"",
-                u"submitit": u"Submit", u"browserInfo": u"",
-                u"sentence_drop_1_verb1": u"foo",
-                u"sentence_drop_1_verb2": u"foo",
-                u"sentence_drop_1_verb3": u"foo",
-                u"sentence_drop_1_verb4": u"foo",
-                u"sentence_drop_1_verb5": u"foo",
-                u"sentence_drop_1_verb6": u"foo",
-                u"sentence_drop_1_verb7": u"foo", u"country": u"",
-                u"sentence_drop_3_verb1": u"foo",
-                u"ipAddress": u"", u"region": u""
+                "comment": "\u221e", "userDisplayLanguage": "",
+                "sentence_textbox_3_verb1": "", "city": "",
+                "sentence_textbox_1_verb6": "",
+                "sentence_textbox_1_verb7": "",
+                "sentence_textbox_1_verb4": "",
+                "sentence_textbox_1_verb5": "",
+                "sentence_textbox_1_verb2": "",
+                "sentence_textbox_1_verb3": "",
+                "sentence_textbox_1_verb1": "",
+                "sentence_textbox_2_verb4": "",
+                "csrfmiddlewaretoken": "7zxQ9Yyug6Nsnm4nLky9p8ObJwNipdu8",
+                "sentence_drop_2_verb3": "foo",
+                "sentence_drop_2_verb2": "foo",
+                "sentence_drop_2_verb1": "foo",
+                "sentence_textbox_2_verb1": "",
+                "sentence_textbox_2_verb3": "",
+                "sentence_drop_2_verb4": "foo",
+                "sentence_textbox_2_verb2": "",
+                "submitit": "Submit", "browserInfo": "",
+                "sentence_drop_1_verb1": "foo",
+                "sentence_drop_1_verb2": "foo",
+                "sentence_drop_1_verb3": "foo",
+                "sentence_drop_1_verb4": "foo",
+                "sentence_drop_1_verb5": "foo",
+                "sentence_drop_1_verb6": "foo",
+                "sentence_drop_1_verb7": "foo", "country": "",
+                "sentence_drop_3_verb1": "foo",
+                "ipAddress": "", "region": ""
             },
             assigned_to=None,
             completed=True,
@@ -800,14 +800,14 @@ class TestModels(django.test.TestCase):
 
     def test_extract_fieldnames_from_form_html(self):
         self.assertEqual(
-            {u'foo': True},
+            {'foo': True},
             self.task.batch.project.fieldnames
         )
 
         project = Project(name='test', html_template='<p>${foo} - ${bar}</p><textarea>')
         project.clean()
         self.assertEqual(
-            {u'foo': True, u'bar': True},
+            {'foo': True, 'bar': True},
             project.fieldnames
         )
 
@@ -845,14 +845,14 @@ class TestModels(django.test.TestCase):
             task=task2
         ).save()
 
-        csv_output = BytesIO()
+        csv_output = StringIO()
         project.to_csv(csv_output)
 
-        rows = csv_output.getvalue().split(b'\r\n')
+        rows = csv_output.getvalue().split('\r\n')
         self.assertTrue(
-            b'"Input.letter","Input.number","Answer.combined"' in rows[0])
-        self.assertTrue(any([b'"a","1","1a"' in row for row in rows[1:]]))
-        self.assertTrue(any([b'"b","2","2b"' in row for row in rows[1:]]))
+            '"Input.letter","Input.number","Answer.combined"' in rows[0])
+        self.assertTrue(any(['"a","1","1a"' in row for row in rows[1:]]))
+        self.assertTrue(any(['"b","2","2b"' in row for row in rows[1:]]))
 
     def test_project_to_csv_different_answers_per_batch(self):
         project = Project(name='test', html_template='<p>${letter}</p><textarea>')
@@ -888,14 +888,14 @@ class TestModels(django.test.TestCase):
             task=task2
         ).save()
 
-        csv_output = BytesIO()
+        csv_output = StringIO()
         project.to_csv(csv_output)
 
-        rows = csv_output.getvalue().split(b'\r\n')
+        rows = csv_output.getvalue().split('\r\n')
         self.assertTrue(
-            b'"Input.letter","Answer.1","Answer.2","Answer.3","Answer.4"' in rows[0])
-        self.assertTrue(b'"a","1","2","",""' in rows[1])
-        self.assertTrue(b'"b","","","3","4"' in rows[2])
+            '"Input.letter","Answer.1","Answer.2","Answer.3","Answer.4"' in rows[0])
+        self.assertTrue('"a","1","2","",""' in rows[1])
+        self.assertTrue('"b","","","3","4"' in rows[2])
 
     def test_new_task(self):
         """
@@ -922,7 +922,7 @@ class TestModels(django.test.TestCase):
 
     def test_result_to_dict_unicode(self):
         self.assertEqual(
-            u'∞',
+            '∞',
             self.task_assignment.answers['comment']
         )
 
@@ -937,26 +937,26 @@ class TestGenerateForm(django.test.TestCase):
         self.project.save()
         self.batch = Batch(project=self.project)
         self.batch.save()
-        field_names = u"tweet0_id,tweet0_entity,tweet0_before_entity,tweet0_after_entity," + \
-            u"tweet0_word0,tweet0_word1,tweet0_word2,tweet1_id,tweet1_entity," + \
-            u"tweet1_before_entity,tweet1_after_entity,tweet1_word0,tweet1_word1,tweet1_word2," + \
-            u"tweet2_id,tweet2_entity,tweet2_before_entity,tweet2_after_entity,tweet2_word0," + \
-            u"tweet2_word1,tweet2_word2,tweet3_id,tweet3_entity,tweet3_before_entity," + \
-            u"tweet3_after_entity,tweet3_word0,tweet3_word1,tweet3_word2,tweet4_id," + \
-            u"tweet4_entity,tweet4_before_entity,tweet4_after_entity,tweet4_word0," + \
-            u"tweet4_word1,tweet4_word2,tweet5_id,tweet5_entity,tweet5_before_entity," + \
-            u"tweet5_after_entity,tweet5_word0,tweet5_word1,tweet5_word2",
-        values = u"268,SANTOS, Muy bien America ......... y lo siento mucho , un muy buen " + \
-            u"rival,mucho,&nbsp;,&nbsp;,2472,GREGORY, Ah bueno , tampoco andes pidiendo ese " +\
-            u"tipo de milagros . @jcabrerac @CarlosCabreraR,bueno,&nbsp;,&nbsp;,478,ALEJANDRO," + \
-            u" @aguillen19 &#44; un super abrazo mi querido , &#44; mis mejores deseos para " + \
-            u"este 2012 ... muakkk !,querido,&nbsp;,&nbsp;,906_control, PF, Acusan camioneros " + \
-            u"extorsiones de, : Transportistas acusaron que deben pagar entre 13 y 15 mil " + \
-            u"pesos a agentes que .. http://t.co/d8LUVvhP,acusaron,&nbsp;,&nbsp;,2793_control," + \
-            u" CHICARO, Me gusta cuando chicharo hace su oracion es lo que lo hace especial .," + \
-            u"&nbsp;,gusta,&nbsp;,&nbsp;,357,OSCAR WILDE&QUOT;, &quot; @ ifilosofia : Las " + \
-            u"pequeñas acciones de cada día son las que hacen o deshacen el carácter.&quot; , " + \
-            u"bueno !!!! Es así,bueno,&nbsp;,&nbsp;",
+        field_names = "tweet0_id,tweet0_entity,tweet0_before_entity,tweet0_after_entity," + \
+            "tweet0_word0,tweet0_word1,tweet0_word2,tweet1_id,tweet1_entity," + \
+            "tweet1_before_entity,tweet1_after_entity,tweet1_word0,tweet1_word1,tweet1_word2," + \
+            "tweet2_id,tweet2_entity,tweet2_before_entity,tweet2_after_entity,tweet2_word0," + \
+            "tweet2_word1,tweet2_word2,tweet3_id,tweet3_entity,tweet3_before_entity," + \
+            "tweet3_after_entity,tweet3_word0,tweet3_word1,tweet3_word2,tweet4_id," + \
+            "tweet4_entity,tweet4_before_entity,tweet4_after_entity,tweet4_word0," + \
+            "tweet4_word1,tweet4_word2,tweet5_id,tweet5_entity,tweet5_before_entity," + \
+            "tweet5_after_entity,tweet5_word0,tweet5_word1,tweet5_word2",
+        values = "268,SANTOS, Muy bien America ......... y lo siento mucho , un muy buen " + \
+            "rival,mucho,&nbsp;,&nbsp;,2472,GREGORY, Ah bueno , tampoco andes pidiendo ese " +\
+            "tipo de milagros . @jcabrerac @CarlosCabreraR,bueno,&nbsp;,&nbsp;,478,ALEJANDRO," + \
+            " @aguillen19 &#44; un super abrazo mi querido , &#44; mis mejores deseos para " + \
+            "este 2012 ... muakkk !,querido,&nbsp;,&nbsp;,906_control, PF, Acusan camioneros " + \
+            "extorsiones de, : Transportistas acusaron que deben pagar entre 13 y 15 mil " + \
+            "pesos a agentes que .. http://t.co/d8LUVvhP,acusaron,&nbsp;,&nbsp;,2793_control," + \
+            " CHICARO, Me gusta cuando chicharo hace su oracion es lo que lo hace especial .," + \
+            "&nbsp;,gusta,&nbsp;,&nbsp;,357,OSCAR WILDE&QUOT;, &quot; @ ifilosofia : Las " + \
+            "pequeñas acciones de cada día son las que hacen o deshacen el carácter.&quot; , " + \
+            "bueno !!!! Es así,bueno,&nbsp;,&nbsp;",
         self.task = Task(
             batch=self.batch,
             input_csv_fields=dict(zip(field_names, values))
@@ -974,9 +974,9 @@ class TestGenerateForm(django.test.TestCase):
     def test_map_fields_csv_row(self):
         project = Project(
             name='test',
-            html_template=u"""</select> con relaci&oacute;n a """ +
-            u"""<span style="color: rgb(0, 0, 255);">""" +
-            u"""${tweet0_entity}</span> en este mensaje.</p><textarea>"""
+            html_template="""</select> con relaci&oacute;n a """ +
+            """<span style="color: rgb(0, 0, 255);">""" +
+            """${tweet0_entity}</span> en este mensaje.</p><textarea>"""
         )
         project.save()
         batch = Batch(project=project)
@@ -985,14 +985,14 @@ class TestGenerateForm(django.test.TestCase):
             batch=batch,
             input_csv_fields=dict(
                 zip(
-                    [u"tweet0_id", u"tweet0_entity"],
-                    [u"268", u"SANTOS"],
+                    ["tweet0_id", "tweet0_entity"],
+                    ["268", "SANTOS"],
                 )
             ),
         )
         task.save()
-        expect = u"""</select> con relaci&oacute;n a <span style="color:""" + \
-            u""" rgb(0, 0, 255);">SANTOS</span> en este mensaje.</p><textarea>"""
+        expect = """</select> con relaci&oacute;n a <span style="color:""" + \
+            """ rgb(0, 0, 255);">SANTOS</span> en este mensaje.</p><textarea>"""
         actual = task.populate_html_template()
         self.assertEqual(expect, actual)
 

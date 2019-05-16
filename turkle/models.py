@@ -1,8 +1,9 @@
-import ctypes
+import csv
 import datetime
 import os.path
 import re
 import statistics
+import sys
 
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import User
@@ -12,10 +13,9 @@ from django.db.models import Prefetch
 from django.utils import timezone
 from guardian.core import ObjectPermissionChecker
 from jsonfield import JSONField
-import unicodecsv
 
 # The default field size limit is 131072 characters
-unicodecsv.field_size_limit(int(ctypes.c_ulong(-1).value // 2))
+csv.field_size_limit(sys.maxsize)
 
 
 class Task(models.Model):
@@ -332,8 +332,8 @@ class Batch(models.Model):
             csv_fh (file-like object): File handle for CSV output
         """
         fieldnames, rows = self._results_data(self.task_set.all())
-        writer = unicodecsv.DictWriter(csv_fh, fieldnames, lineterminator=lineterminator,
-                                       quoting=unicodecsv.QUOTE_ALL)
+        writer = csv.DictWriter(csv_fh, fieldnames, lineterminator=lineterminator,
+                                       quoting=csv.QUOTE_ALL)
         writer.writeheader()
         for row in rows:
             writer.writerow(row)
@@ -368,7 +368,7 @@ class Batch(models.Model):
             that returns a list of values for the rest of the roww in
             the CSV file.
         """
-        rows = unicodecsv.reader(csv_fh)
+        rows = csv.reader(csv_fh)
         header = next(rows)
         return header, rows
 
@@ -588,8 +588,8 @@ class Project(models.Model):
         batches = self.batch_set.all()
         if batches:
             fieldnames = self._get_csv_fieldnames(batches)
-            writer = unicodecsv.DictWriter(csv_fh, fieldnames, lineterminator=lineterminator,
-                                           quoting=unicodecsv.QUOTE_ALL)
+            writer = csv.DictWriter(csv_fh, fieldnames, lineterminator=lineterminator,
+                                           quoting=csv.QUOTE_ALL)
             writer.writeheader()
             for batch in batches:
                 _, rows = batch._results_data(batch.finished_tasks())

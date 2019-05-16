@@ -1,4 +1,4 @@
-from io import BytesIO
+from io import StringIO
 import urllib
 
 from django.contrib import messages
@@ -114,7 +114,7 @@ def download_batch_csv(request, batch_id):
       download any CSV file.
     """
     batch = Batch.objects.get(id=batch_id)
-    csv_output = BytesIO()
+    csv_output = StringIO()
     if request.session.get('csv_unix_line_endings', False):
         batch.to_csv(csv_output, lineterminator='\n')
     else:

@@ -6,4 +6,3 @@ django-nose==1.4.5
 humanfriendly
 jsonfield==2.0.2
 requests
-unicodecsv==0.14.1
