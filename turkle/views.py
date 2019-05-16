@@ -1,3 +1,4 @@
+from functools import wraps
 from io import StringIO
 import urllib
 
@@ -9,7 +10,8 @@ from django.db.utils import OperationalError
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
-from functools import wraps
+from django.utils.datastructures import MultiValueDictKeyError
+from django.utils.dateparse import parse_date
 
 from turkle.models import Task, TaskAssignment, Batch, Project
 
@@ -363,6 +365,83 @@ def skip_task(request, batch_id, task_id):
     """
     _add_task_id_to_skip_session(request.session, batch_id, task_id)
     return redirect(preview_next_task, batch_id)
+
+
+def stats(request):
+    def format_seconds(s):
+        """Converts seconds to string"""
+        return '%dh %dm' % (s//3600, (s//60) % 60)
+
+    if not request.user.is_authenticated:
+        messages.error(
+            request,
+            u'You must be logged in to view the user statistics page')
+        return redirect(index)
+
+    try:
+        start_date = parse_date(request.GET['start_date'])
+    except MultiValueDictKeyError:
+        start_date = None
+    try:
+        end_date = parse_date(request.GET['end_date'])
+    except MultiValueDictKeyError:
+        end_date = None
+
+    tas = TaskAssignment.objects.filter(completed=True).filter(assigned_to=request.user)
+    if start_date:
+        tas = tas.filter(updated_at__gte=start_date)
+    if end_date:
+        tas = tas.filter(updated_at__lte=end_date)
+
+    projects = Project.objects.filter(batch__task__taskassignment__assigned_to=request.user).\
+        distinct()
+    batches = Batch.objects.filter(task__taskassignment__assigned_to=request.user).distinct()
+
+    elapsed_seconds_overall = 0
+    project_stats = []
+    for project in projects:
+        project_batches = [b for b in batches if b.project_id == project.id]
+
+        batch_stats = []
+        elapsed_seconds_project = 0
+        total_completed_project = 0
+        for batch in project_batches:
+            batch_tas = tas.filter(task__batch=batch)
+            total_completed_batch = batch_tas.count()
+            total_completed_project += total_completed_batch
+            elapsed_seconds_batch = sum([ta.work_time_in_seconds() for ta in batch_tas])
+            elapsed_seconds_project += elapsed_seconds_batch
+            elapsed_seconds_overall += elapsed_seconds_batch
+            if total_completed_batch > 0:
+                batch_stats.append({
+                    'batch_name': batch.name,
+                    'elapsed_time_batch': format_seconds(elapsed_seconds_batch),
+                    'total_completed_batch': total_completed_batch,
+                })
+        if total_completed_project > 0:
+            project_stats.append({
+                'project_name': project.name,
+                'batch_stats': batch_stats,
+                'elapsed_time_project': format_seconds(elapsed_seconds_project),
+                'total_completed_project': total_completed_project,
+            })
+
+    if start_date:
+        start_date = start_date.strftime('%Y-%m-%d')
+    if end_date:
+        end_date = end_date.strftime('%Y-%m-%d')
+
+    return render(
+        request,
+        'stats.html',
+        {
+            'project_stats': project_stats,
+            'end_date': end_date,
+            'start_date': start_date,
+            'total_completed': tas.count(),
+            'total_elapsed_time': format_seconds(elapsed_seconds_overall),
+        }
+    )
 
 
 def update_auto_accept(request):

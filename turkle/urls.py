@@ -13,11 +13,13 @@ from turkle.views import (
     return_task_assignment,
     skip_and_accept_next_task,
     skip_task,
+    stats,
     update_auto_accept,
 )
 
 urlpatterns = [
     url(r'^$', index, name='index'),
+    url(r'^stats/$', stats, name='stats'),
     url(r'^update_auto_accept/$', update_auto_accept, name='update_auto_accept'),
     url(r'^task/(?P<task_id>\d+)/$', preview, name='preview'),
     url(r'^task/(?P<task_id>\d+)/iframe/$', preview_iframe, name='preview_iframe'),
