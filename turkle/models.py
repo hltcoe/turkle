@@ -1,8 +1,9 @@
-import ctypes
+import csv
 import datetime
 import os.path
 import re
 import statistics
+import sys
 
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import User
@@ -10,12 +11,11 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Prefetch
 from django.utils import timezone
+from guardian.core import ObjectPermissionChecker
 from jsonfield import JSONField
-import unicodecsv
-
 
 # The default field size limit is 131072 characters
-unicodecsv.field_size_limit(int(ctypes.c_ulong(-1).value // 2))
+csv.field_size_limit(sys.maxsize)
 
 
 class Task(models.Model):
@@ -78,7 +78,7 @@ class TaskAssignment(models.Model):
 
         if 'csrfmiddlewaretoken' in self.answers:
             del self.answers['csrfmiddlewaretoken']
-        super(TaskAssignment, self).save(*args, **kwargs)
+        super().save(*args, **kwargs)
 
         # Mark Task as completed if all Assignments have been completed
         if self.task.taskassignment_set.filter(completed=True).count() >= \
@@ -151,15 +151,19 @@ class Batch(models.Model):
 
         hs = self.task_set.filter(completed=False)
 
-        # Exclude Tasks that have already been assigned to this user.
-        if user.is_authenticated:
-            # If the user is not authenticated, then user.id is None,
-            # and the query below would exclude all uncompleted Tasks.
-            hs = hs.exclude(taskassignment__assigned_to_id=user.id)
+        if self.assignments_per_task > 1:
+            # Exclude Tasks that have already been assigned to this user.
+            if user.is_authenticated:
+                # If the user is not authenticated, then user.id is None,
+                # and the query below would exclude all uncompleted Tasks.
+                hs = hs.exclude(taskassignment__assigned_to_id=user.id)
 
-        # Only include Tasks whose total (possibly incomplete) assignments < assignments_per_task
-        hs = hs.annotate(ac=models.Count('taskassignment')).\
-            filter(ac__lt=self.assignments_per_task)
+            # Only include Tasks when # of (possibly incomplete) assignments < assignments_per_task
+            hs = hs.annotate(ac=models.Count('taskassignment')).\
+                filter(ac__lt=self.assignments_per_task)
+        elif self.assignments_per_task == 1:
+            # Only returns Tasks that have not been assigned to anyone (including this user)
+            hs = hs.filter(taskassignment=None)
 
         return hs
 
@@ -328,8 +332,8 @@ class Batch(models.Model):
             csv_fh (file-like object): File handle for CSV output
         """
         fieldnames, rows = self._results_data(self.task_set.all())
-        writer = unicodecsv.DictWriter(csv_fh, fieldnames, lineterminator=lineterminator,
-                                       quoting=unicodecsv.QUOTE_ALL)
+        writer = csv.DictWriter(csv_fh, fieldnames, lineterminator=lineterminator,
+                                quoting=csv.QUOTE_ALL)
         writer.writeheader()
         for row in rows:
             writer.writerow(row)
@@ -364,7 +368,7 @@ class Batch(models.Model):
             that returns a list of values for the rest of the roww in
             the CSV file.
         """
-        rows = unicodecsv.reader(csv_fh)
+        rows = csv.reader(csv_fh)
         header = next(rows)
         return header, rows
 
@@ -386,15 +390,15 @@ class Batch(models.Model):
             input_field_set.update(task_assignment.task.input_csv_fields.keys())
 
             # If the answers JSONField is empty, it evaluates as a string instead of a dict
-            if task_assignment.answers != u'':
+            if task_assignment.answers != '':
                 answer_field_set.update(task_assignment.answers.keys())
         return tuple(
-            [u'HITId', u'HITTypeId', u'Title', u'CreationTime', u'MaxAssignments',
-             u'AssignmentDurationInSeconds', u'AssignmentId', u'WorkerId',
-             u'AcceptTime', u'SubmitTime', u'WorkTimeInSeconds'] +
-            [u'Input.' + k for k in sorted(input_field_set)] +
-            [u'Answer.' + k for k in sorted(answer_field_set)] +
-            [u'Turkle.Username']
+            ['HITId', 'HITTypeId', 'Title', 'CreationTime', 'MaxAssignments',
+             'AssignmentDurationInSeconds', 'AssignmentId', 'WorkerId',
+             'AcceptTime', 'SubmitTime', 'WorkTimeInSeconds'] +
+            ['Input.' + k for k in sorted(input_field_set)] +
+            ['Answer.' + k for k in sorted(answer_field_set)] +
+            ['Turkle.Username']
         )
 
     def _results_data(self, task_queryset):
@@ -440,8 +444,8 @@ class Batch(models.Model):
                 'WorkTimeInSeconds': task_assignment.work_time_in_seconds(),
                 'Turkle.Username': username,
             }
-            row.update({u'Input.' + k: v for k, v in task.input_csv_fields.items()})
-            row.update({u'Answer.' + k: v for k, v in task_assignment.answers.items()})
+            row.update({'Input.' + k: v for k, v in task.input_csv_fields.items()})
+            row.update({'Answer.' + k: v for k, v in task_assignment.answers.items()})
             rows.append(row)
 
         return self._get_csv_fieldnames(task_queryset), rows
@@ -451,6 +455,34 @@ class Batch(models.Model):
 
     def __str__(self):
         return 'Batch: {}'.format(self.name)
+
+
+class TurklePermissionChecker(ObjectPermissionChecker):
+    """
+    Wrapper for django-guardian's permissions checker.
+
+    Handles projects that don't have custom permissions.
+    """
+
+    def has_perm(self, perm, obj):
+        """
+        Checks if user/group has given permission for object.
+        :param perm: permission as string, may or may not contain app_label
+          prefix (if not prefixed, we grab app_label from ``obj``)
+        :param obj: Django model instance for which permission should be checked
+        """
+        if self.user and not self.user.is_active:
+            return False
+        elif self.user and self.user.is_superuser:
+            return True
+        elif not self.user.is_authenticated and obj.login_required:
+            return False
+        elif obj.custom_permissions:
+            if '.' in perm:
+                _, perm = perm.split('.', 1)
+            return perm in self.get_perms(obj)
+        else:
+            return True
 
 
 class Project(models.Model):
@@ -490,8 +522,11 @@ class Project(models.Model):
         if not user.is_authenticated:
             projects = projects.filter(login_required=False)
 
-        projects = [p for p in projects if p.available_for(user)]
-        return projects
+        # Can implement our own prefetch_perms() in future for efficiency
+        checker = TurklePermissionChecker(user)
+        checker.prefetch_perms(projects)
+
+        return [p for p in projects if checker.has_perm('can_work_on', p)]
 
     def available_for(self, user):
         """
@@ -520,18 +555,28 @@ class Project(models.Model):
         return batches
 
     def clean(self):
+        super().clean()
         if not self.login_required and self.assignments_per_task != 1:
             raise ValidationError('When login is not required to access the Project, ' +
                                   'the number of Assignments per Task must be 1')
+        self.process_template()
 
-    def save(self, *args, **kwargs):
+    def process_template(self):
         soup = BeautifulSoup(self.html_template, 'html.parser')
         self.html_template_has_submit_button = bool(soup.select('input[type=submit]'))
 
         # Extract fieldnames from html_template text, save fieldnames as keys of JSON dict
         unique_fieldnames = set(re.findall(r'\${(\w+)}', self.html_template))
         self.fieldnames = dict((fn, True) for fn in unique_fieldnames)
-        super(Project, self).save(*args, **kwargs)
+
+        # Matching mTurk we confirm at least one input, select, or textarea
+        if soup.find('input') is None and soup.find('select') is None \
+                and soup.find('textarea') is None:
+            msg = "Template does not contain any fields for responses. " + \
+                  "Please include at least one field (input, select, or textarea)." + \
+                  "This usually means you are generating HTML with JavaScript." + \
+                  "If so, add an unused hidden input."
+            raise ValidationError({'html_template': msg}, code='invalid')
 
     def to_csv(self, csv_fh, lineterminator='\r\n'):
         """
@@ -543,8 +588,8 @@ class Project(models.Model):
         batches = self.batch_set.all()
         if batches:
             fieldnames = self._get_csv_fieldnames(batches)
-            writer = unicodecsv.DictWriter(csv_fh, fieldnames, lineterminator=lineterminator,
-                                           quoting=unicodecsv.QUOTE_ALL)
+            writer = csv.DictWriter(csv_fh, fieldnames, lineterminator=lineterminator,
+                                    quoting=csv.QUOTE_ALL)
             writer.writeheader()
             for batch in batches:
                 _, rows = batch._results_data(batch.finished_tasks())
@@ -568,12 +613,12 @@ class Project(models.Model):
                     input_field_set.update(task.input_csv_fields.keys())
                     answer_field_set.update(task_assignment.answers.keys())
         return tuple(
-            [u'HITId', u'HITTypeId', u'Title', u'CreationTime', u'MaxAssignments',
-             u'AssignmentDurationInSeconds', u'AssignmentId', u'WorkerId',
-             u'AcceptTime', u'SubmitTime', u'WorkTimeInSeconds'] +
-            [u'Input.' + k for k in sorted(input_field_set)] +
-            [u'Answer.' + k for k in sorted(answer_field_set)] +
-            [u'Turkle.Username']
+            ['HITId', 'HITTypeId', 'Title', 'CreationTime', 'MaxAssignments',
+             'AssignmentDurationInSeconds', 'AssignmentId', 'WorkerId',
+             'AcceptTime', 'SubmitTime', 'WorkTimeInSeconds'] +
+            ['Input.' + k for k in sorted(input_field_set)] +
+            ['Answer.' + k for k in sorted(answer_field_set)] +
+            ['Turkle.Username']
         )
 
     def __unicode__(self):

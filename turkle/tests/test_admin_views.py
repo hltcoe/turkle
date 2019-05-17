@@ -7,6 +7,7 @@ from django.contrib.auth.models import Group, User
 from django.contrib.messages import get_messages
 from django.urls import reverse
 from django.utils import timezone
+from .utility import save_model
 
 from turkle.models import Batch, Project, Task, TaskAssignment
 
@@ -14,7 +15,7 @@ from turkle.models import Batch, Project, Task, TaskAssignment
 class TestCancelOrPublishBatch(django.test.TestCase):
     def setUp(self):
         User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
-        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p>')
+        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
         project.save()
         self.batch = Batch(active=False, project=project, name='MY_BATCH_NAME')
         self.batch.save()
@@ -38,7 +39,7 @@ class TestCancelOrPublishBatch(django.test.TestCase):
         self.assertEqual(response['Location'], reverse('turkle_admin:turkle_batch_changelist'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
-        self.assertEqual(str(messages[0]), u'Cannot find Batch with ID 666')
+        self.assertEqual(str(messages[0]), 'Cannot find Batch with ID 666')
 
     def test_batch_publish(self):
         batch_id = self.batch.id
@@ -64,7 +65,7 @@ class TestCancelOrPublishBatch(django.test.TestCase):
         self.assertEqual(response['Location'], reverse('turkle_admin:turkle_batch_changelist'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
-        self.assertEqual(str(messages[0]), u'Cannot find Batch with ID 666')
+        self.assertEqual(str(messages[0]), 'Cannot find Batch with ID 666')
 
 
 class TestExpireAbandonedAssignments(django.test.TestCase):
@@ -101,7 +102,7 @@ class TestExpireAbandonedAssignments(django.test.TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         u'All 1 abandoned Tasks have been expired')
+                         'All 1 abandoned Tasks have been expired')
 
 
 class TestBatchAdmin(django.test.TestCase):
@@ -109,7 +110,7 @@ class TestBatchAdmin(django.test.TestCase):
         self.user = User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
 
     def test_batch_add(self):
-        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p>')
+        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
         project.save()
 
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
@@ -118,7 +119,7 @@ class TestBatchAdmin(django.test.TestCase):
         client.login(username='admin', password='secret')
         with open(os.path.abspath('turkle/tests/resources/form_1_vals.csv')) as fp:
             response = client.post(
-                u'/admin/turkle/batch/add/',
+                '/admin/turkle/batch/add/',
                 {
                     'assignments_per_task': 1,
                     'project': project.id,
@@ -130,15 +131,15 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertTrue(Batch.objects.filter(name='batch_save').exists())
         matching_batch = Batch.objects.filter(name='batch_save').last()
         self.assertEqual(response['Location'],
-                         u'/admin/turkle/batch/{}/review/'.format(matching_batch.id))
-        self.assertEqual(matching_batch.filename, u'form_1_vals.csv')
+                         '/admin/turkle/batch/{}/review/'.format(matching_batch.id))
+        self.assertEqual(matching_batch.filename, 'form_1_vals.csv')
         self.assertEqual(matching_batch.total_tasks(), 1)
         self.assertEqual(matching_batch.allotted_assignment_time,
                          Batch._meta.get_field('allotted_assignment_time').get_default())
         self.assertEqual(matching_batch.created_by, self.user)
 
     def test_batch_add_csv_with_emoji(self):
-        project = Project(name='foo', html_template='<p>${emoji}: ${more_emoji}</p>')
+        project = Project(name='foo', html_template='<p>${emoji}: ${more_emoji}</p><textarea>')
         project.save()
 
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
@@ -147,7 +148,7 @@ class TestBatchAdmin(django.test.TestCase):
         client.login(username='admin', password='secret')
         with open(os.path.abspath('turkle/tests/resources/emoji.csv')) as fp:
             response = client.post(
-                u'/admin/turkle/batch/add/',
+                '/admin/turkle/batch/add/',
                 {
                     'assignments_per_task': 1,
                     'project': project.id,
@@ -159,25 +160,25 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertTrue(Batch.objects.filter(name='batch_save').exists())
         matching_batch = Batch.objects.filter(name='batch_save').last()
         self.assertEqual(response['Location'],
-                         u'/admin/turkle/batch/{}/review/'.format(matching_batch.id))
-        self.assertEqual(matching_batch.filename, u'emoji.csv')
+                         '/admin/turkle/batch/{}/review/'.format(matching_batch.id))
+        self.assertEqual(matching_batch.filename, 'emoji.csv')
 
         self.assertEqual(matching_batch.total_tasks(), 3)
         tasks = matching_batch.task_set.all()
-        self.assertEqual(tasks[0].input_csv_fields['emoji'], u'😀')
-        self.assertEqual(tasks[0].input_csv_fields['more_emoji'], u'😃')
-        self.assertEqual(tasks[2].input_csv_fields['emoji'], u'🤔')
-        self.assertEqual(tasks[2].input_csv_fields['more_emoji'], u'🤭')
+        self.assertEqual(tasks[0].input_csv_fields['emoji'], '😀')
+        self.assertEqual(tasks[0].input_csv_fields['more_emoji'], '😃')
+        self.assertEqual(tasks[2].input_csv_fields['emoji'], '🤔')
+        self.assertEqual(tasks[2].input_csv_fields['more_emoji'], '🤭')
 
     def test_batch_add_empty_allotted_assignment_time(self):
-        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p>')
+        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
         project.save()
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
         with open(os.path.abspath('turkle/tests/resources/form_1_vals.csv')) as fp:
             response = client.post(
-                u'/admin/turkle/batch/add/',
+                '/admin/turkle/batch/add/',
                 {
                     'allotted_assignment_time': '',
                     'assignments_per_task': 1,
@@ -190,7 +191,7 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertTrue(b'This field is required.' in response.content)
 
     def test_batch_add_missing_project(self):
-        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p>')
+        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
         project.save()
 
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
@@ -199,7 +200,7 @@ class TestBatchAdmin(django.test.TestCase):
         client.login(username='admin', password='secret')
         with open(os.path.abspath('turkle/tests/resources/form_1_vals.csv')) as fp:
             response = client.post(
-                u'/admin/turkle/batch/add/',
+                '/admin/turkle/batch/add/',
                 {
                     'assignments_per_task': 1,
                     'name': 'batch_save',
@@ -210,7 +211,7 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertTrue(b'This field is required' in response.content)
 
     def test_batch_add_missing_file_field(self):
-        project = Project(name='foo', html_template='<p>${emoji}: ${more_emoji}</p>')
+        project = Project(name='foo', html_template='<p>${emoji}: ${more_emoji}</p><textarea>')
         project.save()
 
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
@@ -218,7 +219,7 @@ class TestBatchAdmin(django.test.TestCase):
         client = django.test.Client()
         client.login(username='admin', password='secret')
         response = client.post(
-            u'/admin/turkle/batch/add/',
+            '/admin/turkle/batch/add/',
             {
                 'assignments_per_task': 1,
                 'project': project.id,
@@ -229,7 +230,7 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertTrue(b'This field is required' in response.content)
 
     def test_batch_add_validation_extra_csv_fields(self):
-        project = Project(name='foo', html_template='<p>${f2}</p>')
+        project = Project(name='foo', html_template='<p>${f2}</p><textarea>')
         project.save()
 
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
@@ -239,7 +240,7 @@ class TestBatchAdmin(django.test.TestCase):
         # CSV file has fields 'f2' and 'f3'
         with open(os.path.abspath('turkle/tests/resources/mismatched_fields.csv')) as fp:
             response = client.post(
-                u'/admin/turkle/batch/add/',
+                '/admin/turkle/batch/add/',
                 {
                     'assignments_per_task': 1,
                     'project': project.id,
@@ -253,12 +254,14 @@ class TestBatchAdmin(django.test.TestCase):
                                                        kwargs={'batch_id': matching_batch.id}))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
-        self.assertTrue(u'The CSV file contained fields that are not in the HTML template.'
+        self.assertTrue('The CSV file contained fields that are not in the HTML template.'
                         in str(messages[0]))
 
     def test_batch_add_validation_missing_csv_fields(self):
-        project = Project(name='foo', html_template='<p>${f1} ${f2} ${f3}</p>')
-        project.save()
+        project = Project(name='foo', html_template='<p>${f1} ${f2} ${f3}</p><textarea>')
+        project.created_by = self.user
+        project.updated_by = self.user
+        save_model(project)
 
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
 
@@ -267,19 +270,20 @@ class TestBatchAdmin(django.test.TestCase):
         # CSV file has fields 'f2' and 'f3'
         with open(os.path.abspath('turkle/tests/resources/mismatched_fields.csv')) as fp:
             response = client.post(
-                u'/admin/turkle/batch/add/',
+                '/admin/turkle/batch/add/',
                 {
                     'project': project.id,
                     'name': 'batch_save',
                     'csv_file': fp
                 })
         self.assertEqual(response.status_code, 200)
+        print(response.content)
         self.assertTrue(b'error' in response.content)
         self.assertTrue(b'extra fields' not in response.content)
         self.assertTrue(b'missing fields' in response.content)
 
     def test_batch_add_validation_variable_fields_per_row(self):
-        project = Project(name='foo', html_template='<p>${f1} ${f2} ${f3}</p>')
+        project = Project(name='foo', html_template='<p>${f1} ${f2} ${f3}</p><textarea>')
         project.save()
 
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
@@ -289,7 +293,7 @@ class TestBatchAdmin(django.test.TestCase):
         # CSV file has fields 'f2' and 'f3'
         with open(os.path.abspath('turkle/tests/resources/variable_fields_per_row.csv')) as fp:
             response = client.post(
-                u'/admin/turkle/batch/add/',
+                '/admin/turkle/batch/add/',
                 {
                     'project': project.id,
                     'name': 'batch_save',
@@ -307,7 +311,7 @@ class TestBatchAdmin(django.test.TestCase):
         client = django.test.Client()
         client.login(username='admin', password='secret')
         response = client.get(
-            u'/admin/turkle/batch/%d/change/' % batch.id
+            '/admin/turkle/batch/%d/change/' % batch.id
         )
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 200)
@@ -319,7 +323,7 @@ class TestBatchAdmin(django.test.TestCase):
         client = django.test.Client()
         client.login(username='admin', password='secret')
         response = client.post(
-            u'/admin/turkle/batch/%d/change/' % batch.id,
+            '/admin/turkle/batch/%d/change/' % batch.id,
             {
                 'assignments_per_task': 1,
                 'project': batch.project.id,
@@ -327,7 +331,7 @@ class TestBatchAdmin(django.test.TestCase):
             })
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], u'/admin/turkle/batch/')
+        self.assertEqual(response['Location'], '/admin/turkle/batch/')
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
         self.assertTrue(Batch.objects.filter(name='batch_save_modified').exists())
 
@@ -447,11 +451,11 @@ class TestProject(django.test.TestCase):
                                {
                                    'assignments_per_task': 1,
                                    'name': 'foo',
-                                   'html_template': '<p>${foo}: ${bar}</p>',
+                                   'html_template': '<p>${foo}: ${bar}</p><textarea>',
                                })
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], u'/admin/turkle/project/')
+        self.assertEqual(response['Location'], '/admin/turkle/project/')
         self.assertEqual(Project.objects.filter(name='foo').count(), 1)
         project = Project.objects.get(name='foo')
         self.assertEqual(project.created_by, self.user)
@@ -478,11 +482,11 @@ class TestProject(django.test.TestCase):
                                {
                                    'assignments_per_task': 1,
                                    'name': 'newname',
-                                   'html_template': '<p>${foo}: ${bar}</p>',
+                                   'html_template': '<p>${foo}: ${bar}</p><textarea>',
                                })
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], u'/admin/turkle/project/')
+        self.assertEqual(response['Location'], '/admin/turkle/project/')
         self.assertEqual(Project.objects.filter(name='newname').count(), 1)
 
     def test_post_change_project_custom_permissions(self):
@@ -499,13 +503,13 @@ class TestProject(django.test.TestCase):
                                {
                                    'assignments_per_task': 1,
                                    'custom_permissions': True,
-                                   'html_template': '<p>${foo}: ${bar}</p>',
+                                   'html_template': '<p>${foo}: ${bar}</p><textarea>',
                                    'name': 'newname',
                                    'worker_permissions': [group.id],
                                })
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], u'/admin/turkle/project/')
+        self.assertEqual(response['Location'], '/admin/turkle/project/')
         self.assertEqual(Project.objects.filter(name='newname').count(), 1)
         self.assertTrue(user.has_perm('can_work_on', project))
 
@@ -524,12 +528,12 @@ class TestProject(django.test.TestCase):
                                {
                                    'assignments_per_task': 1,
                                    'custom_permissions': True,
-                                   'html_template': '<p>${foo}: ${bar}</p>',
+                                   'html_template': '<p>${foo}: ${bar}</p><textarea>',
                                    'name': 'newname',
                                })
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], u'/admin/turkle/project/')
+        self.assertEqual(response['Location'], '/admin/turkle/project/')
         self.assertEqual(Project.objects.filter(name='newname').count(), 1)
         self.assertFalse(user.has_perm('can_work_on', project))
 
@@ -552,13 +556,13 @@ class TestProject(django.test.TestCase):
                                {
                                    'assignments_per_task': 1,
                                    'custom_permissions': True,
-                                   'html_template': '<p>${foo}: ${bar}</p>',
+                                   'html_template': '<p>${foo}: ${bar}</p><textarea>',
                                    'name': 'newname',
                                    'worker_permissions': [group_to_add.id],
                                })
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], u'/admin/turkle/project/')
+        self.assertEqual(response['Location'], '/admin/turkle/project/')
         self.assertEqual(Project.objects.filter(name='newname').count(), 1)
         self.assertTrue(user_for_add.has_perm('can_work_on', project))
         self.assertFalse(user_for_remove.has_perm('can_work_on', project))
@@ -575,4 +579,4 @@ class TestReviewBatch(django.test.TestCase):
         self.assertEqual(response['Location'], reverse('turkle_admin:turkle_batch_changelist'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
-        self.assertEqual(str(messages[0]), u'Cannot find Batch with ID 666')
+        self.assertEqual(str(messages[0]), 'Cannot find Batch with ID 666')

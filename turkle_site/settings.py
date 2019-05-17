@@ -106,7 +106,7 @@ INSTALLED_APPS = (
     # 'django.contrib.admindocs',
     'django_nose',
     'guardian',
-    'dbbackup'
+    'dbbackup',
 )
 
 AUTHENTICATION_BACKENDS = (

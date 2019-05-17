@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block header %}
+
+<link href="{% static "turkle/bootstrap-datepicker-1.8.0/css/bootstrap-datepicker.css" %}" rel="stylesheet" type="text/css"/>
+<script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
+<script type="text/javascript" src="{% static "turkle/bootstrap-datepicker-1.8.0/js/bootstrap-datepicker.js" %}"></script>
+
+<script>
+$(document).ready(function() {
+  $('.datepicker').datepicker({
+    format: 'yyyy-mm-dd',
+  });
+});
+</script>
+
+{% endblock %}
+
+{% block body %}
+
+<div class="container-fluid">
+  <div style="margin-top: 2em;"></div>
+
+  <h2>Statistics</h2>
+
+  <form>
+    <div class="row">
+      <div class="col-sm">
+        <label for="start_date">Start Date:</label>
+        <input id="start_date" name="start_date" class="datepicker" placeholder="YYYY-MM-DD" size="12"
+               {% if start_date %}value="{{ start_date }}"{% endif %}>
+      </div>
+      <div class="col-sm">
+        <label for="end_date">End Date:</label>
+        <input id="end_date" name="end_date" class="datepicker" placeholder="YYYY-MM-DD" size="12"
+               {% if end_date %}value="{{ end_date }}"{% endif %}>
+      </div>
+      <div class="col-sm">
+        <input type="submit" id="submitButton" class="btn btn-primary" value="Compute Statistics">
+      </div>
+    </div>
+  </form>
+
+  <hr />
+
+  <p>
+    <h3>
+      Total Task Assignments: {{ total_completed }}
+      {% if not start_date and not end_date %}
+      (All time)
+      {% else %}
+      ({% if start_date %}{{ start_date }}{% endif %} -
+       {% if end_date %}{{ end_date }}{% endif %})
+      {% endif %}
+    </h3>
+    <h3>Total Elapsed Time: {{ total_elapsed_time }}</h3>
+  </p>
+
+  <div>
+    <table class="table table-sm table-bordered thead-light">
+      <tr class="thead-dark">
+        <th scope="col" style="width: 50%"></th>
+        <th scope="col"># Tasks (Project)</th>
+        <th scope="col"># Tasks (Batch)</th>
+        <th scope="col">Elapsed Time (Project)</th>
+        <th scope="col">Elapsed Time (Batch)</th>
+      </tr>
+      {% for project in project_stats %}
+      <tr class="thead-light">
+        <th>
+          PROJECT: {{ project.project_name }}
+        </th>
+        <th>
+          {{ project.total_completed_project }}
+        </th>
+        <th></th>
+        <th>
+          {{ project.elapsed_time_project }}
+        </th>
+        <th></th>
+      </tr>
+      {% if project.batch_stats|length > 1 %}
+      {% for batch in project.batch_stats %}
+      <tr>
+        <td>
+          <span style="margin-left: 2em; font-style: italic">
+            BATCH: {{ batch.batch_name }}
+          </span>
+        </td>
+        <td></td>
+        <td>
+          {{ batch.total_completed_batch }}
+        </td>
+        <td></td>
+        <td>
+          {{ batch.elapsed_time_batch }}
+        </td>
+      </tr>
+      {% endfor %}
+      {% endif %}
+      {% endfor %}
+    </table>
+  </div>
+
+  <hr>
+
+  <div>
+    <b>Elapsed Time</b> is the time between when you Accept a Task
+    Assignment and when you Submit that Task Assignment.  Elapsed Time
+    is not the same thing as "time worked".  If you Accept a Task
+    Assignment, leave for lunch, and then Submit the task after lunch,
+    the amount of Elapsed Time will be longer than the amount of time
+    you spent working on the Task.
+  </div>
+
+</div>
+
+{% endblock %}

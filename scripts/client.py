@@ -47,13 +47,15 @@ class TurkleClient(object):
                 'username': user,
                 'password1': password,
                 'password2': password,
+                'is_active': True,
                 'csrfmiddlewaretoken': session.cookies['csrftoken']
             }
             if email:
                 payload['email'] = email
             resp = session.post(url, data=payload)
-            if "username already exists" in resp.text:
-                print("Error: username already exists")
+            error = self.extract_error_message(resp)
+            if error:
+                print("Error: {}".format(error))
                 return False
         return True
 
@@ -169,6 +171,14 @@ class TurkleClient(object):
     @staticmethod
     def extract_name(filename):
         return os.path.splitext(os.path.basename(filename))[0]
+
+    @staticmethod
+    def extract_error_message(resp):
+        # returns None if no error message
+        soup = BeautifulSoup(resp.text, features='html.parser')
+        if soup.find('p', class_='errornote'):
+            for error in soup.find('ul', class_='errorlist'):
+                return error.string
 
     def login(self, session):
         result = True
