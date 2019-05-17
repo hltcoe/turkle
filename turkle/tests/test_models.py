@@ -503,33 +503,6 @@ class TestBatchAvailableTASKs(django.test.TestCase):
         self.assertEqual(len(batch_unprotected.available_tasks_for(user)), 1)
 
 
-class TestBatchExpireAssignments(django.test.TestCase):
-    def test_batch_expire_assignments(self):
-        t = timezone.now()
-        dt = datetime.timedelta(hours=2)
-        past = t - dt
-
-        project = Project(login_required=False)
-        project.save()
-        batch = Batch(
-            allotted_assignment_time=1,
-            project=project
-        )
-        batch.save()
-        task = Task(batch=batch)
-        task.save()
-        ha = TaskAssignment(
-            completed=False,
-            expires_at=past,
-            task=task,
-        )
-        # Bypass TaskAssignment's save(), which updates expires_at
-        super(TaskAssignment, ha).save()
-        self.assertEqual(TaskAssignment.objects.count(), 1)
-        batch.expire_assignments()
-        self.assertEqual(TaskAssignment.objects.count(), 0)
-
-
 class TestBatchReportFunctions(django.test.TestCase):
     def setUp(self):
         project = Project.objects.create(name='test')

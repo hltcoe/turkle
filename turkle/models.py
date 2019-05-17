@@ -218,13 +218,6 @@ class Batch(models.Model):
 
         return num_created_tasks
 
-    def expire_assignments(self):
-        TaskAssignment.objects.\
-            filter(completed=False).\
-            filter(task__batch_id=self.id).\
-            filter(expires_at__lt=timezone.now()).\
-            delete()
-
     def finished_tasks(self):
         """
         Returns:
