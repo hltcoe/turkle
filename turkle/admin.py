@@ -152,7 +152,7 @@ class ProjectNameReadOnlyWidget(Widget):
         self.project_name = project.name
         super().__init__(attrs)
 
-    def render(self, name, value, attrs=None):
+    def render(self, name, value, attrs=None, renderer=None):
         return format_html(
             '<div class="readonly"><a href="{}">{}</a></div>'
             '<input name="project" id="id_project" type="hidden" value="{}" />'.format(

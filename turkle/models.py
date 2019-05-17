@@ -372,7 +372,7 @@ class Batch(models.Model):
         Returns:
             A tuple where the first value is a list of strings for the
             header fieldnames, and the second value is an iterable
-            that returns a list of values for the rest of the roww in
+            that returns a list of values for the rest of the row in
             the CSV file.
         """
         rows = csv.reader(csv_fh)
@@ -554,7 +554,7 @@ class Project(models.Model):
             user (User):
 
         Returns:
-            QuerySet of Batch objects this usre can access
+            QuerySet of Batch objects this user can access
         """
         batches = self.batch_set.filter(active=True)
         if not user.is_authenticated:
