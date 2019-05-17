@@ -1,6 +1,7 @@
 from io import StringIO
 import csv
 import json
+import logging
 import statistics
 
 from django.conf.urls import url
@@ -22,6 +23,8 @@ import humanfriendly
 
 from turkle.models import Batch, Project, TaskAssignment
 from turkle.utils import get_site_name
+
+logger = logging.getLogger(__name__)
 
 
 class TurkleAdminSite(admin.AdminSite):
@@ -327,13 +330,14 @@ class BatchAdmin(admin.ModelAdmin):
     def cancel_batch(self, request, batch_id):
         try:
             batch = Batch.objects.get(id=batch_id)
+            logger.info("User(%i) deleting Batch(%i) %s", request.user.id, batch.id, batch.name)
             batch.delete()
         except ObjectDoesNotExist:
             messages.error(request, 'Cannot find Batch with ID {}'.format(batch_id))
 
         return redirect(reverse('turkle_admin:turkle_batch_changelist'))
 
-    def changelist_view(self, request):
+    def changelist_view(self, request, extra_context=None):
         c = {
             'csv_unix_line_endings': request.session.get('csv_unix_line_endings', False)
         }
@@ -349,7 +353,7 @@ class BatchAdmin(admin.ModelAdmin):
         return format_html('<a href="{}" class="button">CSV input</a>'.
                            format(download_url))
 
-    def get_fields(self, request, obj):
+    def get_fields(self, request, obj=None):
         # Display different fields when adding (when obj is None) vs changing a Batch
         if not obj:
             return ('project', 'name', 'assignments_per_task',
@@ -358,7 +362,7 @@ class BatchAdmin(admin.ModelAdmin):
             return ('active', 'project', 'name', 'assignments_per_task',
                     'allotted_assignment_time', 'filename')
 
-    def get_readonly_fields(self, request, obj):
+    def get_readonly_fields(self, request, obj=None):
         if not obj:
             return []
         else:
@@ -386,6 +390,7 @@ class BatchAdmin(admin.ModelAdmin):
             batch = Batch.objects.get(id=batch_id)
             batch.active = True
             batch.save()
+            logger.info("User(%i) publishing Batch(%i) %s", request.user.id, batch.id, batch.name)
         except ObjectDoesNotExist:
             messages.error(request, 'Cannot find Batch with ID {}'.format(batch_id))
 
@@ -425,7 +430,8 @@ class BatchAdmin(admin.ModelAdmin):
             obj.filename = request.FILES['csv_file']._name
             csv_text = request.FILES['csv_file'].read()
             super().save_model(request, obj, form, change)
-            # ToDo inefficient to read entire file to get header
+            logger.info("User(%i) creating Batch(%i) %s", request.user.id, obj.id, obj.name)
+
             csv_fh = StringIO(csv_text.decode('utf-8'))
             csv_fields = set(next(csv.reader(csv_fh)))
             csv_fh.seek(0)
@@ -442,6 +448,7 @@ class BatchAdmin(admin.ModelAdmin):
             obj.create_tasks_from_csv(csv_fh)
         else:
             super().save_model(request, obj, form, change)
+            logger.info("User(%i) updating Batch(%i) %s", request.user.id, obj.id, obj.name)
 
     def stats(self, obj):
         stats_url = reverse('turkle_admin:batch_stats', kwargs={'batch_id': obj.id})
@@ -507,7 +514,7 @@ class ProjectAdmin(GuardedModelAdmin):
         return format_html_join('\n', "<li>{}</li>",
                                 ((f, ) for f in instance.fieldnames.keys()))
 
-    def get_fieldsets(self, request, obj):
+    def get_fieldsets(self, request, obj=None):
         if not obj:
             # Adding
             return (
@@ -548,12 +555,18 @@ class ProjectAdmin(GuardedModelAdmin):
     publish_tasks.short_description = 'Publish Tasks'
 
     def save_model(self, request, obj, form, change):
+        new_flag = obj._state.adding
         if request.user.is_authenticated:
             obj.updated_by = request.user
-            if obj._state.adding:
+            if new_flag:
                 obj.created_by = request.user
 
         super().save_model(request, obj, form, change)
+        if new_flag:
+            logger.info("User(%i) creating Project(%i) %s", request.user.id, obj.id, obj.name)
+        else:
+            logger.info("User(%i) updating Project(%i) %s", request.user.id, obj.id, obj.name)
+
         if 'custom_permissions' in form.data:
             if 'worker_permissions' in form.data:
                 existing_groups = set(get_groups_with_perms(obj))
@@ -567,6 +580,10 @@ class ProjectAdmin(GuardedModelAdmin):
             else:
                 for group in get_groups_with_perms(obj):
                     remove_perm('can_work_on', group, obj)
+
+    def delete_model(self, request, obj):
+        logger.info("User(%i) deleting Project(%i) %s", request.user.id, obj.id, obj.name)
+        super().delete_model(request, obj)
 
 
 admin_site = TurkleAdminSite(name='turkle_admin')
