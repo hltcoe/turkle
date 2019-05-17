@@ -31,9 +31,6 @@ class Task(models.Model):
     completed = models.BooleanField(default=False)
     input_csv_fields = JSONField()
 
-    def __unicode__(self):
-        return 'Task id:{}'.format(self.id)
-
     def __str__(self):
         return 'Task id:{}'.format(self.id)
 
@@ -457,9 +454,6 @@ class Batch(models.Model):
 
         return self._get_csv_fieldnames(task_queryset), rows
 
-    def __unicode__(self):
-        return 'Batch: {}'.format(self.name)
-
     def __str__(self):
         return 'Batch: {}'.format(self.name)
 
@@ -627,9 +621,6 @@ class Project(models.Model):
             ['Answer.' + k for k in sorted(answer_field_set)] +
             ['Turkle.Username']
         )
-
-    def __unicode__(self):
-        return self.name
 
     def __str__(self):
         return self.name
