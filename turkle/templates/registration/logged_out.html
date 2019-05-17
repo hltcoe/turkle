@@ -1,0 +1,11 @@
+{% extends "admin/base_site.html" %}
+
+{% block breadcrumbs %}<div class="breadcrumbs"><a href="{% url 'admin:index' %}">Home</a></div>{% endblock %}
+
+{% block content %}
+
+<p>You are logged out of {{turkle_site_name}} administration.</p>
+
+<p><a href="{% url 'admin:index' %}">Log in again</a></p>
+
+{% endblock %}

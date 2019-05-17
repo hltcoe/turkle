@@ -10,4 +10,5 @@ def get_site_name():
 
 
 def site(request):
+    """template context processor that adds turkle_site_name variable"""
     return {'turkle_site_name': get_site_name()}
