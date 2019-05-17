@@ -8,7 +8,8 @@
   </head>
   <body>
     <form name="mturk_form" method="post" id="mturk_form" target="_parent"
-          action="{% url 'task_assignment' task.id task_assignment.id %}">
+          action="{% url 'task_assignment' task.id task_assignment.id %}"
+          data-iframe-height="">
 
       {% csrf_token %}
       {% autoescape off %}{{ task.populate_html_template }}{% endautoescape %}
