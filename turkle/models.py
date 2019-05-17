@@ -340,6 +340,9 @@ class Batch(models.Model):
 
     def to_input_csv(self, csv_fh, lineterminator='\r\n'):
         """Write (reconstructed) CSV input to file handle for every Task in Batch
+
+        PLEASE NOTE: The column order in the reconstructed CSV file
+        may not match the column order in the original CSV file.
         """
         tasks = self.task_set.all()
         if not tasks.exists():

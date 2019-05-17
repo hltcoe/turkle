@@ -230,9 +230,16 @@ class TestBatch(django.test.TestCase):
         csv_output = StringIO()
         batch.to_input_csv(csv_output)
         rows = csv_output.getvalue().split()
-        self.assertTrue('"letter","number"' in rows[0])
-        self.assertTrue(any(['"a","1"' in row for row in rows[1:]]))
-        self.assertTrue(any(['"b","2"' in row for row in rows[1:]]))
+
+        # Original column order not guaranteed
+        if '"letter","number"' in rows[0]:
+            self.assertTrue(any(['"a","1"' in row for row in rows[1:]]))
+            self.assertTrue(any(['"b","2"' in row for row in rows[1:]]))
+        elif '"number","letter"' in rows[0]:
+            self.assertTrue(any(['"1","a"' in row for row in rows[1:]]))
+            self.assertTrue(any(['"2","b"' in row for row in rows[1:]]))
+        else:
+            self.fail('Unexpected header value: %s' % rows[0])
 
     def test_batch_to_csv_variable_number_of_answers(self):
         project = Project(name='test', html_template='<p>${letter}</p><textarea>')
