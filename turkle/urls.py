@@ -4,6 +4,7 @@ from turkle.views import (
     accept_task,
     accept_next_task,
     download_batch_csv,
+    download_batch_input_csv,
     task_assignment,
     task_assignment_iframe,
     index,
@@ -39,4 +40,6 @@ urlpatterns = [
     url(r'^batch/(?P<batch_id>\d+)/preview_next_task/$',
         preview_next_task, name='preview_next_task'),
     url(r'^batch/(?P<batch_id>\d+)/download/$', download_batch_csv, name='download_batch_csv'),
+    url(r'^batch/(?P<batch_id>\d+)/download_input/$', download_batch_input_csv,
+        name='download_batch_input_csv'),
 ]

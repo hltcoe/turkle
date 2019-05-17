@@ -208,6 +208,32 @@ class TestBatch(django.test.TestCase):
         self.assertTrue('"b","2","2b","joe"\r\n' in csv_string)
         self.assertTrue('"a","1","1a","joe"\r\n' in csv_string)
 
+    def test_batch_to_input_csv(self):
+        project = Project(name='test', html_template='<p>${letter}</p><textarea>')
+        project.save()
+        batch = Batch(project=project)
+        batch.save()
+
+        task1 = Task(
+            batch=batch,
+            completed=True,
+            input_csv_fields={'letter': 'a', 'number': '1'},
+        )
+        task1.save()
+        task2 = Task(
+            batch=batch,
+            completed=True,
+            input_csv_fields={'letter': 'b', 'number': '2'},
+        )
+        task2.save()
+
+        csv_output = StringIO()
+        batch.to_input_csv(csv_output)
+        rows = csv_output.getvalue().split()
+        self.assertTrue('"letter","number"' in rows[0])
+        self.assertTrue(any(['"a","1"' in row for row in rows[1:]]))
+        self.assertTrue(any(['"b","2"' in row for row in rows[1:]]))
+
     def test_batch_to_csv_variable_number_of_answers(self):
         project = Project(name='test', html_template='<p>${letter}</p><textarea>')
         project.save()

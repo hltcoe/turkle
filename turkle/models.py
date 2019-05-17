@@ -338,6 +338,24 @@ class Batch(models.Model):
         for row in rows:
             writer.writerow(row)
 
+    def to_input_csv(self, csv_fh, lineterminator='\r\n'):
+        """Write (reconstructed) CSV input to file handle for every Task in Batch
+        """
+        tasks = self.task_set.all()
+        if not tasks.exists():
+            return
+
+        # Some rows may (theoretically) be missing fields
+        fieldnames = set()
+        for task in tasks:
+            fieldnames.update(task.input_csv_fields.keys())
+
+        writer = csv.DictWriter(csv_fh, list(fieldnames), lineterminator=lineterminator,
+                                quoting=csv.QUOTE_ALL)
+        writer.writeheader()
+        for task in tasks:
+            writer.writerow(task.input_csv_fields)
+
     def unfinished_tasks(self):
         """
         Returns:

@@ -266,7 +266,7 @@ class BatchAdmin(admin.ModelAdmin):
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
     list_display = (
-        'name', 'project', 'active', 'stats', 'download_csv',
+        'name', 'project', 'active', 'stats', 'download_input_csv', 'download_csv',
         'tasks_completed', 'assignments_completed', 'total_finished_tasks')
 
     def assignments_completed(self, obj):
@@ -342,6 +342,11 @@ class BatchAdmin(admin.ModelAdmin):
     def download_csv(self, obj):
         download_url = reverse('download_batch_csv', kwargs={'batch_id': obj.id})
         return format_html('<a href="{}" class="button">CSV results</a>'.
+                           format(download_url))
+
+    def download_input_csv(self, obj):
+        download_url = reverse('download_batch_input_csv', kwargs={'batch_id': obj.id})
+        return format_html('<a href="{}" class="button">CSV input</a>'.
                            format(download_url))
 
     def get_fields(self, request, obj):
