@@ -80,7 +80,6 @@ $(document).ready(function() {
         </th>
         <th></th>
       </tr>
-      {% if project.batch_stats|length > 1 %}
       {% for batch in project.batch_stats %}
       <tr>
         <td>
@@ -98,7 +97,6 @@ $(document).ready(function() {
         </td>
       </tr>
       {% endfor %}
-      {% endif %}
       {% endfor %}
     </table>
   </div>
