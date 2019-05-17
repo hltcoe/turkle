@@ -1,5 +1,6 @@
 import csv
 import datetime
+import logging
 import os.path
 import re
 import statistics
@@ -13,6 +14,8 @@ from django.db.models import Prefetch
 from django.utils import timezone
 from guardian.core import ObjectPermissionChecker
 from jsonfield import JSONField
+
+logger = logging.getLogger(__name__)
 
 # The default field size limit is 131072 characters
 csv.field_size_limit(sys.maxsize)
@@ -67,10 +70,12 @@ class TaskAssignment(models.Model):
 
     @classmethod
     def expire_all_abandoned(cls):
-        return cls.objects.\
+        result = cls.objects.\
             filter(completed=False).\
             filter(expires_at__lt=timezone.now()).\
             delete()
+        logger.info('Expired %i task assignments', result[0])
+        return result
 
     def save(self, *args, **kwargs):
         self.expires_at = timezone.now() + \
@@ -201,6 +206,7 @@ class Batch(models.Model):
         """
         header, data_rows = self._parse_csv(csv_fh)
 
+        logger.info('Creating tasks for Batch(%i) %s', self.id, self.name)
         num_created_tasks = 0
         for row in data_rows:
             if not row:
@@ -211,6 +217,7 @@ class Batch(models.Model):
             )
             task.save()
             num_created_tasks += 1
+        logger.info('Created %i tasks for Batch(%i) %s', num_created_tasks, self.id, self.name)
 
         return num_created_tasks
 

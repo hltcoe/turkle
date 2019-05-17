@@ -1,5 +1,6 @@
 from functools import wraps
 from io import StringIO
+import logging
 import urllib
 
 from django.contrib import messages
@@ -14,6 +15,8 @@ from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.dateparse import parse_date
 
 from turkle.models import Task, TaskAssignment, Batch, Project
+
+logger = logging.getLogger(__name__)
 
 
 def handle_db_lock(func):
@@ -33,9 +36,47 @@ def handle_db_lock(func):
     return wrapper
 
 
+def index(request):
+    """
+    Security behavior:
+    - Anyone can access the page, but the page only shows the user
+      information they have access to.
+    """
+    abandoned_assignments = []
+    if request.user.is_authenticated:
+        for ha in TaskAssignment.objects.filter(assigned_to=request.user).filter(completed=False):
+            abandoned_assignments.append({
+                'task': ha.task,
+                'task_assignment_id': ha.id
+            })
+
+    # Create a row for each Batch that has Tasks available for the current user
+    batch_rows = []
+    for project in Project.all_available_for(request.user):
+        for batch in project.batches_available_for(request.user):
+            total_tasks_available = batch.total_available_tasks_for(request.user)
+            if total_tasks_available > 0:
+                batch_rows.append({
+                    'project_name': project.name,
+                    'batch_name': batch.name,
+                    'batch_published': batch.created_at,
+                    'assignments_available': total_tasks_available,
+                    'preview_next_task_url': reverse('preview_next_task',
+                                                     kwargs={'batch_id': batch.id}),
+                    'accept_next_task_url': reverse('accept_next_task',
+                                                    kwargs={'batch_id': batch.id})
+                })
+    return render(request, 'index.html', {
+        'abandoned_assignments': abandoned_assignments,
+        'batch_rows': batch_rows
+    })
+
+
 @handle_db_lock
 def accept_task(request, batch_id, task_id):
     """
+    Accept task from preview
+
     Security behavior:
     - If the user does not have permission to access the Batch+Task, they
       are redirected to the index page with an error message.
@@ -66,6 +107,10 @@ def accept_task(request, batch_id, task_id):
                 ha.assigned_to = None
             ha.task = task
             ha.save()
+            if request.user.is_authenticated:
+                logger.info('User(%i) accepted Task(%i)', request.user.id, task.id)
+            else:
+                logger.info('Anonymous user accepted Task(%i)', task.id)
     except ObjectDoesNotExist:
         messages.error(request, u'The Task with ID {} is no longer available'.format(task_id))
         return redirect(index)
@@ -76,6 +121,8 @@ def accept_task(request, batch_id, task_id):
 @handle_db_lock
 def accept_next_task(request, batch_id):
     """
+    Accept task from index or auto accept next task
+
     Security behavior:
     - If the user does not have permission to access the Batch+Task, they
       are redirected to the index page with an error message.
@@ -97,6 +144,10 @@ def accept_next_task(request, batch_id):
                     ha.assigned_to = None
                 ha.task_id = task_id
                 ha.save()
+                if request.user.is_authenticated:
+                    logger.info('User(%i) accepted Task(%i)', request.user.id, task_id)
+                else:
+                    logger.info('Anonymous user accepted Task(%i)', task_id)
     except ObjectDoesNotExist:
         messages.error(request, u'Cannot find Task Batch with ID {}'.format(batch_id))
         return redirect(index)
@@ -130,6 +181,8 @@ def download_batch_csv(request, batch_id):
 
 def task_assignment(request, task_id, task_assignment_id):
     """
+    Task view and submission (task content in iframe below)
+
     Security behavior:
     - If the user does not have permission to access the Task Assignment, they
       are redirected to the index page with an error message.
@@ -186,6 +239,10 @@ def task_assignment(request, task_id, task_assignment_id):
         task_assignment.answers = dict(request.POST.items())
         task_assignment.completed = True
         task_assignment.save()
+        if request.user.is_authenticated:
+            logger.info('User(%i) submitted Task(%i)', request.user.id, task.id)
+        else:
+            logger.info('Anonymous user submitted Task(%i)', task.id)
 
         if request.session.get('auto_accept_status'):
             return redirect(accept_next_task, task.batch.id)
@@ -195,6 +252,8 @@ def task_assignment(request, task_id, task_assignment_id):
 
 def task_assignment_iframe(request, task_id, task_assignment_id):
     """
+    Task form served in an iframe
+
     Security behavior:
     - If the user does not have permission to access the Task Assignment, they
       are redirected to the index page with an error messge.
@@ -227,42 +286,6 @@ def task_assignment_iframe(request, task_id, task_assignment_id):
             'task_assignment': task_assignment,
         },
     )
-
-
-def index(request):
-    """
-    Security behavior:
-    - Anyone can access the page, but the page only shows the user
-      information they have access to.
-    """
-    abandoned_assignments = []
-    if request.user.is_authenticated:
-        for ha in TaskAssignment.objects.filter(assigned_to=request.user).filter(completed=False):
-            abandoned_assignments.append({
-                'task': ha.task,
-                'task_assignment_id': ha.id
-            })
-
-    # Create a row for each Batch that has Tasks available for the current user
-    batch_rows = []
-    for project in Project.all_available_for(request.user):
-        for batch in project.batches_available_for(request.user):
-            total_tasks_available = batch.total_available_tasks_for(request.user)
-            if total_tasks_available > 0:
-                batch_rows.append({
-                    'project_name': project.name,
-                    'batch_name': batch.name,
-                    'batch_published': batch.created_at,
-                    'assignments_available': total_tasks_available,
-                    'preview_next_task_url': reverse('preview_next_task',
-                                                     kwargs={'batch_id': batch.id}),
-                    'accept_next_task_url': reverse('accept_next_task',
-                                                    kwargs={'batch_id': batch.id})
-                })
-    return render(request, 'index.html', {
-        'abandoned_assignments': abandoned_assignments,
-        'batch_rows': batch_rows
-    })
 
 
 def preview(request, task_id):
@@ -339,6 +362,10 @@ def return_task_assignment(request, task_id, task_assignment_id):
     redirect_due_to_error = _delete_task_assignment(request, task_id, task_assignment_id)
     if redirect_due_to_error:
         return redirect_due_to_error
+    if request.user.is_authenticated:
+        logger.info('User(%i) returned Task(%i)', request.user.id, int(task_id))
+    else:
+        logger.info('Anonymous user returned Task(%i)', int(task_id))
     return redirect(index)
 
 
@@ -353,11 +380,17 @@ def skip_and_accept_next_task(request, batch_id, task_id, task_assignment_id):
         return redirect_due_to_error
 
     _add_task_id_to_skip_session(request.session, batch_id, task_id)
+    if request.user.is_authenticated:
+        logger.info('User(%i) skipped Task(%i)', request.user.id, int(task_id))
+    else:
+        logger.info('Anonymous user skipped Task(%i)', int(task_id))
     return redirect(accept_next_task, batch_id)
 
 
 def skip_task(request, batch_id, task_id):
     """
+    Skip to next task when previewing a task
+
     Security behavior:
     - This view updates a session variable that controls the order
       that Tasks are presented to a user.  Users cannot modify other
