@@ -142,7 +142,7 @@ class TestAcceptNextTask(TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         'No more Tasks available from Batch {}'.format(self.batch.id))
+                         'No more Tasks available for Batch {}'.format(self.batch.name))
 
     def test_accept_next_task__respect_skip(self):
         task_two = Task(batch=self.batch)
