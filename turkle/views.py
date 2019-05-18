@@ -155,7 +155,7 @@ def accept_next_task(request, batch_id):
     if task_id:
         return redirect(task_assignment, task_id, ha.id)
     else:
-        messages.error(request, u'No more Tasks available from Batch {}'.format(batch_id))
+        messages.error(request, u'No more Tasks available for Batch {}'.format(batch.name))
         return redirect(index)
 
 
