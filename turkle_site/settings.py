@@ -67,7 +67,7 @@ TEMPLATES = [
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
-                'turkle.utils.site',
+                'turkle.utils.turkle_vars',
             ],
         },
     },
@@ -171,6 +171,9 @@ AUTHENTICATION_BACKENDS = (
 # Set max size for file uploads and POST requests to 100MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600
 FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600
+
+# max size of template in KB
+TURKLE_TEMPLATE_LIMIT = 64
 
 LOGIN_REDIRECT_URL = 'index'
 

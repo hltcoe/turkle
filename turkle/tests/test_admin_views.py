@@ -439,7 +439,7 @@ class TestProject(django.test.TestCase):
         client = django.test.Client()
         client.login(username='admin', password='secret')
         response = client.get(reverse('turkle_admin:turkle_project_add'))
-        self.assertTrue(b'error' not in response.content)
+        self.assertTrue(b'Please correct the error' not in response.content)
         self.assertEqual(response.status_code, 200)
 
     def test_post_add_project(self):
@@ -453,7 +453,7 @@ class TestProject(django.test.TestCase):
                                    'name': 'foo',
                                    'html_template': '<p>${foo}: ${bar}</p><textarea>',
                                })
-        self.assertTrue(b'error' not in response.content)
+        self.assertTrue(b'Please correct the error' not in response.content)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], '/admin/turkle/project/')
         self.assertEqual(Project.objects.filter(name='foo').count(), 1)
@@ -468,7 +468,7 @@ class TestProject(django.test.TestCase):
         client.login(username='admin', password='secret')
         response = client.get(reverse('turkle_admin:turkle_project_change',
                                       args=(project.id,)))
-        self.assertTrue(b'error' not in response.content)
+        self.assertTrue(b'Please correct the error' not in response.content)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(b'testproject' in response.content)
 
@@ -484,7 +484,7 @@ class TestProject(django.test.TestCase):
                                    'name': 'newname',
                                    'html_template': '<p>${foo}: ${bar}</p><textarea>',
                                })
-        self.assertTrue(b'error' not in response.content)
+        self.assertTrue(b'Please correct the error' not in response.content)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], '/admin/turkle/project/')
         self.assertEqual(Project.objects.filter(name='newname').count(), 1)
@@ -507,7 +507,7 @@ class TestProject(django.test.TestCase):
                                    'name': 'newname',
                                    'worker_permissions': [group.id],
                                })
-        self.assertTrue(b'error' not in response.content)
+        self.assertTrue(b'Please correct the error' not in response.content)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], '/admin/turkle/project/')
         self.assertEqual(Project.objects.filter(name='newname').count(), 1)
@@ -531,7 +531,7 @@ class TestProject(django.test.TestCase):
                                    'html_template': '<p>${foo}: ${bar}</p><textarea>',
                                    'name': 'newname',
                                })
-        self.assertTrue(b'error' not in response.content)
+        self.assertTrue(b'Please correct the error' not in response.content)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], '/admin/turkle/project/')
         self.assertEqual(Project.objects.filter(name='newname').count(), 1)
@@ -560,7 +560,7 @@ class TestProject(django.test.TestCase):
                                    'name': 'newname',
                                    'worker_permissions': [group_to_add.id],
                                })
-        self.assertTrue(b'error' not in response.content)
+        self.assertTrue(b'Please correct the error' not in response.content)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], '/admin/turkle/project/')
         self.assertEqual(Project.objects.filter(name='newname').count(), 1)
