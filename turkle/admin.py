@@ -22,7 +22,7 @@ from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 import humanfriendly
 
 from turkle.models import Batch, Project, TaskAssignment
-from turkle.utils import get_site_name
+from turkle.utils import get_site_name, get_turkle_template_limit
 
 logger = logging.getLogger(__name__)
 
@@ -490,8 +490,13 @@ class ProjectForm(ModelForm):
             'published batches of Tasks.'
         self.fields['custom_permissions'].label = 'Restrict access to specific Groups of Workers '
         self.fields['html_template'].label = 'HTML template text'
+        limit = str(get_turkle_template_limit())
         self.fields['html_template'].help_text = 'You can edit the template text directly, ' + \
-            'Drag-and-Drop a template file onto this window, or use the "Choose File" button below'
+            'Drag-and-Drop a template file onto this window, ' + \
+            'or use the "Choose File" button below. Maximum size is ' + limit + ' KB.'
+        byte_limit = str(get_turkle_template_limit(True))
+        self.fields['html_template'].widget.attrs['data-parsley-maxlength'] = byte_limit
+        self.fields['html_template'].widget.attrs['data-parsley-group'] = 'html_template'
 
         initial_ids = [str(id)
                        for id in get_groups_with_perms(self.instance).values_list('id', flat=True)]

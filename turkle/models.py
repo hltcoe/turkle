@@ -15,6 +15,8 @@ from django.utils import timezone
 from guardian.core import ObjectPermissionChecker
 from jsonfield import JSONField
 
+from .utils import get_turkle_template_limit
+
 logger = logging.getLogger(__name__)
 
 # The default field size limit is 131072 characters
@@ -571,6 +573,8 @@ class Project(models.Model):
 
     def clean(self):
         super().clean()
+        if len(self.html_template) > get_turkle_template_limit(True):
+            raise ValidationError({'html_template': 'Template is too large'}, code='invalid')
         if not self.login_required and self.assignments_per_task != 1:
             raise ValidationError('When login is not required to access the Project, ' +
                                   'the number of Assignments per Task must be 1')

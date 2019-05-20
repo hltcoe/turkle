@@ -12,6 +12,7 @@ from guardian.shortcuts import assign_perm
 from .utility import save_model
 
 from turkle.models import Task, TaskAssignment, Batch, Project
+from turkle.utils import get_turkle_template_limit
 
 
 class TestTaskAssignment(django.test.TestCase):
@@ -738,6 +739,14 @@ class TestProject(django.test.TestCase):
                 assignments_per_task=2,
                 login_required=True,
                 html_template='<script>do stuff here</script>'
+            ).clean()
+
+    def test_too_large_template(self):
+        limit = get_turkle_template_limit(True)
+        template = 'a' * limit + '<textarea>'
+        with self.assertRaisesMessage(ValidationError, 'Template is too large'):
+            Project(
+                html_template=template,
             ).clean()
 
 
