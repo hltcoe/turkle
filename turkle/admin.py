@@ -156,7 +156,7 @@ class ProjectNameReadOnlyWidget(Widget):
         return format_html(
             '<div class="readonly"><a href="{}">{}</a></div>'
             '<input name="project" id="id_project" type="hidden" value="{}" />'.format(
-                reverse('admin:turkle_project_change', args=[self.project_id]),
+                reverse('turkle_admin:turkle_project_change', args=[self.project_id]),
                 self.project_name, self.project_id))
 
 
@@ -552,7 +552,7 @@ class ProjectAdmin(GuardedModelAdmin):
 
     def publish_tasks(self, instance):
         publish_tasks_url = '%s?project=%d&assignments_per_task=%d' % (
-            reverse('admin:turkle_batch_add'),
+            reverse('turkle_admin:turkle_batch_add'),
             instance.id,
             instance.assignments_per_task)
         return format_html('<a href="{}" class="button">Publish Tasks</a>'.
