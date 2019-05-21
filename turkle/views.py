@@ -160,26 +160,6 @@ def accept_next_task(request, batch_id):
 
 
 @staff_member_required
-def download_batch_csv(request, batch_id):
-    """
-    Security behavior:
-    - Access to this page is limited to requesters.  Any requester can
-      download any CSV file.
-    """
-    batch = Batch.objects.get(id=batch_id)
-    csv_output = StringIO()
-    if request.session.get('csv_unix_line_endings', False):
-        batch.to_csv(csv_output, lineterminator='\n')
-    else:
-        batch.to_csv(csv_output)
-    csv_string = csv_output.getvalue()
-    response = HttpResponse(csv_string, content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="{}"'.format(
-        batch.csv_results_filename())
-    return response
-
-
-@staff_member_required
 def download_batch_input_csv(request, batch_id):
     """
     Security behavior:
