@@ -1,3 +1,18 @@
+html, body {
+  height: 100%;
+}
+body {
+  display: flex;
+  flex-flow: column;
+}
+.content {
+  flex: 1;
+}
+.project-header {
+  padding: 5px 16px;
+  border-top: 7px solid #373b44;
+  border-bottom: 2px solid #373b44;
+}
 /* --- There are five Django messages alert levels:
        - debug, info, success, warning, error
        We want to map these alert levels to Bootstrap 'alert-*' classes.
@@ -16,10 +31,8 @@
   background-color: #f8d7da;
   border-color: #f5c6cb;
 }
-
 .inline-form-buttons > form,
-.inline-form-buttons > a[role="button"]
-{
+.inline-form-buttons > a[role="button"] {
   display: inline-block;
   margin-left: 1em;
 }

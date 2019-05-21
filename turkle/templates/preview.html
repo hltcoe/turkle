@@ -1,37 +1,21 @@
 {% extends "task_base.html" %}
 {% load staticfiles %}
 
-{% block header %}
+{% block head %}
 {{ block.super }}
 <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'turkle/iframe-resizer-3.6.2/iframeResizer.min.js' %}"></script>
-<script>
-$(function () {
-  $('#task_assignment_iframe').iFrameResize({
-    heightCalculationMethod: 'max',
-    minHeight: '600px'
-  });
-});
-</script>
 {% endblock %}
 
 {% block body %}
-<div class="container-fluid">
-
-  {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
-
-  <div id="iframe_container" style="background: #000;">
-    <iframe src="{% url 'preview_iframe' task.id %}{{ http_get_params }}"
-            id="task_assignment_iframe"
-            style="top: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: 0; box-sizing: inherit; background: #fff; opacity: 0.8;"
-            scrolling="no">
-    </iframe>
-  </div>
-
+<div class="container-fluid content">
+  <iframe src="{% url 'preview_iframe' task.id %}{{ http_get_params }}"
+          id="task_assignment_iframe"
+          style="top: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: 0; box-sizing: inherit; background: #fff; opacity: 0.8; display: block;">
+  </iframe>
 </div><!-- /.container-fluid -->
 {% endblock %}
 
-{% block right_half_header_row %}
+{% block subheader_right %}
 <span class="inline-form-buttons">
   <form method="post" action="{% url 'accept_task' task.batch_id task.id %}">
     {% csrf_token %}
