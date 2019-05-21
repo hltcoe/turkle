@@ -1,14 +1,12 @@
 from functools import wraps
-from io import StringIO
 import logging
 import urllib
 
 from django.contrib import messages
-from django.contrib.admin.views.decorators import staff_member_required
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.utils import OperationalError
-from django.http import HttpResponse, JsonResponse
+from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.datastructures import MultiValueDictKeyError
@@ -157,26 +155,6 @@ def accept_next_task(request, batch_id):
     else:
         messages.error(request, u'No more Tasks available for Batch {}'.format(batch.name))
         return redirect(index)
-
-
-@staff_member_required
-def download_batch_input_csv(request, batch_id):
-    """
-    Security behavior:
-    - Access to this page is limited to requesters.  Any requester can
-      download any CSV file.
-    """
-    batch = Batch.objects.get(id=batch_id)
-    csv_output = StringIO()
-    if request.session.get('csv_unix_line_endings', False):
-        batch.to_input_csv(csv_output, lineterminator='\n')
-    else:
-        batch.to_input_csv(csv_output)
-    csv_string = csv_output.getvalue()
-    response = HttpResponse(csv_string, content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="{}"'.format(
-        batch.filename)
-    return response
 
 
 def task_assignment(request, task_id, task_assignment_id):

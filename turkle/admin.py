@@ -269,7 +269,7 @@ class BatchAdmin(admin.ModelAdmin):
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
     list_display = (
-        'name', 'project', 'active', 'stats', 'download_input_csv', 'download_csv_link',
+        'name', 'project', 'active', 'stats', 'download_input', 'download_csv',
         'tasks_completed', 'assignments_completed', 'total_finished_tasks')
 
     def assignments_completed(self, obj):
@@ -343,15 +343,13 @@ class BatchAdmin(admin.ModelAdmin):
         }
         return super().changelist_view(request, extra_context=c)
 
-    def download_csv_link(self, obj):
+    def download_csv(self, obj):
         download_url = reverse('turkle_admin:download_batch', kwargs={'batch_id': obj.id})
-        return format_html('<a href="{}" class="button">CSV results</a>'.
-                           format(download_url))
+        return format_html('<a href="{}" class="button">CSV results</a>'.format(download_url))
 
-    def download_input_csv(self, obj):
-        download_url = reverse('download_batch_input_csv', kwargs={'batch_id': obj.id})
-        return format_html('<a href="{}" class="button">CSV input</a>'.
-                           format(download_url))
+    def download_input(self, obj):
+        download_url = reverse('turkle_admin:download_batch_input', kwargs={'batch_id': obj.id})
+        return format_html('<a href="{}" class="button">CSV input</a>'.format(download_url))
 
     def get_fields(self, request, obj=None):
         # Display different fields when adding (when obj is None) vs changing a Batch
@@ -379,6 +377,8 @@ class BatchAdmin(admin.ModelAdmin):
                 self.admin_site.admin_view(self.publish_batch), name='publish_batch'),
             url(r'^(?P<batch_id>\d+)/download/$',
                 self.admin_site.admin_view(self.download_batch), name='download_batch'),
+            url(r'^(?P<batch_id>\d+)/input/$',
+                self.admin_site.admin_view(self.download_batch_input), name='download_batch_input'),
             url(r'^(?P<batch_id>\d+)/stats/$',
                 self.admin_site.admin_view(self.batch_stats), name='batch_stats'),
             url(r'^update_csv_line_endings',
@@ -409,6 +409,19 @@ class BatchAdmin(admin.ModelAdmin):
         response = HttpResponse(csv_string, content_type='text/csv')
         response['Content-Disposition'] = 'attachment; filename="{}"'.format(
             batch.csv_results_filename())
+        return response
+
+    def download_batch_input(self, request, batch_id):
+        batch = Batch.objects.get(id=batch_id)
+        csv_output = StringIO()
+        if request.session.get('csv_unix_line_endings', False):
+            batch.to_input_csv(csv_output, lineterminator='\n')
+        else:
+            batch.to_input_csv(csv_output)
+        csv_string = csv_output.getvalue()
+        response = HttpResponse(csv_string, content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(
+            batch.filename)
         return response
 
     def response_add(self, request, obj, post_url_continue=None):
