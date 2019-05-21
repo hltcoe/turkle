@@ -7,14 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Admin UI page with Batch-level Statistics
+- Worker specific statistics page
 - Bootstrap 4 support for the glyphicons from Bootstrap 3
 - New results CSV column `Turkle.username`
+- Toggle for unix line endings for batch results
+- Added a check for input fields in templates (MTurk compatibility)
+- Added template size limit (MTurk compatibility)
+- Pass variables to task iframe (MTurk compatibility)
+- Logging of user actions
 
 ### Changed
+- Improved documentation
+- Improved performance of index page
+- Fixed several UI issues
+- Fixed limit on csv field size
 - Login page less fugly
+- Docker compose setup now supports unicode characters in templates
 
 ### Removed
 - Python 2.7 no longer supported
+- Unused static resources like concrete.js and older bootstrap
 
 ## [2.0.1] - 2019-01-28
 ### Added
