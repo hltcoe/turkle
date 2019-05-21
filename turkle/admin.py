@@ -13,7 +13,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.forms import (FileField, FileInput, HiddenInput, IntegerField,
                           ModelForm, ModelMultipleChoiceField, TextInput, ValidationError, Widget)
-from django.http import JsonResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
@@ -156,7 +156,7 @@ class ProjectNameReadOnlyWidget(Widget):
         return format_html(
             '<div class="readonly"><a href="{}">{}</a></div>'
             '<input name="project" id="id_project" type="hidden" value="{}" />'.format(
-                reverse('admin:turkle_project_change', args=[self.project_id]),
+                reverse('turkle_admin:turkle_project_change', args=[self.project_id]),
                 self.project_name, self.project_id))
 
 
@@ -269,7 +269,7 @@ class BatchAdmin(admin.ModelAdmin):
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
     list_display = (
-        'name', 'project', 'active', 'stats', 'download_input_csv', 'download_csv',
+        'name', 'project', 'active', 'stats', 'download_input', 'download_csv',
         'tasks_completed', 'assignments_completed', 'total_finished_tasks')
 
     def assignments_completed(self, obj):
@@ -344,14 +344,12 @@ class BatchAdmin(admin.ModelAdmin):
         return super().changelist_view(request, extra_context=c)
 
     def download_csv(self, obj):
-        download_url = reverse('download_batch_csv', kwargs={'batch_id': obj.id})
-        return format_html('<a href="{}" class="button">CSV results</a>'.
-                           format(download_url))
+        download_url = reverse('turkle_admin:download_batch', kwargs={'batch_id': obj.id})
+        return format_html('<a href="{}" class="button">CSV results</a>'.format(download_url))
 
-    def download_input_csv(self, obj):
-        download_url = reverse('download_batch_input_csv', kwargs={'batch_id': obj.id})
-        return format_html('<a href="{}" class="button">CSV input</a>'.
-                           format(download_url))
+    def download_input(self, obj):
+        download_url = reverse('turkle_admin:download_batch_input', kwargs={'batch_id': obj.id})
+        return format_html('<a href="{}" class="button">CSV input</a>'.format(download_url))
 
     def get_fields(self, request, obj=None):
         # Display different fields when adding (when obj is None) vs changing a Batch
@@ -377,6 +375,11 @@ class BatchAdmin(admin.ModelAdmin):
                 self.admin_site.admin_view(self.review_batch), name='review_batch'),
             url(r'^(?P<batch_id>\d+)/publish/$',
                 self.admin_site.admin_view(self.publish_batch), name='publish_batch'),
+            url(r'^(?P<batch_id>\d+)/download/$',
+                self.admin_site.admin_view(self.download_batch), name='download_batch'),
+            url(r'^(?P<batch_id>\d+)/input/$',
+                self.admin_site.admin_view(self.download_batch_input),
+                name='download_batch_input'),
             url(r'^(?P<batch_id>\d+)/stats/$',
                 self.admin_site.admin_view(self.batch_stats), name='batch_stats'),
             url(r'^update_csv_line_endings',
@@ -395,6 +398,32 @@ class BatchAdmin(admin.ModelAdmin):
             messages.error(request, 'Cannot find Batch with ID {}'.format(batch_id))
 
         return redirect(reverse('turkle_admin:turkle_batch_changelist'))
+
+    def download_batch(self, request, batch_id):
+        batch = Batch.objects.get(id=batch_id)
+        csv_output = StringIO()
+        if request.session.get('csv_unix_line_endings', False):
+            batch.to_csv(csv_output, lineterminator='\n')
+        else:
+            batch.to_csv(csv_output)
+        csv_string = csv_output.getvalue()
+        response = HttpResponse(csv_string, content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(
+            batch.csv_results_filename())
+        return response
+
+    def download_batch_input(self, request, batch_id):
+        batch = Batch.objects.get(id=batch_id)
+        csv_output = StringIO()
+        if request.session.get('csv_unix_line_endings', False):
+            batch.to_input_csv(csv_output, lineterminator='\n')
+        else:
+            batch.to_input_csv(csv_output)
+        csv_string = csv_output.getvalue()
+        response = HttpResponse(csv_string, content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="{}"'.format(
+            batch.filename)
+        return response
 
     def response_add(self, request, obj, post_url_continue=None):
         return redirect(reverse('turkle_admin:review_batch', kwargs={'batch_id': obj.id}))
@@ -552,7 +581,7 @@ class ProjectAdmin(GuardedModelAdmin):
 
     def publish_tasks(self, instance):
         publish_tasks_url = '%s?project=%d&assignments_per_task=%d' % (
-            reverse('admin:turkle_batch_add'),
+            reverse('turkle_admin:turkle_batch_add'),
             instance.id,
             instance.assignments_per_task)
         return format_html('<a href="{}" class="button">Publish Tasks</a>'.

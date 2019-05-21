@@ -193,7 +193,7 @@ class TestDownloadBatchCSV(TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        download_url = reverse('download_batch_csv', kwargs={'batch_id': self.batch.id})
+        download_url = reverse('turkle_admin:download_batch', kwargs={'batch_id': self.batch.id})
         response = client.get(download_url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get('Content-Disposition'),
@@ -201,8 +201,8 @@ class TestDownloadBatchCSV(TestCase):
 
     def test_get_as_rando(self):
         client = django.test.Client()
-        client.login(username='admin', password='secret')
-        download_url = reverse('download_batch_csv', kwargs={'batch_id': self.batch.id})
+        client.login(username='not_admin', password='secret')
+        download_url = reverse('turkle_admin:download_batch', kwargs={'batch_id': self.batch.id})
         response = client.get(download_url)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], '/admin/login/?next=%s' % download_url)
