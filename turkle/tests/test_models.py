@@ -180,12 +180,14 @@ class TestBatch(django.test.TestCase):
             input_csv_fields={'number': '1', 'letter': 'a'},
         )
         task1.save()
-        TaskAssignment(
+        ta = TaskAssignment(
             answers={'combined': '1a'},
             assigned_to=user,
             completed=True,
-            task=task1
-        ).save()
+            task=task1,
+        )
+        ta.save()
+        time_string = ta.created_at.strftime("%a %b %d %H:%M:%S %Z %Y")
 
         task2 = Task(
             batch=batch,
@@ -208,6 +210,7 @@ class TestBatch(django.test.TestCase):
             in csv_string)
         self.assertTrue('"b","2","2b","joe"\r\n' in csv_string)
         self.assertTrue('"a","1","1a","joe"\r\n' in csv_string)
+        self.assertTrue(time_string in csv_string)
 
     def test_batch_to_input_csv(self):
         project = Project(name='test', html_template='<p>${letter}</p><textarea>')

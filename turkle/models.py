@@ -435,7 +435,7 @@ class Batch(models.Model):
             dicts are the values of the fieldname strings.
         """
         rows = []
-        time_format = '%a %b %m %H:%M:%S %Z %Y'
+        time_format = '%a %b %d %H:%M:%S %Z %Y'
         task_assignments = TaskAssignment.objects.\
             filter(task__in=task_queryset).\
             filter(completed=True).\
