@@ -541,3 +541,11 @@ The scripts for creating users (`scripts/add_user.py`,
 of Tasks (`scripts/upload_tasks.py`), and downloading completed Task
 Assignments (`scripts/download_results.py`) work the same whether
 Turkle is running in a Docker container or on the local host.
+
+# Developers
+
+## Release process
+ 1. Set version number in `turkle/__init__.py`
+ 2. Update `CHANGELOG.md`
+ 3. Commit and tag version
+ 
