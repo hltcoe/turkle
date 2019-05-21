@@ -1,18 +1,12 @@
 {% extends "task_base.html" %}
 {% load staticfiles %}
 
-{% block header %}
+{% block head %}
 {{ block.super }}
 <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'turkle/iframe-resizer-3.6.2/iframeResizer.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'turkle/jquery.countdown-2.2.0.js' %}"></script>
 <script>
 $(function () {
-  $('#task_assignment_iframe').iFrameResize({
-    heightCalculationMethod: 'taggedElement',
-    minHeight: '600px'
-  }).focus();
-
   var csrftoken = $("[name=csrfmiddlewaretoken]").val();
 
   function csrfSafeMethod(method) {
@@ -49,22 +43,15 @@ $(function () {
 {% endblock %}
 
 {% block body %}
-<div class="container-fluid">
-
-  {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
-
-  <div id="iframe_container">
-    <iframe src="{% url 'task_assignment_iframe' task.id task_assignment.id %}{{ http_get_params }}"
+<div class="container-fluid content">
+  <iframe src="{% url 'task_assignment_iframe' task.id task_assignment.id %}{{ http_get_params }}"
             id="task_assignment_iframe"
-            style="top: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: 0; box-sizing: inherit;"
-            scrolling="no">
-    </iframe>
-  </div>
-
+            style="top: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: 0; box-sizing: inherit; display: block;">
+  </iframe>
 </div><!-- /.container-fluid -->
 {% endblock %}
 
-{% block right_half_header_row %}
+{% block subheader_right %}
 <span>
   <input type="checkbox" id="update_auto_accept"
          {% if auto_accept_status %} checked="checked" {% endif %} >

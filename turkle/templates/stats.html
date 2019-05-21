@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load staticfiles %}
 
-{% block header %}
+{% block head %}
 
 <link href="{% static "turkle/bootstrap-datepicker-1.8.0/css/bootstrap-datepicker.css" %}" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
@@ -14,7 +14,6 @@ $(document).ready(function() {
   });
 });
 </script>
-
 {% endblock %}
 
 {% block body %}
