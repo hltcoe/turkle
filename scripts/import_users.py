@@ -13,12 +13,11 @@ parser = argparse.ArgumentParser(
 )
 parser.add_argument("-u", help="admin username", required=True)
 parser.add_argument("-p", help="admin password")
-parser.add_argument("--server", help="hostname:port", default="localhost:8000")
-parser.add_argument("--prefix", help="URL prefix of the application", default="")
+parser.add_argument("--server", help="protocol://hostname:port", default="http://localhost:8000")
 parser.add_argument("csv", help="csv filename")
 args = parser.parse_args()
 
-client = TurkleClient(args.server, args.prefix, args.u, args.p)
+client = TurkleClient(args.server, args.u, args.p)
 with open(args.csv, 'r') as fh:
     reader = csv.reader(fh)
     result = True

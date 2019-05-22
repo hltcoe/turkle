@@ -12,8 +12,7 @@ parser = argparse.ArgumentParser(
 )
 parser.add_argument("-u", help="admin username", required=True)
 parser.add_argument("-p", help="admin password")
-parser.add_argument("--server", help="hostname:port", default="localhost:8000")
-parser.add_argument("--prefix", help="URL prefix of the application", default="")
+parser.add_argument("--server", help="protocol://hostname:port", default="http://localhost:8000")
 parser.add_argument("--num", help="number of assignments per task", default=1, type=int)
 parser.add_argument("--login", help="is login required (0 or 1)",
                     default=1, type=int, choices=[0, 1])
@@ -23,7 +22,7 @@ parser.add_argument("template", help="html template file")
 parser.add_argument("csv", help="csv file for batch")
 args = parser.parse_args()
 
-client = TurkleClient(args.server, args.prefix, args.u, args.p)
+client = TurkleClient(args.server, args.u, args.p)
 result = client.upload(args)
 if result:
     print("Success")
