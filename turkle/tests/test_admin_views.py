@@ -126,7 +126,7 @@ class TestBatchAdmin(django.test.TestCase):
                     'name': 'batch_save',
                     'csv_file': fp
                 })
-        self.assertTrue(b'error' not in response.content)
+        self.assertTrue(b'Please correct the error' not in response.content)
         self.assertEqual(response.status_code, 302)
         self.assertTrue(Batch.objects.filter(name='batch_save').exists())
         matching_batch = Batch.objects.filter(name='batch_save').last()
@@ -155,7 +155,7 @@ class TestBatchAdmin(django.test.TestCase):
                     'name': 'batch_save',
                     'csv_file': fp
                 })
-        self.assertTrue(b'error' not in response.content)
+        self.assertTrue(b'Please correct the error' not in response.content)
         self.assertEqual(response.status_code, 302)
         self.assertTrue(Batch.objects.filter(name='batch_save').exists())
         matching_batch = Batch.objects.filter(name='batch_save').last()
@@ -187,7 +187,7 @@ class TestBatchAdmin(django.test.TestCase):
                     'csv_file': fp
                 })
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(b'error' in response.content)
+        self.assertTrue(b'Please correct the error' in response.content)
         self.assertTrue(b'This field is required.' in response.content)
 
     def test_batch_add_missing_project(self):
@@ -206,7 +206,7 @@ class TestBatchAdmin(django.test.TestCase):
                     'name': 'batch_save',
                     'csv_file': fp
                 })
-        self.assertTrue(b'error' in response.content)
+        self.assertTrue(b'Please correct the error' in response.content)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(b'This field is required' in response.content)
 
@@ -225,7 +225,7 @@ class TestBatchAdmin(django.test.TestCase):
                 'project': project.id,
                 'name': 'batch_save',
             })
-        self.assertTrue(b'error' in response.content)
+        self.assertTrue(b'Please correct the error' in response.content)
         self.assertEqual(response.status_code, 200)
         self.assertTrue(b'This field is required' in response.content)
 
@@ -278,7 +278,7 @@ class TestBatchAdmin(django.test.TestCase):
                 })
         self.assertEqual(response.status_code, 200)
         print(response.content)
-        self.assertTrue(b'error' in response.content)
+        self.assertTrue(b'Please correct the error' in response.content)
         self.assertTrue(b'extra fields' not in response.content)
         self.assertTrue(b'missing fields' in response.content)
 
@@ -300,7 +300,7 @@ class TestBatchAdmin(django.test.TestCase):
                     'csv_file': fp
                 })
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(b'error' in response.content)
+        self.assertTrue(b'Please correct the error' in response.content)
         self.assertTrue(b'line 2 has 2 fields' in response.content)
         self.assertTrue(b'line 4 has 4 fields' in response.content)
 
@@ -313,7 +313,7 @@ class TestBatchAdmin(django.test.TestCase):
         response = client.get(
             '/admin/turkle/batch/%d/change/' % batch.id
         )
-        self.assertTrue(b'error' not in response.content)
+        self.assertTrue(b'Please correct the error' not in response.content)
         self.assertEqual(response.status_code, 200)
 
     def test_batch_change_update(self):
