@@ -31,6 +31,9 @@ body {
   background-color: #f8d7da;
   border-color: #f5c6cb;
 }
+.inline-form-buttons {
+  display: inline-block;
+}
 .inline-form-buttons > form,
 .inline-form-buttons > a[role="button"] {
   display: inline-block;

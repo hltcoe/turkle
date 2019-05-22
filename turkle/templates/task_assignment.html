@@ -58,7 +58,7 @@ $(function () {
   <label class="form-check-label" for="update_auto_accept">Auto-accept next Task</label>
 </span>
 
-<span class="inline-form-buttons">
+<div class="inline-form-buttons">
   <form method="post" action="{% url 'return_task_assignment' task.id task_assignment.id %}">
     {% csrf_token %}
     <input type="submit" id="returnButton" class="btn btn-sm btn-danger" value="Return Task" />
@@ -68,7 +68,7 @@ $(function () {
     {% csrf_token %}
     <input type="submit" id="skipButton" class="btn btn-sm btn-danger" value="Skip Task" />
   </form>
-</span>
+</div>
 
 <span style="padding-left: 2em; font-size: 0.8em;">
   <span id="expiration-timer"></span>

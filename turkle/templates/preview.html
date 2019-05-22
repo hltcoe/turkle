@@ -16,7 +16,7 @@
 {% endblock %}
 
 {% block subheader_right %}
-<span class="inline-form-buttons">
+<div class="inline-form-buttons">
   <form method="post" action="{% url 'accept_task' task.batch_id task.id %}">
     {% csrf_token %}
     <input type="submit" id="acceptButton" class="btn btn-sm btn-primary" value="Accept Task" />
@@ -28,5 +28,5 @@
   </form>
 
   <a href="{% url 'index' %}" role="button" class="btn btn-sm btn-danger">Stop Preview</a>
-</span>
+</div>
 {% endblock %}

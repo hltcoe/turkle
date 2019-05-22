@@ -6,26 +6,24 @@
 {% if abandoned_assignments %}
 <div class="container-fluid">
   {% for aa in abandoned_assignments %}
-  <div class="alert alert-warning" role="alert">
-    <span class="float-left">
+  <div class="alert alert-warning clearfix" role="alert">
+    <div class="float-left">
       You have abandoned <b>Task {{ aa.task.id }}</b>
       from Project <b>{{ aa.task.batch.project.name }}</b>,
       Batch <b>{{ aa.task.batch.name }}</b>
-    </span>
+    </div>
 
-    <span>&nbsp;</span>
-
-    <span class="float-right">
-      <span class="inline-form-buttons">
+    <div class="float-right">
+      <div class="inline-form-buttons">
         <a href="{% url 'task_assignment' aa.task.id aa.task_assignment_id %}" class="btn btn-sm btn-primary">
           Resume working on Task
         </a>
         <form method="post" action="{% url 'return_task_assignment' aa.task.id aa.task_assignment_id %}">
           {% csrf_token %}
-          <input type="submit" id="returnButton" class="btn btn-sm btn-primary" value="Return Task" />
+          <input type="submit" class="btn btn-sm btn-primary" value="Return Task" />
         </form>
-      </span>
-    </span>
+      </div>
+    </div>
   </div>
   {% endfor %}
 </div>
@@ -59,7 +57,7 @@
       <td>
         <form method="post" action="{{ batch_row.accept_next_task_url }}">
           {% csrf_token %}
-          <input type="submit" id="acceptButton" class="btn btn-sm btn-primary" value="Accept next Task" />
+          <input type="submit" class="btn btn-sm btn-primary" value="Accept next Task" />
         </form>
       </td>
     </tr>

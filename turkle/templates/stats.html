@@ -3,9 +3,9 @@
 
 {% block head %}
 
-<link href="{% static "turkle/bootstrap-datepicker-1.8.0/css/bootstrap-datepicker.css" %}" rel="stylesheet" type="text/css"/>
+<link href="{% static 'turkle/bootstrap-datepicker-1.8.0/css/bootstrap-datepicker.css' %}" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
-<script type="text/javascript" src="{% static "turkle/bootstrap-datepicker-1.8.0/js/bootstrap-datepicker.js" %}"></script>
+<script type="text/javascript" src="{% static 'turkle/bootstrap-datepicker-1.8.0/js/bootstrap-datepicker.js' %}"></script>
 
 <script>
 $(document).ready(function() {
@@ -23,7 +23,7 @@ $(document).ready(function() {
 
   <h2>Statistics for {{ full_name }}</h2>
 
-  <hr />
+  <hr>
 
   <form>
     <div class="row">
@@ -44,20 +44,17 @@ $(document).ready(function() {
     </div>
   </form>
 
-  <hr />
+  <hr>
 
-  <p>
-    <h3>
-      Total Task Assignments: {{ total_completed }}
-      {% if not start_date and not end_date %}
-      (All time)
-      {% else %}
-      ({% if start_date %}{{ start_date }}{% endif %} -
-       {% if end_date %}{{ end_date }}{% endif %})
-      {% endif %}
-    </h3>
-    <h3>Total Elapsed Time: {{ total_elapsed_time }}</h3>
-  </p>
+  <h3>
+    Total Task Assignments: {{ total_completed }}
+    {% if not start_date and not end_date %}
+    (All time)
+    {% else %}
+    ({% if start_date %}{{ start_date }}{% endif %} - {% if end_date %}{{ end_date }}{% endif %})
+    {% endif %}
+  </h3>
+  <h3>Total Elapsed Time: {{ total_elapsed_time }}</h3>
 
   <div>
     <table class="table table-sm table-bordered thead-light">
