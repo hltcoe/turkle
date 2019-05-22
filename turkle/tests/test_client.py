@@ -13,10 +13,10 @@ class TestClient(django.test.LiveServerTestCase):
     fixtures = ['turkle/tests/resources/test_db.json']
 
     def setUp(self):
-        self.client = TurkleClient(self.live_server_url, "", "admin", "password")
+        self.client = TurkleClient(self.live_server_url, "admin", "password")
 
     def test_login_failure(self):
-        client = TurkleClient(self.live_server_url, "", "admin", "chicken")
+        client = TurkleClient(self.live_server_url, "admin", "chicken")
         self.assertFalse(client.add_user("tony", "password"))
 
     def test_add_user(self):

@@ -11,8 +11,11 @@ def exception_handler(func):
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except requests.exceptions.ConnectionError:
-            print("Error: failed to contact site")
+        except requests.exceptions.ConnectionError as e:
+            if 'CERTIFICATE_VERIFY_FAILED' in str(e):
+                print("Error: could not verify ssl certificate")
+            else:
+                print("Error: failed to contact site")
             return False
     return wrapper
 
@@ -24,17 +27,14 @@ class TurkleClient(object):
     ADD_BATCH_URL = "/admin/turkle/batch/add/"
     LIST_BATCH_URL = "/admin/turkle/batch/"
 
-    def __init__(self, server, prefix, admin, password=None):
+    def __init__(self, server, admin, password=None):
         # prefix is for when the app is not run in the base of the web server
         if not password:
             self.password = getpass.getpass(prompt="Admin password: ")
         else:
             self.password = password
         self.admin = admin
-        self.server = server
-        self.prefix = prefix
-        if 'http://' in self.server:
-            self.server = self.server.replace('http://', '')
+        self.server = server.rstrip('/')
 
     @exception_handler
     def add_user(self, user, password, email=None):
@@ -48,10 +48,11 @@ class TurkleClient(object):
                 'password1': password,
                 'password2': password,
                 'is_active': True,
-                'csrfmiddlewaretoken': session.cookies['csrftoken']
+                'csrfmiddlewaretoken': session.cookies['csrftoken'],
             }
             if email:
                 payload['email'] = email
+            session.headers.update({'referer': url})
             resp = session.post(url, data=payload)
             error = self.extract_error_message(resp)
             if error:
@@ -71,7 +72,7 @@ class TurkleClient(object):
                 finished_col = row.find('td', {'class': 'field-total_finished_tasks'}).string
                 download_link = row.find('td', {'class': 'field-download_csv'}).a
                 if finished_col != '0':
-                    resp = session.get(self.format_url(download_link['href'], False))
+                    resp = session.get(self.format_url(download_link['href']))
                     info = resp.headers['content-disposition']
                     filename = re.findall(r'filename="(.+)"', info)[0]
                     filename = os.path.join(directory, filename)
@@ -102,10 +103,11 @@ class TurkleClient(object):
             'filename': options.template,
             'html_template': options.form,
             'active': 1,
-            'csrfmiddlewaretoken': session.cookies['csrftoken']
+            'csrfmiddlewaretoken': session.cookies['csrftoken'],
         }
         if options.login:
             payload['login_required'] = 1
+        session.headers.update({'referer': url})
         resp = session.post(url, data=payload)
         if resp.status_code != requests.codes.ok:
             print("Error: uploading the project failed")
@@ -124,9 +126,10 @@ class TurkleClient(object):
             'name': options.batch_name,
             'assignments_per_task': options.num,
             'active': 1,
-            'csrfmiddlewaretoken': session.cookies['csrftoken']
+            'csrfmiddlewaretoken': session.cookies['csrftoken'],
         }
         files = {'csv_file': (options.csv, options.csv_data)}
+        session.headers.update({'referer': url})
         resp = session.post(url, data=payload, files=files)
         if resp.status_code != requests.codes.ok:
             print("Error: uploading the csv failed")
@@ -187,17 +190,15 @@ class TurkleClient(object):
         payload = {
             'username': self.admin,
             'password': self.password,
-            'csrfmiddlewaretoken': session.cookies['csrftoken']
+            'csrfmiddlewaretoken': session.cookies['csrftoken'],
         }
+        session.headers.update({'referer': url})
         resp = session.post(url, data=payload)
-        if "didn't match" in resp.text:
+        if "didn't match" in resp.text or 'Admin' not in resp.text:
+            # catching user/pass failures and account not having admin
             print("Error: login failure")
             result = False
         return result
 
-    def format_url(self, path, include_prefix=True):
-        if self.prefix and include_prefix:
-            server = self.server + '/' + self.prefix
-        else:
-            server = self.server
-        return "http://" + server + path
+    def format_url(self, path):
+        return self.server + path
