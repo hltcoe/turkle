@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added template size limit (MTurk compatibility)
 - Pass variables to task iframe (MTurk compatibility)
 - Logging of user actions
+- Versioning to code
+- Admin About page that displays version #
+- Release process instructions to README
 
 ### Changed
 - Improved documentation
