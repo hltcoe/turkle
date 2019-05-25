@@ -69,6 +69,54 @@ a row of the CSV file:
 The HTML template can include any HTML form input fields, such as text
 boxes, radio buttons, and check boxes.
 
+## Serialized Data ##
+
+More sophisticated tasks may require loading or saving serialized data.
+For example, a tagging task starts with tokenized text and that may be
+saved in JSON or [Concrete](https://github.com/hltcoe/concrete).
+
+Here is a sample CSV file that contains a JSON array:
+
+    "json_array"
+	"[3,6,9]"
+
+JavaScript code in a template can access this JSON array using:
+
+``` javascript
+<script>
+  var a = ${json_array};
+  // a[0]=3, a[1]=6, a[2]=9
+</script>
+```
+
+Please note that when you are passing in JSON data through template
+variables, you should NOT use `JSON.parse()` to deserialize the data.
+Turkle replaces the template variables with their corresponding values
+on the server side.  For this example, the HTML that the Turkle server
+sends to the browser is:
+
+``` javascript
+<script>
+  var a = [3,6,9];
+  // a[0]=3, a[1]=6, a[2]=9
+</script>
+```
+
+However, if you want to save JSON data as a form value, then you need
+to use `JSON.stringify()` to convert the in-memory JavaScript object
+to a JSON string representation.  As an example, this jQuery-based
+code serializes output and adds it to the DOM as an input element when
+the submit button is pressed:
+
+```javascript
+$('input[type="submit"]').on("click", function(event) {
+  var output = my_function_that_grabs_output();
+  var string = escapeHtml(JSON.stringify(output));
+  $("#mturk_form").append('<input name="output" type="hidden" value="' + string + '">');
+});
+```
+The data is then available in the output CSV as JSON as the variable Answer.output.
+
 ## JavaScript and CSS ##
 
 JavaScript and CSS can be placed in the template itself or linked to from
@@ -80,27 +128,7 @@ The `emotion detection` and `image contains` template examples uses
 Bootstrap and jQuery. The `translate validate` template uses the
 Parsley validation library.
 
-## Serialized Data ##
-
-More sophisticated tasks may require loading or saving serialized data.
-For example, a tagging task starts with tokenized text and that may be
-saved in JSON or [Concrete](https://github.com/hltcoe/concrete).
-In these cases, JavaScript code will deserialize the inputs to render
-the template or serialize the output for submission.
-
-As an example, this jQuery-based code serializes output and adds it to
-the DOM as an input element:
-
-```javascript
-$('input[type="submit"]').on("click", function(event) {
-  var output = my_function_that_grabs_output();
-  var string = escapeHtml(JSON.stringify(output));
-  $("#mturk_form").append('<input name="output" type="hidden" value="' + string + '">');
-});
-```
-The data is then available in the output CSV as JSON as the variable Answer.output.
-
-## Preventing Default Browser Behavior that Frustrates Users ##
+## Preventing Default Browser Behavior that Affects Data Quality ##
 
 Users will accidentally trigger form submission by pressing the Enter
 key outside of a text field.  Some browsers use the Backspace key to
@@ -134,20 +162,21 @@ $(document).ready(function() {
 
 ## Gotchas ##
 
-Do not include text like this `%{variable}` in your template unless it is 
+Do not include text like this `${variable}` in your template unless it is 
 a variable in your input CSV file. Accidentally adding something like this
 in your JavaScript code will cause Turkle's template rendering to modify it.
 
-Do not include a form in your template. The template is inserted into a form
-element and a form in a form is invalid HTML.
+Do not include a form element in your template. The template is
+inserted into a form element and a form in a form is invalid HTML.
 
 Because your entire HTML template is wrapped in a form element, the
 default behavior for any buttons in your template will be to trigger
-form submission.  To prevent a button from submitting the form, use
-the CSS "button" class:
+form submission.  To prevent a button from submitting the form, set
+the "type" of the button to "button" (instead of the default button
+type, "submit"):
 
 ``` html
-<button class="button">
+<button type="button">
 ```
 
 Do not use JavaScript or CSS resources included with Turkle. There is no
