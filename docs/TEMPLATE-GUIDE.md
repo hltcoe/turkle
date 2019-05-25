@@ -100,7 +100,7 @@ $('input[type="submit"]').on("click", function(event) {
 ```
 The data is then available in the output CSV as JSON as the variable Answer.output.
 
-## Preventing Default Browser Behavior that Frustrates Users ##
+## Preventing Default Browser Behavior that Affects Data Quality ##
 
 Users will accidentally trigger form submission by pressing the Enter
 key outside of a text field.  Some browsers use the Backspace key to
@@ -138,16 +138,17 @@ Do not include text like this `%{variable}` in your template unless it is
 a variable in your input CSV file. Accidentally adding something like this
 in your JavaScript code will cause Turkle's template rendering to modify it.
 
-Do not include a form in your template. The template is inserted into a form
-element and a form in a form is invalid HTML.
+Do not include a form element in your template. The template is
+inserted into a form element and a form in a form is invalid HTML.
 
 Because your entire HTML template is wrapped in a form element, the
 default behavior for any buttons in your template will be to trigger
-form submission.  To prevent a button from submitting the form, use
-the CSS "button" class:
+form submission.  To prevent a button from submitting the form, set
+the "type" of the button to "button" (instead of the default button
+type, "submit"):
 
 ``` html
-<button class="button">
+<button type="button">
 ```
 
 Do not use JavaScript or CSS resources included with Turkle. There is no
