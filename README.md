@@ -104,6 +104,12 @@ After copying over the new code, run the migrate script:
 python manage.py migrate
 ```
 
+If serving the static files through a web server like Apache or nginx, collect the static assets:
+
+```bash
+python manage.py collectstatic
+```
+
 
 # Usage
 
