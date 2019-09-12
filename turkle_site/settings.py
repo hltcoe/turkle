@@ -2,6 +2,8 @@
 # Django settings for turkle project.
 
 import os
+import sys
+import types
 
 DEBUG = False
 ALLOWED_HOSTS = ['*']
@@ -74,8 +76,6 @@ TEMPLATES = [
 ]
 
 MIDDLEWARE = (
-    # Uncomment to use whitenoise to serve static files
-    # 'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -115,59 +115,6 @@ AUTHENTICATION_BACKENDS = (
 )
 
 
-# Below is a possible logging configuration that sends HTTP 500
-# errors to people lists in ADMINS and records an access log to
-# logs/turkle.log. You will need to create the logs directory in
-# the base of this repository (at the same level as examples).
-# More options can be found in Django's logging docs:
-# https://docs.djangoproject.com/en/1.11/topics/logging/
-# ADMINS =(('name','email'),)
-# LOGGING = {
-#     'version': 1,
-#     'disable_existing_loggers': False,
-#     'filters': {
-#         'require_debug_false': {
-#             '()': 'django.utils.log.RequireDebugFalse'
-#         }
-#     },
-#     'formatters': {
-#         'simple': {
-#             'format': '%(asctime)s %(levelname)s: %(message)s',
-#             'datefmt': '%Y-%m-%d %H:%M:%S',
-#         },
-#     },
-#     'handlers': {
-#         'file': {
-#             'level': 'INFO',
-#             'class': 'logging.FileHandler',
-#             'filename': os.path.join(os.path.dirname(__file__), os.pardir, 'logs', 'turkle.log'),
-#             'formatter': 'simple',
-#         },
-#         'mail_admins': {
-#             'level': 'ERROR',
-#             'class': 'django.utils.log.AdminEmailHandler'
-#             'filters': ['require_debug_false'],
-#         }
-#     },
-#     'loggers': {
-#         'django': {
-#             'handlers': ['file'],
-#             'level': 'WARNING',
-#             'propagate': True,
-#         },
-#         'django.request': {
-#             'handlers': ['mail_admins'],
-#             'level': 'ERROR',
-#             'propagate': False,
-#         },
-#         'turkle': {
-#             'handlers': ['file'],
-#             'level': 'INFO',
-#             'propagate': True,
-#         },
-#     }
-# }
-
 # Set max size for file uploads and POST requests to 100MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600
 FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600
@@ -178,21 +125,8 @@ TURKLE_TEMPLATE_LIMIT = 64
 LOGIN_REDIRECT_URL = 'index'
 
 # If True, the "Password Reset" link will be added to the login form.
-# This requires MTA configuration below.
+# This requires MTA configuration.
 TURKLE_EMAIL_ENABLED = False
-
-# Configure connection to Mail Transfer Agent (MTA)
-# more details at https://docs.djangoproject.com/en/1.11/ref/settings/#std:setting-EMAIL_HOST
-# EMAIL_HOST = ''
-# set the [from] email address
-# DEFAULT_FROM_EMAIL = ''
-# configure if not using the standard SMTP port 25
-# EMAIL_PORT = 25
-# uncomment if using secure connection to MTA
-# EMAIL_USE_TLS = True
-# configure if authenticating to MTA
-# EMAIL_HOST_USER = ''
-# EMAIL_HOST_PASSWORD = ''
 
 # Uncomment and configure (Note: this does not work for sqlite databases)
 # DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
@@ -256,3 +190,42 @@ if 'TURKLE_DOCKER' in os.environ:
             },
         },
     }
+
+
+##################
+# LOCAL SETTINGS #
+##################
+
+# This implementation of local settings adapted from:
+#   https://github.com/stephenmcd/mezzanine/blob/master/mezzanine/project_template/project_name/settings.py#L315
+
+# Allow any settings to be defined in local_settings.py (which should be
+# ignored in your version control system), allowing for settings to be
+# defined per machine.
+
+# Instead of doing "from .local_settings import *", we use exec so that
+# local_settings has full access to everything defined in this module.
+# Also force into sys.modules so it's visible to Django's autoreload.
+
+# Full filesystem path to the project.
+PROJECT_APP_PATH = os.path.dirname(os.path.abspath(__file__))
+PROJECT_APP = os.path.basename(PROJECT_APP_PATH)
+
+f = os.path.join(PROJECT_APP_PATH, "local_settings.py")
+if os.path.exists(f):
+    module_name = "%s.local_settings" % PROJECT_APP
+    module = types.ModuleType(module_name)
+    module.__file__ = f
+    sys.modules[module_name] = module
+    try:
+        exec(open(f, "rb").read())
+    except Exception as err:
+        # Python traceback output lists problems in local_settings.py as
+        # occurring in 'File "<string>"`, which may confuse users.
+        if err.args[1][0] == '<string>':
+            # Exception thrown directly from local_settings.py
+            raise type(err)('%s on line %d of File "%s"' %
+                            (err.args[0], err.args[1][1], f)) from err
+        else:
+            # Exception thrown from file used by local_settings.py
+            raise err
