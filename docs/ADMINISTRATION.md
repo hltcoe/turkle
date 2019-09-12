@@ -3,7 +3,7 @@ Administration Guide
 
 While Turkle can run out of the box using the Django development web server
 and a SQLite database, we recommend using a scalable database and a production
-quality WSGI HTTP server. This guide describes the steps of running a prodcution
+quality WSGI HTTP server. This guide describes the steps of running a production
 Turkle site.
 
 Topics:
@@ -12,12 +12,19 @@ Topics:
  * Cron
  * Email
 
+Configuration changes should be made by creating a
+`turkle_site/local_settings.py` file.  Configuration changes in this
+file override the default configuration settings in
+`turkle_site/settings.py`.  The file
+`turkle_site/example_local_settings.py` contains some examples of how
+to customize local settings.
+
 ## Production Webserver Configuration
 
 ### Configuring Static Files
 
 In a production environment, static files should be served by a web
-server and not by a Django web application.  In `settings.py`, you
+server and not by a Django web application.  In `turkle_site/local_settings.py`, you
 will need to set the STATIC_ROOT directory to the location where you
 want to store the static files, e.g.:
 
@@ -69,11 +76,13 @@ files.  Install it using:
 pip install whitenoise
 ```
 
-and then enable Whitenoise in `turkle_site/settings.py` by adding this line
-to the MIDDLEWARE section:
+and then enable Whitenoise in `turkle_site/local_settings.py` by
+adding the appropriate string to the MIDDLEWARE list:
 
 ``` python
-'whitenoise.middleware.WhiteNoiseMiddleware',
+MIDDLEWARE = (
+    'whitenoise.middleware.WhiteNoiseMiddleware',
+) + MIDDLEWARE
 ```
 
 Note that you need to follow the previous instructions on configuring static files
@@ -177,7 +186,7 @@ section above.
 
 ## Database Backups
 
-To backup the database, edit the configuration in settings.py for backups.
+To backup the database, edit the configuration in `turkle_site/local_settings.py` for backups.
 Then run the command:
 
 ```bash
@@ -233,12 +242,16 @@ automatically delete expired Task Assignments.
 
 Turkle can send password reset emails if your server is configured to deliver emails.
 By default, the links to the password reset page are hidden.
-To enable, edit the `turkle_site/settings.py` file and set the variable `TURKLE_EMAIL_ENABLED` to `True`.
-Then edit the section directly below to configure connecting to the Mail Transfer Agent (MTA).
+To enable, edit the `turkle_site/local_settings.py` file and set the variable `TURKLE_EMAIL_ENABLED` to `True`.
+You will need to add a section to `turkle_site/local_settings.py` for
+configuring a Mail Transfer Agent (MTA).  The
+`turkle_site/settings.py` file contains a (commented out) section with
+sample settings for configuring an MTA with Django.  For more details
+about configuring an MTA, consult the Django docs.
 
 ## Logging Configuration
 
 Before running Turkle in a production environment, logging must be configured 
-in the `turkle_site_settings.py` file. There is also a sample logging 
+in the `turkle_site/local_settings.py` file. There is also a sample logging
 configuration in the settings file if an administrator wants to receive emails
 if HTTP 500 errors occur.
