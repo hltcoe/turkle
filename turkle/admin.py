@@ -273,7 +273,22 @@ class BatchForm(ModelForm):
             return data
 
 
+def activate_batches(modeladmin, request, queryset):
+    queryset.update(active=True)
+
+
+activate_batches.short_description = "Activate selected Batches"
+
+
+def deactivate_batches(modeladmin, request, queryset):
+    queryset.update(active=False)
+
+
+deactivate_batches.short_description = "Deactivate selected Batches"
+
+
 class BatchAdmin(admin.ModelAdmin):
+    actions = [activate_batches, deactivate_batches]
     form = BatchForm
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
