@@ -1,0 +1,98 @@
+{% extends "admin/base_bootcamp.html" %}
+{% load static %}
+
+{% block header %}
+<style>
+.inline-form-buttons > form,
+.inline-form-buttons > a[role="button"]
+{
+  display: inline-block;
+  margin-left: 1em;
+}
+</style>
+<script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
+
+<script>
+$(function () {
+});
+</script>
+{% endblock %}
+
+{% block body %}
+
+<div class="container" style="padding-top: 5px;">
+
+  {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
+
+  <h2>Project Statistics</h2>
+
+  <div>
+    <table class="table table-sm table-bordered thead-light">
+      <tr>
+        <th>Project Name</th>
+        <td>{{ project.name }}</td>
+      </tr>
+      <tr>
+        <th>Project Created by</th>
+        <td>{{ project.created_by.get_full_name }} ({{ project.created_by.username }})</td>
+      </tr>
+      <tr>
+        <th>Active?</th>
+        <td>{% if project.active %} Yes {% else %} No {% endif %}
+        </td>
+      </tr>
+      <tr>
+        <th>First Assignment Completed at</th>
+        <td>{{ first_finished_time }}</td>
+      </tr>
+      <tr>
+        <th>Most Recent Assignment Completed at</th>
+        <td>{{ last_finished_time }}</td>
+      </tr>
+      <tr>
+        <th>Total Work Time</th>
+        <td>{{ project_total_work_time }} ({{ project.total_work_time_in_seconds }}s)</td>
+      </tr>
+      <tr>
+        <th>Mean Time / Assignment</th>
+        <td>{{ project_mean_work_time }} ({{ project.mean_work_time_in_seconds | floatformat }}s)</td>
+      </tr>
+      <tr>
+        <th>Median Time / Assignment</th>
+        <td>{{ project_median_work_time}} ({{ project.median_work_time_in_seconds }}s)</td>
+      </tr>
+    </table>
+  </div>
+
+  <h2>User Statistics</h2>
+
+  <div>
+    <table class="table table-sm table-bordered">
+      <thead class="thead-light">
+        <tr>
+          <th>Username</th>
+          <th>Name</th>
+          <th># Assignments</th>
+          <th>Mean Time</th>
+          <th>Median Time</th>
+          <th>Most Recent Assignment</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for stats_user in stats_users %}
+        <tr>
+          <td>{{ stats_user.username }}</td>
+          <td>{{ stats_user.full_name }}</td>
+          <td>{{ stats_user.assignments_completed }}</td>
+          <td>{{ stats_user.mean_work_time }}</td>
+          <td>{{ stats_user.median_work_time }}</td>
+          <td>{{ stats_user.last_finished_time }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div><!-- /.container -->
+
+{% endblock %}

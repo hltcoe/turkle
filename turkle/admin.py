@@ -563,11 +563,19 @@ class ProjectAdmin(GuardedModelAdmin):
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
-    list_display = ('name', 'filename', 'updated_at', 'active', 'publish_tasks')
+    list_display = ('name', 'filename', 'updated_at', 'active', 'stats', 'publish_tasks')
 
     # Fieldnames are extracted from form text, and should not be edited directly
     exclude = ('fieldnames',)
     readonly_fields = ('extracted_template_variables',)
+
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            url(r'^(?P<project_id>\d+)/stats/$',
+                self.admin_site.admin_view(self.project_stats), name='project_stats'),
+        ]
+        return my_urls + urls
 
     def extracted_template_variables(self, instance):
         return format_html_join('\n', "<li>{}</li>",
@@ -603,6 +611,57 @@ class ProjectAdmin(GuardedModelAdmin):
                                'worker_permissions')
                 }),
             )
+
+    def project_stats(self, request, project_id):
+        try:
+            project = Project.objects.get(id=project_id)
+        except ObjectDoesNotExist:
+            messages.error(request, 'Cannot find Project with ID {}'.format(project_id))
+            return redirect(reverse('turkle_admin:turkle_project_changelist'))
+
+        stats_users = []
+        for user in project.users_that_completed_tasks().order_by('username'):
+            assignments = project.assignments_completed_by(user)
+            if assignments:
+                last_finished_time = assignments.order_by('updated_at').last().updated_at
+                mean_work_time = '%.2f' % float(statistics.mean(
+                    [ta.work_time_in_seconds() for ta in assignments]))
+                median_work_time = '{}s'.format(int(statistics.median(
+                    [ta.work_time_in_seconds() for ta in assignments])))
+            else:
+                last_finished_time = 'N/A'
+                mean_work_time = 'N/A'
+                median_work_time = 'N/A'
+
+            stats_users.append({
+                'username': user.username,
+                'full_name': user.get_full_name(),
+                'assignments_completed': project.total_assignments_completed_by(user),
+                'mean_work_time': mean_work_time,
+                'median_work_time': median_work_time,
+                'last_finished_time': last_finished_time,
+            })
+
+        finished_assignments = project.finished_task_assignments().order_by('updated_at')
+        if finished_assignments:
+            first_finished_time = finished_assignments.first().updated_at
+            last_finished_time = finished_assignments.last().updated_at
+        else:
+            first_finished_time = 'N/A'
+            last_finished_time = 'N/A'
+
+        return render(request, 'admin/turkle/project_stats.html', {
+            'project': project,
+            'project_total_work_time': humanfriendly.format_timespan(
+                project.total_work_time_in_seconds(), max_units=6),
+            'project_mean_work_time': humanfriendly.format_timespan(
+                project.mean_work_time_in_seconds(), max_units=6),
+            'project_median_work_time': humanfriendly.format_timespan(
+                project.median_work_time_in_seconds(), max_units=6),
+            'first_finished_time': first_finished_time,
+            'last_finished_time': last_finished_time,
+            'stats_users': stats_users,
+        })
 
     def publish_tasks(self, instance):
         publish_tasks_url = '%s?project=%d&assignments_per_task=%d' % (
@@ -643,6 +702,11 @@ class ProjectAdmin(GuardedModelAdmin):
     def delete_model(self, request, obj):
         logger.info("User(%i) deleting Project(%i) %s", request.user.id, obj.id, obj.name)
         super().delete_model(request, obj)
+
+    def stats(self, obj):
+        stats_url = reverse('turkle_admin:project_stats', kwargs={'project_id': obj.id})
+        return format_html('<a href="{}" class="button">Stats</a>'.
+                           format(stats_url))
 
 
 admin_site = TurkleAdminSite(name='turkle_admin')
