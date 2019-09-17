@@ -23,6 +23,46 @@ logger = logging.getLogger(__name__)
 csv.field_size_limit(sys.maxsize)
 
 
+class TaskAssignmentStatistics(object):
+    """Mixin class for Batch/Project that computes TaskAssignment statistics
+
+    Assumes that the inheriting class has a finished_task_assignments()
+    method that returns a QuerySet of TaskAssignments.
+    """
+    def mean_work_time_in_seconds(self):
+        """
+        Returns:
+            Float for mean work time (in seconds) for completed Tasks in this Batch
+        """
+        finished_assignments = self.finished_task_assignments()
+        if finished_assignments.count() > 0:
+            return statistics.mean(
+                [ta.work_time_in_seconds() for ta in self.finished_task_assignments()])
+        else:
+            return 0
+
+    def median_work_time_in_seconds(self):
+        """
+        Returns:
+            Integer for median work time (in seconds) for completed Tasks in this Batch
+        """
+        if self.finished_task_assignments().count() > 0:
+            # np.median returns float but we convert back to int computed by work_time_in_seconds()
+            return int(statistics.median(
+                [ta.work_time_in_seconds() for ta in self.finished_task_assignments()]
+            ))
+        else:
+            return 0
+
+    def total_work_time_in_seconds(self):
+        """
+        Returns:
+            Integer sum of work_time_in_seconds() for all completed
+            TaskAssignments in this Batch
+        """
+        return sum([ta.work_time_in_seconds() for ta in self.finished_task_assignments()])
+
+
 class Task(models.Model):
     """Human Intelligence Task
     """
@@ -113,7 +153,7 @@ class TaskAssignment(models.Model):
                 self.id)
 
 
-class Batch(models.Model):
+class Batch(TaskAssignmentStatistics, models.Model):
     class Meta:
         verbose_name = "Batch"
         verbose_name_plural = "Batches"
@@ -237,32 +277,6 @@ class Batch(models.Model):
         return TaskAssignment.objects.filter(task__batch_id=self.id)\
                                      .filter(completed=True)
 
-    def mean_work_time_in_seconds(self):
-        """
-        Returns:
-            Float for mean work time (in seconds) for completed Tasks in this Batch
-        """
-        finished_assignments = self.finished_task_assignments()
-        if finished_assignments.count() > 0:
-            return statistics.mean(
-                [ta.work_time_in_seconds() for ta in self.finished_task_assignments()])
-        else:
-            return 0
-
-    def median_work_time_in_seconds(self):
-        """
-        Returns:
-            Integer for median work time (in seconds) for completed Tasks in this Batch
-        """
-        finished_assignments = self.finished_task_assignments()
-        if finished_assignments.count() > 0:
-            # np.median returns float but we convert back to int computed by work_time_in_seconds()
-            return int(statistics.median(
-                [ta.work_time_in_seconds() for ta in self.finished_task_assignments()]
-            ))
-        else:
-            return 0
-
     def next_available_task_for(self, user):
         """Returns next available Task for the user, or None if no Tasks available
 
@@ -315,14 +329,6 @@ class Batch(models.Model):
             TaskAssignments that are part of this Batch
         """
         return self.users_that_completed_tasks().count()
-
-    def total_work_time_in_seconds(self):
-        """
-        Returns:
-            Integer sum of work_time_in_seconds() for all completed
-            TaskAssignments in this Batch
-        """
-        return sum([ta.work_time_in_seconds() for ta in self.finished_task_assignments()])
 
     def to_csv(self, csv_fh, lineterminator='\r\n'):
         """Write CSV output to file handle for every Task in batch
@@ -502,7 +508,7 @@ class TurklePermissionChecker(ObjectPermissionChecker):
             return True
 
 
-class Project(models.Model):
+class Project(TaskAssignmentStatistics, models.Model):
     class Meta:
         permissions = (
             ('can_work_on', 'Can work on Tasks for this Project'),
@@ -545,6 +551,17 @@ class Project(models.Model):
 
         return [p for p in projects if checker.has_perm('can_work_on', p)]
 
+    def assignments_completed_by(self, user):
+        """
+        Returns:
+            QuerySet of all TaskAssignments completed by specified user
+            that are part of this Project
+        """
+        return TaskAssignment.objects.\
+            filter(completed=True).\
+            filter(assigned_to_id=user.id).\
+            filter(task__batch__project=self)
+
     def available_for(self, user):
         """
         Returns:
@@ -580,6 +597,15 @@ class Project(models.Model):
                                   'the number of Assignments per Task must be 1')
         self.process_template()
 
+    def finished_task_assignments(self):
+        """
+        Returns:
+            QuerySet of all Task Assignment objects associated with this Project
+            that have been completed.
+        """
+        return TaskAssignment.objects.filter(task__batch__project_id=self.id)\
+                                     .filter(completed=True)
+
     def process_template(self):
         soup = BeautifulSoup(self.html_template, 'html.parser')
         self.html_template_has_submit_button = bool(soup.select('input[type=submit]'))
@@ -596,6 +622,14 @@ class Project(models.Model):
                   "This usually means you are generating HTML with JavaScript." + \
                   "If so, add an unused hidden input."
             raise ValidationError({'html_template': msg}, code='invalid')
+
+    def total_assignments_completed_by(self, user):
+        """
+        Returns:
+            Integer of total number of TaskAssignments completed by
+            specified user that are part of this Project
+        """
+        return self.assignments_completed_by(user).count()
 
     def to_csv(self, csv_fh, lineterminator='\r\n'):
         """
@@ -614,6 +648,17 @@ class Project(models.Model):
                 _, rows = batch._results_data(batch.finished_tasks())
                 for row in rows:
                     writer.writerow(row)
+
+    def users_that_completed_tasks(self):
+        """
+        Returns:
+            QuerySet of all Users who have completed TaskAssignments
+            that are part of this Project
+        """
+        return User.objects.\
+            filter(taskassignment__task__batch__project=self).\
+            filter(taskassignment__completed=True).\
+            distinct()
 
     def _get_csv_fieldnames(self, batches):
         """
