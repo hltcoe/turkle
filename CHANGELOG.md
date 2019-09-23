@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 ### Removed
+- No longer using django-dbbackup
 
 ## [2.1.0] - 2019-06-05
 ### Added
