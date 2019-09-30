@@ -13,6 +13,8 @@ from django.db import models
 from django.db.models import Prefetch
 from django.utils import timezone
 from guardian.core import ObjectPermissionChecker
+from guardian.models import GroupObjectPermission
+from guardian.shortcuts import assign_perm, get_group_perms, get_groups_with_perms
 from jsonfield import JSONField
 
 from .utils import get_turkle_template_limit
@@ -155,6 +157,9 @@ class TaskAssignment(models.Model):
 
 class Batch(TaskAssignmentStatistics, models.Model):
     class Meta:
+        permissions = (
+            ('can_work_on_batch', 'Can work on Tasks for this Batch'),
+        )
         verbose_name = "Batch"
         verbose_name_plural = "Batches"
 
@@ -163,9 +168,33 @@ class Batch(TaskAssignmentStatistics, models.Model):
     assignments_per_task = models.IntegerField(default=1, verbose_name='Assignments per Task')
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, null=True)
+    custom_permissions = models.BooleanField(default=False)
     filename = models.CharField(max_length=1024)
+    login_required = models.BooleanField(db_index=True, default=True)
     project = models.ForeignKey('Project', on_delete=models.CASCADE)
     name = models.CharField(max_length=1024)
+
+    @classmethod
+    def all_available_for(cls, user):
+        """Retrieve the active Batches that the user has permission to access
+
+        Both the Batch and the Project associated the Batch must be active.
+
+        Args:
+            user (User):
+
+        Returns:
+            List of Batch objects this user can access
+        """
+        batches = cls.objects.filter(active=True).filter(project__active=True)
+        if not user.is_authenticated:
+            batches = batches.filter(login_required=False)
+
+        # Can implement our own prefetch_perms() in future for efficiency
+        checker = TurklePermissionChecker(user)
+        checker.prefetch_perms(batches)
+
+        return [b for b in batches if checker.has_perm('can_work_on_batch', b)]
 
     def assignments_completed_by(self, user):
         """
@@ -177,6 +206,18 @@ class Batch(TaskAssignmentStatistics, models.Model):
             filter(completed=True).\
             filter(assigned_to_id=user.id).\
             filter(task__batch=self)
+
+    def available_for(self, user):
+        """
+        Returns:
+            Boolean indicating if this Batch is available for the user
+        """
+        if not user.is_authenticated and self.login_required:
+            return False
+        elif self.custom_permissions:
+            return user.has_perm('can_work_on_batch', self)
+        else:
+            return True
 
     def available_tasks_for(self, user):
         """Retrieve a list of all Tasks in this batch available for the user.
@@ -190,7 +231,7 @@ class Batch(TaskAssignmentStatistics, models.Model):
         Returns:
             QuerySet of Task objects
         """
-        if not user.is_authenticated and self.project.login_required:
+        if not user.is_authenticated and self.login_required:
             return Task.objects.none()
 
         hs = self.task_set.filter(completed=False)
@@ -226,6 +267,21 @@ class Batch(TaskAssignmentStatistics, models.Model):
             if not self.project.login_required and self.assignments_per_task != 1:
                 raise ValidationError('When login is not required to access a Project, ' +
                                       'the number of Assignments per Task must be 1')
+
+    def copy_project_permissions(self):
+        """Copy 'permission' settings from associated Project to this Batch
+
+        Copies:
+        - `custom_permissions` flag
+        - `login_required` flag
+        - group-level access permissions
+        """
+        self.custom_permissions = self.project.custom_permissions
+        self.login_required = self.project.login_required
+        if self.custom_permissions:
+            for group in get_groups_with_perms(self.project):
+                if 'can_work_on' in get_group_perms(group, self.project):
+                    assign_perm('can_work_on_batch', group, self)
 
     def csv_results_filename(self):
         """Returns filename for CSV results file for this Batch
@@ -511,6 +567,9 @@ class TurklePermissionChecker(ObjectPermissionChecker):
 class Project(TaskAssignmentStatistics, models.Model):
     class Meta:
         permissions = (
+            # For consistency with Django Guardian naming conventions
+            # ('{VERB}_{MODELNAME}'), this permission SHOULD have been
+            # named 'can_work_on_project'
             ('can_work_on', 'Can work on Tasks for this Project'),
         )
         verbose_name = "Project"
@@ -530,26 +589,6 @@ class Project(TaskAssignmentStatistics, models.Model):
 
     # Fieldnames are automatically extracted from html_template text
     fieldnames = JSONField(blank=True)
-
-    @classmethod
-    def all_available_for(cls, user):
-        """Retrieve the Projects that the user has permission to access
-
-        Args:
-            user (User):
-
-        Returns:
-            QuerySet of Project objects this user can access
-        """
-        projects = cls.objects.filter(active=True)
-        if not user.is_authenticated:
-            projects = projects.filter(login_required=False)
-
-        # Can implement our own prefetch_perms() in future for efficiency
-        checker = TurklePermissionChecker(user)
-        checker.prefetch_perms(projects)
-
-        return [p for p in projects if checker.has_perm('can_work_on', p)]
 
     def assignments_completed_by(self, user):
         """
@@ -596,6 +635,25 @@ class Project(TaskAssignmentStatistics, models.Model):
             raise ValidationError('When login is not required to access the Project, ' +
                                   'the number of Assignments per Task must be 1')
         self.process_template()
+
+    def copy_permissions_to_batches(self):
+        """Copy permissions from this Project to all associated Batches
+
+        Copies:
+        - `custom_permissions` flag
+        - `login_required` flag
+        - group-level access permissions
+        """
+        self.batch_set.update(
+            custom_permissions=self.custom_permissions,
+            login_required=self.login_required,
+        )
+        if self.custom_permissions:
+            for group in get_groups_with_perms(self):
+                if 'can_work_on' in get_group_perms(group, self):
+                    batches = self.batch_set.all()
+                    GroupObjectPermission.objects.bulk_assign_perm(
+                        'can_work_on_batch', group, batches)
 
     def finished_task_assignments(self):
         """

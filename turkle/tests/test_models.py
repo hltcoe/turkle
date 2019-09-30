@@ -8,9 +8,9 @@ from django.contrib.auth.models import AnonymousUser, Group, User
 from django.core.exceptions import ValidationError
 import django.test
 from django.utils import timezone
-from guardian.shortcuts import assign_perm
-from .utility import save_model
+from guardian.shortcuts import assign_perm, get_group_perms
 
+from .utility import save_model
 from turkle.models import Task, TaskAssignment, Batch, Project
 from turkle.utils import get_turkle_template_limit
 
@@ -167,6 +167,67 @@ class TestBatch(django.test.TestCase):
 
     def setUp(self):
         self.admin = User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+
+    def test_all_available_for_active_flag(self):
+        user = User.objects.create_user('testuser', password='secret')
+
+        self.assertEqual(len(Batch.all_available_for(user)), 0)
+
+        active_project = Project.objects.create()
+        inactive_project = Project.objects.create(active=False)
+
+        Batch.objects.create(
+            active=False,
+            project=active_project,
+        )
+        self.assertEqual(len(Batch.all_available_for(user)), 0)
+
+        Batch.objects.create(
+            active=False,
+            project=inactive_project
+        )
+        self.assertEqual(len(Batch.all_available_for(user)), 0)
+
+        Batch.objects.create(
+            active=True,
+            project=inactive_project
+        )
+        self.assertEqual(len(Batch.all_available_for(user)), 0)
+
+        Batch.objects.create(
+            active=True,
+            project=active_project,
+        )
+        self.assertEqual(len(Batch.all_available_for(user)), 1)
+
+    def test_all_available_for_login_required(self):
+        anonymous_user = AnonymousUser()
+
+        self.assertEqual(len(Batch.all_available_for(anonymous_user)), 0)
+
+        project = Project.objects.create()
+        Batch.objects.create(login_required=True, project=project)
+        self.assertEqual(len(Batch.all_available_for(anonymous_user)), 0)
+
+        authenticated_user = User.objects.create_user('testuser', password='secret')
+        self.assertEqual(len(Batch.all_available_for(authenticated_user)), 1)
+
+    def test_all_available_for_custom_permissions(self):
+        user = User.objects.create_user('testuser', password='secret')
+        group = Group.objects.create(name='testgroup')
+        user.groups.add(group)
+        project = Project.objects.create(custom_permissions=True)
+        batch = Batch.objects.create(custom_permissions=True, project=project)
+
+        self.assertEqual(len(batch.all_available_for(user)), 0)
+
+        # Verify that giving the group access also gives the group members access
+        self.assertFalse(user.has_perm('can_work_on_batch', batch))
+        assign_perm('can_work_on_batch', group, batch)
+        self.assertEqual(len(batch.all_available_for(user)), 1)
+
+        # add superusers should have access to it
+        self.assertEqual(len(batch.all_available_for(self.admin)), 1)
 
     def test_batch_to_csv(self):
         template = '<p>${number} - ${letter}</p><textarea>'
@@ -359,6 +420,44 @@ class TestBatch(django.test.TestCase):
         self.assertEqual(tasks[2].input_csv_fields['emoji'], '🤔')
         self.assertEqual(tasks[2].input_csv_fields['more_emoji'], '🤭')
 
+    def test_copy_project_permissions(self):
+        project = Project.objects.create(
+            custom_permissions=True,
+            login_required=True,
+        )
+        group = Group.objects.create(name='testgroup')
+        assign_perm('can_work_on', group, project)
+        batch = Batch.objects.create(
+            custom_permissions=False,
+            login_required=False,
+            project=project,
+        )
+        self.assertFalse('can_work_on_batch' in get_group_perms(group, batch))
+
+        batch.copy_project_permissions()
+        self.assertTrue(batch.custom_permissions)
+        self.assertTrue(batch.login_required)
+        self.assertTrue('can_work_on_batch' in get_group_perms(group, batch))
+
+    def test_copy_project_permissions_no_custom_permissions(self):
+        project = Project.objects.create(
+            custom_permissions=False,
+            login_required=False,
+        )
+        group = Group.objects.create(name='testgroup')
+        assign_perm('can_work_on', group, project)
+        batch = Batch.objects.create(
+            custom_permissions=True,
+            login_required=True,
+            project=project,
+        )
+        self.assertFalse('can_work_on_batch' in get_group_perms(group, batch))
+
+        batch.copy_project_permissions()
+        self.assertFalse(batch.custom_permissions)
+        self.assertFalse(batch.login_required)
+        self.assertFalse('can_work_on_batch' in get_group_perms(group, batch))
+
     def test_login_required_validation_1(self):
         # No ValidationError thrown
         project = Project(
@@ -413,8 +512,7 @@ class TestBatchAvailableTASKs(django.test.TestCase):
         self.user = User.objects.create_user('testuser', password='secret')
 
         template = '<p>${number} - ${letter}</p><textarea>'
-        self.project = Project(name='test', html_template=template)
-        self.project.save()
+        self.project = Project.objects.create(name='test', html_template=template)
 
     def test_available_tasks_for__aph_is_1(self):
         batch = Batch(
@@ -478,31 +576,27 @@ class TestBatchAvailableTASKs(django.test.TestCase):
         anonymous_user = AnonymousUser()
         user = User.objects.create_user('user', password='secret')
 
-        project_protected = Project(
+        self.assertEqual(len(Batch.all_available_for(user)), 0)
+        batch_protected = Batch.objects.create(
             active=True,
             login_required=True,
+            project=self.project
         )
-        project_protected.save()
-        self.assertEqual(len(Project.all_available_for(anonymous_user)), 0)
-        self.assertEqual(len(Project.all_available_for(user)), 2)  # Project created by setUp
-        batch_protected = Batch(project=project_protected)
-        batch_protected.save()
-        Task(batch=batch_protected).save()
+        self.assertEqual(len(Batch.all_available_for(anonymous_user)), 0)
+        self.assertEqual(len(Batch.all_available_for(user)), 1)
+
+        Task.objects.create(batch=batch_protected)
         self.assertEqual(len(batch_protected.available_tasks_for(anonymous_user)), 0)
         self.assertEqual(len(batch_protected.available_tasks_for(user)), 1)
 
-        project_unprotected = Project(
+        batch_unprotected = Batch.objects.create(
             active=True,
             login_required=False,
+            project=self.project
         )
-        project_unprotected.save()
-        batch_unprotected = Batch(project=project_unprotected)
-        batch_unprotected.save()
-        Task(batch=batch_unprotected).save()
-        self.assertEqual(len(Project.all_available_for(anonymous_user)), 1)
-        self.assertEqual(len(Project.all_available_for(user)), 3)
-        self.assertEqual(len(project_unprotected.batches_available_for(anonymous_user)), 1)
-        self.assertEqual(len(project_unprotected.batches_available_for(user)), 1)
+        Task.objects.create(batch=batch_unprotected)
+        self.assertEqual(len(Batch.all_available_for(anonymous_user)), 1)
+        self.assertEqual(len(Batch.all_available_for(user)), 2)
         self.assertEqual(len(batch_unprotected.available_tasks_for(anonymous_user)), 1)
         self.assertEqual(len(batch_unprotected.available_tasks_for(user)), 1)
 
@@ -583,51 +677,6 @@ class TestProject(django.test.TestCase):
     def setUp(self):
         self.admin = User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
 
-    def test_all_available_for_active_flag(self):
-        user = User.objects.create_user('testuser', password='secret')
-
-        self.assertEqual(len(Project.all_available_for(user)), 0)
-
-        Project(
-            active=False,
-        ).save()
-        self.assertEqual(len(Project.all_available_for(user)), 0)
-
-        Project(
-            active=True,
-        ).save()
-        self.assertEqual(len(Project.all_available_for(user)), 1)
-
-    def test_all_available_for_login_required(self):
-        anonymous_user = AnonymousUser()
-
-        self.assertEqual(len(Project.all_available_for(anonymous_user)), 0)
-
-        Project(
-            login_required=True,
-        ).save()
-        self.assertEqual(len(Project.all_available_for(anonymous_user)), 0)
-
-        authenticated_user = User.objects.create_user('testuser', password='secret')
-        self.assertEqual(len(Project.all_available_for(authenticated_user)), 1)
-
-    def test_all_available_for_custom_permissions(self):
-        user = User.objects.create_user('testuser', password='secret')
-        group = Group.objects.create(name='testgroup')
-        user.groups.add(group)
-        project = Project(custom_permissions=True)
-        project.save()
-
-        self.assertEqual(len(project.all_available_for(user)), 0)
-
-        # Verify that giving the group access also gives the group members access
-        self.assertFalse(user.has_perm('can_work_on', project))
-        assign_perm('can_work_on', group, project)
-        self.assertEqual(len(project.all_available_for(user)), 1)
-
-        # add superusers should have access to it
-        self.assertEqual(len(project.all_available_for(self.admin)), 1)
-
     def test_batches_available_for(self):
         user = User.objects.create_user('testuser', password='secret')
 
@@ -671,6 +720,49 @@ class TestProject(django.test.TestCase):
 
         Batch(project=project_unprotected).save()
         self.assertEqual(len(project_unprotected.batches_available_for(anonymous_user)), 1)
+
+    def test_copy_permissions_to_batches(self):
+        project = Project.objects.create(
+            custom_permissions=True,
+            login_required=True,
+        )
+        group = Group.objects.create(name='testgroup')
+        assign_perm('can_work_on', group, project)
+        batch = Batch.objects.create(
+            custom_permissions=False,
+            login_required=False,
+            project=project,
+        )
+        self.assertFalse('can_work_on_batch' in get_group_perms(group, batch))
+
+        project.copy_permissions_to_batches()
+        batch.refresh_from_db()
+        self.assertTrue(batch.custom_permissions)
+        self.assertTrue(batch.login_required)
+        self.assertTrue('can_work_on_batch' in get_group_perms(group, batch))
+
+    def test_copy_permissions_to_batches_no_custom_permissions(self):
+        project = Project.objects.create(
+            custom_permissions=False,
+            login_required=False,
+        )
+        group = Group.objects.create(name='testgroup')
+        assign_perm('can_work_on', group, project)
+        batch = Batch.objects.create(
+            custom_permissions=True,
+            login_required=True,
+            project=project,
+        )
+        self.assertFalse('can_work_on_batch' in get_group_perms(group, batch))
+
+        project.copy_permissions_to_batches()
+        batch.refresh_from_db()
+        self.assertFalse(batch.custom_permissions)
+        self.assertFalse(batch.login_required)
+
+        # Custom permissions are not copied from Project to Batch if
+        # project.custom_permissions is False
+        self.assertFalse('can_work_on_batch' in get_group_perms(group, batch))
 
     def test_form_with_submit_button(self):
         project = Project(
