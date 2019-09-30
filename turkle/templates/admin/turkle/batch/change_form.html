@@ -12,6 +12,13 @@ $(document).ready(function() {
 </script>
 <script type="text/javascript">
 $(function () {
+  if (!$('#id_custom_permissions').is(':checked')) {
+    $('div.field-worker_permissions').hide();
+  }
+  $('#id_custom_permissions').change(function() {
+    $('div.field-worker_permissions').toggle();
+  });
+
   document.addEventListener('dragenter', (e) => {
     e.preventDefault();
   });

@@ -180,6 +180,13 @@ class BatchForm(ModelForm):
         initial=Batch._meta.get_field('allotted_assignment_time').get_default(),
         required=False)
 
+    worker_permissions = ModelMultipleChoiceField(
+        label='Worker Groups with access to this Batch',
+        queryset=Group.objects.all(),
+        required=False,
+        widget=FilteredSelectMultiple('Worker Groups', False),
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -190,8 +197,34 @@ class BatchForm(ModelForm):
         self.fields['csv_file'].help_text = 'You can Drag-and-Drop a CSV file onto this ' + \
             'window, or use the "Choose File" button to browse for the file'
         self.fields['csv_file'].widget = CustomButtonFileWidget()
+        self.fields['custom_permissions'].label = 'Restrict access to specific Groups of Workers '
         self.fields['project'].label = 'Project'
         self.fields['name'].label = 'Batch Name'
+
+        self.fields['active'].help_text = 'Workers can only access a Batch if both the Batch ' + \
+            'itself and the associated Project are Active.'
+
+        if self.instance._state.adding and 'project' in self.initial:
+            # We are adding a new Batch where the associated Project has been specified.
+            # Per Django convention, the project ID is specified in the URL, e.g.:
+            #   /admin/turkle/batch/add/?project=94
+
+            # NOTE: The fields that are initialized here should match the fields copied
+            #       over by the batch.copy_project_permissions() function.
+
+            project = Project.objects.get(id=int(self.initial['project']))
+            self.fields['custom_permissions'].initial = project.custom_permissions
+            self.fields['login_required'].initial = project.login_required
+
+            # Pre-populate permissions using permissions from the associated Project
+            initial_ids = [str(id)
+                           for id in get_groups_with_perms(project).values_list('id', flat=True)]
+        else:
+            # Pre-populate permissions
+            initial_ids = [str(id)
+                           for id in get_groups_with_perms(self.instance).
+                           values_list('id', flat=True)]
+        self.fields['worker_permissions'].initial = initial_ids
 
         # csv_file field not required if changing existing Batch
         #
@@ -376,14 +409,36 @@ class BatchAdmin(admin.ModelAdmin):
         download_url = reverse('turkle_admin:download_batch_input', kwargs={'batch_id': obj.id})
         return format_html('<a href="{}" class="button">CSV input</a>'.format(download_url))
 
-    def get_fields(self, request, obj=None):
+    def get_fieldsets(self, request, obj=None):
         # Display different fields when adding (when obj is None) vs changing a Batch
         if not obj:
-            return ('project', 'name', 'assignments_per_task',
-                    'allotted_assignment_time', 'csv_file')
+            # Adding
+            return (
+                (None, {
+                    'fields': ('project', 'name', 'assignments_per_task',
+                               'allotted_assignment_time', 'csv_file'),
+                }),
+                ('Status', {
+                    'fields': ('active',)
+                }),
+                ('Permissions', {
+                    'fields': ('login_required', 'custom_permissions', 'worker_permissions')
+                }),
+            )
         else:
-            return ('active', 'project', 'name', 'assignments_per_task',
-                    'allotted_assignment_time', 'filename')
+            # Changing
+            return (
+                (None, {
+                    'fields': ('project', 'name', 'assignments_per_task',
+                               'allotted_assignment_time', 'filename')
+                }),
+                ('Status', {
+                    'fields': ('active',)
+                }),
+                ('Permissions', {
+                    'fields': ('login_required', 'custom_permissions', 'worker_permissions')
+                }),
+            )
 
     def get_readonly_fields(self, request, obj=None):
         if not obj:
@@ -552,6 +607,10 @@ class ProjectForm(ModelForm):
         self.fields['html_template'].widget.attrs['data-parsley-maxlength'] = byte_limit
         self.fields['html_template'].widget.attrs['data-parsley-group'] = 'html_template'
 
+        self.fields['active'].help_text = 'Deactivating a Project effectively deactivates ' + \
+            'all associated Batches.  Workers can only access a Batch if both the Batch ' + \
+            'itself and the associated Project are Active.'
+
         initial_ids = [str(id)
                        for id in get_groups_with_perms(self.instance).values_list('id', flat=True)]
         self.fields['worker_permissions'].initial = initial_ids
@@ -591,9 +650,11 @@ class ProjectAdmin(GuardedModelAdmin):
                 ('HTML Template', {
                     'fields': ('html_template', 'template_file_upload', 'filename')
                 }),
-                ('Permissions', {
-                    'fields': ('active', 'login_required', 'custom_permissions',
-                               'worker_permissions')
+                ('Status', {
+                    'fields': ('active',)
+                }),
+                ('Default Permissions for new Batches', {
+                    'fields': ('login_required', 'custom_permissions', 'worker_permissions')
                 }),
             )
         else:
@@ -606,9 +667,11 @@ class ProjectAdmin(GuardedModelAdmin):
                     'fields': ('html_template', 'template_file_upload', 'filename',
                                'extracted_template_variables')
                 }),
-                ('Permissions', {
-                    'fields': ('active', 'login_required', 'custom_permissions',
-                               'worker_permissions')
+                ('Status', {
+                    'fields': ('active',)
+                }),
+                ('Default Permissions for new Batches', {
+                    'fields': ('login_required', 'custom_permissions', 'worker_permissions')
                 }),
             )
 

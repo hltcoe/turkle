@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Support for turkle_site/local_settings.py
 
 ### Changed
+- Access controls are now Batch-level instead of Project-level
 
 ### Removed
 - No longer using django-dbbackup
