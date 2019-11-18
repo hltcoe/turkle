@@ -410,8 +410,8 @@ class TestBatch(django.test.TestCase):
         batch = Batch(project=project)
         batch.save()
 
-        csv_fh = open(os.path.abspath('turkle/tests/resources/emoji.csv'), 'r')
-        batch.create_tasks_from_csv(csv_fh)
+        with open(os.path.abspath('turkle/tests/resources/emoji.csv'), 'r') as csv_fh:
+            batch.create_tasks_from_csv(csv_fh)
 
         self.assertEqual(batch.total_tasks(), 3)
         tasks = batch.task_set.all()
