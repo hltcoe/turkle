@@ -167,7 +167,7 @@ class Batch(TaskAssignmentStatistics, models.Model):
     allotted_assignment_time = models.IntegerField(default=24)
     assignments_per_task = models.IntegerField(default=1, verbose_name='Assignments per Task')
     created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(User, null=True)
+    created_by = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
     custom_permissions = models.BooleanField(default=False)
     filename = models.CharField(max_length=1024)
     login_required = models.BooleanField(db_index=True, default=True)
@@ -577,7 +577,8 @@ class Project(TaskAssignmentStatistics, models.Model):
     active = models.BooleanField(db_index=True, default=True)
     assignments_per_task = models.IntegerField(db_index=True, default=1)
     created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(User, null=True, related_name='created_projects')
+    created_by = models.ForeignKey(User, null=True, related_name='created_projects',
+                                   on_delete=models.CASCADE)
     custom_permissions = models.BooleanField(default=False)
     filename = models.CharField(max_length=1024, blank=True)
     html_template = models.TextField()
@@ -585,7 +586,8 @@ class Project(TaskAssignmentStatistics, models.Model):
     login_required = models.BooleanField(db_index=True, default=True)
     name = models.CharField(max_length=1024)
     updated_at = models.DateTimeField(auto_now=True)
-    updated_by = models.ForeignKey(User, null=True, related_name='updated_projects')
+    updated_by = models.ForeignKey(User, null=True, related_name='updated_projects',
+                                   on_delete=models.CASCADE)
 
     # Fieldnames are automatically extracted from html_template text
     fieldnames = JSONField(blank=True)
