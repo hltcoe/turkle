@@ -829,7 +829,7 @@ class TestProject(django.test.TestCase):
 
     def test_input_field_required(self):
         msg_part = "Please include at least one field"
-        with self.assertRaisesRegexp(ValidationError, msg_part):
+        with self.assertRaisesRegex(ValidationError, msg_part):
             Project(
                 assignments_per_task=2,
                 login_required=True,
