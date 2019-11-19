@@ -6,6 +6,7 @@
 <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
 <script>
 $(function () {
+  /* this function saves the unix line ending setting to the user's session */
   var csrftoken = $("[name=csrfmiddlewaretoken]").val();
 
   function csrfSafeMethod(method) {

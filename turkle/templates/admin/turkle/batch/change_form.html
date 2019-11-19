@@ -5,39 +5,11 @@
 {{ block.super }}
 <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'turkle/parsley-2.9.1.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/turkle-file-upload.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/turkle-admin.js' %}"></script>
 <script>
 $(document).ready(function() {
   $('#batch_form').parsley();
-});
-</script>
-<script type="text/javascript">
-$(function () {
-  if (!$('#id_custom_permissions').is(':checked')) {
-    $('div.field-worker_permissions').hide();
-  }
-  $('#id_custom_permissions').change(function() {
-    $('div.field-worker_permissions').toggle();
-  });
-
-  document.addEventListener('dragenter', (e) => {
-    e.preventDefault();
-  });
-
-  document.addEventListener('dragover', (e) => {
-    e.preventDefault();
-  });
-
-  document.addEventListener('drop', (e) => {
-    e.preventDefault();
-    document.getElementById('id_csv_file').files = e.dataTransfer.files;
-
-    // DOM ID created in custom_button_file_widget.html
-    $('#id_csv_file_custom_text').text(e.dataTransfer.files[0].name);
-  });
-
-  $('#id_csv_file').change(function (e) {
-    $('#id_csv_file_custom_text').text(this.files[0].name);
-  });
 });
 </script>
 {% endblock %}
