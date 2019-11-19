@@ -1,17 +1,6 @@
 {% extends "admin/base_site.html" %}
 {% load static %}
 
-{% block extrastyle %}
-<style>
-.inline-form-buttons > form,
-.inline-form-buttons > a[role="button"]
-{
-  display: inline-block;
-  margin-left: 1em;
-}
-</style>
-{% endblock %}
-
 {% block extrahead %}
 {{ block.super }}
 <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
