@@ -217,7 +217,8 @@ if os.path.exists(f):
     module.__file__ = f
     sys.modules[module_name] = module
     try:
-        exec(open(f, "rb").read())
+        with open(f, "rb") as fh:
+            exec(fh.read())
     except Exception as err:
         # Python traceback output lists problems in local_settings.py as
         # occurring in 'File "<string>"`, which may confuse users.
