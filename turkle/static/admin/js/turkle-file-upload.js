@@ -26,7 +26,10 @@ $(function () {
     reader.onload = (function(theFile) {
       var fileContents = theFile.target.result;
       $('#id_html_template').val(fileContents);
+      // force validation of template and temporarily change class to not make display green
+      ParsleyConfig['successClass'] = 'invisible-success';
       $('#project_form').parsley().validate({group: 'html_template'});
+      delete ParsleyConfig['successClass'];
     });
     reader.readAsText(f);
 
