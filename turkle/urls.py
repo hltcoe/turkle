@@ -6,6 +6,7 @@ from turkle.views import (
     task_assignment,
     task_assignment_iframe,
     index,
+    help_page,
     preview,
     preview_iframe,
     preview_next_task,
@@ -19,6 +20,7 @@ from turkle.views import (
 urlpatterns = [
     url(r'^$', index, name='index'),
     url(r'^stats/$', stats, name='stats'),
+    url(r'^help/$', help_page, name='help'),
     url(r'^update_auto_accept/$', update_auto_accept, name='update_auto_accept'),
     url(r'^task/(?P<task_id>\d+)/$', preview, name='preview'),
     url(r'^task/(?P<task_id>\d+)/iframe/$', preview_iframe, name='preview_iframe'),
