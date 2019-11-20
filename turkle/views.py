@@ -156,6 +156,10 @@ def accept_next_task(request, batch_id):
         return redirect(index)
 
 
+def help_page(request):
+    return render(request, 'help.html')
+
+
 def task_assignment(request, task_id, task_assignment_id):
     """
     Task view and submission (task content in iframe below)
