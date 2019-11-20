@@ -445,6 +445,10 @@ def stats(request):
     if end_date:
         end_date = end_date.strftime('%Y-%m-%d')
 
+    name = request.user.get_full_name()
+    if not name:
+        name = request.user.get_username()
+
     return render(
         request,
         'stats.html',
@@ -454,7 +458,7 @@ def stats(request):
             'start_date': start_date,
             'total_completed': tas.count(),
             'total_elapsed_time': format_seconds(elapsed_seconds_overall),
-            'full_name': request.user.get_full_name(),
+            'full_name': name,
         }
     )
 
