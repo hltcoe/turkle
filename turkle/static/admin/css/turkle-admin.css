@@ -11,6 +11,10 @@
   margin-left: 1em;
 }
 
+.turkle-file-error {
+  clear: left;
+}
+
 .ml-2 {
   margin-left: 2em;
 }
