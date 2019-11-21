@@ -30,11 +30,9 @@ $(function () {
 
 {% block content %}
 <div>
-  <span style="float: left;">
-    <input type="checkbox" id="csv_unix_line_endings"
-           {% if csv_unix_line_endings %} checked="checked" {% endif %} >
-    <label for="csv_unix_line_endings">Use UNIX (\n) line endings for CSV results file</label>
-  </span>
+  <input type="checkbox" id="csv_unix_line_endings"
+         {% if csv_unix_line_endings %} checked="checked" {% endif %} >
+  <label for="csv_unix_line_endings">Use UNIX (\n) line endings for CSV results file</label>
 </div>
 {{ block.super }}
 {% endblock %}
