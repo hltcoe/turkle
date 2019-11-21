@@ -2,25 +2,12 @@
 {% load static %}
 
 {% block header %}
-<style>
-.inline-form-buttons > form,
-.inline-form-buttons > a[role="button"]
-{
-  display: inline-block;
-  margin-left: 1em;
-}
-</style>
 <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
-
-<script>
-$(function () {
-});
-</script>
 {% endblock %}
 
 {% block body %}
 
-<div class="container" style="padding-top: 5px;">
+<div class="container mt-2">
 
   {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 
@@ -29,7 +16,7 @@ $(function () {
   <div>
     <table class="table table-sm table-bordered thead-light">
       <tr>
-        <th scope="col" style="width: 40%">Batch Name</th>
+        <th scope="col" class="column-large">Batch Name</th>
         <td scope="col">{{ batch.name }}</td>
       </tr>
       <tr>

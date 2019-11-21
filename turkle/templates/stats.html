@@ -18,8 +18,7 @@ $(document).ready(function() {
 
 {% block body %}
 
-<div class="container-fluid">
-  <div style="margin-top: 2em;"></div>
+<div class="container-fluid mt-5">
 
   <h2>Statistics for {{ full_name }}</h2>
 
@@ -59,7 +58,7 @@ $(document).ready(function() {
   <div>
     <table class="table table-sm table-bordered thead-light">
       <tr class="thead-dark">
-        <th scope="col" style="width: 50%"></th>
+        <th scope="col" class="column-large"></th>
         <th scope="col"># Tasks (Project)</th>
         <th scope="col"># Tasks (Batch)</th>
         <th scope="col">Elapsed Time (Project)</th>
@@ -81,10 +80,8 @@ $(document).ready(function() {
       </tr>
       {% for batch in project.batch_stats %}
       <tr>
-        <td>
-          <span style="margin-left: 2em; font-style: italic">
+        <td class="pl-4 font-italic">
             BATCH: {{ batch.batch_name }}
-          </span>
         </td>
         <td></td>
         <td>

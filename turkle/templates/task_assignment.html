@@ -45,10 +45,9 @@ $(function () {
 {% block body %}
 <div class="container-fluid content">
   <iframe src="{% url 'task_assignment_iframe' task.id task_assignment.id %}{{ http_get_params }}"
-            id="task_assignment_iframe"
-            style="top: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: 0; box-sizing: inherit; display: block;">
+            id="task_assignment_iframe">
   </iframe>
-</div><!-- /.container-fluid -->
+</div>
 {% endblock %}
 
 {% block subheader_right %}
@@ -70,7 +69,7 @@ $(function () {
   </form>
 </div>
 
-<span style="padding-left: 2em; font-size: 0.8em;">
-  <span id="expiration-timer"></span>
+<span class="pl-3">
+  <span id="expiration-timer" class="small"></span>
 </span>
 {% endblock %}
