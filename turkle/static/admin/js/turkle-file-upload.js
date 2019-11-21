@@ -11,14 +11,28 @@ $(function () {
 
   document.addEventListener('drop', (e) => {
     e.preventDefault();
-    copyFileTextToFormField(e.dataTransfer.files[0]);
+    // handle project and batch form separately
+    if ($('#id_csv_file').length) {
+      document.getElementById('id_csv_file').files = e.dataTransfer.files;
+
+      // DOM ID created in custom_button_file_widget.html
+      $('#id_csv_file_custom_text').text(e.dataTransfer.files[0].name);
+    } else {
+      copyFileTextToFormField(e.dataTransfer.files[0]);
+    }
   });
 
+  // html template for projects
   $('#id_template_file_upload').change(function (e) {
     copyFileTextToFormField(this.files[0]);
 
     // Resetting input value allows the user to upload same file twice
     $(this).val('');
+  });
+
+  // csv file for batches
+  $('#id_csv_file').change(function (e) {
+    $('#id_csv_file_custom_text').text(this.files[0].name);
   });
 
   function copyFileTextToFormField(f) {
