@@ -1,7 +1,4 @@
-<span>
-  <span><label for="{{ widget.attrs.id }}" class="button align-center">Choose File</label></span>
-  <span><label id="{{ widget.attrs.id }}_custom_text" class="ml-2"></label></span>
-  <span class="hidden">
-    {% include "django/forms/widgets/input.html" %}
-  </span>
-</span>
+<label for="{{ widget.attrs.id }}" class="button align-center">Choose File</label>
+<label id="{{ widget.attrs.id }}_custom_text" class="ml-2"></label>
+{% include "django/forms/widgets/input.html" %}
+<div id="file-upload-error" class="turkle-file-error"></div>

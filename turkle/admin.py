@@ -196,7 +196,10 @@ class BatchForm(ModelForm):
             'someone else can work on the Task.'
         self.fields['csv_file'].help_text = 'You can Drag-and-Drop a CSV file onto this ' + \
             'window, or use the "Choose File" button to browse for the file'
-        self.fields['csv_file'].widget = CustomButtonFileWidget()
+        self.fields['csv_file'].widget = CustomButtonFileWidget(attrs={
+            'class': 'hidden',
+            'data-parsley-errors-container': '#file-upload-error',
+        })
         self.fields['custom_permissions'].label = 'Restrict access to specific Groups of Workers '
         self.fields['project'].label = 'Project'
         self.fields['name'].label = 'Batch Name'
@@ -599,7 +602,9 @@ class ProjectForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields['template_file_upload'].widget = CustomButtonFileWidget()
+        self.fields['template_file_upload'].widget = CustomButtonFileWidget(attrs={
+            'class': 'hidden',
+        })
 
         # This hidden form field is updated by JavaScript code in the
         # customized admin template file:
