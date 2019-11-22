@@ -691,24 +691,6 @@ class Project(TaskAssignmentStatistics, models.Model):
         """
         return self.assignments_completed_by(user).count()
 
-    def to_csv(self, csv_fh, lineterminator='\r\n'):
-        """
-        Writes CSV output to file handle for every Task associated with project
-
-        Args:
-            csv_fh (file-like object): File handle for CSV output
-        """
-        batches = self.batch_set.all()
-        if batches:
-            fieldnames = self._get_csv_fieldnames(batches)
-            writer = csv.DictWriter(csv_fh, fieldnames, lineterminator=lineterminator,
-                                    quoting=csv.QUOTE_ALL)
-            writer.writeheader()
-            for batch in batches:
-                _, rows = batch._results_data(batch.finished_tasks())
-                for row in rows:
-                    writer.writerow(row)
-
     def users_that_completed_tasks(self):
         """
         Returns:
@@ -719,31 +701,6 @@ class Project(TaskAssignmentStatistics, models.Model):
             filter(taskassignment__task__batch__project=self).\
             filter(taskassignment__completed=True).\
             distinct()
-
-    def _get_csv_fieldnames(self, batches):
-        """
-        Args:
-            batches (List of Batch objects)
-
-        Returns:
-            A tuple of strings specifying the fieldnames to be used in
-            in the header of a CSV file.
-        """
-        input_field_set = set()
-        answer_field_set = set()
-        for batch in batches:
-            for task in batch.task_set.all():
-                for task_assignment in task.taskassignment_set.all():
-                    input_field_set.update(task.input_csv_fields.keys())
-                    answer_field_set.update(task_assignment.answers.keys())
-        return tuple(
-            ['HITId', 'HITTypeId', 'Title', 'CreationTime', 'MaxAssignments',
-             'AssignmentDurationInSeconds', 'AssignmentId', 'WorkerId',
-             'AcceptTime', 'SubmitTime', 'WorkTimeInSeconds'] +
-            ['Input.' + k for k in sorted(input_field_set)] +
-            ['Answer.' + k for k in sorted(answer_field_set)] +
-            ['Turkle.Username']
-        )
 
     def __str__(self):
         return self.name
