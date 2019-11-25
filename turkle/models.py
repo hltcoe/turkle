@@ -622,20 +622,6 @@ class Project(TaskAssignmentStatistics, models.Model):
         else:
             return True
 
-    def batches_available_for(self, user):
-        """Retrieve the Batches that the user has permission to access
-
-        Args:
-            user (User):
-
-        Returns:
-            QuerySet of Batch objects this user can access
-        """
-        batches = self.batch_set.filter(active=True)
-        if not user.is_authenticated:
-            batches = batches.filter(project__login_required=False)
-        return batches
-
     def clean(self):
         super().clean()
         if len(self.html_template) > get_turkle_template_limit(True):

@@ -677,50 +677,6 @@ class TestProject(django.test.TestCase):
     def setUp(self):
         self.admin = User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
 
-    def test_batches_available_for(self):
-        user = User.objects.create_user('testuser', password='secret')
-
-        project = Project(
-            active=True,
-        )
-        project.save()
-        self.assertEqual(len(project.batches_available_for(user)), 0)
-
-        Batch(
-            active=False,
-            project=project,
-        ).save()
-        self.assertEqual(len(project.batches_available_for(user)), 0)
-
-        Batch(
-            active=True,
-            project=project,
-        ).save()
-        self.assertEqual(len(project.batches_available_for(user)), 1)
-
-    def test_batches_available_for_anon(self):
-        anonymous_user = AnonymousUser()
-
-        project_protected = Project(
-            active=True,
-            login_required=True,
-        )
-        project_protected.save()
-        self.assertEqual(len(project_protected.batches_available_for(anonymous_user)), 0)
-
-        Batch(project=project_protected).save()
-        self.assertEqual(len(project_protected.batches_available_for(anonymous_user)), 0)
-
-        project_unprotected = Project(
-            active=True,
-            login_required=False,
-        )
-        project_unprotected.save()
-        self.assertEqual(len(project_unprotected.batches_available_for(anonymous_user)), 0)
-
-        Batch(project=project_unprotected).save()
-        self.assertEqual(len(project_unprotected.batches_available_for(anonymous_user)), 1)
-
     def test_copy_permissions_to_batches(self):
         project = Project.objects.create(
             custom_permissions=True,
