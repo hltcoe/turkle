@@ -92,7 +92,10 @@ class TurkleClient(object):
                 return False
             if not self.upload_project(session, options):
                 return False
-            return self.upload_csv(session, options)
+            review_url = self.upload_csv(session, options)
+            if not review_url:
+                return False
+            return self.review_batch(session, review_url)
 
     def upload_project(self, session, options):
         url = self.format_url(self.ADD_PROJECT_URL)
@@ -118,24 +121,38 @@ class TurkleClient(object):
         url = self.format_url(self.ADD_BATCH_URL)
         resp = session.get(url)
         # grab a list of the project ids from the form
-        regex = r'<option value="(.*)">'
-        ids = re.findall(regex, resp.text)
+        soup = BeautifulSoup(resp.text, features='html.parser')
+        project_options = [option['value'] for option in
+                           soup.select('select[id=id_project] > option')]
         payload = {
             # we just upload a project so we assume that its last in list
-            'project': ids[-1],
+            'project': project_options[-1],
             'name': options.batch_name,
             'assignments_per_task': options.num,
             'active': 1,
             'csrfmiddlewaretoken': session.cookies['csrftoken'],
         }
+        if options.login:
+            payload['login_required'] = 1
         files = {'csv_file': (options.csv, options.csv_data)}
         session.headers.update({'referer': url})
         resp = session.post(url, data=payload, files=files)
         if resp.status_code != requests.codes.ok:
             print("Error: uploading the csv failed")
-            return False
+            return None
         if b'correct the error' in resp.content:
             print("Error: the csv file is invalid. Try uploading using the admin UI.")
+            return None
+        return resp.url
+
+    def review_batch(self, session, url):
+        url = url.replace('review', 'publish')
+        payload = {
+            'csrfmiddlewaretoken': session.cookies['csrftoken'],
+        }
+        resp = session.post(url, data=payload)
+        if resp.status_code != requests.codes.ok:
+            print("Error: publishing batch failed")
             return False
         return True
 

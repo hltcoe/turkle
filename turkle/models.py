@@ -171,8 +171,9 @@ class Batch(TaskAssignmentStatistics, models.Model):
     custom_permissions = models.BooleanField(default=False)
     filename = models.CharField(max_length=1024)
     login_required = models.BooleanField(db_index=True, default=True)
-    project = models.ForeignKey('Project', on_delete=models.CASCADE)
     name = models.CharField(max_length=1024)
+    project = models.ForeignKey('Project', on_delete=models.CASCADE)
+    published = models.BooleanField(db_index=True, default=True)
 
     @classmethod
     def all_available_for(cls, user):
@@ -186,7 +187,8 @@ class Batch(TaskAssignmentStatistics, models.Model):
         Returns:
             List of Batch objects this user can access
         """
-        batches = cls.objects.filter(active=True).filter(project__active=True)
+        batches = cls.objects.filter(active=True).filter(published=True)\
+            .filter(project__active=True)
         if not user.is_authenticated:
             batches = batches.filter(login_required=False)
 
@@ -332,6 +334,11 @@ class Batch(TaskAssignmentStatistics, models.Model):
         """
         return TaskAssignment.objects.filter(task__batch_id=self.id)\
                                      .filter(completed=True)
+
+    def is_active(self):
+        return self.active and self.published
+    is_active.short_description = 'Active'
+    is_active.boolean = True
 
     def next_available_task_for(self, user):
         """Returns next available Task for the user, or None if no Tasks available
