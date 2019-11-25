@@ -8,10 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Bulk Batch activation/deactivation
 - Support for turkle_site/local_settings.py
+- Help page for workers
 
 ### Changed
+- Access controls are now Batch-level instead of Project-level
 
 ### Removed
+- No longer using django-dbbackup
 
 ## [2.1.0] - 2019-06-05
 ### Added

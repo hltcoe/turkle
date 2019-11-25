@@ -50,20 +50,19 @@ def index(request):
 
     # Create a row for each Batch that has Tasks available for the current user
     batch_rows = []
-    for project in Project.all_available_for(request.user):
-        for batch in project.batches_available_for(request.user):
-            total_tasks_available = batch.total_available_tasks_for(request.user)
-            if total_tasks_available > 0:
-                batch_rows.append({
-                    'project_name': project.name,
-                    'batch_name': batch.name,
-                    'batch_published': batch.created_at,
-                    'assignments_available': total_tasks_available,
-                    'preview_next_task_url': reverse('preview_next_task',
-                                                     kwargs={'batch_id': batch.id}),
-                    'accept_next_task_url': reverse('accept_next_task',
-                                                    kwargs={'batch_id': batch.id})
-                })
+    for batch in Batch.all_available_for(request.user):
+        total_tasks_available = batch.total_available_tasks_for(request.user)
+        if total_tasks_available > 0:
+            batch_rows.append({
+                'project_name': batch.project.name,
+                'batch_name': batch.name,
+                'batch_published': batch.created_at,
+                'assignments_available': total_tasks_available,
+                'preview_next_task_url': reverse('preview_next_task',
+                                                 kwargs={'batch_id': batch.id}),
+                'accept_next_task_url': reverse('accept_next_task',
+                                                kwargs={'batch_id': batch.id})
+            })
     return render(request, 'index.html', {
         'abandoned_assignments': abandoned_assignments,
         'batch_rows': batch_rows
@@ -155,6 +154,10 @@ def accept_next_task(request, batch_id):
     else:
         messages.error(request, u'No more Tasks available for Batch {}'.format(batch.name))
         return redirect(index)
+
+
+def help_page(request):
+    return render(request, 'help.html')
 
 
 def task_assignment(request, task_id, task_assignment_id):
@@ -442,6 +445,10 @@ def stats(request):
     if end_date:
         end_date = end_date.strftime('%Y-%m-%d')
 
+    name = request.user.get_full_name()
+    if not name:
+        name = request.user.get_username()
+
     return render(
         request,
         'stats.html',
@@ -451,7 +458,7 @@ def stats(request):
             'start_date': start_date,
             'total_completed': tas.count(),
             'total_elapsed_time': format_seconds(elapsed_seconds_overall),
-            'full_name': request.user.get_full_name(),
+            'full_name': name,
         }
     )
 

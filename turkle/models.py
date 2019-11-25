@@ -13,6 +13,8 @@ from django.db import models
 from django.db.models import Prefetch
 from django.utils import timezone
 from guardian.core import ObjectPermissionChecker
+from guardian.models import GroupObjectPermission
+from guardian.shortcuts import assign_perm, get_group_perms, get_groups_with_perms
 from jsonfield import JSONField
 
 from .utils import get_turkle_template_limit
@@ -21,6 +23,46 @@ logger = logging.getLogger(__name__)
 
 # The default field size limit is 131072 characters
 csv.field_size_limit(sys.maxsize)
+
+
+class TaskAssignmentStatistics(object):
+    """Mixin class for Batch/Project that computes TaskAssignment statistics
+
+    Assumes that the inheriting class has a finished_task_assignments()
+    method that returns a QuerySet of TaskAssignments.
+    """
+    def mean_work_time_in_seconds(self):
+        """
+        Returns:
+            Float for mean work time (in seconds) for completed Tasks in this Batch
+        """
+        finished_assignments = self.finished_task_assignments()
+        if finished_assignments.count() > 0:
+            return statistics.mean(
+                [ta.work_time_in_seconds() for ta in self.finished_task_assignments()])
+        else:
+            return 0
+
+    def median_work_time_in_seconds(self):
+        """
+        Returns:
+            Integer for median work time (in seconds) for completed Tasks in this Batch
+        """
+        if self.finished_task_assignments().count() > 0:
+            # np.median returns float but we convert back to int computed by work_time_in_seconds()
+            return int(statistics.median(
+                [ta.work_time_in_seconds() for ta in self.finished_task_assignments()]
+            ))
+        else:
+            return 0
+
+    def total_work_time_in_seconds(self):
+        """
+        Returns:
+            Integer sum of work_time_in_seconds() for all completed
+            TaskAssignments in this Batch
+        """
+        return sum([ta.work_time_in_seconds() for ta in self.finished_task_assignments()])
 
 
 class Task(models.Model):
@@ -113,8 +155,11 @@ class TaskAssignment(models.Model):
                 self.id)
 
 
-class Batch(models.Model):
+class Batch(TaskAssignmentStatistics, models.Model):
     class Meta:
+        permissions = (
+            ('can_work_on_batch', 'Can work on Tasks for this Batch'),
+        )
         verbose_name = "Batch"
         verbose_name_plural = "Batches"
 
@@ -122,10 +167,36 @@ class Batch(models.Model):
     allotted_assignment_time = models.IntegerField(default=24)
     assignments_per_task = models.IntegerField(default=1, verbose_name='Assignments per Task')
     created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(User, null=True)
+    created_by = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
+    custom_permissions = models.BooleanField(default=False)
     filename = models.CharField(max_length=1024)
-    project = models.ForeignKey('Project', on_delete=models.CASCADE)
+    login_required = models.BooleanField(db_index=True, default=True)
     name = models.CharField(max_length=1024)
+    project = models.ForeignKey('Project', on_delete=models.CASCADE)
+    published = models.BooleanField(db_index=True, default=True)
+
+    @classmethod
+    def all_available_for(cls, user):
+        """Retrieve the active Batches that the user has permission to access
+
+        Both the Batch and the Project associated the Batch must be active.
+
+        Args:
+            user (User):
+
+        Returns:
+            List of Batch objects this user can access
+        """
+        batches = cls.objects.filter(active=True).filter(published=True)\
+            .filter(project__active=True)
+        if not user.is_authenticated:
+            batches = batches.filter(login_required=False)
+
+        # Can implement our own prefetch_perms() in future for efficiency
+        checker = TurklePermissionChecker(user)
+        checker.prefetch_perms(batches)
+
+        return [b for b in batches if checker.has_perm('can_work_on_batch', b)]
 
     def assignments_completed_by(self, user):
         """
@@ -137,6 +208,18 @@ class Batch(models.Model):
             filter(completed=True).\
             filter(assigned_to_id=user.id).\
             filter(task__batch=self)
+
+    def available_for(self, user):
+        """
+        Returns:
+            Boolean indicating if this Batch is available for the user
+        """
+        if not user.is_authenticated and self.login_required:
+            return False
+        elif self.custom_permissions:
+            return user.has_perm('can_work_on_batch', self)
+        else:
+            return True
 
     def available_tasks_for(self, user):
         """Retrieve a list of all Tasks in this batch available for the user.
@@ -150,7 +233,7 @@ class Batch(models.Model):
         Returns:
             QuerySet of Task objects
         """
-        if not user.is_authenticated and self.project.login_required:
+        if not user.is_authenticated and self.login_required:
             return Task.objects.none()
 
         hs = self.task_set.filter(completed=False)
@@ -186,6 +269,21 @@ class Batch(models.Model):
             if not self.project.login_required and self.assignments_per_task != 1:
                 raise ValidationError('When login is not required to access a Project, ' +
                                       'the number of Assignments per Task must be 1')
+
+    def copy_project_permissions(self):
+        """Copy 'permission' settings from associated Project to this Batch
+
+        Copies:
+        - `custom_permissions` flag
+        - `login_required` flag
+        - group-level access permissions
+        """
+        self.custom_permissions = self.project.custom_permissions
+        self.login_required = self.project.login_required
+        if self.custom_permissions:
+            for group in get_groups_with_perms(self.project):
+                if 'can_work_on' in get_group_perms(group, self.project):
+                    assign_perm('can_work_on_batch', group, self)
 
     def csv_results_filename(self):
         """Returns filename for CSV results file for this Batch
@@ -237,31 +335,10 @@ class Batch(models.Model):
         return TaskAssignment.objects.filter(task__batch_id=self.id)\
                                      .filter(completed=True)
 
-    def mean_work_time_in_seconds(self):
-        """
-        Returns:
-            Float for mean work time (in seconds) for completed Tasks in this Batch
-        """
-        finished_assignments = self.finished_task_assignments()
-        if finished_assignments.count() > 0:
-            return statistics.mean(
-                [ta.work_time_in_seconds() for ta in self.finished_task_assignments()])
-        else:
-            return 0
-
-    def median_work_time_in_seconds(self):
-        """
-        Returns:
-            Integer for median work time (in seconds) for completed Tasks in this Batch
-        """
-        finished_assignments = self.finished_task_assignments()
-        if finished_assignments.count() > 0:
-            # np.median returns float but we convert back to int computed by work_time_in_seconds()
-            return int(statistics.median(
-                [ta.work_time_in_seconds() for ta in self.finished_task_assignments()]
-            ))
-        else:
-            return 0
+    def is_active(self):
+        return self.active and self.published
+    is_active.short_description = 'Active'
+    is_active.boolean = True
 
     def next_available_task_for(self, user):
         """Returns next available Task for the user, or None if no Tasks available
@@ -315,14 +392,6 @@ class Batch(models.Model):
             TaskAssignments that are part of this Batch
         """
         return self.users_that_completed_tasks().count()
-
-    def total_work_time_in_seconds(self):
-        """
-        Returns:
-            Integer sum of work_time_in_seconds() for all completed
-            TaskAssignments in this Batch
-        """
-        return sum([ta.work_time_in_seconds() for ta in self.finished_task_assignments()])
 
     def to_csv(self, csv_fh, lineterminator='\r\n'):
         """Write CSV output to file handle for every Task in batch
@@ -502,9 +571,12 @@ class TurklePermissionChecker(ObjectPermissionChecker):
             return True
 
 
-class Project(models.Model):
+class Project(TaskAssignmentStatistics, models.Model):
     class Meta:
         permissions = (
+            # For consistency with Django Guardian naming conventions
+            # ('{VERB}_{MODELNAME}'), this permission SHOULD have been
+            # named 'can_work_on_project'
             ('can_work_on', 'Can work on Tasks for this Project'),
         )
         verbose_name = "Project"
@@ -512,7 +584,8 @@ class Project(models.Model):
     active = models.BooleanField(db_index=True, default=True)
     assignments_per_task = models.IntegerField(db_index=True, default=1)
     created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(User, null=True, related_name='created_projects')
+    created_by = models.ForeignKey(User, null=True, related_name='created_projects',
+                                   on_delete=models.CASCADE)
     custom_permissions = models.BooleanField(default=False)
     filename = models.CharField(max_length=1024, blank=True)
     html_template = models.TextField()
@@ -520,30 +593,22 @@ class Project(models.Model):
     login_required = models.BooleanField(db_index=True, default=True)
     name = models.CharField(max_length=1024)
     updated_at = models.DateTimeField(auto_now=True)
-    updated_by = models.ForeignKey(User, null=True, related_name='updated_projects')
+    updated_by = models.ForeignKey(User, null=True, related_name='updated_projects',
+                                   on_delete=models.CASCADE)
 
     # Fieldnames are automatically extracted from html_template text
     fieldnames = JSONField(blank=True)
 
-    @classmethod
-    def all_available_for(cls, user):
-        """Retrieve the Projects that the user has permission to access
-
-        Args:
-            user (User):
-
-        Returns:
-            QuerySet of Project objects this user can access
+    def assignments_completed_by(self, user):
         """
-        projects = cls.objects.filter(active=True)
-        if not user.is_authenticated:
-            projects = projects.filter(login_required=False)
-
-        # Can implement our own prefetch_perms() in future for efficiency
-        checker = TurklePermissionChecker(user)
-        checker.prefetch_perms(projects)
-
-        return [p for p in projects if checker.has_perm('can_work_on', p)]
+        Returns:
+            QuerySet of all TaskAssignments completed by specified user
+            that are part of this Project
+        """
+        return TaskAssignment.objects.\
+            filter(completed=True).\
+            filter(assigned_to_id=user.id).\
+            filter(task__batch__project=self)
 
     def available_for(self, user):
         """
@@ -557,20 +622,6 @@ class Project(models.Model):
         else:
             return True
 
-    def batches_available_for(self, user):
-        """Retrieve the Batches that the user has permission to access
-
-        Args:
-            user (User):
-
-        Returns:
-            QuerySet of Batch objects this user can access
-        """
-        batches = self.batch_set.filter(active=True)
-        if not user.is_authenticated:
-            batches = batches.filter(project__login_required=False)
-        return batches
-
     def clean(self):
         super().clean()
         if len(self.html_template) > get_turkle_template_limit(True):
@@ -579,6 +630,34 @@ class Project(models.Model):
             raise ValidationError('When login is not required to access the Project, ' +
                                   'the number of Assignments per Task must be 1')
         self.process_template()
+
+    def copy_permissions_to_batches(self):
+        """Copy permissions from this Project to all associated Batches
+
+        Copies:
+        - `custom_permissions` flag
+        - `login_required` flag
+        - group-level access permissions
+        """
+        self.batch_set.update(
+            custom_permissions=self.custom_permissions,
+            login_required=self.login_required,
+        )
+        if self.custom_permissions:
+            for group in get_groups_with_perms(self):
+                if 'can_work_on' in get_group_perms(group, self):
+                    batches = self.batch_set.all()
+                    GroupObjectPermission.objects.bulk_assign_perm(
+                        'can_work_on_batch', group, batches)
+
+    def finished_task_assignments(self):
+        """
+        Returns:
+            QuerySet of all Task Assignment objects associated with this Project
+            that have been completed.
+        """
+        return TaskAssignment.objects.filter(task__batch__project_id=self.id)\
+                                     .filter(completed=True)
 
     def process_template(self):
         soup = BeautifulSoup(self.html_template, 'html.parser')
@@ -597,48 +676,24 @@ class Project(models.Model):
                   "If so, add an unused hidden input."
             raise ValidationError({'html_template': msg}, code='invalid')
 
-    def to_csv(self, csv_fh, lineterminator='\r\n'):
+    def total_assignments_completed_by(self, user):
         """
-        Writes CSV output to file handle for every Task associated with project
-
-        Args:
-            csv_fh (file-like object): File handle for CSV output
-        """
-        batches = self.batch_set.all()
-        if batches:
-            fieldnames = self._get_csv_fieldnames(batches)
-            writer = csv.DictWriter(csv_fh, fieldnames, lineterminator=lineterminator,
-                                    quoting=csv.QUOTE_ALL)
-            writer.writeheader()
-            for batch in batches:
-                _, rows = batch._results_data(batch.finished_tasks())
-                for row in rows:
-                    writer.writerow(row)
-
-    def _get_csv_fieldnames(self, batches):
-        """
-        Args:
-            batches (List of Batch objects)
-
         Returns:
-            A tuple of strings specifying the fieldnames to be used in
-            in the header of a CSV file.
+            Integer of total number of TaskAssignments completed by
+            specified user that are part of this Project
         """
-        input_field_set = set()
-        answer_field_set = set()
-        for batch in batches:
-            for task in batch.task_set.all():
-                for task_assignment in task.taskassignment_set.all():
-                    input_field_set.update(task.input_csv_fields.keys())
-                    answer_field_set.update(task_assignment.answers.keys())
-        return tuple(
-            ['HITId', 'HITTypeId', 'Title', 'CreationTime', 'MaxAssignments',
-             'AssignmentDurationInSeconds', 'AssignmentId', 'WorkerId',
-             'AcceptTime', 'SubmitTime', 'WorkTimeInSeconds'] +
-            ['Input.' + k for k in sorted(input_field_set)] +
-            ['Answer.' + k for k in sorted(answer_field_set)] +
-            ['Turkle.Username']
-        )
+        return self.assignments_completed_by(user).count()
+
+    def users_that_completed_tasks(self):
+        """
+        Returns:
+            QuerySet of all Users who have completed TaskAssignments
+            that are part of this Project
+        """
+        return User.objects.\
+            filter(taskassignment__task__batch__project=self).\
+            filter(taskassignment__completed=True).\
+            distinct()
 
     def __str__(self):
         return self.name

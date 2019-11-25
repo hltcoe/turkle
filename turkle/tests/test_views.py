@@ -13,12 +13,9 @@ from turkle.models import Task, TaskAssignment, Batch, Project
 
 class TestAcceptTask(TestCase):
     def setUp(self):
-        project = Project(login_required=False)
-        project.save()
-        self.batch = Batch(project=project)
-        self.batch.save()
-        self.task = Task(batch=self.batch)
-        self.task.save()
+        project = Project.objects.create(login_required=False)
+        self.batch = Batch.objects.create(login_required=False, project=project)
+        self.task = Task.objects.create(batch=self.batch)
 
     def test_accept_unclaimed_task(self):
         User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
@@ -73,18 +70,22 @@ class TestAcceptTask(TestCase):
 
 class TestAcceptNextTask(TestCase):
     def setUp(self):
-        project = Project(login_required=False, name='foo',
-                          html_template='<p>${foo}: ${bar}</p><textarea>')
-        project.save()
+        project = Project.objects.create(
+            login_required=False,
+            html_template='<p>${foo}: ${bar}</p><textarea>',
+            name='foo',
+        )
+        self.batch = Batch.objects.create(
+            filename='foo.csv',
+            login_required=False,
+            name='foo',
+            project=project,
+        )
 
-        self.batch = Batch(project=project, name='foo', filename='foo.csv')
-        self.batch.save()
-
-        self.task = Task(
+        self.task = Task.objects.create(
             batch=self.batch,
             input_csv_fields={'foo': 'fufu', 'bar': 'baba'}
         )
-        self.task.save()
 
     def test_accept_next_task(self):
         user = User.objects.create_user('testuser', password='secret')
@@ -243,14 +244,19 @@ class TestIndex(django.test.TestCase):
             login_required=True,
             name='MY_TEMPLATE_NAME',
         )
-        batch = Batch.objects.create(project=project, name='MY_BATCH_NAME')
+        batch = Batch.objects.create(
+            custom_permissions=True,
+            login_required=True,
+            name='MY_BATCH_NAME',
+            project=project,
+        )
         Task.objects.create(batch=batch)
 
         in_user = User.objects.create_user('in_user', password='secret')
         User.objects.create_user('out_user', password='secret')
         group = Group.objects.create(name='testgroup')
         in_user.groups.add(group)
-        assign_perm('can_work_on', group, project)
+        assign_perm('can_work_on_batch', group, batch)
 
         in_client = django.test.Client()
         in_client.login(username='in_user', password='secret')
@@ -274,7 +280,11 @@ class TestIndex(django.test.TestCase):
             login_required=True,
             name='MY_TEMPLATE_NAME',
         )
-        batch = Batch.objects.create(project=project_protected, name='MY_BATCH_NAME')
+        batch = Batch.objects.create(
+            login_required=True,
+            name='MY_BATCH_NAME',
+            project=project_protected,
+        )
         Task.objects.create(batch=batch)
 
         anon_client = django.test.Client()
@@ -294,15 +304,17 @@ class TestIndex(django.test.TestCase):
         self.assertTrue(b'MY_BATCH_NAME' in response.content)
 
     def test_index_unprotected_template(self):
-        project_unprotected = Project(
+        project_unprotected = Project.objects.create(
             active=True,
             login_required=False,
             name='MY_TEMPLATE_NAME',
         )
-        project_unprotected.save()
-        batch = Batch(project=project_unprotected, name='MY_BATCH_NAME')
-        batch.save()
-        Task(batch=batch).save()
+        batch = Batch.objects.create(
+            login_required=False,
+            name='MY_BATCH_NAME',
+            project=project_unprotected,
+        )
+        Task.objects.create(batch=batch)
 
         anon_client = django.test.Client()
         response = anon_client.get(reverse('index'))
@@ -535,16 +547,21 @@ class TestTaskAssignmentIFrame(TestCase):
 
 class TestPreview(TestCase):
     def setUp(self):
-        self.project = Project(html_template='<p>${foo}: ${bar}</p><textarea>',
-                               login_required=False, name='foo')
-        self.project.save()
-        self.batch = Batch(filename='foo.csv', project=self.project, name='foo')
-        self.batch.save()
-        self.task = Task(
+        self.project = Project.objects.create(
+            html_template='<p>${foo}: ${bar}</p><textarea>',
+            login_required=False,
+            name='foo'
+        )
+        self.batch = Batch.objects.create(
+            filename='foo.csv',
+            login_required=False,
+            name='foo',
+            project=self.project,
+        )
+        self.task = Task.objects.create(
             batch=self.batch,
             input_csv_fields={'foo': 'fufu', 'bar': 'baba'},
         )
-        self.task.save()
 
     def test_get_preview(self):
         client = django.test.Client()
@@ -728,16 +745,11 @@ class TestReturnTaskAssignment(TestCase):
 
 class TestSkipTask(TestCase):
     def setUp(self):
-        project = Project(login_required=False)
-        project.save()
-        self.batch = Batch(project=project)
-        self.batch.save()
-        self.task_one = Task(batch=self.batch)
-        self.task_one.save()
-        self.task_two = Task(batch=self.batch)
-        self.task_two.save()
-        self.task_three = Task(batch=self.batch)
-        self.task_three.save()
+        project = Project.objects.create(login_required=False)
+        self.batch = Batch.objects.create(login_required=False, project=project)
+        self.task_one = Task.objects.create(batch=self.batch)
+        self.task_two = Task.objects.create(batch=self.batch)
+        self.task_three = Task.objects.create(batch=self.batch)
 
     def test_preview_next_task_order(self):
         client = django.test.Client()

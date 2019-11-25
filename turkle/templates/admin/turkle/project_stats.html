@@ -11,50 +11,22 @@
 
   {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 
-  <h2>Batch Statistics</h2>
+  <h2>Project Statistics</h2>
 
   <div>
     <table class="table table-sm table-bordered thead-light">
       <tr>
-        <th scope="col" class="column-large">Batch Name</th>
-        <td scope="col">{{ batch.name }}</td>
-      </tr>
-      <tr>
-        <th>Project Name</th>
-        <td>{{ batch.project.name }}</td>
+        <th class="column-large">Project Name</th>
+        <td>{{ project.name }}</td>
       </tr>
       <tr>
         <th>Project Created by</th>
-        <td>{{ batch.project.created_by.get_full_name }} ({{ batch.project.created_by.username }})</td>
-      </tr>
-      <tr>
-        <th>Batch Created at</th>
-        <td>{{ batch.created_at }}</td>
-      </tr>
-      <tr>
-        <th>Batch Created by</th>
-        <td>{{ batch.created_by.get_full_name }} ({{ batch.created_by.username }})</td>
-      </tr>
-      <tr>
-        <th>Input CSV Filename</th>
-        <td>{{ batch.filename }}</td>
+        <td>{{ project.created_by.get_full_name }} ({{ project.created_by.username }})</td>
       </tr>
       <tr>
         <th>Active?</th>
-        <td>{% if batch.active %} Yes {% else %} No {% endif %}
+        <td>{% if project.active %} Yes {% else %} No {% endif %}
         </td>
-      </tr>
-      <tr>
-        <th>Assignments per Task</th>
-        <td>{{ batch.assignments_per_task }}</td>
-      </tr>
-      <tr>
-        <th>Tasks Completed</th>
-        <td>{{ batch.total_finished_tasks }} / {{ batch.total_tasks }}</td>
-      </tr>
-      <tr>
-        <th>Task Assignments Completed</th>
-        <td>{{ batch.total_finished_task_assignments }} / {{ batch.total_task_assignments }}</td>
       </tr>
       <tr>
         <th>First Assignment Completed at</th>
@@ -66,22 +38,16 @@
       </tr>
       <tr>
         <th>Total Work Time</th>
-        <td>{{ batch_total_work_time }} ({{ batch.total_work_time_in_seconds }}s)</td>
+        <td>{{ project_total_work_time }} ({{ project.total_work_time_in_seconds }}s)</td>
       </tr>
       <tr>
         <th>Mean Time / Assignment</th>
-        <td>{{ batch_mean_work_time }} ({{ batch.mean_work_time_in_seconds | floatformat }}s)</td>
+        <td>{{ project_mean_work_time }} ({{ project.mean_work_time_in_seconds | floatformat }}s)</td>
       </tr>
       <tr>
         <th>Median Time / Assignment</th>
-        <td>{{ batch_median_work_time}} ({{ batch.median_work_time_in_seconds }}s)</td>
+        <td>{{ project_median_work_time}} ({{ project.median_work_time_in_seconds }}s)</td>
       </tr>
-      <!--
-      <tr>
-        <th></th>
-        <td></td>
-      </tr>
-      -->
     </table>
   </div>
 

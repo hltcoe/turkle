@@ -22,11 +22,18 @@
             <a class="nav-link" href="{% url 'turkle_admin:index' %}" title="Administration">Admin</a>
           </li>
           {% endif %}
+          {% if user.is_authenticated %}
+          <li class="nav-item active">
+            <a class="nav-link" href="{% url 'stats' %}" title="Your Progress">Stats</a>
+          </li>
+          {% endif %}
+          <li class="nav-item active">
+            <a class="nav-link" href="{% url 'help' %}">Help</a>
+          </li>
         </ul>
         <span class="navbar-text">
           {% if user.is_authenticated %}
           Logged in as <b>{{ user.username }}</b> -
-          <a href="{% url 'stats' %}">Stats</a> -
           <a href="{% url 'password_change' %}">Change Password</a> -
           <a href="{% url 'logout' %}?next={% url 'index' %}">Logout</a>
           {% else %}

@@ -5,71 +5,13 @@
 {{ block.super }}
 <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'turkle/parsley-2.9.1.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/turkle-file-upload.js' %}"></script>
+<script type="text/javascript" src="{% static 'admin/js/turkle-admin.js' %}"></script>
 <script>
 $(document).ready(function() {
   $('#batch_form').parsley();
 });
 </script>
-<script type="text/javascript">
-$(function () {
-  document.addEventListener('dragenter', (e) => {
-    e.preventDefault();
-  });
-
-  document.addEventListener('dragover', (e) => {
-    e.preventDefault();
-  });
-
-  document.addEventListener('drop', (e) => {
-    e.preventDefault();
-    document.getElementById('id_csv_file').files = e.dataTransfer.files;
-
-    // DOM ID created in custom_button_file_widget.html
-    $('#id_csv_file_custom_text').text(e.dataTransfer.files[0].name);
-  });
-
-  $('#id_csv_file').change(function (e) {
-    $('#id_csv_file_custom_text').text(this.files[0].name);
-  });
-});
-</script>
-<style>
-/* Style rules copied from:  http://parsleyjs.org/src/parsley.css */
-input.parsley-success,
-select.parsley-success,
-textarea.parsley-success {
-  color: #468847;
-  background-color: #DFF0D8;
-  border: 1px solid #D6E9C6;
-}
-
-input.parsley-error,
-select.parsley-error,
-textarea.parsley-error {
-  color: #B94A48;
-  background-color: #F2DEDE;
-  border: 1px solid #EED3D7;
-}
-
-.parsley-errors-list {
-  margin: 2px 0 3px;
-  padding: 0;
-  list-style-type: none;
-  font-size: 0.9em;
-  line-height: 0.9em;
-  opacity: 0;
-  color: #B94A48;
-
-  transition: all .3s ease-in;
-  -o-transition: all .3s ease-in;
-  -moz-transition: all .3s ease-in;
-  -webkit-transition: all .3s ease-in;
-}
-
-.parsley-errors-list.filled {
-  opacity: 1;
-}
-</style>
 {% endblock %}
 
 {% block submit_buttons_bottom %}
@@ -87,6 +29,14 @@ textarea.parsley-error {
 <div class="submit-row">
   <p class="deletelink-box"><a href="" class="deletelink">Delete</a></p>
   <input type="submit" value="Review Batch" name="_saveasnew" />
+</div>
+{% elif not published %}
+{% comment %}
+  Requester reviewed the batch did did not publish so we show the review button
+{% endcomment %}
+<div class="submit-row">
+  <p class="deletelink-box"><a href="" class="deletelink">Delete</a></p>
+  <input type="submit" value="Review Batch" name="_save" />
 </div>
 {% else %}
 {{ block.super }}

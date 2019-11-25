@@ -181,6 +181,13 @@ class BatchForm(ModelForm):
         initial=Batch._meta.get_field('allotted_assignment_time').get_default(),
         required=False)
 
+    worker_permissions = ModelMultipleChoiceField(
+        label='Worker Groups with access to this Batch',
+        queryset=Group.objects.all(),
+        required=False,
+        widget=FilteredSelectMultiple('Worker Groups', False),
+    )
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -190,9 +197,38 @@ class BatchForm(ModelForm):
             'someone else can work on the Task.'
         self.fields['csv_file'].help_text = 'You can Drag-and-Drop a CSV file onto this ' + \
             'window, or use the "Choose File" button to browse for the file'
-        self.fields['csv_file'].widget = CustomButtonFileWidget()
+        self.fields['csv_file'].widget = CustomButtonFileWidget(attrs={
+            'class': 'hidden',
+            'data-parsley-errors-container': '#file-upload-error',
+        })
+        self.fields['custom_permissions'].label = 'Restrict access to specific Groups of Workers '
         self.fields['project'].label = 'Project'
         self.fields['name'].label = 'Batch Name'
+
+        self.fields['active'].help_text = 'Workers can only access a Batch if both the Batch ' + \
+            'itself and the associated Project are Active.'
+
+        if self.instance._state.adding and 'project' in self.initial:
+            # We are adding a new Batch where the associated Project has been specified.
+            # Per Django convention, the project ID is specified in the URL, e.g.:
+            #   /admin/turkle/batch/add/?project=94
+
+            # NOTE: The fields that are initialized here should match the fields copied
+            #       over by the batch.copy_project_permissions() function.
+
+            project = Project.objects.get(id=int(self.initial['project']))
+            self.fields['custom_permissions'].initial = project.custom_permissions
+            self.fields['login_required'].initial = project.login_required
+
+            # Pre-populate permissions using permissions from the associated Project
+            initial_ids = [str(id)
+                           for id in get_groups_with_perms(project).values_list('id', flat=True)]
+        else:
+            # Pre-populate permissions
+            initial_ids = [str(id)
+                           for id in get_groups_with_perms(self.instance).
+                           values_list('id', flat=True)]
+        self.fields['worker_permissions'].initial = initial_ids
 
         # csv_file field not required if changing existing Batch
         #
@@ -295,7 +331,7 @@ class BatchAdmin(admin.ModelAdmin):
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
     list_display = (
-        'name', 'project', 'active', 'stats', 'download_input', 'download_csv',
+        'name', 'project', 'is_active', 'stats', 'download_input', 'download_csv',
         'tasks_completed', 'assignments_completed', 'total_finished_tasks')
 
     def assignments_completed(self, obj):
@@ -364,6 +400,12 @@ class BatchAdmin(admin.ModelAdmin):
 
         return redirect(reverse('turkle_admin:turkle_batch_changelist'))
 
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        if object_id:
+            extra_context['published'] = Batch.objects.get(id=object_id).published
+        return super().change_view(request, object_id, form_url, extra_context=extra_context)
+
     def changelist_view(self, request, extra_context=None):
         c = {
             'csv_unix_line_endings': request.session.get('csv_unix_line_endings', False)
@@ -378,20 +420,42 @@ class BatchAdmin(admin.ModelAdmin):
         download_url = reverse('turkle_admin:download_batch_input', kwargs={'batch_id': obj.id})
         return format_html('<a href="{}" class="button">CSV input</a>'.format(download_url))
 
-    def get_fields(self, request, obj=None):
+    def get_fieldsets(self, request, obj=None):
         # Display different fields when adding (when obj is None) vs changing a Batch
         if not obj:
-            return ('project', 'name', 'assignments_per_task',
-                    'allotted_assignment_time', 'csv_file')
+            # Adding
+            return (
+                (None, {
+                    'fields': ('project', 'name', 'assignments_per_task',
+                               'allotted_assignment_time', 'csv_file'),
+                }),
+                ('Status', {
+                    'fields': ('active',)
+                }),
+                ('Permissions', {
+                    'fields': ('login_required', 'custom_permissions', 'worker_permissions')
+                }),
+            )
         else:
-            return ('active', 'project', 'name', 'assignments_per_task',
-                    'allotted_assignment_time', 'filename')
+            # Changing
+            return (
+                (None, {
+                    'fields': ('project', 'name', 'assignments_per_task',
+                               'allotted_assignment_time', 'filename')
+                }),
+                ('Status', {
+                    'fields': ('active', 'published')
+                }),
+                ('Permissions', {
+                    'fields': ('login_required', 'custom_permissions', 'worker_permissions')
+                }),
+            )
 
     def get_readonly_fields(self, request, obj=None):
         if not obj:
             return []
         else:
-            return ('assignments_per_task', 'filename')
+            return ('assignments_per_task', 'filename', 'published')
 
     def get_urls(self):
         urls = super().get_urls()
@@ -418,7 +482,7 @@ class BatchAdmin(admin.ModelAdmin):
     def publish_batch(self, request, batch_id):
         try:
             batch = Batch.objects.get(id=batch_id)
-            batch.active = True
+            batch.published = True
             batch.save()
             logger.info("User(%i) publishing Batch(%i) %s", request.user.id, batch.id, batch.name)
         except ObjectDoesNotExist:
@@ -455,6 +519,12 @@ class BatchAdmin(admin.ModelAdmin):
     def response_add(self, request, obj, post_url_continue=None):
         return redirect(reverse('turkle_admin:review_batch', kwargs={'batch_id': obj.id}))
 
+    def response_change(self, request, obj):
+        # catch unpublished batch when saved to redirect to review page
+        if not obj.published:
+            return redirect(reverse('turkle_admin:review_batch', kwargs={'batch_id': obj.id}))
+        return super().response_change(request, obj)
+
     def review_batch(self, request, batch_id):
         request.current_app = self.admin_site.name
         try:
@@ -478,9 +548,8 @@ class BatchAdmin(admin.ModelAdmin):
             if request.user.is_authenticated:
                 obj.created_by = request.user
 
-            # If Batch active flag not explicitly set, make inactive until Batch reviewed
-            if 'active' not in request.POST:
-                obj.active = False
+            # When creating a new batch, set published flag as false until reviewed
+            obj.published = False
 
             # Only use CSV file when adding Batch, not when changing
             obj.filename = request.FILES['csv_file']._name
@@ -505,6 +574,20 @@ class BatchAdmin(admin.ModelAdmin):
         else:
             super().save_model(request, obj, form, change)
             logger.info("User(%i) updating Batch(%i) %s", request.user.id, obj.id, obj.name)
+
+        if 'custom_permissions' in form.data:
+            if 'worker_permissions' in form.data:
+                existing_groups = set(get_groups_with_perms(obj))
+                form_groups = set(form.cleaned_data['worker_permissions'])
+                groups_to_add = form_groups.difference(existing_groups)
+                groups_to_remove = existing_groups.difference(form_groups)
+                for group in groups_to_add:
+                    assign_perm('can_work_on_batch', group, obj)
+                for group in groups_to_remove:
+                    remove_perm('can_work_on_batch', group, obj)
+            else:
+                for group in get_groups_with_perms(obj):
+                    remove_perm('can_work_on_batch', group, obj)
 
     def stats(self, obj):
         stats_url = reverse('turkle_admin:batch_stats', kwargs={'batch_id': obj.id})
@@ -534,7 +617,9 @@ class ProjectForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields['template_file_upload'].widget = CustomButtonFileWidget()
+        self.fields['template_file_upload'].widget = CustomButtonFileWidget(attrs={
+            'class': 'hidden',
+        })
 
         # This hidden form field is updated by JavaScript code in the
         # customized admin template file:
@@ -556,6 +641,10 @@ class ProjectForm(ModelForm):
         self.fields['html_template'].widget.attrs['data-parsley-maxlength'] = byte_limit
         self.fields['html_template'].widget.attrs['data-parsley-group'] = 'html_template'
 
+        self.fields['active'].help_text = 'Deactivating a Project effectively deactivates ' + \
+            'all associated Batches.  Workers can only access a Batch if both the Batch ' + \
+            'itself and the associated Project are Active.'
+
         initial_ids = [str(id)
                        for id in get_groups_with_perms(self.instance).values_list('id', flat=True)]
         self.fields['worker_permissions'].initial = initial_ids
@@ -567,11 +656,19 @@ class ProjectAdmin(GuardedModelAdmin):
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
-    list_display = ('name', 'filename', 'updated_at', 'active', 'publish_tasks')
+    list_display = ('name', 'filename', 'updated_at', 'active', 'stats', 'publish_tasks')
 
     # Fieldnames are extracted from form text, and should not be edited directly
     exclude = ('fieldnames',)
     readonly_fields = ('extracted_template_variables',)
+
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            url(r'^(?P<project_id>\d+)/stats/$',
+                self.admin_site.admin_view(self.project_stats), name='project_stats'),
+        ]
+        return my_urls + urls
 
     def extracted_template_variables(self, instance):
         return format_html_join('\n', "<li>{}</li>",
@@ -587,9 +684,11 @@ class ProjectAdmin(GuardedModelAdmin):
                 ('HTML Template', {
                     'fields': ('html_template', 'template_file_upload', 'filename')
                 }),
-                ('Permissions', {
-                    'fields': ('active', 'login_required', 'custom_permissions',
-                               'worker_permissions')
+                ('Status', {
+                    'fields': ('active',)
+                }),
+                ('Default Permissions for new Batches', {
+                    'fields': ('login_required', 'custom_permissions', 'worker_permissions')
                 }),
             )
         else:
@@ -602,11 +701,64 @@ class ProjectAdmin(GuardedModelAdmin):
                     'fields': ('html_template', 'template_file_upload', 'filename',
                                'extracted_template_variables')
                 }),
-                ('Permissions', {
-                    'fields': ('active', 'login_required', 'custom_permissions',
-                               'worker_permissions')
+                ('Status', {
+                    'fields': ('active',)
+                }),
+                ('Default Permissions for new Batches', {
+                    'fields': ('login_required', 'custom_permissions', 'worker_permissions')
                 }),
             )
+
+    def project_stats(self, request, project_id):
+        try:
+            project = Project.objects.get(id=project_id)
+        except ObjectDoesNotExist:
+            messages.error(request, 'Cannot find Project with ID {}'.format(project_id))
+            return redirect(reverse('turkle_admin:turkle_project_changelist'))
+
+        stats_users = []
+        for user in project.users_that_completed_tasks().order_by('username'):
+            assignments = project.assignments_completed_by(user)
+            if assignments:
+                last_finished_time = assignments.order_by('updated_at').last().updated_at
+                mean_work_time = '%.2f' % float(statistics.mean(
+                    [ta.work_time_in_seconds() for ta in assignments]))
+                median_work_time = '{}s'.format(int(statistics.median(
+                    [ta.work_time_in_seconds() for ta in assignments])))
+            else:
+                last_finished_time = 'N/A'
+                mean_work_time = 'N/A'
+                median_work_time = 'N/A'
+
+            stats_users.append({
+                'username': user.username,
+                'full_name': user.get_full_name(),
+                'assignments_completed': project.total_assignments_completed_by(user),
+                'mean_work_time': mean_work_time,
+                'median_work_time': median_work_time,
+                'last_finished_time': last_finished_time,
+            })
+
+        finished_assignments = project.finished_task_assignments().order_by('updated_at')
+        if finished_assignments:
+            first_finished_time = finished_assignments.first().updated_at
+            last_finished_time = finished_assignments.last().updated_at
+        else:
+            first_finished_time = 'N/A'
+            last_finished_time = 'N/A'
+
+        return render(request, 'admin/turkle/project_stats.html', {
+            'project': project,
+            'project_total_work_time': humanfriendly.format_timespan(
+                project.total_work_time_in_seconds(), max_units=6),
+            'project_mean_work_time': humanfriendly.format_timespan(
+                project.mean_work_time_in_seconds(), max_units=6),
+            'project_median_work_time': humanfriendly.format_timespan(
+                project.median_work_time_in_seconds(), max_units=6),
+            'first_finished_time': first_finished_time,
+            'last_finished_time': last_finished_time,
+            'stats_users': stats_users,
+        })
 
     def publish_tasks(self, instance):
         publish_tasks_url = '%s?project=%d&assignments_per_task=%d' % (
@@ -647,6 +799,11 @@ class ProjectAdmin(GuardedModelAdmin):
     def delete_model(self, request, obj):
         logger.info("User(%i) deleting Project(%i) %s", request.user.id, obj.id, obj.name)
         super().delete_model(request, obj)
+
+    def stats(self, obj):
+        stats_url = reverse('turkle_admin:project_stats', kwargs={'project_id': obj.id})
+        return format_html('<a href="{}" class="button">Stats</a>'.
+                           format(stats_url))
 
 
 admin_site = TurkleAdminSite(name='turkle_admin')
