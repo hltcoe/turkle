@@ -9,6 +9,7 @@ from django.contrib import admin, messages
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.auth.models import Group, User
+from django.contrib.admin.templatetags.admin_list import _boolean_icon
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.forms import (FileField, FileInput, HiddenInput, IntegerField,
@@ -331,11 +332,17 @@ class BatchAdmin(admin.ModelAdmin):
     }
     list_display = (
         'name', 'project', 'is_active', 'stats', 'download_input', 'download_csv',
-        'tasks_completed', 'assignments_completed', 'total_finished_tasks')
+        'assignments_completed')
 
     def assignments_completed(self, obj):
-        return '{} / {}'.format(obj.total_finished_task_assignments(),
-                                obj.assignments_per_task * obj.total_tasks())
+        tfa = obj.total_finished_task_assignments()
+        ta = obj.assignments_per_task * obj.total_tasks()
+        h = format_html(
+            '<progress value="{0}" max="{1}" title="Completed {0}/{1} Task Assignments">'
+            '</progress>'.format(tfa, ta))
+        if tfa == ta:
+            h += _boolean_icon(True)
+        return h
 
     def batch_stats(self, request, batch_id):
         try:
@@ -591,9 +598,6 @@ class BatchAdmin(admin.ModelAdmin):
         stats_url = reverse('turkle_admin:batch_stats', kwargs={'batch_id': obj.id})
         return format_html('<a href="{}" class="button">Stats</a>'.
                            format(stats_url))
-
-    def tasks_completed(self, obj):
-        return '{} / {}'.format(obj.total_finished_tasks(), obj.total_tasks())
 
     def update_csv_line_endings(self, request):
         csv_unix_line_endings = (request.POST['csv_unix_line_endings'] == 'true')
