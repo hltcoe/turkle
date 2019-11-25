@@ -331,8 +331,9 @@ class BatchAdmin(admin.ModelAdmin):
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
     list_display = (
-        'name', 'project', 'is_active', 'stats', 'download_input', 'download_csv',
-        'assignments_completed')
+        'name', 'project', 'is_active', 'assignments_completed',
+        'stats', 'download_input', 'download_csv',
+        )
 
     def assignments_completed(self, obj):
         tfa = obj.total_finished_task_assignments()
