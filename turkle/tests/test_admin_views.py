@@ -17,7 +17,7 @@ class TestCancelOrPublishBatch(django.test.TestCase):
         User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
         project = Project(name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
         project.save()
-        self.batch = Batch(active=False, project=project, name='MY_BATCH_NAME')
+        self.batch = Batch(project=project, name='MY_BATCH_NAME', published=False)
         self.batch.save()
 
     def test_batch_cancel(self):
@@ -44,7 +44,7 @@ class TestCancelOrPublishBatch(django.test.TestCase):
     def test_batch_publish(self):
         batch_id = self.batch.id
         client = django.test.Client()
-        self.assertFalse(self.batch.active)
+        self.assertFalse(self.batch.published)
         client.login(username='admin', password='secret')
         response = client.post(reverse('turkle_admin:publish_batch',
                                        kwargs={'batch_id': batch_id}))
@@ -53,7 +53,7 @@ class TestCancelOrPublishBatch(django.test.TestCase):
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 0)
         self.batch.refresh_from_db()
-        self.assertTrue(self.batch.active)
+        self.assertTrue(self.batch.published)
 
     def test_batch_publish_bad_batch_id(self):
         batch_id = 666
@@ -319,6 +319,8 @@ class TestBatchAdmin(django.test.TestCase):
     def test_batch_change_update(self):
         self.test_batch_add()
         batch = Batch.objects.get(name='batch_save')
+        batch.published = True
+        batch.save()
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
@@ -334,6 +336,23 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertEqual(response['Location'], '/admin/turkle/batch/')
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
         self.assertTrue(Batch.objects.filter(name='batch_save_modified').exists())
+
+    def test_batch_change_update_non_published(self):
+        self.test_batch_add()
+        batch = Batch.objects.get(name='batch_save')
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.post(
+            '/admin/turkle/batch/%d/change/' % batch.id,
+            {
+                'assignments_per_task': 1,
+                'project': batch.project.id,
+                'name': 'batch_save_modified',
+            })
+        self.assertTrue(b'error' not in response.content)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], '/admin/turkle/batch/1/review/')
 
     def test_batch_stats_view(self):
         self.test_batch_add()

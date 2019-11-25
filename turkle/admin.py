@@ -330,7 +330,7 @@ class BatchAdmin(admin.ModelAdmin):
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
     list_display = (
-        'name', 'project', 'active', 'stats', 'download_input', 'download_csv',
+        'name', 'project', 'is_active', 'stats', 'download_input', 'download_csv',
         'tasks_completed', 'assignments_completed', 'total_finished_tasks')
 
     def assignments_completed(self, obj):
@@ -398,6 +398,12 @@ class BatchAdmin(admin.ModelAdmin):
 
         return redirect(reverse('turkle_admin:turkle_batch_changelist'))
 
+    def change_view(self, request, object_id, form_url='', extra_context=None):
+        extra_context = extra_context or {}
+        if object_id:
+            extra_context['published'] = Batch.objects.get(id=object_id).published
+        return super().change_view(request, object_id, form_url, extra_context=extra_context)
+
     def changelist_view(self, request, extra_context=None):
         c = {
             'csv_unix_line_endings': request.session.get('csv_unix_line_endings', False)
@@ -436,7 +442,7 @@ class BatchAdmin(admin.ModelAdmin):
                                'allotted_assignment_time', 'filename')
                 }),
                 ('Status', {
-                    'fields': ('active',)
+                    'fields': ('active', 'published')
                 }),
                 ('Permissions', {
                     'fields': ('login_required', 'custom_permissions', 'worker_permissions')
@@ -447,7 +453,7 @@ class BatchAdmin(admin.ModelAdmin):
         if not obj:
             return []
         else:
-            return ('assignments_per_task', 'filename')
+            return ('assignments_per_task', 'filename', 'published')
 
     def get_urls(self):
         urls = super().get_urls()
@@ -474,7 +480,7 @@ class BatchAdmin(admin.ModelAdmin):
     def publish_batch(self, request, batch_id):
         try:
             batch = Batch.objects.get(id=batch_id)
-            batch.active = True
+            batch.published = True
             batch.save()
             logger.info("User(%i) publishing Batch(%i) %s", request.user.id, batch.id, batch.name)
         except ObjectDoesNotExist:
@@ -511,6 +517,12 @@ class BatchAdmin(admin.ModelAdmin):
     def response_add(self, request, obj, post_url_continue=None):
         return redirect(reverse('turkle_admin:review_batch', kwargs={'batch_id': obj.id}))
 
+    def response_change(self, request, obj):
+        # catch unpublished batch when saved to redirect to review page
+        if not obj.published:
+            return redirect(reverse('turkle_admin:review_batch', kwargs={'batch_id': obj.id}))
+        return super().response_change(request, obj)
+
     def review_batch(self, request, batch_id):
         request.current_app = self.admin_site.name
         try:
@@ -534,9 +546,8 @@ class BatchAdmin(admin.ModelAdmin):
             if request.user.is_authenticated:
                 obj.created_by = request.user
 
-            # If Batch active flag not explicitly set, make inactive until Batch reviewed
-            if 'active' not in request.POST:
-                obj.active = False
+            # When creating a new batch, set published flag as false until reviewed
+            obj.published = False
 
             # Only use CSV file when adding Batch, not when changing
             obj.filename = request.FILES['csv_file']._name

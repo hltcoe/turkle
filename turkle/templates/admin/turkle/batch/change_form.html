@@ -30,6 +30,14 @@ $(document).ready(function() {
   <p class="deletelink-box"><a href="" class="deletelink">Delete</a></p>
   <input type="submit" value="Review Batch" name="_saveasnew" />
 </div>
+{% elif not published %}
+{% comment %}
+  Requester reviewed the batch did did not publish so we show the review button
+{% endcomment %}
+<div class="submit-row">
+  <p class="deletelink-box"><a href="" class="deletelink">Delete</a></p>
+  <input type="submit" value="Review Batch" name="_save" />
+</div>
 {% else %}
 {{ block.super }}
 {% endif %}
