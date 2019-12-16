@@ -16,6 +16,7 @@ from django.forms import (FileField, FileInput, HiddenInput, IntegerField,
                           ModelForm, ModelMultipleChoiceField, TextInput, ValidationError, Widget)
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
+from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
 from guardian.admin import GuardedModelAdmin
@@ -340,9 +341,12 @@ class BatchAdmin(admin.ModelAdmin):
         ta = obj.assignments_per_task * obj.total_tasks()
         h = format_html(
             '<progress value="{0}" max="{1}" title="Completed {0}/{1} Task Assignments">'
-            '</progress>'.format(tfa, ta))
-        if tfa == ta:
+            '</progress> '.format(tfa, ta))
+        if tfa >= ta:
             h += _boolean_icon(True)
+        else:
+            h += format_html('<img src="{}" />', static('admin/img/icon-unknown-alt.svg'))
+        h += format_html(' {} / {}'.format(tfa, ta))
         return h
 
     def batch_stats(self, request, batch_id):
