@@ -1,10 +1,10 @@
-# Turkle #
+Turkle
+======
 
-Run a clone of Amazon's Mechanical **Turk** service in your **l**ocal
-**e**nvironment.
+Run a clone of Amazon's Mechanical **Turk** service in your **l**\ocal
+**e**\nvironment.
 
-Turkle is implemented as a
-[Django](https://www.djangoproject.com)-based web application that can
+Turkle is implemented as a Django_-based web application that can
 be deployed on your local network or hosted on a public server.  It
 is compatible with Human Intelligence Tasks (HITs) from Amazon
 Mechanical Turk.  Turkle can use the same HTML Task template files and
@@ -21,14 +21,15 @@ Turkle's features include:
 - Scripts to automate the creation of Users, Projects, and Batches of Tasks
 - Docker images using the SQLite and MySQL database backends
 
-## Turkle Workflow Overview ##
+Turkle Workflow Overview
+------------------------
 
 Turkle provides a Task-oriented interface for **Workers**, and an
 administrative interface for **Requesters**.
 
 Requesters create **Projects** that have an HTML template with a form body.
 The HTML template defines the user interface for collecting annotations. 
-[Documentation on creating templates](docs/TEMPLATE-GUIDE.md) is found
+:doc:`Documentation on creating templates <TEMPLATE-GUIDE>` is found
 in the docs directory.
 
 Once a Project has been created, a Requester can create a **Batch** of
@@ -38,11 +39,12 @@ in the CSV file (excluding the header).  When a Batch is created,
 the Requester can specify how many **Assignments** per Task they need.
 Each Worker is limited to one Assignment per Task. Requesters can 
 download completed annotations as CSV files.
-[Further documentation for Requesters](docs/REQUESTERS.md) is found 
+:doc:`Further documentation for Requesters <REQUESTERS>` is found 
 in the docs directory.
 
 
-# Installation #
+Installation
+============
 
 Turkle works with Python 3.5+.
 
@@ -54,87 +56,86 @@ If you want to use Turkle with more than a handful of Workers or host
 Turkle on a public webserver, it is **strongly recommended** that you
 use a scalable webserver and database backend.  Please see the
 documentation of production deployments included in the 
- [Administration guide](docs/ADMINISTRATION.md) in the docs directory.
+:doc:`Administration guide <ADMINISTRATION>` in the docs directory.
 
 If you would like to use Turkle in a Docker container, see the 
-[Docker guide](docs/DOCKER.md).
+:doc:`Docker guide <DOCKER>`.
 
 
-## Dependencies ##
+Dependencies
+------------
 
-Turkle depends on the packages listed in `requirements.txt`.
+Turkle depends on the packages listed in ``requirements.txt``.
 If the packages are not already installed in your environment, and you have
 an internet connection, then you can run the following command to install
-the required Python packages:
+the required Python packages::
 
-```bash
-pip install -r requirements.txt
-```
+    pip install -r requirements.txt
 
 Using a virtual environment has the advantage of keeping the dependencies
 for this project separate from other projects. The actual syntax depends
-on what virtual environment package you are using, but here is an example:
+on what virtual environment package you are using, but here is an example::
 
-```bash
-virtualenv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
+    virtualenv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
 
-## One-time Configuration Steps ##
+One-time Configuration Steps
+----------------------------
 
 After the dependencies have been installed, create and initialize the
-database:
+database::
 
-```bash
-python manage.py migrate
-```
+    python manage.py migrate
 
-Next, create an admin account:
+Next, create an admin account::
 
-```bash
-python manage.py createsuperuser
-```
+    python manage.py createsuperuser
 
-## Upgrading ##
+Upgrading
+---------
 
-After copying over the new code, run the migrate script:
+After copying over the new code, run the migrate script::
 
-```bash
-python manage.py migrate
-```
+    python manage.py migrate
 
-If serving the static files through a web server like Apache or nginx, collect the static assets:
+If serving the static files through a web server like Apache or nginx, collect the static assets::
 
-```bash
-python manage.py collectstatic
-```
+    python manage.py collectstatic
 
 
-# Usage
+Usage
+=====
 
 
-## Running the development server ##
+Running the development server
+------------------------------
 
-Start the development web server on port 8000 using:
+Start the development web server on port 8000 using::
 
-```bash
-python manage.py runserver 0.0.0.0:8000
-```
+    python manage.py runserver 0.0.0.0:8000
 
-# Developers
+Developers
+==========
 
-## Running tests
+Running tests
+-------------
 
-```bash
-python manage.py test
-```
+::
 
-## Style Guideline
-Python code should be formatted according to [PEP 8](https://www.python.org/dev/peps/pep-0008/).
+    python manage.py test
 
-## Release process
- 1. Set version number in `turkle/__init__.py`
- 2. Update `CHANGELOG.md`
+Style Guideline
+---------------
+
+Python code should be formatted according to `PEP 8`_.
+
+Release process
+---------------
+
+ 1. Set version number in ``turkle/__init__.py``
+ 2. Update ``CHANGELOG.md``
  3. Commit and tag version
  
+.. _Django: https://www.djangoproject.com
+.. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
