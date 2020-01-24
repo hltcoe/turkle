@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('turkle', '0005_copy_can_work_on_permission'),
+        ('turkle', '0004_batch_login_required'),
     ]
 
     operations = [
