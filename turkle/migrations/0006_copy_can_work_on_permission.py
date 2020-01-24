@@ -51,7 +51,7 @@ def copy_project_settings_to_batch(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('turkle', '0004_batch_login_required'),
+        ('turkle', '0005_batch_published'),
     ]
 
     operations = [
