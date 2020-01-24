@@ -31,3 +31,12 @@ docker-build:
     - docker build -t turkle.mysql -f Dockerfile-MySQL .
   tags:
     - docker
+
+docs:
+  image: python:3.5-alpine3.8
+  stage: test
+  script:
+    - pip install sphinx sphinx_rtd_theme
+    - sphinx-build -M html docs _built_docs -W
+  tags:
+    - docker
