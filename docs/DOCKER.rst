@@ -38,11 +38,26 @@ with the commands::
 
     docker-compose build
     docker-compose up -d
-    docker-compose run turkle python3.6 manage.py migrate --noinput
     docker-compose run turkle python3.6 manage.py createsuperuser
 
 This will stand up a Turkle server listening on port 8080.
-The database files are stored in a docker volume called turkle_db_data.
+
+The database files are stored in a Docker volume named turkle_db_data.
+This Docker volume persists across Docker container restarts.
+
+To upgrade to a newer version of Turkle, shut down the application
+using::
+
+    docker-compose stop
+
+Then build the newest version of the Turkle MySQL Docker image and
+restart the application::
+
+    docker-compose build
+    docker-compose up -d
+
+Any database migrations for the upgraded version of Turkle will be
+automatically applied when the application is brought back up.
 
 Changing the admin password
 ---------------------------
