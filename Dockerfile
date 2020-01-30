@@ -30,4 +30,6 @@ VOLUME /opt/turkle
 
 EXPOSE 8080
 
-CMD crond && gunicorn --env TURKLE_DOCKER=1 --bind 0.0.0.0:8080 turkle_site.wsgi
+CMD python3.6 manage.py migrate --noinput && \
+    crond && \
+    gunicorn --env TURKLE_DOCKER=1 --bind 0.0.0.0:8080 turkle_site.wsgi
