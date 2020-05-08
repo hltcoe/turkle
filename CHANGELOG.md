@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - Access controls are now Batch-level instead of Project-level
+- CSV field size limit now computed with Windows-compatible metric
 
 ### Removed
 - No longer using django-dbbackup
