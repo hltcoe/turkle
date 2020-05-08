@@ -1,4 +1,5 @@
 import csv
+import ctypes
 import datetime
 import logging
 import os.path
@@ -21,8 +22,13 @@ from .utils import get_turkle_template_limit
 
 logger = logging.getLogger(__name__)
 
-# The default field size limit is 131072 characters
-csv.field_size_limit(sys.maxsize)
+C_LONG_NUM_BITS = 8 * ctypes.sizeof(ctypes.c_long)
+C_LONG_MAX = 2 ** (C_LONG_NUM_BITS-1) - 1
+
+# Increase default field size limit (default 131072 characters).
+# Note that field_size_limit converts its argument to a C long,
+# at least in Anaconda 3 on Windows 10.
+csv.field_size_limit(min(C_LONG_MAX, sys.maxsize))
 
 
 class TaskAssignmentStatistics(object):
