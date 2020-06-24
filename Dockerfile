@@ -1,9 +1,9 @@
-FROM centos:7
+FROM centos:8
 MAINTAINER Craig Harman <craig@craigharman.net>
 LABEL Description="Image for running a Turkle interface"
 
 RUN yum install epel-release -y && \
-    yum install crontabs git patch python36 python36-pip -y && \
+    yum install crontabs git patch python3 python3-pip -y && \
     yum clean all -y
 
 WORKDIR /opt/turkle

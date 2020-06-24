@@ -1,9 +1,9 @@
-FROM centos:7
+FROM centos:8
 MAINTAINER Craig Harman <craig@craigharman.net>
-LABEL Description="Image for running a Turkle interface"
+LABEL Description="Image for running a Turkle interface using MySQL"
 
 RUN yum install epel-release -y && \
-    yum install crontabs gcc git mysql-devel patch python36-devel python36-pip -y && \
+    yum install crontabs gcc git mysql-devel patch python3-devel python3-pip -y && \
     yum clean all -y
 
 WORKDIR /opt/turkle
