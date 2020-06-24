@@ -1,5 +1,8 @@
-from io import StringIO
+from bisect import bisect_left
+from collections import defaultdict
 import csv
+from datetime import datetime, timedelta, timezone
+from io import StringIO
 import json
 import logging
 import statistics
@@ -12,6 +15,7 @@ from django.contrib.auth.models import Group, User
 from django.contrib.admin.templatetags.admin_list import _boolean_icon
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
+from django.db.models import DurationField, ExpressionWrapper, F
 from django.forms import (FileField, FileInput, HiddenInput, IntegerField,
                           ModelForm, ModelMultipleChoiceField, TextInput, ValidationError, Widget)
 from django.http import HttpResponse, JsonResponse
@@ -28,6 +32,10 @@ from turkle.models import Batch, Project, TaskAssignment
 from turkle.utils import get_site_name, get_turkle_template_limit
 
 logger = logging.getLogger(__name__)
+
+
+def _format_timespan(sec):
+    return '{} ({:,}s)'.format(humanfriendly.format_timespan(sec, max_units=6), sec)
 
 
 class TurkleAdminSite(admin.AdminSite):
@@ -356,45 +364,61 @@ class BatchAdmin(admin.ModelAdmin):
             messages.error(request, 'Cannot find Batch with ID {}'.format(batch_id))
             return redirect(reverse('turkle_admin:turkle_batch_changelist'))
 
+        tasks = batch.finished_task_assignments()\
+            .annotate(duration=ExpressionWrapper(F('updated_at') - F('created_at'),
+                                                 output_field=DurationField()))\
+            .order_by('updated_at')\
+            .values('assigned_to',  'duration', 'updated_at')
+
+        tasks_updated_at = [t['updated_at'] for t in tasks]
+        tasks_duration = [t['duration'].total_seconds() for t in tasks]
+        task_duration_by_user = defaultdict(list)
+        task_updated_at_by_user = defaultdict(list)
+        for t in tasks:
+            duration = t['duration'].total_seconds()
+            task_duration_by_user[t['assigned_to']].append(duration)
+            task_updated_at_by_user[t['assigned_to']].append(t['updated_at'])
+
+        user_ids = task_duration_by_user.keys()
         stats_users = []
-        for user in batch.users_that_completed_tasks().order_by('username'):
-            assignments = batch.assignments_completed_by(user)
-            if assignments:
-                last_finished_time = assignments.order_by('updated_at').last().updated_at
-                mean_work_time = '%.2f' % float(statistics.mean(
-                    [ta.work_time_in_seconds() for ta in assignments]))
+        for user in User.objects.filter(id__in=user_ids).order_by('username'):
+            if user.id in task_duration_by_user:
+                last_finished_time = task_updated_at_by_user[user.id][-1]
+                mean_work_time = '{}s'.format(int(statistics.mean(
+                    task_duration_by_user[user.id])))
                 median_work_time = '{}s'.format(int(statistics.median(
-                    [ta.work_time_in_seconds() for ta in assignments])))
+                    task_duration_by_user[user.id])))
             else:
                 last_finished_time = 'N/A'
                 mean_work_time = 'N/A'
                 median_work_time = 'N/A'
-
             stats_users.append({
                 'username': user.username,
                 'full_name': user.get_full_name(),
-                'assignments_completed': batch.total_assignments_completed_by(user),
+                'assignments_completed': len(task_duration_by_user[user.id]),
                 'mean_work_time': mean_work_time,
                 'median_work_time': median_work_time,
                 'last_finished_time': last_finished_time,
             })
 
-        finished_assignments = batch.finished_task_assignments().order_by('updated_at')
-        if finished_assignments:
-            first_finished_time = finished_assignments.first().updated_at
-            last_finished_time = finished_assignments.last().updated_at
+        if tasks:
+            first_finished_time = tasks_updated_at[0]
+            last_finished_time = tasks_updated_at[-1]
+            total_work_time = _format_timespan(int(sum(tasks_duration)))
+            mean_work_time = _format_timespan(int(statistics.mean(tasks_duration)))
+            median_work_time = _format_timespan(int(statistics.median(tasks_duration)))
         else:
             first_finished_time = 'N/A'
             last_finished_time = 'N/A'
+            total_work_time = 'N/A'
+            mean_work_time = 'N/A'
+            median_work_time = 'N/A'
 
         return render(request, 'admin/turkle/batch_stats.html', {
             'batch': batch,
-            'batch_total_work_time': humanfriendly.format_timespan(
-                batch.total_work_time_in_seconds(), max_units=6),
-            'batch_mean_work_time': humanfriendly.format_timespan(
-                batch.mean_work_time_in_seconds(), max_units=6),
-            'batch_median_work_time': humanfriendly.format_timespan(
-                batch.median_work_time_in_seconds(), max_units=6),
+            'batch_total_work_time': total_work_time,
+            'batch_mean_work_time': mean_work_time,
+            'batch_median_work_time': median_work_time,
             'first_finished_time': first_finished_time,
             'last_finished_time': last_finished_time,
             'stats_users': stats_users,
@@ -721,48 +745,111 @@ class ProjectAdmin(GuardedModelAdmin):
             messages.error(request, 'Cannot find Project with ID {}'.format(project_id))
             return redirect(reverse('turkle_admin:turkle_project_changelist'))
 
-        stats_users = []
-        for user in project.users_that_completed_tasks().order_by('username'):
-            assignments = project.assignments_completed_by(user)
-            if assignments:
-                last_finished_time = assignments.order_by('updated_at').last().updated_at
-                mean_work_time = '%.2f' % float(statistics.mean(
-                    [ta.work_time_in_seconds() for ta in assignments]))
+        tasks = project.finished_task_assignments()\
+            .annotate(duration=ExpressionWrapper(F('updated_at') - F('created_at'),
+                                                 output_field=DurationField()))\
+            .order_by('updated_at')\
+            .values('assigned_to', 'task__batch_id', 'duration', 'updated_at')
+
+        tasks_updated_at = [t['updated_at'] for t in tasks]
+        tasks_duration = [t['duration'].total_seconds() for t in tasks]
+        task_duration_by_batch = defaultdict(list)
+        task_updated_at_by_batch = defaultdict(list)
+        task_duration_by_user = defaultdict(list)
+        task_updated_at_by_user = defaultdict(list)
+        for t in tasks:
+            duration = t['duration'].total_seconds()
+            task_duration_by_batch[t['task__batch_id']].append(duration)
+            task_updated_at_by_batch[t['task__batch_id']].append(t['updated_at'])
+            task_duration_by_user[t['assigned_to']].append(duration)
+            task_updated_at_by_user[t['assigned_to']].append(t['updated_at'])
+
+        batch_ids = task_duration_by_batch.keys()
+        stats_batches = []
+        for batch in Batch.objects.filter(id__in=batch_ids).order_by('name'):
+            if batch.id in task_duration_by_batch:
+                last_finished_time = task_updated_at_by_batch[batch.id][-1]
+                mean_work_time = '{}s'.format(int(statistics.mean(
+                    task_duration_by_batch[batch.id])))
                 median_work_time = '{}s'.format(int(statistics.median(
-                    [ta.work_time_in_seconds() for ta in assignments])))
+                    task_duration_by_batch[batch.id])))
             else:
                 last_finished_time = 'N/A'
                 mean_work_time = 'N/A'
                 median_work_time = 'N/A'
-
-            stats_users.append({
-                'username': user.username,
-                'full_name': user.get_full_name(),
-                'assignments_completed': project.total_assignments_completed_by(user),
+            stats_batches.append({
+                'batch_id': batch.id,
+                'name': batch.name,
+                'assignments_completed': len(task_duration_by_batch[batch.id]),
                 'mean_work_time': mean_work_time,
                 'median_work_time': median_work_time,
                 'last_finished_time': last_finished_time,
             })
 
-        finished_assignments = project.finished_task_assignments().order_by('updated_at')
-        if finished_assignments:
-            first_finished_time = finished_assignments.first().updated_at
-            last_finished_time = finished_assignments.last().updated_at
+        user_ids = task_duration_by_user.keys()
+        stats_users = []
+        for user in User.objects.filter(id__in=user_ids).order_by('username'):
+            if user.id in task_duration_by_user:
+                last_finished_time = task_updated_at_by_user[user.id][-1]
+                mean_work_time = '{}s'.format(int(statistics.mean(
+                    task_duration_by_user[user.id])))
+                median_work_time = '{}s'.format(int(statistics.median(
+                    task_duration_by_user[user.id])))
+            else:
+                last_finished_time = 'N/A'
+                mean_work_time = 'N/A'
+                median_work_time = 'N/A'
+            stats_users.append({
+                'username': user.username,
+                'full_name': user.get_full_name(),
+                'assignments_completed': len(task_duration_by_user[user.id]),
+                'mean_work_time': mean_work_time,
+                'median_work_time': median_work_time,
+                'last_finished_time': last_finished_time,
+            })
+
+        if tasks:
+            now = datetime.now(timezone.utc)
+            tca_1_day = len(tasks) - bisect_left(tasks_updated_at, now - timedelta(days=1))
+            tca_7_day = len(tasks) - bisect_left(tasks_updated_at, now - timedelta(days=7))
+            tca_30_day = len(tasks) - bisect_left(tasks_updated_at, now - timedelta(days=30))
+            tca_90_day = len(tasks) - bisect_left(tasks_updated_at, now - timedelta(days=90))
+            tca_180_day = len(tasks) - bisect_left(tasks_updated_at, now - timedelta(days=180))
+            tca_365_day = len(tasks) - bisect_left(tasks_updated_at, now - timedelta(days=365))
+            first_finished_time = tasks_updated_at[0]
+            last_finished_time = tasks_updated_at[-1]
+            total_work_time = _format_timespan(int(sum(tasks_duration)))
+            mean_work_time = _format_timespan(int(statistics.mean(tasks_duration)))
+            median_work_time = _format_timespan(int(statistics.median(tasks_duration)))
         else:
+            tca_1_day = 'N/A'
+            tca_7_day = 'N/A'
+            tca_30_day = 'N/A'
+            tca_90_day = 'N/A'
+            tca_180_day = 'N/A'
+            tca_365_day = 'N/A'
             first_finished_time = 'N/A'
             last_finished_time = 'N/A'
+            total_work_time = 'N/A'
+            mean_work_time = 'N/A'
+            median_work_time = 'N/A'
 
         return render(request, 'admin/turkle/project_stats.html', {
             'project': project,
-            'project_total_work_time': humanfriendly.format_timespan(
-                project.total_work_time_in_seconds(), max_units=6),
-            'project_mean_work_time': humanfriendly.format_timespan(
-                project.mean_work_time_in_seconds(), max_units=6),
-            'project_median_work_time': humanfriendly.format_timespan(
-                project.median_work_time_in_seconds(), max_units=6),
+            'project_total_completed_assignments': len(tasks),
+            'project_total_completed_assignments_1_day': tca_1_day,
+            'project_total_completed_assignments_7_day': tca_7_day,
+            'project_total_completed_assignments_30_day': tca_30_day,
+            'project_total_completed_assignments_90_day': tca_90_day,
+            'project_total_completed_assignments_180_day': tca_180_day,
+            'project_total_completed_assignments_365_day': tca_365_day,
+            'project_total_work_time': total_work_time,
+            'project_mean_work_time': mean_work_time,
+            'project_median_work_time': median_work_time,
             'first_finished_time': first_finished_time,
             'last_finished_time': last_finished_time,
             'stats_users': stats_users,
+            'stats_batches': stats_batches,
         })
 
     def publish_tasks(self, instance):
