@@ -8,6 +8,3 @@ sphinx:
 # define the python used to build the documentation
 python:
   version: 3.7
-  install:
-    - method: pip
-  system_packages: true
