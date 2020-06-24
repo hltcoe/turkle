@@ -3,6 +3,11 @@
 
 {% block header %}
 <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
+<style>
+.substat td {
+  padding-left: 2em;
+}
+</style>
 {% endblock %}
 
 {% block body %}
@@ -37,17 +42,76 @@
         <td>{{ last_finished_time }}</td>
       </tr>
       <tr>
+        <th>Total Completed Assignments</th>
+        <td>{{ project_total_completed_assignments }}</td>
+      </tr>
+      <tr class="substat">
+        <td>last 24 hours</td>
+        <td>{{ project_total_completed_assignments_1_day }}</td>
+      </tr>
+      <tr class="substat">
+        <td>last 7 days</td>
+        <td>{{ project_total_completed_assignments_7_day }}</td>
+      </tr>
+      <tr class="substat">
+        <td>last 30 days</td>
+        <td>{{ project_total_completed_assignments_30_day }}</td>
+      </tr>
+      <tr class="substat">
+        <td>last 90 days</td>
+        <td>{{ project_total_completed_assignments_90_day }}</td>
+      </tr>
+      <tr class="substat">
+        <td>last 180 days</td>
+        <td>{{ project_total_completed_assignments_180_day }}</td>
+      </tr>
+      <tr class="substat">
+        <td>last 365 days</td>
+        <td>{{ project_total_completed_assignments_365_day }}</td>
+      </tr>
+      <tr>
         <th>Total Work Time</th>
-        <td>{{ project_total_work_time }} ({{ project.total_work_time_in_seconds }}s)</td>
+        <td>{{ project_total_work_time }}</td>
       </tr>
       <tr>
         <th>Mean Time / Assignment</th>
-        <td>{{ project_mean_work_time }} ({{ project.mean_work_time_in_seconds | floatformat }}s)</td>
+        <td>{{ project_mean_work_time }}</td>
       </tr>
       <tr>
         <th>Median Time / Assignment</th>
-        <td>{{ project_median_work_time}} ({{ project.median_work_time_in_seconds }}s)</td>
+        <td>{{ project_median_work_time }}</td>
       </tr>
+    </table>
+  </div>
+
+  <h2>Batch Statistics</h2>
+
+  <div>
+    <table class="table table-sm table-bordered">
+      <thead class="thead-light">
+        <tr>
+          <th>Name</th>
+          <th># Assignments</th>
+          <th>Mean Time</th>
+          <th>Median Time</th>
+          <th>Most Recent Assignment</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for stats_batch in stats_batches %}
+        <tr>
+          <td>
+            <a href="{% url 'turkle_admin:batch_stats' stats_batch.batch_id %}">
+              {{ stats_batch.name }}
+            </a>
+          </td>
+          <td>{{ stats_batch.assignments_completed }}</td>
+          <td>{{ stats_batch.mean_work_time }}</td>
+          <td>{{ stats_batch.median_work_time }}</td>
+          <td>{{ stats_batch.last_finished_time }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
   </div>
 

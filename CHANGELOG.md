@@ -11,6 +11,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Help page for workers
 
 ### Changed
+- Admin UI page with Project-level Statistics now shows tasks
+  completed during time intervals.  Page also links to Batch-level
+  Statistics pages for each Batch associated with the Project.
 - Access controls are now Batch-level instead of Project-level
 - CSV field size limit now computed with Windows-compatible metric
 

@@ -20,7 +20,11 @@
         <td scope="col">{{ batch.name }}</td>
       </tr>
       <tr>
-        <th>Project Name</th>
+        <th>
+          Project Name
+          (<a href="{% url 'turkle_admin:project_stats' batch.project_id %}">Project Statistics</a>)
+
+        </th>
         <td>{{ batch.project.name }}</td>
       </tr>
       <tr>
@@ -66,15 +70,15 @@
       </tr>
       <tr>
         <th>Total Work Time</th>
-        <td>{{ batch_total_work_time }} ({{ batch.total_work_time_in_seconds }}s)</td>
+        <td>{{ batch_total_work_time }}</td>
       </tr>
       <tr>
         <th>Mean Time / Assignment</th>
-        <td>{{ batch_mean_work_time }} ({{ batch.mean_work_time_in_seconds | floatformat }}s)</td>
+        <td>{{ batch_mean_work_time }}</td>
       </tr>
       <tr>
         <th>Median Time / Assignment</th>
-        <td>{{ batch_median_work_time}} ({{ batch.median_work_time_in_seconds }}s)</td>
+        <td>{{ batch_median_work_time}}</td>
       </tr>
       <!--
       <tr>
