@@ -52,6 +52,13 @@ iframe {
   box-sizing: inherit;
   display: block;
 }
-.muted {
-  opacity: 80%;
+
+div.task-preview {
+  background: #000;
+  height: 100%;
+  display: block;
+}
+.task-preview iframe {
+  background: #fff;
+  opacity: 0.8;
 }

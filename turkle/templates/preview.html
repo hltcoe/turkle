@@ -8,9 +8,11 @@
 
 {% block body %}
 <div class="container-fluid content">
-  <iframe src="{% url 'preview_iframe' task.id %}{{ http_get_params }}"
-          id="task_assignment_iframe" class="muted">
-  </iframe>
+  <div class="task-preview">
+    <iframe src="{% url 'preview_iframe' task.id %}{{ http_get_params }}"
+            id="task_assignment_iframe">
+    </iframe>
+  </div>
 </div>
 {% endblock %}
 
