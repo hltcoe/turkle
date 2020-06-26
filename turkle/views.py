@@ -50,7 +50,12 @@ def index(request):
 
     # Create a row for each Batch that has Tasks available for the current user
     batch_rows = []
-    for batch in Batch.all_available_for(request.user):
+
+    batch_list = Batch.all_available_for(request.user)
+    batch_query = Batch.objects.filter(id__in=[b.id for b in batch_list])
+    batch_query = batch_query.prefetch_related('project')
+
+    for batch in batch_query:
         total_tasks_available = batch.total_available_tasks_for(request.user)
         if total_tasks_available > 0:
             batch_rows.append({
