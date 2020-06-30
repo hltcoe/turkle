@@ -11,7 +11,8 @@ from bs4 import BeautifulSoup
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Prefetch
+from django.db.models import Count, IntegerField, OuterRef, Prefetch, Subquery
+from django.db.models.functions import Coalesce
 from django.utils import timezone
 from guardian.core import ObjectPermissionChecker
 from guardian.models import GroupObjectPermission
@@ -182,7 +183,7 @@ class Batch(TaskAssignmentStatistics, models.Model):
     published = models.BooleanField(db_index=True, default=True)
 
     @classmethod
-    def all_available_for(cls, user):
+    def access_permitted_for(cls, user):
         """Retrieve the active Batches that the user has permission to access
 
         Both the Batch and the Project associated the Batch must be active.
@@ -203,6 +204,85 @@ class Batch(TaskAssignmentStatistics, models.Model):
         checker.prefetch_perms(batches)
 
         return [b for b in batches if checker.has_perm('can_work_on_batch', b)]
+
+    @classmethod
+    def available_task_counts_for(cls, batch_query, user):
+        """Retrieve # of tasks available for user for the Batches in query
+
+        Args:
+            batch_query (QuerySet): A QuerySet that retrieves Batch objects
+            user (User):
+
+        Returns:
+            Dict where keys are Batch IDs (int) and values are the total
+            number of tasks in the batch available for the specified user.
+        """
+        available_task_counts = {}
+
+        if not user.is_authenticated:
+            # Batches an anonymous user does not have access to have an available task count of 0
+            for b_id in batch_query.filter(login_required=True).values_list('id', flat=True):
+                available_task_counts[b_id] = 0
+            batch_query = batch_query.exclude(login_required=True)
+
+        # Count number of tasks available for case where Batch.assignments_per_task == 1
+        # For this case, the number of available tasks is the same for all users with
+        # access to the batch.
+        oneway_batch_query = batch_query.filter(assignments_per_task=1)
+        unassigned_tasks = Task.objects.filter(completed=False).filter(taskassignment=None)
+
+        # Django does not easily support aggregations (such as Count) using subqueries:
+        #   https://code.djangoproject.com/ticket/28296
+        # The Django documentation states that:
+        #  "Aggregates may be used within a Subquery, but they require a specific
+        #   combination of filter(), values(), and annotate() to get the subquery
+        #   grouping correct."
+        #     https://docs.djangoproject.com/en/2.2/ref/models/expressions/#using-aggregates-within-a-subquery-expression
+        # The specific syntax we use here for count subqueries is adapted from:
+        #   https://github.com/martsberger/django-sql-utils
+        # where we are using the pattern:
+        #   subquery = Subquery(Child.objects.filter(parent_id=OuterRef('id')).order_by()
+        #                      .values('parent').annotate(count=Count('pk'))
+        #                      .values('count'), output_field=IntegerField())
+        #   Parent.objects.annotate(child_count=Coalesce(subquery, 0))
+        task_count_subquery = Subquery(
+            unassigned_tasks
+            .filter(batch=OuterRef('pk'))
+            .order_by().values('batch').annotate(count=Count('pk')).values('count'),
+            output_field=IntegerField())
+
+        oneway_batch_values = oneway_batch_query\
+            .annotate(available_task_count=Coalesce(task_count_subquery, 0))\
+            .values('available_task_count', 'id')
+        for obv in oneway_batch_values:
+            available_task_counts[obv['id']] = obv['available_task_count']
+
+        if user.is_authenticated:
+            # Only authenticated users have access to multiple-assignment batches
+
+            # Count number of tasks available for case where Batch.assignments_per_task > 1
+            multiway_batch_query = batch_query.filter(assignments_per_task__gt=1)
+            ta_count_subquery = Subquery(
+                TaskAssignment.objects
+                .filter(task=OuterRef('pk'))
+                .order_by().values('task').annotate(count=Count('pk')).values('count'),
+                output_field=IntegerField())
+            unassigned_tasks = Task.objects.filter(completed=False)\
+                                           .annotate(ac=Coalesce(ta_count_subquery, 0))\
+                                           .filter(ac__lt=OuterRef('assignments_per_task'))\
+                                           .exclude(taskassignment__assigned_to=user)
+            task_count_subquery = Subquery(
+                unassigned_tasks
+                .filter(batch=OuterRef('pk'))
+                .order_by().values('batch').annotate(count=Count('pk')).values('count'),
+                output_field=IntegerField())
+            multiway_batch_values = multiway_batch_query\
+                .annotate(available_task_count=Coalesce(task_count_subquery, 0))\
+                .values('available_task_count', 'id')
+            for mbv in multiway_batch_values:
+                available_task_counts[mbv['id']] = mbv['available_task_count']
+
+        return available_task_counts
 
     def assignments_completed_by(self, user):
         """
