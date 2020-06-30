@@ -168,10 +168,10 @@ class TestBatch(django.test.TestCase):
     def setUp(self):
         self.admin = User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
 
-    def test_all_available_for_active_flag(self):
+    def test_access_permitted_for_active_flag(self):
         user = User.objects.create_user('testuser', password='secret')
 
-        self.assertEqual(len(Batch.all_available_for(user)), 0)
+        self.assertEqual(len(Batch.access_permitted_for(user)), 0)
 
         active_project = Project.objects.create()
         inactive_project = Project.objects.create(active=False)
@@ -180,54 +180,54 @@ class TestBatch(django.test.TestCase):
             active=False,
             project=active_project,
         )
-        self.assertEqual(len(Batch.all_available_for(user)), 0)
+        self.assertEqual(len(Batch.access_permitted_for(user)), 0)
 
         Batch.objects.create(
             active=False,
             project=inactive_project
         )
-        self.assertEqual(len(Batch.all_available_for(user)), 0)
+        self.assertEqual(len(Batch.access_permitted_for(user)), 0)
 
         Batch.objects.create(
             active=True,
             project=inactive_project
         )
-        self.assertEqual(len(Batch.all_available_for(user)), 0)
+        self.assertEqual(len(Batch.access_permitted_for(user)), 0)
 
         Batch.objects.create(
             active=True,
             project=active_project,
         )
-        self.assertEqual(len(Batch.all_available_for(user)), 1)
+        self.assertEqual(len(Batch.access_permitted_for(user)), 1)
 
-    def test_all_available_for_login_required(self):
+    def test_access_permitted_for_login_required(self):
         anonymous_user = AnonymousUser()
 
-        self.assertEqual(len(Batch.all_available_for(anonymous_user)), 0)
+        self.assertEqual(len(Batch.access_permitted_for(anonymous_user)), 0)
 
         project = Project.objects.create()
         Batch.objects.create(login_required=True, project=project)
-        self.assertEqual(len(Batch.all_available_for(anonymous_user)), 0)
+        self.assertEqual(len(Batch.access_permitted_for(anonymous_user)), 0)
 
         authenticated_user = User.objects.create_user('testuser', password='secret')
-        self.assertEqual(len(Batch.all_available_for(authenticated_user)), 1)
+        self.assertEqual(len(Batch.access_permitted_for(authenticated_user)), 1)
 
-    def test_all_available_for_custom_permissions(self):
+    def test_access_permitted_for_custom_permissions(self):
         user = User.objects.create_user('testuser', password='secret')
         group = Group.objects.create(name='testgroup')
         user.groups.add(group)
         project = Project.objects.create(custom_permissions=True)
         batch = Batch.objects.create(custom_permissions=True, project=project)
 
-        self.assertEqual(len(batch.all_available_for(user)), 0)
+        self.assertEqual(len(batch.access_permitted_for(user)), 0)
 
         # Verify that giving the group access also gives the group members access
         self.assertFalse(user.has_perm('can_work_on_batch', batch))
         assign_perm('can_work_on_batch', group, batch)
-        self.assertEqual(len(batch.all_available_for(user)), 1)
+        self.assertEqual(len(batch.access_permitted_for(user)), 1)
 
         # add superusers should have access to it
-        self.assertEqual(len(batch.all_available_for(self.admin)), 1)
+        self.assertEqual(len(batch.access_permitted_for(self.admin)), 1)
 
     def test_batch_to_csv(self):
         template = '<p>${number} - ${letter}</p><textarea>'
@@ -507,20 +507,22 @@ class TestBatch(django.test.TestCase):
             ).clean()
 
 
-class TestBatchAvailableTASKs(django.test.TestCase):
+class TestBatchAvailableTasks(django.test.TestCase):
     def setUp(self):
+        self.batch_query = Batch.objects.all()
         self.user = User.objects.create_user('testuser', password='secret')
 
         template = '<p>${number} - ${letter}</p><textarea>'
         self.project = Project.objects.create(name='test', html_template=template)
 
-    def test_available_tasks_for__aph_is_1(self):
+    def test_available_tasks_for__apt_is_1(self):
         batch = Batch(
             assignments_per_task=1,
             project=self.project
         )
         batch.save()
         self.assertEqual(batch.total_available_tasks_for(self.user), 0)
+        self.assertEqual(Batch.available_task_counts_for(self.batch_query, self.user)[batch.id], 0)
         self.assertEqual(batch.next_available_task_for(self.user), None)
 
         task = Task(
@@ -528,6 +530,7 @@ class TestBatchAvailableTASKs(django.test.TestCase):
         )
         task.save()
         self.assertEqual(batch.total_available_tasks_for(self.user), 1)
+        self.assertEqual(Batch.available_task_counts_for(self.batch_query, self.user)[batch.id], 1)
         self.assertEqual(batch.next_available_task_for(self.user), task)
 
         task_assignment = TaskAssignment(
@@ -537,21 +540,24 @@ class TestBatchAvailableTASKs(django.test.TestCase):
         )
         task_assignment.save()
         self.assertEqual(batch.total_available_tasks_for(self.user), 0)
+        self.assertEqual(Batch.available_task_counts_for(self.batch_query, self.user)[batch.id], 0)
         self.assertEqual(batch.next_available_task_for(self.user), None)
 
-    def test_available_tasks_for__aph_is_2(self):
+    def test_available_tasks_for__apt_is_2(self):
         batch = Batch(
             assignments_per_task=2,
             project=self.project
         )
         batch.save()
         self.assertEqual(batch.total_available_tasks_for(self.user), 0)
+        self.assertEqual(Batch.available_task_counts_for(self.batch_query, self.user)[batch.id], 0)
 
         task = Task(
             batch=batch,
         )
         task.save()
         self.assertEqual(batch.total_available_tasks_for(self.user), 1)
+        self.assertEqual(Batch.available_task_counts_for(self.batch_query, self.user)[batch.id], 1)
 
         task_assignment = TaskAssignment(
             assigned_to=self.user,
@@ -560,6 +566,7 @@ class TestBatchAvailableTASKs(django.test.TestCase):
         )
         task_assignment.save()
         self.assertEqual(batch.total_available_tasks_for(self.user), 0)
+        self.assertEqual(Batch.available_task_counts_for(self.batch_query, self.user)[batch.id], 0)
 
         other_user = User.objects.create_user('other_user', password='secret')
         self.assertEqual(batch.total_available_tasks_for(other_user), 1)
@@ -571,23 +578,28 @@ class TestBatchAvailableTASKs(django.test.TestCase):
         )
         task_assignment.save()
         self.assertEqual(batch.total_available_tasks_for(other_user), 0)
+        self.assertEqual(Batch.available_task_counts_for(self.batch_query, self.user)[batch.id], 0)
 
     def test_available_tasks_for_anon_user(self):
-        anonymous_user = AnonymousUser()
+        anon_user = AnonymousUser()
         user = User.objects.create_user('user', password='secret')
 
-        self.assertEqual(len(Batch.all_available_for(user)), 0)
+        self.assertEqual(len(Batch.access_permitted_for(user)), 0)
         batch_protected = Batch.objects.create(
             active=True,
             login_required=True,
             project=self.project
         )
-        self.assertEqual(len(Batch.all_available_for(anonymous_user)), 0)
-        self.assertEqual(len(Batch.all_available_for(user)), 1)
+        self.assertEqual(len(Batch.access_permitted_for(anon_user)), 0)
+        self.assertEqual(len(Batch.access_permitted_for(user)), 1)
 
         Task.objects.create(batch=batch_protected)
-        self.assertEqual(len(batch_protected.available_tasks_for(anonymous_user)), 0)
+        self.assertEqual(len(batch_protected.available_tasks_for(anon_user)), 0)
+        self.assertEqual(
+            Batch.available_task_counts_for(self.batch_query, anon_user)[batch_protected.id], 0)
         self.assertEqual(len(batch_protected.available_tasks_for(user)), 1)
+        self.assertEqual(
+            Batch.available_task_counts_for(self.batch_query, user)[batch_protected.id], 1)
 
         batch_unprotected = Batch.objects.create(
             active=True,
@@ -595,10 +607,14 @@ class TestBatchAvailableTASKs(django.test.TestCase):
             project=self.project
         )
         Task.objects.create(batch=batch_unprotected)
-        self.assertEqual(len(Batch.all_available_for(anonymous_user)), 1)
-        self.assertEqual(len(Batch.all_available_for(user)), 2)
-        self.assertEqual(len(batch_unprotected.available_tasks_for(anonymous_user)), 1)
+        self.assertEqual(len(Batch.access_permitted_for(anon_user)), 1)
+        self.assertEqual(len(Batch.access_permitted_for(user)), 2)
+        self.assertEqual(len(batch_unprotected.available_tasks_for(anon_user)), 1)
+        self.assertEqual(
+            Batch.available_task_counts_for(self.batch_query, anon_user)[batch_unprotected.id], 1)
         self.assertEqual(len(batch_unprotected.available_tasks_for(user)), 1)
+        self.assertEqual(
+            Batch.available_task_counts_for(self.batch_query, user)[batch_unprotected.id], 1)
 
 
 class TestBatchReportFunctions(django.test.TestCase):

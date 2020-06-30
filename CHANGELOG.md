@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Statistics pages for each Batch associated with the Project.
 - Access controls are now Batch-level instead of Project-level
 - CSV field size limit now computed with Windows-compatible metric
+- Index page performance improvements.
 
 ### Removed
 - No longer using django-dbbackup

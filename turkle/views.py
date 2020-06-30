@@ -48,25 +48,25 @@ def index(request):
                 'task_assignment_id': ha.id
             })
 
-    # Create a row for each Batch that has Tasks available for the current user
-    batch_rows = []
-
-    batch_list = Batch.all_available_for(request.user)
+    batch_list = Batch.access_permitted_for(request.user)
     batch_query = Batch.objects.filter(id__in=[b.id for b in batch_list])
-    batch_query = batch_query.prefetch_related('project')
 
-    for batch in batch_query:
-        total_tasks_available = batch.total_available_tasks_for(request.user)
+    available_task_counts = Batch.available_task_counts_for(batch_query, request.user)
+
+    batch_rows = []
+    for batch in batch_query.values('created_at', 'id', 'name', 'project__name'):
+        total_tasks_available = available_task_counts[batch['id']]
+
         if total_tasks_available > 0:
             batch_rows.append({
-                'project_name': batch.project.name,
-                'batch_name': batch.name,
-                'batch_published': batch.created_at,
+                'project_name': batch['project__name'],
+                'batch_name': batch['name'],
+                'batch_published': batch['created_at'],
                 'assignments_available': total_tasks_available,
                 'preview_next_task_url': reverse('preview_next_task',
-                                                 kwargs={'batch_id': batch.id}),
+                                                 kwargs={'batch_id': batch['id']}),
                 'accept_next_task_url': reverse('accept_next_task',
-                                                kwargs={'batch_id': batch.id})
+                                                kwargs={'batch_id': batch['id']})
             })
     return render(request, 'index.html', {
         'abandoned_assignments': abandoned_assignments,
