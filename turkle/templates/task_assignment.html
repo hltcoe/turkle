@@ -25,7 +25,8 @@ $(function () {
     $.post("{% url 'update_auto_accept' %}", {'auto_accept': this.checked});
   });
 
-  $("#expiration-timer").countdown('{{ task_assignment.expires_at|date:'Y-m-d H:i' }}')
+  var expirationTime = new Date('{{ task_assignment.expires_at|date:'c' }}');
+  $("#expiration-timer").countdown(expirationTime)
                         .on('update.countdown', function(event) {
                           $(this).text(event.strftime('Expires in %H:%M'))
                         })
