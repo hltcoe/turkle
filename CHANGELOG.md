@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CSV field size limit now computed with Windows-compatible metric
 - Index page performance improvements.
 
+### Fixed
+- On Task Assignment page, JavaScript countdown timer now handles
+  timezones correctly.
+
 ### Removed
 - No longer using django-dbbackup
 
