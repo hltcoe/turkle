@@ -326,11 +326,25 @@ def activate_batches(modeladmin, request, queryset):
 activate_batches.short_description = "Activate selected Batches"
 
 
+def activate_projects(modeladmin, request, queryset):
+    queryset.update(active=True)
+
+
+activate_projects.short_description = "Activate selected Projects"
+
+
 def deactivate_batches(modeladmin, request, queryset):
     queryset.update(active=False)
 
 
 deactivate_batches.short_description = "Deactivate selected Batches"
+
+
+def deactivate_projects(modeladmin, request, queryset):
+    queryset.update(active=False)
+
+
+deactivate_projects.short_description = "Deactivate selected Projects"
 
 
 class BatchAdmin(admin.ModelAdmin):
@@ -680,6 +694,7 @@ class ProjectForm(ModelForm):
 
 
 class ProjectAdmin(GuardedModelAdmin):
+    actions = [activate_projects, deactivate_projects]
     change_form_template = 'admin/turkle/project/change_form.html'
     form = ProjectForm
     formfield_overrides = {

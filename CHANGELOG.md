@@ -6,7 +6,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
-- Bulk Batch activation/deactivation
+- Bulk Batch activation/deactivation admin UI actions
+- Bulk Project activation/deactivation admin UI actions
 - Support for turkle_site/local_settings.py
 - Help page for workers
 
