@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Bulk Project activation/deactivation admin UI actions
 - Support for turkle_site/local_settings.py
 - Help page for workers
+- Batches on Batch Admin page can now be filtered by Active flag,
+  Batch Name, Batch Creator, and Project Name
+- Projects on Project Admin page can now be filtered by Active flag,
+  Project Creator, Project Name
 
 ### Changed
 - Admin UI page with Project-level Statistics now shows tasks

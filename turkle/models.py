@@ -174,7 +174,8 @@ class Batch(TaskAssignmentStatistics, models.Model):
     allotted_assignment_time = models.IntegerField(default=24)
     assignments_per_task = models.IntegerField(default=1, verbose_name='Assignments per Task')
     created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(User, null=True, on_delete=models.CASCADE)
+    created_by = models.ForeignKey(User, null=True, related_name='created_batches',
+                                   on_delete=models.CASCADE, verbose_name='creator')
     custom_permissions = models.BooleanField(default=False)
     filename = models.CharField(max_length=1024)
     login_required = models.BooleanField(db_index=True, default=True)
@@ -671,7 +672,7 @@ class Project(TaskAssignmentStatistics, models.Model):
     assignments_per_task = models.IntegerField(db_index=True, default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, null=True, related_name='created_projects',
-                                   on_delete=models.CASCADE)
+                                   on_delete=models.CASCADE, verbose_name='creator')
     custom_permissions = models.BooleanField(default=False)
     filename = models.CharField(max_length=1024, blank=True)
     html_template = models.TextField()

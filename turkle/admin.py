@@ -7,6 +7,8 @@ import json
 import logging
 import statistics
 
+from admin_auto_filters.filters import AutocompleteFilter
+from admin_auto_filters.views import AutocompleteJsonView
 from django.conf.urls import url
 from django.contrib import admin, messages
 from django.contrib.admin.widgets import FilteredSelectMultiple
@@ -143,6 +145,18 @@ class CustomUserAdmin(UserAdmin):
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser',
                                     'groups')}),
     )
+
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            url(r'autocomplete-batch-owner',
+                self.admin_site.admin_view(BatchCreatorSearchView.as_view(model_admin=self)),
+                name='autocomplete_batch_owner'),
+            url(r'autocomplete-project-owner',
+                self.admin_site.admin_view(ProjectCreatorSearchView.as_view(model_admin=self)),
+                name='autocomplete_project_owner'),
+        ]
+        return my_urls + urls
 
     def response_add(self, request, obj, post_url_continue=None):
         # if user clicks save, send to list of users rather than edit screen
@@ -347,6 +361,45 @@ def deactivate_projects(modeladmin, request, queryset):
 deactivate_projects.short_description = "Deactivate selected Projects"
 
 
+class BatchCreatorFilter(AutocompleteFilter):
+    title = 'creator'
+    field_name = 'created_by'
+
+    def get_autocomplete_url(self, request, model_admin):
+        return reverse('turkle_admin:autocomplete_batch_owner')
+
+
+class BatchCreatorSearchView(AutocompleteJsonView):
+    def get_queryset(self):
+        return super().get_queryset().exclude(created_batches=None)
+
+
+class ProjectCreatorFilter(AutocompleteFilter):
+    title = 'creator'
+    field_name = 'created_by'
+
+    def get_autocomplete_url(self, request, model_admin):
+        return reverse('turkle_admin:autocomplete_project_owner')
+
+
+class ProjectCreatorSearchView(AutocompleteJsonView):
+    def get_queryset(self):
+        return super().get_queryset().exclude(created_projects=None)
+
+
+class ProjectFilter(AutocompleteFilter):
+    title = 'project'
+    field_name = 'project'
+
+    def get_autocomplete_url(self, request, model_admin):
+        return reverse('turkle_admin:autocomplete_project_order_by_name')
+
+
+class ProjectSearchView(AutocompleteJsonView):
+    def get_queryset(self):
+        return super().get_queryset().order_by('name')
+
+
 class BatchAdmin(admin.ModelAdmin):
     actions = [activate_batches, deactivate_batches]
     form = BatchForm
@@ -357,6 +410,12 @@ class BatchAdmin(admin.ModelAdmin):
         'name', 'project', 'is_active', 'assignments_completed',
         'stats', 'download_input', 'download_csv',
         )
+    list_filter = ('active', BatchCreatorFilter, ProjectFilter)
+    search_fields = ['name']
+
+    # required by django-admin-autocomplete-filter 0.5
+    class Media:
+        pass
 
     def assignments_completed(self, obj):
         tfa = obj.total_finished_task_assignments()
@@ -701,14 +760,23 @@ class ProjectAdmin(GuardedModelAdmin):
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
     list_display = ('name', 'filename', 'updated_at', 'active', 'stats', 'publish_tasks')
+    list_filter = ('active', ProjectCreatorFilter)
+    search_fields = ['name']
 
     # Fieldnames are extracted from form text, and should not be edited directly
     exclude = ('fieldnames',)
     readonly_fields = ('extracted_template_variables',)
 
+    # required by django-admin-autocomplete-filter 0.5
+    class Media:
+        pass
+
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [
+            url(r'autocomplete-order-by-name',
+                self.admin_site.admin_view(ProjectSearchView.as_view(model_admin=self)),
+                name='autocomplete_project_order_by_name'),
             url(r'^(?P<project_id>\d+)/stats/$',
                 self.admin_site.admin_view(self.project_stats), name='project_stats'),
         ]
