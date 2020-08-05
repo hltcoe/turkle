@@ -332,6 +332,38 @@ class TestIndex(django.test.TestCase):
         self.assertTrue(b'MY_TEMPLATE_NAME' in response.content)
         self.assertTrue(b'MY_BATCH_NAME' in response.content)
 
+    def test_index_unprotected_template_bad_batch(self):
+        project_unprotected = Project.objects.create(
+            active=True,
+            login_required=False,
+            name='MY_TEMPLATE_NAME',
+        )
+        # In theory, Turkle should prevent the creation of Batches where login_required == False
+        # and assignments_per_task != 1
+        batch = Batch.objects.create(
+            assignments_per_task=2,
+            login_required=False,
+            name='MY_BATCH_NAME',
+            project=project_unprotected,
+        )
+        Task.objects.create(batch=batch)
+
+        anon_client = django.test.Client()
+        response = anon_client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(b'No Tasks available' in response.content)
+        self.assertFalse(b'MY_TEMPLATE_NAME' in response.content)
+        self.assertFalse(b'MY_BATCH_NAME' in response.content)
+
+        known_client = django.test.Client()
+        User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+        known_client.login(username='admin', password='secret')
+        response = known_client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(b'No Tasks available' in response.content)
+        self.assertTrue(b'MY_TEMPLATE_NAME' in response.content)
+        self.assertTrue(b'MY_BATCH_NAME' in response.content)
+
 
 class TestIndexAbandonedAssignments(TestCase):
     def setUp(self):

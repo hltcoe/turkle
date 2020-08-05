@@ -258,11 +258,9 @@ class Batch(TaskAssignmentStatistics, models.Model):
         for obv in oneway_batch_values:
             available_task_counts[obv['id']] = obv['available_task_count']
 
+        multiway_batch_query = batch_query.filter(assignments_per_task__gt=1)
         if user.is_authenticated:
-            # Only authenticated users have access to multiple-assignment batches
-
             # Count number of tasks available for case where Batch.assignments_per_task > 1
-            multiway_batch_query = batch_query.filter(assignments_per_task__gt=1)
             ta_count_subquery = Subquery(
                 TaskAssignment.objects
                 .filter(task=OuterRef('pk'))
@@ -282,6 +280,12 @@ class Batch(TaskAssignmentStatistics, models.Model):
                 .values('available_task_count', 'id')
             for mbv in multiway_batch_values:
                 available_task_counts[mbv['id']] = mbv['available_task_count']
+        else:
+            # Only authenticated users should have access to multiple-assignment batches
+            # If the database somehow contains multiple-assignment Batches that are
+            # accessible to an anonymous user, we set the available task count to 0
+            for mbv in multiway_batch_query.values('id'):
+                available_task_counts[mbv['id']] = 0
 
         return available_task_counts
 
@@ -345,17 +349,9 @@ class Batch(TaskAssignmentStatistics, models.Model):
         return self.available_tasks_for(user).values_list('id', flat=True)
 
     def clean(self):
-        # Without this guard condition for project_id, a
-        # RelatedObjectDoesNotExist exception is thrown before a
-        # ValidationError can be thrown.  When this model is edited
-        # using a form, this causes the server to generate an HTTP 500
-        # error due to the uncaught RelatedObjectDoesNotExist
-        # exception, instead of catching the ValidationError and
-        # displaying a form with a "Field required" warning.
-        if self.project_id:
-            if not self.project.login_required and self.assignments_per_task != 1:
-                raise ValidationError('When login is not required to access a Project, ' +
-                                      'the number of Assignments per Task must be 1')
+        if not self.login_required and self.assignments_per_task != 1:
+            raise ValidationError('When login is not required to access a Batch, ' +
+                                  'the number of Assignments per Task must be 1')
 
     def copy_project_permissions(self):
         """Copy 'permission' settings from associated Project to this Batch

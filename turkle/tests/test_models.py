@@ -494,7 +494,6 @@ class TestBatch(django.test.TestCase):
         with self.assertRaisesMessage(ValidationError, 'Assignments per Task must be 1'):
             project = Project(
                 name='test',
-                login_required=False,
                 html_template='<textarea>',
                 created_by=self.admin,
                 updated_by=self.admin,
@@ -503,6 +502,7 @@ class TestBatch(django.test.TestCase):
             Batch(
                 name='test',
                 assignments_per_task=2,
+                login_required=False,
                 project=project,
             ).clean()
 
