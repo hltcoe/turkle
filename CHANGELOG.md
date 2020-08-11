@@ -6,6 +6,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Admin page with Project-level Statistics.  Page shows tasks
+  completed during time intervals.  Page also links to Batch-level
+  Statistics pages for each Batch associated with the Project.
+- Batch Admin page displays green checkmark icon for completed batches
 - Bulk Batch activation/deactivation admin UI actions
 - Bulk Project activation/deactivation admin UI actions
 - Support for turkle_site/local_settings.py
@@ -16,12 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Project Creator, Project Name
 
 ### Changed
-- Admin UI page with Project-level Statistics now shows tasks
-  completed during time intervals.  Page also links to Batch-level
-  Statistics pages for each Batch associated with the Project.
 - Access controls are now Batch-level instead of Project-level
 - CSV field size limit now computed with Windows-compatible metric
 - Index page performance improvements.
+- Updated Django from 1.11 to 2.2
 
 ### Fixed
 - On Task Assignment page, JavaScript countdown timer now handles
