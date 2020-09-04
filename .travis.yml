@@ -19,6 +19,9 @@ script:
 
 jobs:
   include:
+    - stage: Style check
+      install: pip install flake8
+      script: flake8
     - stage: docker build
       python: 3.5
       script: docker build .
