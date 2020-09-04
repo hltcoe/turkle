@@ -19,9 +19,13 @@ script:
 
 jobs:
   include:
-    - stage: Style check
+    - stage: style check
       install: pip install flake8
       script: flake8
+    - stage: documentation
+      install: pip install sphinx sphinx_rtd_theme
+      script: sphinx-build -M html docs _built_docs -W
     - stage: docker build
-      python: 3.5
-      script: docker build .
+      script:
+        - docker build .
+        - docker build -t turkle.mysql -f Dockerfile-MySQL .
