@@ -139,6 +139,9 @@ class TaskAssignment(models.Model):
             self.task.completed = True
             self.task.save()
 
+        # Mark Batch as completed if all Tasks have been completed
+        self.task.batch.update_completed_status()
+
     def work_time_in_seconds(self):
         """Return number of seconds elapsed between Task assignment and submission
 
@@ -173,6 +176,7 @@ class Batch(TaskAssignmentStatistics, models.Model):
     active = models.BooleanField(db_index=True, default=True)
     allotted_assignment_time = models.IntegerField(default=24)
     assignments_per_task = models.IntegerField(default=1, verbose_name='Assignments per Task')
+    completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, null=True, related_name='created_batches',
                                    on_delete=models.CASCADE, verbose_name='creator')
@@ -220,6 +224,9 @@ class Batch(TaskAssignmentStatistics, models.Model):
         """
         available_task_counts = {}
 
+        for b_id in batch_query.filter(completed=True).values_list('id', flat=True):
+            available_task_counts[b_id] = 0
+
         if not user.is_authenticated:
             # Batches an anonymous user does not have access to have an available task count of 0
             for b_id in batch_query.filter(login_required=True).values_list('id', flat=True):
@@ -229,7 +236,7 @@ class Batch(TaskAssignmentStatistics, models.Model):
         # Count number of tasks available for case where Batch.assignments_per_task == 1
         # For this case, the number of available tasks is the same for all users with
         # access to the batch.
-        oneway_batch_query = batch_query.filter(assignments_per_task=1)
+        oneway_batch_query = batch_query.filter(assignments_per_task=1).filter(completed=False)
         unassigned_tasks = Task.objects.filter(completed=False).filter(taskassignment=None)
 
         # Django does not easily support aggregations (such as Count) using subqueries:
@@ -258,7 +265,8 @@ class Batch(TaskAssignmentStatistics, models.Model):
         for obv in oneway_batch_values:
             available_task_counts[obv['id']] = obv['available_task_count']
 
-        multiway_batch_query = batch_query.filter(assignments_per_task__gt=1)
+        multiway_batch_query = batch_query.filter(assignments_per_task__gt=1)\
+                                          .filter(completed=False)
         if user.is_authenticated:
             # Count number of tasks available for case where Batch.assignments_per_task > 1
             ta_count_subquery = Subquery(
@@ -517,6 +525,19 @@ class Batch(TaskAssignmentStatistics, models.Model):
             that have NOT been completed.
         """
         return self.task_set.filter(completed=False).order_by('id')
+
+    def update_completed_status(self):
+        """Update the `completed` flag to match the Batch completed status
+
+        A Batch is marked "complete" IFF all of the Batch's Tasks are marked as `completed`.
+
+        A database write occurs IFF the "completed" status has changed since the `completed`
+        flag was last updated.
+        """
+        completed_status = not self.unfinished_tasks().exists()
+        if self.completed != completed_status:
+            self.completed = completed_status
+            self.save()
 
     def users_that_completed_tasks(self):
         """
