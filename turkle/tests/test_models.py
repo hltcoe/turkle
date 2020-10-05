@@ -31,6 +31,7 @@ class TestTaskAssignment(django.test.TestCase):
 
         self.assertEqual(batch.assignments_per_task, 1)
         self.assertFalse(task.completed)
+        self.assertFalse(batch.completed)
 
         TaskAssignment(
             assigned_to=None,
@@ -39,7 +40,9 @@ class TestTaskAssignment(django.test.TestCase):
         ).save()
 
         task.refresh_from_db()
+        batch.refresh_from_db()
         self.assertTrue(task.completed)
+        self.assertTrue(batch.completed)
 
     def test_task_marked_as_completed_two_way_redundancy(self):
         # When assignment_per_task==2, completing 2 Assignments marks Task as complete
@@ -54,8 +57,8 @@ class TestTaskAssignment(django.test.TestCase):
             input_csv_fields={'number': '1', 'letter': 'a'}
         )
         task.save()
-
         self.assertFalse(task.completed)
+        self.assertFalse(batch.completed)
 
         TaskAssignment(
             assigned_to=None,
@@ -63,7 +66,9 @@ class TestTaskAssignment(django.test.TestCase):
             task=task
         ).save()
         task.refresh_from_db()
+        batch.refresh_from_db()
         self.assertFalse(task.completed)
+        self.assertFalse(batch.completed)
 
         TaskAssignment(
             assigned_to=None,
@@ -71,7 +76,9 @@ class TestTaskAssignment(django.test.TestCase):
             task=task
         ).save()
         task.refresh_from_db()
+        batch.refresh_from_db()
         self.assertTrue(task.completed)
+        self.assertTrue(batch.completed)
 
     def test_expire_all_abandoned(self):
         t = timezone.now()
