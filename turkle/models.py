@@ -224,6 +224,7 @@ class Batch(TaskAssignmentStatistics, models.Model):
         """
         available_task_counts = {}
 
+        # Completed batches (in the original batch_query) have an available task count of 0
         for b_id in batch_query.filter(completed=True).values_list('id', flat=True):
             available_task_counts[b_id] = 0
 
