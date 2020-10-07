@@ -45,7 +45,7 @@
 # TURKLE_EMAIL_ENABLED = True
 
 # Configure connection to Mail Transfer Agent (MTA)
-# more details at https://docs.djangoproject.com/en/1.11/ref/settings/#std:setting-EMAIL_HOST
+# more details at https://docs.djangoproject.com/en/2.2/ref/settings/#std:setting-EMAIL_HOST
 # EMAIL_HOST = ''
 # set the [from] email address
 # DEFAULT_FROM_EMAIL = ''

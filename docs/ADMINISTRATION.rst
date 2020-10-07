@@ -203,7 +203,7 @@ By default, the links to the password reset page are hidden.
 To enable, edit the ``turkle_site/local_settings.py`` file and set the variable ``TURKLE_EMAIL_ENABLED`` to ``True``.
 You will need to add a section to ``turkle_site/local_settings.py`` for
 configuring a Mail Transfer Agent (MTA).  The
-``turkle_site/settings.py`` file contains a (commented out) section with
+``turkle_site/example_local_settings.py`` file contains a (commented out) section with
 sample settings for configuring an MTA with Django.  For more details
 about configuring an MTA, consult the Django docs.
 
@@ -211,11 +211,11 @@ Logging Configuration
 ---------------------
 
 Before running Turkle in a production environment, logging must be configured 
-in the ``turkle_site/local_settings.py`` file. There is also a sample logging
-configuration in the settings file if an administrator wants to receive emails
-if HTTP 500 errors occur.
+in the ``turkle_site/local_settings.py`` file. There is a sample logging
+configuration in the ``turkle_site/example_local_settings.py``
+file if an administrator wants to receive emails if HTTP 500 errors occur.
 
-.. _`Django static files HOWTO`: https://docs.djangoproject.com/en/1.11/howto/static-files/deployment/
+.. _`Django static files HOWTO`: https://docs.djangoproject.com/en/2.2/howto/static-files/deployment/
 .. _Gunicorn: https://gunicorn.org
 .. _`Running Gunicorn documentation`: http://docs.gunicorn.org/en/stable/run.html
 .. _Whitenoise: https://pypi.org/project/whitenoise/
