@@ -18,9 +18,6 @@ COPY scripts /opt/turkle/scripts
 COPY turkle_site /opt/turkle/turkle_site
 COPY docker-config/create_turkle_admin.sh /opt/turkle/create_turkle_admin.sh
 
-COPY bin/entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
-
 COPY docker-config/turkle.crontab /etc/cron.d/turkle
 RUN crontab /etc/cron.d/turkle
 
@@ -33,4 +30,4 @@ VOLUME /opt/turkle
 
 EXPOSE 8080
 
-CMD [ "/entrypoint.sh" ]
+CMD [ "scripts/entrypoint.sh" ]
