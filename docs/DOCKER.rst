@@ -76,6 +76,18 @@ container by:
 - clicking on the ``CHANGE PASSWORD`` link at the top right of the screen
 - filling out and submitting the Change Password form
 
+Changing the number of threads, workers and worker connections
+--------------------------------------------------------------
+If you want to change the number of workers, threads or the connections that a worker
+accepts, you can pass environment variables to the container:
+
+- WORKERS - The number of gunicorn workers that are started (Default: 1)
+- THREADS - The number of threads started by gunicorn (Default 1)
+- CONNECTIONS - The maximum number of simultaneous clients (Default: 1000)
+
+Example::
+  docker run -d -e WORKERS=3 -e THREADS=4 -e CONNECTIONS=2000 -p 8080:8080 htlcore/turkle
+  
 Running Dockerized Turkle with a URL prefix
 -------------------------------------------
 
