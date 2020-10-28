@@ -86,7 +86,7 @@ accepts, you can pass environment variables to the container:
 - CONNECTIONS - The maximum number of simultaneous clients (Default: 1000)
 
 Example::
-  docker run -d -e WORKERS=3 -e THREADS=4 -e CONNECTIONS=2000 -p 8080:8080 htlcore/turkle
+  docker run -d -e WORKERS=3 -e THREADS=4 -e CONNECTIONS=2000 -p 8080:8080 hltcoe/turkle
   
 Running Dockerized Turkle with a URL prefix
 -------------------------------------------

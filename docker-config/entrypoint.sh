@@ -11,7 +11,7 @@ if [ ! -z $CONNECTIONS ]; then
 fi
 
 if [ ! -z $THREADS ]; then
-    ADDITIONAL_FLAGS="${ADDTIONAL_FLAGS} --threads=${THREADS}"
+    ADDITIONAL_FLAGS="${ADDITIONAL_FLAGS} --threads=${THREADS}"
 fi
 
 python3.6 manage.py migrate --noinput
