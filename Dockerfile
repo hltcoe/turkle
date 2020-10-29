@@ -17,6 +17,7 @@ COPY manage.py /opt/turkle/manage.py
 COPY scripts /opt/turkle/scripts
 COPY turkle_site /opt/turkle/turkle_site
 COPY docker-config/create_turkle_admin.sh /opt/turkle/create_turkle_admin.sh
+COPY docker-config/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 COPY docker-config/turkle.crontab /etc/cron.d/turkle
 RUN crontab /etc/cron.d/turkle
@@ -30,6 +31,4 @@ VOLUME /opt/turkle
 
 EXPOSE 8080
 
-CMD python3.6 manage.py migrate --noinput && \
-    crond && \
-    gunicorn --env TURKLE_DOCKER=1 --bind 0.0.0.0:8080 turkle_site.wsgi
+CMD [ "/usr/local/bin/entrypoint.sh" ]
