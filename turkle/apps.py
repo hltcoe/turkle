@@ -1,5 +1,5 @@
 from django.apps import AppConfig
-from turkle.utils import get_site_name
+from .utils import get_site_name
 
 
 class TurkleAppConfig(AppConfig):

@@ -29,9 +29,9 @@ from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 import humanfriendly
 
-import turkle
-from turkle.models import Batch, Project, TaskAssignment
-from turkle.utils import get_site_name, get_turkle_template_limit
+from . import __version__
+from .models import Batch, Project, TaskAssignment
+from .utils import get_site_name, get_turkle_template_limit
 
 logger = logging.getLogger(__name__)
 
@@ -50,7 +50,7 @@ class TurkleAdminSite(admin.AdminSite):
             'title': 'About',
             'site_title': self.site_title,
             'site_header': self.site_header,
-            'version': turkle.__version__,
+            'version': __version__,
         })
 
     def expire_abandoned_assignments(self, request):

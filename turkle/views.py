@@ -12,7 +12,7 @@ from django.urls import reverse
 from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.dateparse import parse_date
 
-from turkle.models import Task, TaskAssignment, Batch, Project
+from .models import Task, TaskAssignment, Batch, Project
 
 logger = logging.getLogger(__name__)
 
