@@ -1,6 +1,6 @@
 from django.conf.urls import url
 
-from turkle.views import (
+from .views import (
     accept_task,
     accept_next_task,
     task_assignment,
