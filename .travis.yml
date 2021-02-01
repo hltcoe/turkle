@@ -27,5 +27,6 @@ jobs:
       script: sphinx-build -M html docs _built_docs -W
     - stage: docker build
       script:
+        - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
         - docker build .
         - docker build -t turkle.mysql -f Dockerfile-MySQL .
