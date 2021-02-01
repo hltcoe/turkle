@@ -28,7 +28,12 @@ $(function () {
   var expirationTime = new Date('{{ task_assignment.expires_at|date:'c' }}');
   $("#expiration-timer").countdown(expirationTime)
                         .on('update.countdown', function(event) {
-                          $(this).text(event.strftime('Expires in %H:%M'))
+                          var format = '%I:%M';
+                          // if greater than 1 full day left, display as days rather than hours:mins
+                          if (event.offset.totalDays > 1) {
+                            format = "%-d day%!d";
+                          }
+                          $(this).text(event.strftime('Expires in ' + format));
                         })
                         .on('finish.countdown', function(event) {
                           // "Gray out" background of iFrame
