@@ -19,5 +19,9 @@
       </p>
       {% endif %}
     </form>
+    {% if 'hitId' in request.GET %}
+    {# When viewed by annotators, indicate this is a preview only #}
+    <div style="position: fixed; top: 0; left: 0; bottom: 0; right: 0; height: 100%; z-index: 30000; background-color: black; opacity: 0.1;"></div>
+    {% endif %}
   </body>
 </html>

@@ -314,7 +314,7 @@ def preview_iframe(request, task_id):
         messages.error(request, 'You do not have permission to view this Task')
         return redirect(index)
 
-    return render(request, 'preview_iframe.html', {'task': task})
+    return render(request, 'preview_iframe.html', {'request': request, 'task': task})
 
 
 def preview_next_task(request, batch_id):
