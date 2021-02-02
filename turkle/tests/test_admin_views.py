@@ -364,6 +364,30 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertEqual(response.status_code, 200)
 
 
+class TestUserAdmin(django.test.TestCase):
+    def setUp(self):
+        User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+
+    def test_deactivate_users(self):
+        User.objects.create_user('normal_user', password='secret')
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        # 1=AnonymousUser, 2=admin, 3=normal_user
+        response = client.post(reverse('turkle_admin:auth_user_changelist'), {
+            'action': 'deactivate_users',
+            'index': 0,
+            'select_across': 0,
+            '_selected_action': [3]
+        })
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('turkle_admin:auth_user_changelist'))
+        messages = [m.message for m in get_messages(response.wsgi_request)]
+        self.assertEqual(len(messages), 1)
+        self.assertTrue("1 user was deactivated" in messages[0])
+        self.assertEqual(1, User.objects.filter(is_active=False).count())
+
+
 class TestGroupAdmin(django.test.TestCase):
     def setUp(self):
         User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
