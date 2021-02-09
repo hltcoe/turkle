@@ -412,6 +412,7 @@ class BatchAdmin(admin.ModelAdmin):
         )
     list_filter = ('active', 'completed', BatchCreatorFilter, ProjectFilter)
     search_fields = ['name']
+    autocomplete_fields = ['project']
 
     # required by django-admin-autocomplete-filter 0.5
     class Media:
