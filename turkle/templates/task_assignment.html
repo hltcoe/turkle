@@ -29,8 +29,8 @@ $(function () {
   $("#expiration-timer").countdown(expirationTime)
                         .on('update.countdown', function(event) {
                           var format = '%I:%M';
-                          // if greater than 1 full day left, display as days rather than hours:mins
-                          if (event.offset.totalDays > 1) {
+                          // if 3 full days left or more, display as days rather than hours:mins
+                          if (event.offset.totalDays > 2) {
                             format = "%-d day%!d";
                           }
                           $(this).text(event.strftime('Expires in ' + format));
