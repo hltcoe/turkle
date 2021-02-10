@@ -69,3 +69,12 @@ textarea.parsley-error {
 .parsley-errors-list.filled {
   opacity: 1;
 }
+
+#footer {
+  background: #79aec8;
+  padding: 10px 40px;
+  border: none;
+  font-size: 14px;
+  color: #fff;
+  text-align: right;
+}
