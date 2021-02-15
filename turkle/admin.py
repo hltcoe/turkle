@@ -30,7 +30,6 @@ from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 import humanfriendly
 
-from . import __version__
 from .models import Batch, Project, TaskAssignment
 from .utils import get_site_name, get_turkle_template_limit
 
@@ -46,14 +45,6 @@ class TurkleAdminSite(admin.AdminSite):
     site_header = get_site_name() + ' administration'
     site_title = get_site_name() + ' site admin'
 
-    def about(self, request):
-        return render(request, 'admin/turkle/about.html', {
-            'title': 'About',
-            'site_title': self.site_title,
-            'site_header': self.site_header,
-            'version': __version__,
-        })
-
     def expire_abandoned_assignments(self, request):
         (total_deleted, _) = TaskAssignment.expire_all_abandoned()
         messages.info(request, 'All {} abandoned Tasks have been expired'.format(total_deleted))
@@ -62,7 +53,6 @@ class TurkleAdminSite(admin.AdminSite):
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [
-            url(r'^about/$', self.admin_view(self.about), name='about'),
             url(r'^expire_abandoned_assignments/$',
                 self.admin_view(self.expire_abandoned_assignments),
                 name='expire_abandoned_assignments'),

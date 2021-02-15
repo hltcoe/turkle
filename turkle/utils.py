@@ -1,5 +1,7 @@
 from django.conf import settings
 
+from . import __version__
+
 
 def get_site_name():
     try:
@@ -24,4 +26,5 @@ def turkle_vars(request):
     return {
         'turkle_site_name': get_site_name(),
         'turkle_template_limit': get_turkle_template_limit(),
+        'turkle_version': __version__,
     }
