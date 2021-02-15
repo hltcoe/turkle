@@ -25,11 +25,11 @@ from django.shortcuts import redirect, render
 from django.templatetags.static import static
 from django.urls import reverse
 from django.utils.html import format_html, format_html_join
+from django.utils.translation import ngettext
 from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
 import humanfriendly
 
-from . import __version__
 from .models import Batch, Project, TaskAssignment
 from .utils import get_site_name, get_turkle_template_limit
 
@@ -45,14 +45,6 @@ class TurkleAdminSite(admin.AdminSite):
     site_header = get_site_name() + ' administration'
     site_title = get_site_name() + ' site admin'
 
-    def about(self, request):
-        return render(request, 'admin/turkle/about.html', {
-            'title': 'About',
-            'site_title': self.site_title,
-            'site_header': self.site_header,
-            'version': __version__,
-        })
-
     def expire_abandoned_assignments(self, request):
         (total_deleted, _) = TaskAssignment.expire_all_abandoned()
         messages.info(request, 'All {} abandoned Tasks have been expired'.format(total_deleted))
@@ -61,7 +53,6 @@ class TurkleAdminSite(admin.AdminSite):
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [
-            url(r'^about/$', self.admin_view(self.about), name='about'),
             url(r'^expire_abandoned_assignments/$',
                 self.admin_view(self.expire_abandoned_assignments),
                 name='expire_abandoned_assignments'),
@@ -151,11 +142,39 @@ class CustomUserAdmin(UserAdmin):
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser',
                                     'groups')}),
     )
+    actions = ['activate_users', 'deactivate_users']
     list_filter = ('is_active', 'is_staff', 'is_superuser', GroupFilter, 'date_joined')
+    list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active')
 
     # required by django-admin-autocomplete-filter 0.5
     class Media:
         pass
+
+    def activate_users(self, request, queryset):
+        updated = queryset.update(is_active=True)
+        self.message_user(request, ngettext(
+            '%d user was activated.',
+            '%d users were activated.',
+            updated,
+        ) % updated, messages.SUCCESS)
+    activate_users.short_description = "Activate selected users"
+
+    def deactivate_users(self, request, queryset):
+        # do not deactivate the logged in user nor the anonymous user object
+        queryset = queryset.exclude(username="AnonymousUser")
+        queryset = queryset.exclude(username=request.user.username)
+        updated = queryset.update(is_active=False)
+        self.message_user(request, ngettext(
+            '%d user was deactivated.',
+            '%d users were deactivated.',
+            updated,
+        ) % updated, messages.SUCCESS)
+    deactivate_users.short_description = "Deactivate selected users"
+
+    def get_actions(self, request):
+        actions = super().get_actions(request)
+        actions.pop('delete_selected', None)
+        return actions
 
     def get_urls(self):
         urls = super().get_urls()

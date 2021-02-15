@@ -3,6 +3,7 @@
 import datetime
 from io import StringIO
 import os.path
+import time
 
 from django.contrib.auth.models import AnonymousUser, Group, User
 from django.core.exceptions import ValidationError
@@ -168,6 +169,19 @@ class TestTaskAssignment(django.test.TestCase):
         ta.completed = True
         ta.save()
         self.assertEqual(float(ta.work_time_in_seconds()).is_integer(), True)
+
+    def test_expire_time_not_updated_when_completed(self):
+        # expire_at should only be set when created, not when assignment submitted
+        project = Project.objects.create()
+        batch = Batch.objects.create(project=project)
+        task = Task.objects.create(batch=batch)
+        ta = TaskAssignment.objects.create(task=task)
+        expire_time = ta.expires_at
+        time.sleep(0.01)
+
+        ta.completed = True
+        ta.save()
+        self.assertEqual(expire_time, ta.expires_at)
 
 
 class TestBatch(django.test.TestCase):

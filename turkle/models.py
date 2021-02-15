@@ -126,8 +126,10 @@ class TaskAssignment(models.Model):
         return result
 
     def save(self, *args, **kwargs):
-        self.expires_at = timezone.now() + \
-            datetime.timedelta(hours=self.task.batch.allotted_assignment_time)
+        # set expires_at only when assignment is created
+        if not self.id:
+            self.expires_at = timezone.now() + \
+                datetime.timedelta(hours=self.task.batch.allotted_assignment_time)
 
         if 'csrfmiddlewaretoken' in self.answers:
             del self.answers['csrfmiddlewaretoken']
