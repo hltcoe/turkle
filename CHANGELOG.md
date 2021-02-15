@@ -4,10 +4,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [2.3.0] - 2021-02-15
 ### Added
 - Added `Batch.completed` flag. Batch Admin page now supports
   filtering by completion status.
+- Added additional configuration options for the Docker images.
+- Batch activation and deactivation of user accounts added.
+- Turkle version displayed in new admin footer.
+- Added additional filters and display columns for Batch admin.
+
+### Fixed
+- Task assignment expiration date only set now upon creation.
+- Fixed display of expiration time left to include days remaining.
 
 ## [2.2.0] - 2020-09-08
 ### Added
