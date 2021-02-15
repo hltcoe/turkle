@@ -111,6 +111,7 @@ class CustomGroupAdmin(GroupAdmin):
     fields = ('name', 'users')
     form = CustomGroupAdminForm
     list_display = ('name', 'total_members')
+    search_fields = ['name']
 
     def save_model(self, request, obj, form, change):
         super().save_model(request, obj, form, change)
@@ -130,6 +131,11 @@ class CustomGroupAdmin(GroupAdmin):
         return obj.user_set.count()
 
 
+class GroupFilter(AutocompleteFilter):
+    title = 'groups'
+    field_name = 'groups'
+
+
 class CustomUserAdmin(UserAdmin):
     add_fieldsets = UserAdmin.add_fieldsets + (
         ('Personal info', {'fields': ('first_name', 'last_name', 'email')}),
@@ -137,7 +143,12 @@ class CustomUserAdmin(UserAdmin):
                                     'groups')}),
     )
     actions = ['activate_users', 'deactivate_users']
+    list_filter = ('is_active', 'is_staff', 'is_superuser', GroupFilter, 'date_joined')
     list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active')
+
+    # required by django-admin-autocomplete-filter 0.5
+    class Media:
+        pass
 
     def activate_users(self, request, queryset):
         updated = queryset.update(is_active=True)
