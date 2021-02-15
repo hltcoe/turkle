@@ -31,7 +31,7 @@ $(function () {
                           var format = '%I:%M';
                           // if 3 full days left or more, display as days rather than hours:mins
                           if (event.offset.totalDays > 2) {
-                            format = "%-d day%!d";
+                            format = "%-D day%!D";
                           }
                           $(this).text(event.strftime('Expires in ' + format));
                         })
