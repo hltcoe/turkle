@@ -26,6 +26,7 @@ class TurkleClient(object):
     ADD_PROJECT_URL = "/admin/turkle/project/add/"
     ADD_BATCH_URL = "/admin/turkle/batch/add/"
     LIST_BATCH_URL = "/admin/turkle/batch/"
+    PROJECT_AUTOCOMPLETE_URL = "/admin/turkle/project/autocomplete/"
 
     def __init__(self, server, admin, password=None):
         # prefix is for when the app is not run in the base of the web server
@@ -118,15 +119,14 @@ class TurkleClient(object):
         return True
 
     def upload_csv(self, session, options):
+        project_id = self.get_autocomplete_id(session, options.project_name)
+        if not project_id:
+            print("Error: unable to create the batch of tasks due to project ID failure")
+            return None
         url = self.format_url(self.ADD_BATCH_URL)
-        resp = session.get(url)
-        # grab a list of the project ids from the form
-        soup = BeautifulSoup(resp.text, features='html.parser')
-        project_options = [option['value'] for option in
-                           soup.select('select[id=id_project] > option')]
+        session.get(url)
         payload = {
-            # we just upload a project so we assume that its last in list
-            'project': project_options[-1],
+            'project': project_id,
             'name': options.batch_name,
             'assignments_per_task': options.num,
             'active': 1,
@@ -144,6 +144,13 @@ class TurkleClient(object):
             print("Error: the csv file is invalid. Try uploading using the admin UI.")
             return None
         return resp.url
+
+    def get_autocomplete_id(self, session, project_name):
+        url = self.format_url(self.PROJECT_AUTOCOMPLETE_URL)
+        resp = session.get(url, params={'term': project_name})
+        if resp.status_code != requests.codes.ok or not resp.json()['results']:
+            return None
+        return resp.json()['results'][0]['id']
 
     def review_batch(self, session, url):
         url = url.replace('review', 'publish')
