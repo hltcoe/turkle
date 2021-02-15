@@ -685,6 +685,7 @@ class Project(TaskAssignmentStatistics, models.Model):
             ('can_work_on', 'Can work on Tasks for this Project'),
         )
         verbose_name = "Project"
+        ordering = ['-id']
 
     active = models.BooleanField(db_index=True, default=True)
     assignments_per_task = models.IntegerField(db_index=True, default=1)
