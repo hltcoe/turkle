@@ -97,7 +97,8 @@ def accept_task(request, batch_id, task_id):
     try:
         with transaction.atomic():
             # Lock access to the specified Task
-            Task.objects.filter(id=task_id).select_for_update()
+            # len() forces execution of query to create lock
+            len(Task.objects.filter(id=task_id).select_for_update())
 
             # Will throw ObjectDoesNotExist exception if Task no longer available
             batch.available_tasks_for(request.user).get(id=task_id)
