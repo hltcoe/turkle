@@ -318,6 +318,8 @@ class Batch(TaskAssignmentStatistics, models.Model):
         """
         if not user.is_authenticated and self.login_required:
             return False
+        elif not self.active:
+            return False
         elif self.custom_permissions:
             return user.has_perm('can_work_on_batch', self)
         else:
@@ -335,7 +337,7 @@ class Batch(TaskAssignmentStatistics, models.Model):
         Returns:
             QuerySet of Task objects
         """
-        if not user.is_authenticated and self.login_required:
+        if not self.active or not user.is_authenticated and self.login_required:
             return Task.objects.none()
 
         hs = self.task_set.filter(completed=False)
