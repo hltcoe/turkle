@@ -53,8 +53,8 @@ class TurkleAdminSite(admin.AdminSite):
         urls = super().get_urls()
         my_urls = [
             path('expire_abandoned_assignments/',
-                self.admin_view(self.expire_abandoned_assignments),
-                name='expire_abandoned_assignments'),
+                 self.admin_view(self.expire_abandoned_assignments),
+                 name='expire_abandoned_assignments'),
         ]
         return my_urls + urls
 
@@ -179,11 +179,11 @@ class CustomUserAdmin(UserAdmin):
         urls = super().get_urls()
         my_urls = [
             path('autocomplete-batch-owner',
-                self.admin_site.admin_view(BatchCreatorSearchView.as_view(model_admin=self)),
-                name='autocomplete_batch_owner'),
+                 self.admin_site.admin_view(BatchCreatorSearchView.as_view(model_admin=self)),
+                 name='autocomplete_batch_owner'),
             path('autocomplete-project-owner',
-                self.admin_site.admin_view(ProjectCreatorSearchView.as_view(model_admin=self)),
-                name='autocomplete_project_owner'),
+                 self.admin_site.admin_view(ProjectCreatorSearchView.as_view(model_admin=self)),
+                 name='autocomplete_project_owner'),
         ]
         return my_urls + urls
 
@@ -598,21 +598,21 @@ class BatchAdmin(admin.ModelAdmin):
         urls = super().get_urls()
         my_urls = [
             path('<int:batch_id>/cancel/',
-                self.admin_site.admin_view(self.cancel_batch), name='cancel_batch'),
+                 self.admin_site.admin_view(self.cancel_batch), name='cancel_batch'),
             path('<int:batch_id>/review/',
-                self.admin_site.admin_view(self.review_batch), name='review_batch'),
+                 self.admin_site.admin_view(self.review_batch), name='review_batch'),
             path('<int:batch_id>/publish/',
-                self.admin_site.admin_view(self.publish_batch), name='publish_batch'),
+                 self.admin_site.admin_view(self.publish_batch), name='publish_batch'),
             path('<int:batch_id>/download/',
-                self.admin_site.admin_view(self.download_batch), name='download_batch'),
+                 self.admin_site.admin_view(self.download_batch), name='download_batch'),
             path('<int:batch_id>/input/',
-                self.admin_site.admin_view(self.download_batch_input),
-                name='download_batch_input'),
+                 self.admin_site.admin_view(self.download_batch_input),
+                 name='download_batch_input'),
             path('<int:batch_id>/stats/',
-                self.admin_site.admin_view(self.batch_stats), name='batch_stats'),
+                 self.admin_site.admin_view(self.batch_stats), name='batch_stats'),
             path('update_csv_line_endings',
-                self.admin_site.admin_view(self.update_csv_line_endings),
-                name='update_csv_line_endings'),
+                 self.admin_site.admin_view(self.update_csv_line_endings),
+                 name='update_csv_line_endings'),
         ]
         return my_urls + urls
 
@@ -805,10 +805,10 @@ class ProjectAdmin(GuardedModelAdmin):
         urls = super().get_urls()
         my_urls = [
             path('autocomplete-order-by-name',
-                self.admin_site.admin_view(ProjectSearchView.as_view(model_admin=self)),
-                name='autocomplete_project_order_by_name'),
+                 self.admin_site.admin_view(ProjectSearchView.as_view(model_admin=self)),
+                 name='autocomplete_project_order_by_name'),
             path('<int:project_id>/stats/',
-                self.admin_site.admin_view(self.project_stats), name='project_stats'),
+                 self.admin_site.admin_view(self.project_stats), name='project_stats'),
         ]
         return my_urls + urls
 
