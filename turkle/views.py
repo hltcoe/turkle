@@ -97,7 +97,8 @@ def accept_task(request, batch_id, task_id):
     try:
         with transaction.atomic():
             # Lock access to the specified Task
-            Task.objects.filter(id=task_id).select_for_update()
+            # len() forces execution of query to create lock
+            len(Task.objects.filter(id=task_id).select_for_update())
 
             # Will throw ObjectDoesNotExist exception if Task no longer available
             batch.available_tasks_for(request.user).get(id=task_id)
@@ -134,7 +135,8 @@ def accept_next_task(request, batch_id):
             batch = Batch.objects.get(id=batch_id)
 
             # Lock access to all Tasks available to current user in the batch
-            batch.available_task_ids_for(request.user).select_for_update()
+            # Force evaluation of the query set with len()
+            len(batch.available_task_ids_for(request.user).select_for_update())
 
             task_id = _skip_aware_next_available_task_id(request, batch)
 
