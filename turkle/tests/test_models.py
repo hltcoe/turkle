@@ -250,6 +250,32 @@ class TestBatch(django.test.TestCase):
         # add superusers should have access to it
         self.assertEqual(len(batch.access_permitted_for(self.admin)), 1)
 
+    def test_available_for(self):
+        user = User.objects.create_user('testuser', password='secret')
+        project = Project.objects.create()
+        batch = Batch.objects.create(project=project)
+
+        self.assertTrue(batch.available_for(user))
+
+        batch.active = False
+        self.assertFalse(batch.available_for(user))
+
+    def test_available_tasks_for(self):
+        user = User.objects.create_user('testuser', password='secret')
+        project = Project.objects.create()
+        batch = Batch.objects.create(project=project)
+        task1 = Task(
+            batch=batch,
+            completed=False,
+            input_csv_fields={'number': '1', 'letter': 'a'},
+        )
+        task1.save()
+
+        self.assertEqual(1, len(batch.available_tasks_for(user)))
+
+        batch.active = False
+        self.assertEqual(0, len(batch.available_tasks_for(user)))
+
     def test_batch_to_csv(self):
         template = '<p>${number} - ${letter}</p><textarea>'
         project = Project.objects.create(name='test', html_template=template)
