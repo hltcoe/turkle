@@ -539,11 +539,7 @@ def _delete_task_assignment(request, task_id, task_assignment_id):
             messages.error(request, 'You do not have permission to access this Task')
             return redirect(index)
 
-    with transaction.atomic():
-        # Lock access to the specified Task
-        Task.objects.filter(id=task_id).select_for_update()
-
-        task_assignment.delete()
+    task_assignment.delete()
 
 
 def _skip_aware_next_available_task_id(request, batch):
