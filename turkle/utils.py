@@ -27,4 +27,5 @@ def turkle_vars(request):
         'turkle_site_name': get_site_name(),
         'turkle_template_limit': get_turkle_template_limit(),
         'turkle_version': __version__,
+        'turkle_email_enabled': settings.TURKLE_EMAIL_ENABLED,
     }
