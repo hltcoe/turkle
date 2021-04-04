@@ -3,11 +3,28 @@
 
 {% block header %}
 <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'turkle/datatables-1.10.24/datatables.min.js' %}"></script>
+<link href="{% static 'turkle/datatables-1.10.24/datatables.bootstrap4.min.css' %}" rel="stylesheet" type="text/css"/>
 <style>
 .substat td {
   padding-left: 2em;
 }
 </style>
+<script>
+$(document).ready(function() {
+  $('#batch-stats').DataTable({
+    info: false,
+    paging: false,
+    searching: false
+  });
+
+  $('#user-stats').DataTable({
+    info: false,
+    paging: false,
+    searching: false
+  });
+});
+</script>
 {% endblock %}
 
 {% block body %}
@@ -87,7 +104,7 @@
   <h2>Batch Statistics</h2>
 
   <div>
-    <table class="table table-sm table-bordered">
+    <table id="batch-stats" class="table table-sm table-bordered">
       <thead class="thead-light">
         <tr>
           <th>Name</th>
@@ -106,9 +123,21 @@
             </a>
           </td>
           <td>{{ stats_batch.assignments_completed }}</td>
-          <td>{{ stats_batch.mean_work_time }}</td>
-          <td>{{ stats_batch.median_work_time }}</td>
+	  {% if stats_batch.has_completed_assignments %}
+          <td data-order="{{ stats_batch.mean_work_time }}">
+	    {{ stats_batch.mean_work_time }}s
+	  </td>
+          <td data-order="{{ stats_batch.median_work_time }}">
+	    {{ stats_batch.median_work_time }}s
+	  </td>
+          <td data-order="{{ stats_batch.last_finished_time|date:"c" }}">
+	    {{ stats_batch.last_finished_time }}
+	  </td>
+	  {% else %}
+          <td data-order="-1">{{ stats_batch.mean_work_time }}</td>
+          <td data-order="-1">{{ stats_batch.median_work_time }}</td>
           <td>{{ stats_batch.last_finished_time }}</td>
+	  {% endif %}
         </tr>
         {% endfor %}
       </tbody>
@@ -118,7 +147,7 @@
   <h2>User Statistics</h2>
 
   <div>
-    <table class="table table-sm table-bordered">
+    <table id="user-stats" class="table table-sm table-bordered">
       <thead class="thead-light">
         <tr>
           <th>Username</th>
@@ -135,9 +164,21 @@
           <td>{{ stats_user.username }}</td>
           <td>{{ stats_user.full_name }}</td>
           <td>{{ stats_user.assignments_completed }}</td>
-          <td>{{ stats_user.mean_work_time }}</td>
-          <td>{{ stats_user.median_work_time }}</td>
+	  {% if stats_user.has_completed_assignments %}
+          <td data-order="{{ stats_user.mean_work_time }}">
+	    {{ stats_user.mean_work_time }}s
+	  </td>
+          <td data-order="{{ stats_user.median_work_time }}">
+	    {{ stats_user.median_work_time }}s
+	  </td>
+          <td data-order="{{ stats_user.last_finished_time| date:"c" }}">
+	    {{ stats_user.last_finished_time }}
+	  </td>
+	  {% else %}
+          <td data-order="-1">{{ stats_user.mean_work_time }}</td>
+          <td data-order="-1">{{ stats_user.median_work_time }}</td>
           <td>{{ stats_user.last_finished_time }}</td>
+	  {% endif %}
         </tr>
         {% endfor %}
       </tbody>

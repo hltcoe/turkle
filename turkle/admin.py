@@ -485,12 +485,11 @@ class BatchAdmin(admin.ModelAdmin):
         user_ids = task_duration_by_user.keys()
         stats_users = []
         for user in User.objects.filter(id__in=user_ids).order_by('username'):
-            if user.id in task_duration_by_user:
+            has_completed_assignments = user.id in task_duration_by_user
+            if has_completed_assignments:
                 last_finished_time = task_updated_at_by_user[user.id][-1]
-                mean_work_time = '{}s'.format(int(statistics.mean(
-                    task_duration_by_user[user.id])))
-                median_work_time = '{}s'.format(int(statistics.median(
-                    task_duration_by_user[user.id])))
+                mean_work_time = int(statistics.mean(task_duration_by_user[user.id]))
+                median_work_time = int(statistics.median(task_duration_by_user[user.id]))
             else:
                 last_finished_time = 'N/A'
                 mean_work_time = 'N/A'
@@ -498,6 +497,7 @@ class BatchAdmin(admin.ModelAdmin):
             stats_users.append({
                 'username': user.username,
                 'full_name': user.get_full_name(),
+                'has_completed_assignments': has_completed_assignments,
                 'assignments_completed': len(task_duration_by_user[user.id]),
                 'mean_work_time': mean_work_time,
                 'median_work_time': median_work_time,
@@ -880,12 +880,11 @@ class ProjectAdmin(GuardedModelAdmin):
         batch_ids = task_duration_by_batch.keys()
         stats_batches = []
         for batch in Batch.objects.filter(id__in=batch_ids).order_by('name'):
-            if batch.id in task_duration_by_batch:
+            has_completed_assignments = batch.id in task_duration_by_batch
+            if has_completed_assignments:
                 last_finished_time = task_updated_at_by_batch[batch.id][-1]
-                mean_work_time = '{}s'.format(int(statistics.mean(
-                    task_duration_by_batch[batch.id])))
-                median_work_time = '{}s'.format(int(statistics.median(
-                    task_duration_by_batch[batch.id])))
+                mean_work_time = int(statistics.mean(task_duration_by_batch[batch.id]))
+                median_work_time = int(statistics.median(task_duration_by_batch[batch.id]))
             else:
                 last_finished_time = 'N/A'
                 mean_work_time = 'N/A'
@@ -893,6 +892,7 @@ class ProjectAdmin(GuardedModelAdmin):
             stats_batches.append({
                 'batch_id': batch.id,
                 'name': batch.name,
+                'has_completed_assignments': has_completed_assignments,
                 'assignments_completed': len(task_duration_by_batch[batch.id]),
                 'mean_work_time': mean_work_time,
                 'median_work_time': median_work_time,
@@ -902,12 +902,11 @@ class ProjectAdmin(GuardedModelAdmin):
         user_ids = task_duration_by_user.keys()
         stats_users = []
         for user in User.objects.filter(id__in=user_ids).order_by('username'):
-            if user.id in task_duration_by_user:
+            has_completed_assignments = user.id in task_duration_by_user
+            if has_completed_assignments:
                 last_finished_time = task_updated_at_by_user[user.id][-1]
-                mean_work_time = '{}s'.format(int(statistics.mean(
-                    task_duration_by_user[user.id])))
-                median_work_time = '{}s'.format(int(statistics.median(
-                    task_duration_by_user[user.id])))
+                mean_work_time = int(statistics.mean(task_duration_by_user[user.id]))
+                median_work_time = int(statistics.median(task_duration_by_user[user.id]))
             else:
                 last_finished_time = 'N/A'
                 mean_work_time = 'N/A'
@@ -915,6 +914,7 @@ class ProjectAdmin(GuardedModelAdmin):
             stats_users.append({
                 'username': user.username,
                 'full_name': user.get_full_name(),
+                'has_completed_assignments': has_completed_assignments,
                 'assignments_completed': len(task_duration_by_user[user.id]),
                 'mean_work_time': mean_work_time,
                 'median_work_time': median_work_time,
