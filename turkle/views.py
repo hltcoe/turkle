@@ -42,7 +42,10 @@ def index(request):
     """
     abandoned_assignments = []
     if request.user.is_authenticated:
-        for ha in TaskAssignment.objects.filter(assigned_to=request.user).filter(completed=False):
+        for ha in TaskAssignment.objects.filter(assigned_to=request.user)\
+                                        .filter(completed=False)\
+                                        .filter(task__batch__active=True)\
+                                        .filter(task__batch__project__active=True):
             abandoned_assignments.append({
                 'task': ha.task,
                 'task_assignment_id': ha.id
