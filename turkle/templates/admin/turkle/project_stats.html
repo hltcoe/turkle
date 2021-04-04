@@ -82,22 +82,22 @@
         <td>{{ project_median_work_time }}</td>
       </tr>
       <tr>
-	<th>Total Not-Yet-Completed Assignments</th>
-	<td>
-	  {{ uncompleted_tas_active_batches|add:uncompleted_tas_inactive_batches }}
-	</td>
+        <th>Total Not-Yet-Completed Assignments</th>
+        <td>
+          {{ uncompleted_tas_active_batches|add:uncompleted_tas_inactive_batches }}
+        </td>
       </tr>
       <tr class="substat">
-	<td>Active Batches</td>
-	<td>
-	  {{ uncompleted_tas_active_batches }}
-	</td>
+        <td>Active Batches</td>
+        <td>
+          {{ uncompleted_tas_active_batches }}
+        </td>
       </tr>
       <tr class="substat">
-	<td>Inactive Batches</td>
-	<td>
-	  {{ uncompleted_tas_inactive_batches }}
-	</td>
+        <td>Inactive Batches</td>
+        <td>
+          {{ uncompleted_tas_inactive_batches }}
+        </td>
       </tr>
     </table>
   </div>
@@ -109,7 +109,7 @@
       <thead class="thead-light">
         <tr>
           <th>Name</th>
-	  <th>Active</th>
+          <th>Active</th>
           <th># Assignments</th>
           <th>Mean Time</th>
           <th>Median Time</th>
@@ -132,9 +132,9 @@
             {% endif %}
           </td>
           <td>
-	    {{ stats_batch.assignments_completed }} /
-	    {{ stats_batch.total_task_assignments }}
-	  </td>
+            {{ stats_batch.assignments_completed }} /
+            {{ stats_batch.total_task_assignments }}
+          </td>
           <td>{{ stats_batch.mean_work_time }}</td>
           <td>{{ stats_batch.median_work_time }}</td>
           <td>{{ stats_batch.last_finished_time }}</td>
