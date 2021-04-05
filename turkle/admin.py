@@ -877,6 +877,9 @@ class ProjectAdmin(GuardedModelAdmin):
             task_duration_by_user[t['assigned_to']].append(duration)
             task_updated_at_by_user[t['assigned_to']].append(t['updated_at'])
 
+        uncompleted_tas_active_batches = 0
+        uncompleted_tas_inactive_batches = 0
+
         batch_ids = task_duration_by_batch.keys()
         stats_batches = []
         for batch in Batch.objects.filter(id__in=batch_ids).order_by('name'):
@@ -890,14 +893,32 @@ class ProjectAdmin(GuardedModelAdmin):
                 last_finished_time = 'N/A'
                 mean_work_time = 'N/A'
                 median_work_time = 'N/A'
+            assignments_completed = len(task_duration_by_batch[batch.id])
+            total_task_assignments = batch.total_task_assignments()
             stats_batches.append({
                 'batch_id': batch.id,
                 'name': batch.name,
-                'assignments_completed': len(task_duration_by_batch[batch.id]),
+                'active': batch.active,
+                'assignments_completed': assignments_completed,
+                'total_task_assignments': total_task_assignments,
                 'mean_work_time': mean_work_time,
                 'median_work_time': median_work_time,
                 'last_finished_time': last_finished_time,
             })
+
+            # We use max(0, x) to ensure the # of remaining Task
+            # Assignments for each Batch is never negative.
+            #
+            # In theory, the number of completed Task Assignments
+            # should never exceed the number of Task Assignments
+            # computed by Batch.total_task_assignments() - but in
+            # practice, this has happened due to a race condition.
+            if batch.active:
+                uncompleted_tas_active_batches += \
+                    max(0, total_task_assignments - assignments_completed)
+            else:
+                uncompleted_tas_inactive_batches += \
+                    max(0, total_task_assignments - assignments_completed)
 
         user_ids = task_duration_by_user.keys()
         stats_users = []
@@ -963,6 +984,8 @@ class ProjectAdmin(GuardedModelAdmin):
             'last_finished_time': last_finished_time,
             'stats_users': stats_users,
             'stats_batches': stats_batches,
+            'uncompleted_tas_active_batches': uncompleted_tas_active_batches,
+            'uncompleted_tas_inactive_batches': uncompleted_tas_inactive_batches,
         })
 
     def publish_tasks(self, instance):
