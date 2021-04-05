@@ -316,9 +316,9 @@ class Batch(TaskAssignmentStatistics, models.Model):
         Returns:
             Boolean indicating if this Batch is available for the user
         """
-        if not user.is_authenticated and self.login_required:
-            return False
-        elif not self.active:
+        if not self.active or \
+           not self.project.active or \
+           (not user.is_authenticated and self.login_required):
             return False
         elif self.custom_permissions:
             return user.has_perm('can_work_on_batch', self)
@@ -337,7 +337,7 @@ class Batch(TaskAssignmentStatistics, models.Model):
         Returns:
             QuerySet of Task objects
         """
-        if not self.active or not user.is_authenticated and self.login_required:
+        if not self.available_for(user):
             return Task.objects.none()
 
         hs = self.task_set.filter(completed=False)
