@@ -70,7 +70,7 @@ class TestAcceptTask(TestCase):
 
 class TestAcceptNextTask(TestCase):
     def setUp(self):
-        project = Project.objects.create(
+        self.project = Project.objects.create(
             login_required=False,
             html_template='<p>${foo}: ${bar}</p><textarea>',
             name='foo',
@@ -79,7 +79,7 @@ class TestAcceptNextTask(TestCase):
             filename='foo.csv',
             login_required=False,
             name='foo',
-            project=project,
+            project=self.project,
         )
 
         self.task = Task.objects.create(
@@ -167,6 +167,44 @@ class TestAcceptNextTask(TestCase):
                                       kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertTrue('{}/assignment/'.format(task_two.id) in response['Location'])
+
+    def test_accept_next_task__deactivated_batch(self):
+        self.batch.active = False
+        self.batch.save()
+
+        User.objects.create_user('testuser', password='secret')
+        self.assertEqual(self.task.taskassignment_set.count(), 0)
+
+        client = django.test.Client()
+        client.login(username='testuser', password='secret')
+        response = client.get(reverse('accept_next_task',
+                                      kwargs={'batch_id': self.batch.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(self.task.taskassignment_set.count(), 0)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         'No more Tasks available for Batch {}'.format(self.batch.name))
+
+    def test_accept_next_task__deactivated_project(self):
+        self.project.active = False
+        self.project.save()
+
+        User.objects.create_user('testuser', password='secret')
+        self.assertEqual(self.task.taskassignment_set.count(), 0)
+
+        client = django.test.Client()
+        client.login(username='testuser', password='secret')
+        response = client.get(reverse('accept_next_task',
+                                      kwargs={'batch_id': self.batch.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(self.task.taskassignment_set.count(), 0)
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         'No more Tasks available for Batch {}'.format(self.batch.name))
 
 
 class TestDownloadBatchCSV(TestCase):
