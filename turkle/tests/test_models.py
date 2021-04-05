@@ -260,6 +260,13 @@ class TestBatch(django.test.TestCase):
         batch.active = False
         self.assertFalse(batch.available_for(user))
 
+    def test_available_for_deactivated_project(self):
+        user = User.objects.create_user('testuser', password='secret')
+        project = Project.objects.create(active=False)
+        batch = Batch.objects.create(project=project)
+
+        self.assertFalse(batch.available_for(user))
+
     def test_available_tasks_for(self):
         user = User.objects.create_user('testuser', password='secret')
         project = Project.objects.create()
@@ -274,6 +281,19 @@ class TestBatch(django.test.TestCase):
         self.assertEqual(1, len(batch.available_tasks_for(user)))
 
         batch.active = False
+        self.assertEqual(0, len(batch.available_tasks_for(user)))
+
+    def test_available_task_for_deactivated_project(self):
+        user = User.objects.create_user('testuser', password='secret')
+        project = Project.objects.create(active=False)
+        batch = Batch.objects.create(project=project)
+        task1 = Task(
+            batch=batch,
+            completed=False,
+            input_csv_fields={'number': '1', 'letter': 'a'},
+        )
+        task1.save()
+
         self.assertEqual(0, len(batch.available_tasks_for(user)))
 
     def test_batch_to_csv(self):
