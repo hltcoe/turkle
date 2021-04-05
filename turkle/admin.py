@@ -894,6 +894,8 @@ class ProjectAdmin(GuardedModelAdmin):
                 median_work_time = 'N/A'
             assignments_completed = len(task_duration_by_batch[batch.id])
             total_task_assignments = batch.total_task_assignments()
+            assignment_complete_percentage = '%.1f' % \
+                (100.0 * assignments_completed / total_task_assignments)
             stats_batches.append({
                 'batch_id': batch.id,
                 'name': batch.name,
@@ -901,6 +903,7 @@ class ProjectAdmin(GuardedModelAdmin):
                 'has_completed_assignments': has_completed_assignments,
                 'assignments_completed': assignments_completed,
                 'total_task_assignments': total_task_assignments,
+                'assignment_complete_percentage': assignment_complete_percentage,
                 'mean_work_time': mean_work_time,
                 'median_work_time': median_work_time,
                 'last_finished_time': last_finished_time,

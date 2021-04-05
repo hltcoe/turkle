@@ -148,9 +148,14 @@ $(document).ready(function() {
               N
             {% endif %}
           </td>
-          <td>
-            {{ stats_batch.assignments_completed }} /
-            {{ stats_batch.total_task_assignments }}
+          <td data-order="{{ stats_batch.assignment_complete_percentage }}">
+            <span class="float-left">
+              {{ stats_batch.assignments_completed }} /
+              {{ stats_batch.total_task_assignments }}
+            </span>
+            <span class="float-right" style="margin-right: 1em;">
+              <small>({{ stats_batch.assignment_complete_percentage }}%)</small>
+            </span>
           </td>
           {% if stats_batch.has_completed_assignments %}
           <td data-order="{{ stats_batch.mean_work_time }}">
