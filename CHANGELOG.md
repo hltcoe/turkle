@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added statistics about not-yet-completed Task Assignments to
   Project Stats page.
 
+### Fixed
+- Task Assignments from inactive Batches and/or Projects are no
+  longer included in the list of "Abandoned Tasks" shown to
+  Users on the Turkle index page
+- Users can no longer accept Task Assignments for inactive
+  Projects
+
 ## [2.3.0] - 2021-02-15
 ### Added
 - Added `Batch.completed` flag. Batch Admin page now supports
