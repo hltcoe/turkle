@@ -8,17 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - Added statistics about not-yet-completed Task Assignments to
   Project Stats page.
+- Banner for the preview page added to warn users that any work
+  won't be saved. 
 
 ### Changed
 - Deprecate support for (EOL) Python 3.5, add support for
-  Python 3.9
+  Python 3.9.
+- Updated to use Django 2 style URLs.
 
 ### Fixed
+- Fixed a race condition in task assignment.
 - Task Assignments from inactive Batches and/or Projects are no
   longer included in the list of "Abandoned Tasks" shown to
-  Users on the Turkle index page
+  Users on the Turkle index page.
 - Users can no longer accept Task Assignments for inactive
-  Projects
+  Projects.
 
 ## [2.3.0] - 2021-02-15
 ### Added
