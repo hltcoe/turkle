@@ -8,6 +8,10 @@
 
 {% block body %}
 <div class="container-fluid content">
+  <div class="alert alert-primary my-2">
+    <h2 class="alert-heading text-center">This is only a preview.</h2>
+    <div class="text-center">Any changes will not be saved. You must accept the task first before working on it.</div>
+  </div>
   <div class="task-preview">
     <iframe src="{% url 'preview_iframe' task.id %}{{ http_get_params }}"
             id="task_assignment_iframe">
