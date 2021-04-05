@@ -152,21 +152,21 @@ $(document).ready(function() {
             {{ stats_batch.assignments_completed }} /
             {{ stats_batch.total_task_assignments }}
           </td>
-	  {% if stats_batch.has_completed_assignments %}
+          {% if stats_batch.has_completed_assignments %}
           <td data-order="{{ stats_batch.mean_work_time }}">
-	    {{ stats_batch.mean_work_time }}s
-	  </td>
+            {{ stats_batch.mean_work_time }}s
+          </td>
           <td data-order="{{ stats_batch.median_work_time }}">
-	    {{ stats_batch.median_work_time }}s
-	  </td>
+            {{ stats_batch.median_work_time }}s
+          </td>
           <td data-order="{{ stats_batch.last_finished_time|date:"c" }}">
-	    {{ stats_batch.last_finished_time }}
-	  </td>
-	  {% else %}
+            {{ stats_batch.last_finished_time }}
+          </td>
+          {% else %}
           <td data-order="-1">{{ stats_batch.mean_work_time }}</td>
           <td data-order="-1">{{ stats_batch.median_work_time }}</td>
           <td>{{ stats_batch.last_finished_time }}</td>
-	  {% endif %}
+          {% endif %}
         </tr>
         {% endfor %}
       </tbody>
@@ -193,21 +193,21 @@ $(document).ready(function() {
           <td>{{ stats_user.username }}</td>
           <td>{{ stats_user.full_name }}</td>
           <td>{{ stats_user.assignments_completed }}</td>
-	  {% if stats_user.has_completed_assignments %}
+          {% if stats_user.has_completed_assignments %}
           <td data-order="{{ stats_user.mean_work_time }}">
-	    {{ stats_user.mean_work_time }}s
-	  </td>
+            {{ stats_user.mean_work_time }}s
+          </td>
           <td data-order="{{ stats_user.median_work_time }}">
-	    {{ stats_user.median_work_time }}s
-	  </td>
+            {{ stats_user.median_work_time }}s
+          </td>
           <td data-order="{{ stats_user.last_finished_time| date:"c" }}">
-	    {{ stats_user.last_finished_time }}
-	  </td>
-	  {% else %}
+            {{ stats_user.last_finished_time }}
+          </td>
+          {% else %}
           <td data-order="-1">{{ stats_user.mean_work_time }}</td>
           <td data-order="-1">{{ stats_user.median_work_time }}</td>
           <td>{{ stats_user.last_finished_time }}</td>
-	  {% endif %}
+          {% endif %}
         </tr>
         {% endfor %}
       </tbody>
