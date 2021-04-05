@@ -369,11 +369,11 @@ class TestIndexAbandonedAssignments(TestCase):
     def setUp(self):
         self.user = User.objects.create_user('testuser', password='secret')
 
-        project = Project()
-        project.save()
-        batch = Batch(project=project)
-        batch.save()
-        self.task = Task(batch=batch)
+        self.project = Project()
+        self.project.save()
+        self.batch = Batch(project=self.project)
+        self.batch.save()
+        self.task = Task(batch=self.batch)
         self.task.save()
 
     def test_index_abandoned_assignment(self):
@@ -388,6 +388,40 @@ class TestIndexAbandonedAssignments(TestCase):
         response = client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(b'You have abandoned' in response.content)
+
+    def test_index_abandoned_assignment_from_inactive_batch(self):
+        # Don't show abandoned tasks from inactive batches
+        TaskAssignment(
+            assigned_to=self.user,
+            completed=False,
+            task=self.task,
+        ).save()
+
+        self.project.active = False
+        self.project.save()
+
+        client = django.test.Client()
+        client.login(username='testuser', password='secret')
+        response = client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(b'You have abandoned' in response.content)
+
+    def test_index_abandoned_assignment_from_inactive_project(self):
+        # Don't show abandoned tasks from inactive projects
+        TaskAssignment(
+            assigned_to=self.user,
+            completed=False,
+            task=self.task,
+        ).save()
+
+        self.batch.active = False
+        self.batch.save()
+
+        client = django.test.Client()
+        client.login(username='testuser', password='secret')
+        response = client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(b'You have abandoned' in response.content)
 
     def test_index_no_abandoned_assignments(self):
         TaskAssignment(
