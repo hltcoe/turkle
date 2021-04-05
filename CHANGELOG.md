@@ -5,8 +5,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Added statistics about not-yet-completed Task Assignments to
+  Project Stats page.
+
 ### Fixed
-- Users can no longer accept Task Assignments for deactivated
+- Task Assignments from inactive Batches and/or Projects are no
+  longer included in the list of "Abandoned Tasks" shown to
+  Users on the Turkle index page
+- Users can no longer accept Task Assignments for inactive
   Projects
 
 ## [2.3.0] - 2021-02-15
