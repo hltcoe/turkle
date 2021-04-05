@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added statistics about not-yet-completed Task Assignments to
   Project Stats page.
 
+### Changed
+- Deprecate support for (EOL) Python 3.5, add support for
+  Python 3.9
+
 ### Fixed
 - Task Assignments from inactive Batches and/or Projects are no
   longer included in the list of "Abandoned Tasks" shown to

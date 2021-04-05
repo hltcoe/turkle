@@ -1,5 +1,5 @@
 python3-stylecheck:
-  image: python:3.5-alpine3.8
+  image: python:3.6-alpine
   stage: test
   script:
     - pip install flake8
@@ -8,11 +8,7 @@ python3-stylecheck:
     - docker
 
 python3-tests:
-  # Alpine Linux 3.9 uses SQLite3 3.26.0, but there is an upstream bug
-  # with Django transactions using SQLite3 3.26.0:
-  #   https://code.djangoproject.com/ticket/29182
-  # so we use Alpine Linux 3.8, which uses SQLite3 3.25.3
-  image: python:3.5-alpine3.8
+  image: python:3.6-alpine
   stage: test
   script:
     - pip install -r requirements.txt
@@ -33,7 +29,7 @@ docker-build:
     - docker
 
 docs:
-  image: python:3.5-alpine3.8
+  image: python:3.6-alpine
   stage: test
   script:
     - pip install sphinx sphinx_rtd_theme
