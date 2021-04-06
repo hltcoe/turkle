@@ -9,7 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added statistics about not-yet-completed Task Assignments to
   Project Stats page.
 - Banner for the preview page added to warn users that any work
-  won't be saved. 
+  won't be saved.
+- Tables on Batch Stats and Project Stats pages are now sortable
+  by clicking on column headings
 
 ### Changed
 - Deprecate support for (EOL) Python 3.5, add support for
