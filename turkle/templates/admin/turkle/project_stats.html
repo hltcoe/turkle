@@ -148,13 +148,13 @@ $(document).ready(function() {
               N
             {% endif %}
           </td>
-          <td data-order="{{ stats_batch.assignment_complete_percentage }}">
+          <td data-order="{{ stats_batch.assignments_completed_percentage }}">
             <span class="float-left">
               {{ stats_batch.assignments_completed }} /
               {{ stats_batch.total_task_assignments }}
             </span>
             <span class="float-right" style="margin-right: 1em;">
-              <small>({{ stats_batch.assignment_complete_percentage }}%)</small>
+              <small>({{ stats_batch.assignments_completed_percentage }}%)</small>
             </span>
           </td>
           {% if stats_batch.has_completed_assignments %}
