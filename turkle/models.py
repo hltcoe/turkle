@@ -523,6 +523,15 @@ class Batch(TaskAssignmentStatistics, models.Model):
         for task in tasks:
             writer.writerow(task.input_csv_fields)
 
+    def unfinished_task_assignments(self):
+        """
+        Returns:
+            QuerySet of all Task Assignment objects associated with this Batch
+            that have not been completed.
+        """
+        return TaskAssignment.objects.filter(task__batch_id=self.id)\
+                                     .filter(completed=False)
+
     def unfinished_tasks(self):
         """
         Returns:
