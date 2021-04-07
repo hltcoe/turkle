@@ -524,6 +524,7 @@ class BatchAdmin(admin.ModelAdmin):
             'batch_median_work_time': median_work_time,
             'first_finished_time': first_finished_time,
             'last_finished_time': last_finished_time,
+            'unsubmitted_task_assignments': batch.unfinished_task_assignments(),
             'stats_users': stats_users,
         })
 

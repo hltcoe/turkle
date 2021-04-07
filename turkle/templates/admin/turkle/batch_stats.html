@@ -5,8 +5,19 @@
 <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'turkle/datatables-1.10.24/datatables.min.js' %}"></script>
 <link href="{% static 'turkle/datatables-1.10.24/datatables.bootstrap4.min.css' %}" rel="stylesheet" type="text/css"/>
+<style>
+#user-statistics-div {
+  margin-bottom: 1em;
+}
+</style>
 <script>
 $(document).ready(function() {
+  $('#unsubmitted-assignment-stats').DataTable({
+    info: false,
+    paging: false,
+    searching: false
+  });
+
   $('#user-stats').DataTable({
     info: false,
     paging: false,
@@ -102,7 +113,7 @@ $(document).ready(function() {
 
   <h2>User Statistics</h2>
 
-  <div>
+  <div id="user-statistics-div">
     <table id="user-stats" class="table table-sm table-bordered">
       <thead class="thead-light">
         <tr>
@@ -137,6 +148,43 @@ $(document).ready(function() {
 	  {% endif %}
         </tr>
         {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Unsubmitted Assignments</h2>
+
+  <div>
+    <table id="unsubmitted-assignment-stats" class="table table-sm table-bordered">
+      <thead class="thead-light">
+	<tr>
+	  <th>Assignment ID</th>
+          <th>Username</th>
+          <th>Name</th>
+	  <th>Created at</th>
+	  <th>Expires at</th>
+	</tr>
+      </thead>
+      <tbody>
+	{% for uta in unsubmitted_task_assignments %}
+	<tr>
+	  <td>
+	    {{ uta.id }}
+	  </td>
+	  <td>
+	    {{ uta.assigned_to.username }}
+	  </td>
+	  <td>
+	    {{ uta.assigned_to.get_full_name }}
+	  </td>
+	  <td data-order="{{ uta.created_at|date:'c' }}">
+	    {{ uta.created_at }}
+	  </td>
+	  <td data-order="{{ uta.expires_at|date:'c' }}">
+	    {{ uta.expires_at }}
+	  </td>
+	</tr>
+	{% endfor %}
       </tbody>
     </table>
   </div>
