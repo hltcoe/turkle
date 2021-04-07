@@ -780,6 +780,33 @@ class TestProject(django.test.TestCase):
         self.assertTrue(batch.login_required)
         self.assertTrue('can_work_on_batch' in get_group_perms(group, batch))
 
+    def test_copy_permissions_to_batches_unhydrated_project(self):
+        # Verify that Project.copy_permissions_to_batches() works with
+        # a Project model instance that is only "hydrated" with the
+        # 'id' field.  Behavior related to this Issue:
+        #
+        #   https://github.com/hltcoe/turkle/issues/136
+
+        project = Project.objects.create(
+            custom_permissions=True,
+            login_required=True,
+        )
+        group = Group.objects.create(name='testgroup')
+        assign_perm('can_work_on', group, project)
+        batch = Batch.objects.create(
+            custom_permissions=False,
+            login_required=False,
+            project=project,
+        )
+        self.assertFalse('can_work_on_batch' in get_group_perms(group, batch))
+
+        unhydrated_project = Project.objects.only('id').get(id=project.id)
+        unhydrated_project.copy_permissions_to_batches()
+        batch.refresh_from_db()
+        self.assertTrue(batch.custom_permissions)
+        self.assertTrue(batch.login_required)
+        self.assertTrue('can_work_on_batch' in get_group_perms(group, batch))
+
     def test_copy_permissions_to_batches_no_custom_permissions(self):
         project = Project.objects.create(
             custom_permissions=False,
