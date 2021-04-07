@@ -822,7 +822,7 @@ class ProjectAdmin(GuardedModelAdmin):
             # Adding
             return (
                 (None, {
-                    'fields': ('name', 'assignments_per_task')
+                    'fields': ('name', 'assignments_per_task', 'allotted_assignment_time')
                 }),
                 ('HTML Template', {
                     'fields': ('html_template', 'template_file_upload', 'filename')
@@ -838,7 +838,7 @@ class ProjectAdmin(GuardedModelAdmin):
             # Changing
             return (
                 (None, {
-                    'fields': ('name', 'assignments_per_task')
+                    'fields': ('name', 'assignments_per_task', 'allotted_assignment_time')
                 }),
                 ('HTML Template', {
                     'fields': ('html_template', 'template_file_upload', 'filename',
