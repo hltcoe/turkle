@@ -800,7 +800,8 @@ class TestProject(django.test.TestCase):
         )
         self.assertFalse('can_work_on_batch' in get_group_perms(group, batch))
 
-        unhydrated_project = Project.objects.only('id').get(id=project.id)
+        unhydrated_project = Project.objects.only('id', 'custom_permissions', 'login_required')\
+                                            .get(id=project.id)
         unhydrated_project.copy_permissions_to_batches()
         batch.refresh_from_db()
         self.assertTrue(batch.custom_permissions)

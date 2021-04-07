@@ -48,7 +48,7 @@ def copy_project_settings_to_batch(apps, schema_editor):
     # from this migration fails because Django tries to populate fields that
     # are not added to the database until later migrations:
     #   https://github.com/hltcoe/turkle/issues/136
-    for project in Project.objects.all().only('id'):
+    for project in Project.objects.all().only('id', 'custom_permissions', 'login_required'):
         project.copy_permissions_to_batches()
 
 
