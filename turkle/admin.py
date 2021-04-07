@@ -243,7 +243,7 @@ class BatchForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields['allotted_assignment_time'].label = 'Allotted assignment time (hours)'
+        self.fields['allotted_assignment_time'].label = 'Allotted Assignment Time (hours)'
         self.fields['allotted_assignment_time'].help_text = 'If a user abandons a Task, ' + \
             'this determines how long it takes until their assignment is deleted and ' + \
             'someone else can work on the Task.'
@@ -766,9 +766,15 @@ class ProjectForm(ModelForm):
         #   turkle/templates/admin/turkle/project/change_form.html
         self.fields['filename'].widget = HiddenInput()
 
+        self.fields['allotted_assignment_time'].label = 'Allotted Assignment Time (hours)'
+        self.fields['allotted_assignment_time'].help_text = 'If a user abandons a Task, ' + \
+            'this determines how long it takes until their assignment is deleted and ' + \
+            'someone else can work on the Task. ' + \
+            'Changing this ' + \
+            'parameter DOES NOT change the number of Assignments per Task for already ' + \
+            'published batches of Tasks.'
         self.fields['assignments_per_task'].label = 'Assignments per Task'
-        self.fields['assignments_per_task'].help_text = 'This parameter sets the default ' + \
-            'number of Assignments per Task for new Batches of Tasks.  Changing this ' + \
+        self.fields['assignments_per_task'].help_text = 'Changing this ' + \
             'parameter DOES NOT change the number of Assignments per Task for already ' + \
             'published batches of Tasks.'
         self.fields['custom_permissions'].label = 'Restrict access to specific Groups of Workers '
@@ -846,13 +852,16 @@ class ProjectAdmin(GuardedModelAdmin):
             # Adding
             return (
                 (None, {
-                    'fields': ('name', 'assignments_per_task', 'allotted_assignment_time')
+                    'fields': ('name',)
                 }),
                 ('HTML Template', {
                     'fields': ('html_template', 'template_file_upload', 'filename')
                 }),
                 ('Status', {
                     'fields': ('active',)
+                }),
+                ('Default Task Assignment Settings for new Batches', {
+                    'fields': ('assignments_per_task', 'allotted_assignment_time')
                 }),
                 ('Default Permissions for new Batches', {
                     'fields': ('login_required', 'custom_permissions', 'worker_permissions')
@@ -862,7 +871,7 @@ class ProjectAdmin(GuardedModelAdmin):
             # Changing
             return (
                 (None, {
-                    'fields': ('name', 'assignments_per_task', 'allotted_assignment_time')
+                    'fields': ('name',)
                 }),
                 ('HTML Template', {
                     'fields': ('html_template', 'template_file_upload', 'filename',
@@ -870,6 +879,9 @@ class ProjectAdmin(GuardedModelAdmin):
                 }),
                 ('Status', {
                     'fields': ('active',)
+                }),
+                ('Default Task Assignment Settings for new Batches', {
+                    'fields': ('assignments_per_task', 'allotted_assignment_time')
                 }),
                 ('Default Permissions for new Batches', {
                     'fields': ('login_required', 'custom_permissions', 'worker_permissions')
