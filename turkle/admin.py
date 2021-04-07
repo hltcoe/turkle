@@ -1017,10 +1017,11 @@ class ProjectAdmin(GuardedModelAdmin):
         })
 
     def publish_tasks(self, instance):
-        publish_tasks_url = '%s?project=%d&assignments_per_task=%d' % (
+        publish_tasks_url = '%s?project=%d&assignments_per_task=%d&allotted_assignment_time=%d' % (
             reverse('turkle_admin:turkle_batch_add'),
             instance.id,
-            instance.assignments_per_task)
+            instance.assignments_per_task,
+            instance.allotted_assignment_time)
         return format_html('<a href="{}" class="button">Publish Tasks</a>'.
                            format(publish_tasks_url))
     publish_tasks.short_description = 'Publish Tasks'
