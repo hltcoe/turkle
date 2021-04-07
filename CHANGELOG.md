@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Project Stats page.
 - Banner for the preview page added to warn users that any work
   won't be saved.
+- Batch Statistics page now includes table of Unsubmitted Assignments
 - Tables on Batch Stats and Project Stats pages are now sortable
   by clicking on column headings
 
