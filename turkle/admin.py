@@ -770,13 +770,12 @@ class ProjectForm(ModelForm):
         self.fields['allotted_assignment_time'].help_text = 'If a user abandons a Task, ' + \
             'this determines how long it takes until their assignment is deleted and ' + \
             'someone else can work on the Task. ' + \
-            'Changing this ' + \
-            'parameter DOES NOT change the number of Assignments per Task for already ' + \
-            'published batches of Tasks.'
+            'Changing this parameter DOES NOT change the Allotted Assignment Time for already ' + \
+            'published Batches of Tasks.'
         self.fields['assignments_per_task'].label = 'Assignments per Task'
         self.fields['assignments_per_task'].help_text = 'Changing this ' + \
             'parameter DOES NOT change the number of Assignments per Task for already ' + \
-            'published batches of Tasks.'
+            'published Batches of Tasks.'
         self.fields['custom_permissions'].label = 'Restrict access to specific Groups of Workers '
         self.fields['html_template'].label = 'HTML template text'
         limit = str(get_turkle_template_limit())
