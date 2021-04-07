@@ -492,6 +492,7 @@ class TestProject(django.test.TestCase):
         client.login(username='admin', password='secret')
         response = client.post(reverse('turkle_admin:turkle_project_add'),
                                {
+                                   'allotted_assignment_time': 24,
                                    'assignments_per_task': 1,
                                    'name': 'foo',
                                    'html_template': '<p>${foo}: ${bar}</p><textarea>',
@@ -523,6 +524,7 @@ class TestProject(django.test.TestCase):
         response = client.post(reverse('turkle_admin:turkle_project_change',
                                        args=(project.id,)),
                                {
+                                   'allotted_assignment_time': 24,
                                    'assignments_per_task': 1,
                                    'name': 'newname',
                                    'html_template': '<p>${foo}: ${bar}</p><textarea>',
@@ -544,6 +546,7 @@ class TestProject(django.test.TestCase):
         response = client.post(reverse('turkle_admin:turkle_project_change',
                                        args=(project.id,)),
                                {
+                                   'allotted_assignment_time': 24,
                                    'assignments_per_task': 1,
                                    'custom_permissions': True,
                                    'html_template': '<p>${foo}: ${bar}</p><textarea>',
@@ -569,6 +572,7 @@ class TestProject(django.test.TestCase):
         response = client.post(reverse('turkle_admin:turkle_project_change',
                                        args=(project.id,)),
                                {
+                                   'allotted_assignment_time': 24,
                                    'assignments_per_task': 1,
                                    'custom_permissions': True,
                                    'html_template': '<p>${foo}: ${bar}</p><textarea>',
@@ -597,6 +601,7 @@ class TestProject(django.test.TestCase):
         response = client.post(reverse('turkle_admin:turkle_project_change',
                                        args=(project.id,)),
                                {
+                                   'allotted_assignment_time': 24,
                                    'assignments_per_task': 1,
                                    'custom_permissions': True,
                                    'html_template': '<p>${foo}: ${bar}</p><textarea>',
