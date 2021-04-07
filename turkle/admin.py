@@ -564,11 +564,13 @@ class BatchAdmin(admin.ModelAdmin):
             # Adding
             return (
                 (None, {
-                    'fields': ('project', 'name', 'assignments_per_task',
-                               'allotted_assignment_time', 'csv_file'),
+                    'fields': ('project', 'name', 'csv_file'),
                 }),
                 ('Status', {
                     'fields': ('active',)
+                }),
+                ('Task Assignment Settings', {
+                    'fields': ('assignments_per_task', 'allotted_assignment_time')
                 }),
                 ('Permissions', {
                     'fields': ('login_required', 'custom_permissions', 'worker_permissions')
@@ -578,11 +580,13 @@ class BatchAdmin(admin.ModelAdmin):
             # Changing
             return (
                 (None, {
-                    'fields': ('project', 'name', 'assignments_per_task',
-                               'allotted_assignment_time', 'filename')
+                    'fields': ('project', 'name', 'filename')
                 }),
                 ('Status', {
                     'fields': ('active', 'published')
+                }),
+                ('Task Assignment Settings', {
+                    'fields': ('assignments_per_task', 'allotted_assignment_time')
                 }),
                 ('Permissions', {
                     'fields': ('login_required', 'custom_permissions', 'worker_permissions')
