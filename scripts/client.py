@@ -103,6 +103,7 @@ class TurkleClient(object):
         session.get(url)
         payload = {
             'name': options.project_name,
+            'allotted_assignment_time': 24,
             'assignments_per_task': options.num,
             'filename': options.template,
             'html_template': options.form,
