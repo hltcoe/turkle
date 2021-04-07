@@ -700,7 +700,6 @@ class Project(TaskAssignmentStatistics, models.Model):
         verbose_name = "Project"
         ordering = ['-id']
 
-    demonstrate_broken_migrations = models.BooleanField(default=True)
     active = models.BooleanField(db_index=True, default=True)
     assignments_per_task = models.IntegerField(db_index=True, default=1)
     created_at = models.DateTimeField(auto_now_add=True)
