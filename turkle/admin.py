@@ -739,6 +739,13 @@ class BatchAdmin(admin.ModelAdmin):
 
 
 class ProjectForm(ModelForm):
+    # Allow a form to be submitted without an 'allotted_assignment_time'
+    # field.  The default value for this field will be used instead.
+    # See also the function clean_allotted_assignment_time().
+    allotted_assignment_time = IntegerField(
+        initial=Project._meta.get_field('allotted_assignment_time').get_default(),
+        required=False)
+
     template_file_upload = FileField(label='HTML template file', required=False)
     worker_permissions = ModelMultipleChoiceField(
         label='Worker Groups with access to this Project',
@@ -781,6 +788,23 @@ class ProjectForm(ModelForm):
         initial_ids = [str(id)
                        for id in get_groups_with_perms(self.instance).values_list('id', flat=True)]
         self.fields['worker_permissions'].initial = initial_ids
+
+    def clean_allotted_assignment_time(self):
+        """Clean 'allotted_assignment_time' form field
+
+        - If the allotted_assignment_time field is not submitted as part
+          of the form data (e.g. when interacting with this form via a
+          script), use the default value.
+        - If the allotted_assignment_time is an empty string (e.g. when
+          submitting the form using a browser), raise a ValidationError
+        """
+        data = self.data.get('allotted_assignment_time')
+        if data is None:
+            return Project._meta.get_field('allotted_assignment_time').get_default()
+        elif data.strip() == '':
+            raise ValidationError('This field is required.')
+        else:
+            return data
 
 
 class ProjectAdmin(GuardedModelAdmin):
