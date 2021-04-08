@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added allotted_assignment_time field to Projects that is used as
+  the default allotted_assignment_time for new Batches created
+  for the Project
 - Added statistics about not-yet-completed Task Assignments to
   Project Stats page.
 - Banner for the preview page added to warn users that any work
