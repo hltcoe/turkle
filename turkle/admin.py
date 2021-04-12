@@ -265,22 +265,33 @@ class BatchForm(ModelForm):
             # Per Django convention, the project ID is specified in the URL, e.g.:
             #   /admin/turkle/batch/add/?project=94
 
-            # NOTE: The fields that are initialized here should match the fields copied
-            #       over by the batch.copy_project_permissions() function.
-
             project = Project.objects.get(id=int(self.initial['project']))
-            self.fields['custom_permissions'].initial = project.custom_permissions
-            self.fields['login_required'].initial = project.login_required
+
+            if 'allotted_assignment_time' not in self.initial:
+                self.fields['allotted_assignment_time'].initial = project.allotted_assignment_time
+            if 'assignments_per_task' not in self.initial:
+                self.fields['assignments_per_task'].initial = project.assignments_per_task
 
             # Pre-populate permissions using permissions from the associated Project
-            initial_ids = [str(id)
-                           for id in get_groups_with_perms(project).values_list('id', flat=True)]
+            #
+            # The permisisons that are initialized here should match the fields copied
+            # over by the batch.copy_project_permissions() function.
+            if 'login_required' not in self.initial:
+                self.fields['login_required'].initial = project.login_required
+            if 'custom_permissions' not in self.initial:
+                self.fields['custom_permissions'].initial = project.custom_permissions
+
+            # Pre-populate list of Groups with permissions for associated Project
+            initial_group_ids = [str(id)
+                                 for id in get_groups_with_perms(project).
+                                 values_list('id', flat=True)]
         else:
-            # Pre-populate permissions
-            initial_ids = [str(id)
-                           for id in get_groups_with_perms(self.instance).
-                           values_list('id', flat=True)]
-        self.fields['worker_permissions'].initial = initial_ids
+            # Pre-populate list of Groups with permissions for this Batch
+            # (List will be empty when Adding, but can be non-empty when Changing)
+            initial_group_ids = [str(id)
+                                 for id in get_groups_with_perms(self.instance).
+                                 values_list('id', flat=True)]
+        self.fields['worker_permissions'].initial = initial_group_ids
 
         # csv_file field not required if changing existing Batch
         #
@@ -1032,11 +1043,9 @@ class ProjectAdmin(GuardedModelAdmin):
         })
 
     def publish_tasks(self, instance):
-        publish_tasks_url = '%s?project=%d&assignments_per_task=%d&allotted_assignment_time=%d' % (
+        publish_tasks_url = '%s?project=%d' % (
             reverse('turkle_admin:turkle_batch_add'),
-            instance.id,
-            instance.assignments_per_task,
-            instance.allotted_assignment_time)
+            instance.id)
         return format_html('<a href="{}" class="button">Publish Tasks</a>'.
                            format(publish_tasks_url))
     publish_tasks.short_description = 'Publish Tasks'
