@@ -6,6 +6,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 ### Added
+- Added allotted_assignment_time field to Projects that is used as
+  the default allotted_assignment_time for new Batches created
+  for the Project
 - Added statistics about not-yet-completed Task Assignments to
   Project Stats page.
 - Banner for the preview page added to warn users that any work
@@ -17,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Deprecate support for (EOL) Python 3.5, add support for
   Python 3.9.
+- Reorganized Add/Change Project forms to more clearly identify which
+  Project-level settings are only used as defaults for new Batches.
+  Reorganized Add/Change Batch forms to match field order on Add/Change
+  Project forms.
 - Updated to use Django 2 style URLs.
 
 ### Fixed

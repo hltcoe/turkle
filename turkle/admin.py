@@ -243,7 +243,7 @@ class BatchForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.fields['allotted_assignment_time'].label = 'Allotted assignment time (hours)'
+        self.fields['allotted_assignment_time'].label = 'Allotted Assignment Time (hours)'
         self.fields['allotted_assignment_time'].help_text = 'If a user abandons a Task, ' + \
             'this determines how long it takes until their assignment is deleted and ' + \
             'someone else can work on the Task.'
@@ -265,22 +265,33 @@ class BatchForm(ModelForm):
             # Per Django convention, the project ID is specified in the URL, e.g.:
             #   /admin/turkle/batch/add/?project=94
 
-            # NOTE: The fields that are initialized here should match the fields copied
-            #       over by the batch.copy_project_permissions() function.
-
             project = Project.objects.get(id=int(self.initial['project']))
-            self.fields['custom_permissions'].initial = project.custom_permissions
-            self.fields['login_required'].initial = project.login_required
+
+            if 'allotted_assignment_time' not in self.initial:
+                self.fields['allotted_assignment_time'].initial = project.allotted_assignment_time
+            if 'assignments_per_task' not in self.initial:
+                self.fields['assignments_per_task'].initial = project.assignments_per_task
 
             # Pre-populate permissions using permissions from the associated Project
-            initial_ids = [str(id)
-                           for id in get_groups_with_perms(project).values_list('id', flat=True)]
+            #
+            # The permisisons that are initialized here should match the fields copied
+            # over by the batch.copy_project_permissions() function.
+            if 'login_required' not in self.initial:
+                self.fields['login_required'].initial = project.login_required
+            if 'custom_permissions' not in self.initial:
+                self.fields['custom_permissions'].initial = project.custom_permissions
+
+            # Pre-populate list of Groups with permissions for associated Project
+            initial_group_ids = [str(id)
+                                 for id in get_groups_with_perms(project).
+                                 values_list('id', flat=True)]
         else:
-            # Pre-populate permissions
-            initial_ids = [str(id)
-                           for id in get_groups_with_perms(self.instance).
-                           values_list('id', flat=True)]
-        self.fields['worker_permissions'].initial = initial_ids
+            # Pre-populate list of Groups with permissions for this Batch
+            # (List will be empty when Adding, but can be non-empty when Changing)
+            initial_group_ids = [str(id)
+                                 for id in get_groups_with_perms(self.instance).
+                                 values_list('id', flat=True)]
+        self.fields['worker_permissions'].initial = initial_group_ids
 
         # csv_file field not required if changing existing Batch
         #
@@ -564,11 +575,13 @@ class BatchAdmin(admin.ModelAdmin):
             # Adding
             return (
                 (None, {
-                    'fields': ('project', 'name', 'assignments_per_task',
-                               'allotted_assignment_time', 'csv_file'),
+                    'fields': ('project', 'name', 'csv_file'),
                 }),
                 ('Status', {
                     'fields': ('active',)
+                }),
+                ('Task Assignment Settings', {
+                    'fields': ('assignments_per_task', 'allotted_assignment_time')
                 }),
                 ('Permissions', {
                     'fields': ('login_required', 'custom_permissions', 'worker_permissions')
@@ -578,11 +591,13 @@ class BatchAdmin(admin.ModelAdmin):
             # Changing
             return (
                 (None, {
-                    'fields': ('project', 'name', 'assignments_per_task',
-                               'allotted_assignment_time', 'filename')
+                    'fields': ('project', 'name', 'filename')
                 }),
                 ('Status', {
                     'fields': ('active', 'published')
+                }),
+                ('Task Assignment Settings', {
+                    'fields': ('assignments_per_task', 'allotted_assignment_time')
                 }),
                 ('Permissions', {
                     'fields': ('login_required', 'custom_permissions', 'worker_permissions')
@@ -739,6 +754,13 @@ class BatchAdmin(admin.ModelAdmin):
 
 
 class ProjectForm(ModelForm):
+    # Allow a form to be submitted without an 'allotted_assignment_time'
+    # field.  The default value for this field will be used instead.
+    # See also the function clean_allotted_assignment_time().
+    allotted_assignment_time = IntegerField(
+        initial=Project._meta.get_field('allotted_assignment_time').get_default(),
+        required=False)
+
     template_file_upload = FileField(label='HTML template file', required=False)
     worker_permissions = ModelMultipleChoiceField(
         label='Worker Groups with access to this Project',
@@ -759,11 +781,16 @@ class ProjectForm(ModelForm):
         #   turkle/templates/admin/turkle/project/change_form.html
         self.fields['filename'].widget = HiddenInput()
 
+        self.fields['allotted_assignment_time'].label = 'Allotted Assignment Time (hours)'
+        self.fields['allotted_assignment_time'].help_text = 'If a user abandons a Task, ' + \
+            'this determines how long it takes until their assignment is deleted and ' + \
+            'someone else can work on the Task. ' + \
+            'Changing this parameter DOES NOT change the Allotted Assignment Time for already ' + \
+            'published Batches of Tasks.'
         self.fields['assignments_per_task'].label = 'Assignments per Task'
-        self.fields['assignments_per_task'].help_text = 'This parameter sets the default ' + \
-            'number of Assignments per Task for new Batches of Tasks.  Changing this ' + \
+        self.fields['assignments_per_task'].help_text = 'Changing this ' + \
             'parameter DOES NOT change the number of Assignments per Task for already ' + \
-            'published batches of Tasks.'
+            'published Batches of Tasks.'
         self.fields['custom_permissions'].label = 'Restrict access to specific Groups of Workers '
         self.fields['html_template'].label = 'HTML template text'
         limit = str(get_turkle_template_limit())
@@ -781,6 +808,23 @@ class ProjectForm(ModelForm):
         initial_ids = [str(id)
                        for id in get_groups_with_perms(self.instance).values_list('id', flat=True)]
         self.fields['worker_permissions'].initial = initial_ids
+
+    def clean_allotted_assignment_time(self):
+        """Clean 'allotted_assignment_time' form field
+
+        - If the allotted_assignment_time field is not submitted as part
+          of the form data (e.g. when interacting with this form via a
+          script), use the default value.
+        - If the allotted_assignment_time is an empty string (e.g. when
+          submitting the form using a browser), raise a ValidationError
+        """
+        data = self.data.get('allotted_assignment_time')
+        if data is None:
+            return Project._meta.get_field('allotted_assignment_time').get_default()
+        elif data.strip() == '':
+            raise ValidationError('This field is required.')
+        else:
+            return data
 
 
 class ProjectAdmin(GuardedModelAdmin):
@@ -822,13 +866,16 @@ class ProjectAdmin(GuardedModelAdmin):
             # Adding
             return (
                 (None, {
-                    'fields': ('name', 'assignments_per_task')
+                    'fields': ('name',)
                 }),
                 ('HTML Template', {
                     'fields': ('html_template', 'template_file_upload', 'filename')
                 }),
                 ('Status', {
                     'fields': ('active',)
+                }),
+                ('Default Task Assignment Settings for new Batches', {
+                    'fields': ('assignments_per_task', 'allotted_assignment_time')
                 }),
                 ('Default Permissions for new Batches', {
                     'fields': ('login_required', 'custom_permissions', 'worker_permissions')
@@ -838,7 +885,7 @@ class ProjectAdmin(GuardedModelAdmin):
             # Changing
             return (
                 (None, {
-                    'fields': ('name', 'assignments_per_task')
+                    'fields': ('name',)
                 }),
                 ('HTML Template', {
                     'fields': ('html_template', 'template_file_upload', 'filename',
@@ -846,6 +893,9 @@ class ProjectAdmin(GuardedModelAdmin):
                 }),
                 ('Status', {
                     'fields': ('active',)
+                }),
+                ('Default Task Assignment Settings for new Batches', {
+                    'fields': ('assignments_per_task', 'allotted_assignment_time')
                 }),
                 ('Default Permissions for new Batches', {
                     'fields': ('login_required', 'custom_permissions', 'worker_permissions')
@@ -993,10 +1043,9 @@ class ProjectAdmin(GuardedModelAdmin):
         })
 
     def publish_tasks(self, instance):
-        publish_tasks_url = '%s?project=%d&assignments_per_task=%d' % (
+        publish_tasks_url = '%s?project=%d' % (
             reverse('turkle_admin:turkle_batch_add'),
-            instance.id,
-            instance.assignments_per_task)
+            instance.id)
         return format_html('<a href="{}" class="button">Publish Tasks</a>'.
                            format(publish_tasks_url))
     publish_tasks.short_description = 'Publish Tasks'

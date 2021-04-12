@@ -701,6 +701,7 @@ class Project(TaskAssignmentStatistics, models.Model):
         ordering = ['-id']
 
     active = models.BooleanField(db_index=True, default=True)
+    allotted_assignment_time = models.IntegerField(default=24)
     assignments_per_task = models.IntegerField(db_index=True, default=1)
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(User, null=True, related_name='created_projects',
