@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Deprecate support for (EOL) Python 3.5, add support for
   Python 3.9.
+- Reorganized Add/Change Project forms to more clearly identify which
+  Project-level settings are only used as defaults for new Batches.
+  Reorganized Add/Change Batch forms to match field order on Add/Change
+  Project forms.
 - Updated to use Django 2 style URLs.
 
 ### Fixed
