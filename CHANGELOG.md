@@ -16,10 +16,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Batch Statistics page now includes table of Unsubmitted Assignments
 - Tables on Batch Stats and Project Stats pages are now sortable
   by clicking on column headings
+- Turkle now creates a "Turkle User Admin" Group that has:
+  - Add/Change/View (but not Delete) permissions for Users
+  - Add/Change/View (but not Delete) permissions for Groups
+  - View permissions for Batches
+  - View permissions for Projects
 
 ### Changed
 - Deprecate support for (EOL) Python 3.5, add support for
   Python 3.9.
+- On the Add/Change User admin forms, the ability to assign superuser
+  status or grant model-level permission privileges to Users is now
+  restricted to superusers
+- On the Change User admin form, the "Last login" and "Date joined"
+  fields are now read-only
 - Reorganized Add/Change Project forms to more clearly identify which
   Project-level settings are only used as defaults for new Batches.
   Reorganized Add/Change Batch forms to match field order on Add/Change
