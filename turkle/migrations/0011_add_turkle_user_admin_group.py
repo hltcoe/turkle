@@ -33,7 +33,7 @@ def add_turkle_user_admin_group(apps, schema_editor):
     # 2.2+ - was suggested in a comment on the bug report made on
     # 2020-05-07:
     #   https://code.djangoproject.com/ticket/23422#comment:28
-    emit_post_migrate_signal(2, False, 'default')
+    emit_post_migrate_signal(1, False, 'default')
 
     batch_ctype = ContentType.objects.get_for_model(Batch)
     group_ctype = ContentType.objects.get_for_model(Group)
