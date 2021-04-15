@@ -854,7 +854,6 @@ class ProjectAdmin(GuardedModelAdmin):
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
-    list_display = ('name', 'filename', 'updated_at', 'active', 'stats', 'publish_tasks')
     list_filter = ('active', ProjectCreatorFilter)
     search_fields = ['name']
 
@@ -921,6 +920,12 @@ class ProjectAdmin(GuardedModelAdmin):
                     'fields': ('login_required', 'custom_permissions', 'worker_permissions')
                 }),
             )
+
+    def get_list_display(self, request):
+        if request.user.has_perm('turkle.add_batch'):
+            return ('name', 'filename', 'updated_at', 'active', 'stats', 'publish_tasks')
+        else:
+            return ('name', 'filename', 'updated_at', 'active', 'stats')
 
     def project_stats(self, request, project_id):
         try:
