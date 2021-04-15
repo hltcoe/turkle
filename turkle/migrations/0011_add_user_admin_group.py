@@ -5,6 +5,8 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.management.sql import emit_post_migrate_signal
 from django.db import migrations, models
 
+from turkle.models import Batch, Project
+
 
 def add_user_admin_group(apps, schema_editor):
     """Create custom group that has CRU (but not D) access to User/Group models
@@ -33,18 +35,22 @@ def add_user_admin_group(apps, schema_editor):
     #   https://code.djangoproject.com/ticket/23422#comment:28
     emit_post_migrate_signal(2, False, 'default')
 
-    user_content_type = ContentType.objects.get_for_model(User)
-    group_content_type = ContentType.objects.get_for_model(Group)
+    batch_ctype = ContentType.objects.get_for_model(Batch)
+    group_ctype = ContentType.objects.get_for_model(Group)
+    project_ctype = ContentType.objects.get_for_model(Project)
+    user_ctype = ContentType.objects.get_for_model(User)
 
-    user_perms = [Permission.objects.get(codename=codename, content_type=user_content_type)
-                  for codename in ['add_user', 'change_user', 'view_user']]
-    group_perms = [Permission.objects.get(codename=codename, content_type=group_content_type)
+    batch_perms = [Permission.objects.get(codename='view_batch', content_type=batch_ctype)]
+    group_perms = [Permission.objects.get(codename=codename, content_type=group_ctype)
                    for codename in ['add_group', 'change_group', 'view_group']]
+    project_perms = [Permission.objects.get(codename='view_project', content_type=project_ctype)]
+    user_perms = [Permission.objects.get(codename=codename, content_type=user_ctype)
+                  for codename in ['add_user', 'change_user', 'view_user']]
 
     # Because we use get_or_create(), if an existing Turkle installation already
     # has a "Turkle User Admin" group, we will overwrite the existing permissions.
     (uag, _) = Group.objects.get_or_create(name='Turkle User Admin')
-    uag.permissions.set(user_perms + group_perms)
+    uag.permissions.set(batch_perms + group_perms + project_perms + user_perms)
 
 
 class Migration(migrations.Migration):
