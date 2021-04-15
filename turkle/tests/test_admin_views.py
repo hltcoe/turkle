@@ -548,7 +548,7 @@ class TestProject(django.test.TestCase):
                                    'custom_permissions': True,
                                    'html_template': '<p>${foo}: ${bar}</p><textarea>',
                                    'name': 'newname',
-                                   'worker_permissions': [group.id],
+                                   'can_work_on_groups': [group.id],
                                })
         self.assertTrue(b'Please correct the error' not in response.content)
         self.assertEqual(response.status_code, 302)
@@ -601,7 +601,7 @@ class TestProject(django.test.TestCase):
                                    'custom_permissions': True,
                                    'html_template': '<p>${foo}: ${bar}</p><textarea>',
                                    'name': 'newname',
-                                   'worker_permissions': [group_to_add.id],
+                                   'can_work_on_groups': [group_to_add.id],
                                })
         self.assertTrue(b'Please correct the error' not in response.content)
         self.assertEqual(response.status_code, 302)

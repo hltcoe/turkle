@@ -233,7 +233,7 @@ class BatchForm(ModelForm):
         initial=Batch._meta.get_field('allotted_assignment_time').get_default(),
         required=False)
 
-    worker_permissions = ModelMultipleChoiceField(
+    can_work_on_groups = ModelMultipleChoiceField(
         label='Worker Groups with access to this Batch',
         queryset=Group.objects.all(),
         required=False,
@@ -291,7 +291,7 @@ class BatchForm(ModelForm):
             initial_group_ids = [str(id)
                                  for id in get_groups_with_perms(self.instance).
                                  values_list('id', flat=True)]
-        self.fields['worker_permissions'].initial = initial_group_ids
+        self.fields['can_work_on_groups'].initial = initial_group_ids
 
         # csv_file field not required if changing existing Batch
         #
@@ -584,7 +584,7 @@ class BatchAdmin(admin.ModelAdmin):
                     'fields': ('assignments_per_task', 'allotted_assignment_time')
                 }),
                 ('Permissions', {
-                    'fields': ('login_required', 'custom_permissions', 'worker_permissions')
+                    'fields': ('login_required', 'custom_permissions', 'can_work_on_groups')
                 }),
             )
         else:
@@ -600,7 +600,7 @@ class BatchAdmin(admin.ModelAdmin):
                     'fields': ('assignments_per_task', 'allotted_assignment_time')
                 }),
                 ('Permissions', {
-                    'fields': ('login_required', 'custom_permissions', 'worker_permissions')
+                    'fields': ('login_required', 'custom_permissions', 'can_work_on_groups')
                 }),
             )
 
@@ -729,9 +729,9 @@ class BatchAdmin(admin.ModelAdmin):
             logger.info("User(%i) updating Batch(%i) %s", request.user.id, obj.id, obj.name)
 
         if 'custom_permissions' in form.data:
-            if 'worker_permissions' in form.data:
+            if 'can_work_on_groups' in form.data:
                 existing_groups = set(get_groups_with_perms(obj))
-                form_groups = set(form.cleaned_data['worker_permissions'])
+                form_groups = set(form.cleaned_data['can_work_on_groups'])
                 groups_to_add = form_groups.difference(existing_groups)
                 groups_to_remove = existing_groups.difference(form_groups)
                 for group in groups_to_add:
@@ -762,7 +762,7 @@ class ProjectForm(ModelForm):
         required=False)
 
     template_file_upload = FileField(label='HTML template file', required=False)
-    worker_permissions = ModelMultipleChoiceField(
+    can_work_on_groups = ModelMultipleChoiceField(
         label='Worker Groups with access to this Project',
         queryset=Group.objects.all(),
         required=False,
@@ -807,7 +807,7 @@ class ProjectForm(ModelForm):
 
         initial_ids = [str(id)
                        for id in get_groups_with_perms(self.instance).values_list('id', flat=True)]
-        self.fields['worker_permissions'].initial = initial_ids
+        self.fields['can_work_on_groups'].initial = initial_ids
 
     def clean_allotted_assignment_time(self):
         """Clean 'allotted_assignment_time' form field
@@ -878,7 +878,7 @@ class ProjectAdmin(GuardedModelAdmin):
                     'fields': ('assignments_per_task', 'allotted_assignment_time')
                 }),
                 ('Default Permissions for new Batches', {
-                    'fields': ('login_required', 'custom_permissions', 'worker_permissions')
+                    'fields': ('login_required', 'custom_permissions', 'can_work_on_groups')
                 }),
             )
         else:
@@ -898,7 +898,7 @@ class ProjectAdmin(GuardedModelAdmin):
                     'fields': ('assignments_per_task', 'allotted_assignment_time')
                 }),
                 ('Default Permissions for new Batches', {
-                    'fields': ('login_required', 'custom_permissions', 'worker_permissions')
+                    'fields': ('login_required', 'custom_permissions', 'can_work_on_groups')
                 }),
             )
 
@@ -1064,9 +1064,9 @@ class ProjectAdmin(GuardedModelAdmin):
             logger.info("User(%i) updating Project(%i) %s", request.user.id, obj.id, obj.name)
 
         if 'custom_permissions' in form.data:
-            if 'worker_permissions' in form.data:
+            if 'can_work_on_groups' in form.data:
                 existing_groups = set(get_groups_with_perms(obj))
-                form_groups = set(form.cleaned_data['worker_permissions'])
+                form_groups = set(form.cleaned_data['can_work_on_groups'])
                 groups_to_add = form_groups.difference(existing_groups)
                 groups_to_remove = existing_groups.difference(form_groups)
                 for group in groups_to_add:

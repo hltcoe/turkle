@@ -1,9 +1,9 @@
 $(function () {
   /* Hide/show group permissions on create/edit forms */
   if (!$('#id_custom_permissions').is(':checked')) {
-    $('div.field-worker_permissions').hide();
+    $('div.field-can_work_on_groups').hide();
   }
   $('#id_custom_permissions').change(function() {
-    $('div.field-worker_permissions').toggle();
+    $('div.field-can_work_on_groups').toggle();
   });
 });
