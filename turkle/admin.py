@@ -136,11 +136,6 @@ class GroupFilter(AutocompleteFilter):
 
 
 class CustomUserAdmin(UserAdmin):
-    add_fieldsets = UserAdmin.add_fieldsets + (
-        ('Personal info', {'fields': ('first_name', 'last_name', 'email')}),
-        ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser',
-                                    'groups')}),
-    )
     actions = ['activate_users', 'deactivate_users']
     list_filter = ('is_active', 'is_staff', 'is_superuser', GroupFilter, 'date_joined')
     list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active')
@@ -174,6 +169,31 @@ class CustomUserAdmin(UserAdmin):
         actions = super().get_actions(request)
         actions.pop('delete_selected', None)
         return actions
+
+    def get_fieldsets(self, request, obj=None):
+        if request.user.is_superuser:
+            permission_fields = (
+                'is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions')
+        else:
+            permission_fields = (
+                'is_active', 'is_staff', 'groups')
+
+        if not obj:
+            # Adding
+            return (
+                (None, {'fields': ('username', 'password1', 'password2')}),
+                ('Personal info', {'fields': ('first_name', 'last_name', 'email')}),
+                ('Permissions', {'fields': permission_fields}))
+        else:
+            # Changing
+            return (
+                (None, {'fields': ('username', 'password')}),
+                ('Personal info', {'fields': ('first_name', 'last_name', 'email')}),
+                ('Permissions', {'fields': permission_fields}),
+                ('Important dates', {'fields': ('last_login', 'date_joined')}))
+
+    def get_readonly_fields(self, request, obj=None):
+        return ('last_login', 'date_joined')
 
     def get_urls(self):
         urls = super().get_urls()
