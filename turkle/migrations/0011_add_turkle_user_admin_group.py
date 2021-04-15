@@ -8,7 +8,7 @@ from django.db import migrations, models
 from turkle.models import Batch, Project
 
 
-def add_user_admin_group(apps, schema_editor):
+def add_turkle_user_admin_group(apps, schema_editor):
     """Create custom group that has CRU (but not D) access to User/Group models
     """
 
@@ -60,5 +60,5 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunPython(add_user_admin_group),
+        migrations.RunPython(add_turkle_user_admin_group),
     ]
