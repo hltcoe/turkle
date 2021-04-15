@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tables on Batch Stats and Project Stats pages are now sortable
   by clicking on column headings
 - Turkle now creates a "Turkle User Admin" Group that has:
-  - Add/Change/View (but not Delete) permisisons for Users
+  - Add/Change/View (but not Delete) permissions for Users
   - Add/Change/View (but not Delete) permissions for Groups
   - View permissions for Batches
   - View permissions for Projects
