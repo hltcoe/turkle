@@ -805,9 +805,10 @@ class ProjectForm(ModelForm):
             'all associated Batches.  Workers can only access a Batch if both the Batch ' + \
             'itself and the associated Project are Active.'
 
-        initial_ids = [str(id)
-                       for id in get_groups_with_perms(self.instance).values_list('id', flat=True)]
-        self.fields['can_work_on_groups'].initial = initial_ids
+        initial_group_ids = [str(id)
+                             for id in get_groups_with_perms(self.instance).
+                             values_list('id', flat=True)]
+        self.fields['can_work_on_groups'].initial = initial_group_ids
 
     def clean_allotted_assignment_time(self):
         """Clean 'allotted_assignment_time' form field
