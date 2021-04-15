@@ -624,6 +624,12 @@ class BatchAdmin(admin.ModelAdmin):
                 }),
             )
 
+    def get_list_display_links(self, request, list_display):
+        if request.user.has_perm('turkle.change_batch'):
+            return ('name',)
+        else:
+            return (None,)
+
     def get_readonly_fields(self, request, obj=None):
         if not obj:
             return []
@@ -926,6 +932,12 @@ class ProjectAdmin(GuardedModelAdmin):
             return ('name', 'filename', 'updated_at', 'active', 'stats', 'publish_tasks')
         else:
             return ('name', 'filename', 'updated_at', 'active', 'stats')
+
+    def get_list_display_links(self, request, list_display):
+        if request.user.has_perm('turkle.change_project'):
+            return ('name',)
+        else:
+            return (None,)
 
     def project_stats(self, request, project_id):
         try:
