@@ -60,7 +60,9 @@ class TurkleAdminSite(admin.AdminSite):
         return my_urls + urls
 
 
-class CustomGroupMultipleChoiceField(ModelMultipleChoiceField):
+class UserFullnameMultipleChoiceField(ModelMultipleChoiceField):
+    """MultipleChoiceField that displays User's username and full name
+    """
     def label_from_instance(self, user):
         return '%s (%s)' % (user.get_full_name(), user.username)
 
@@ -68,7 +70,7 @@ class CustomGroupMultipleChoiceField(ModelMultipleChoiceField):
 class CustomGroupAdminForm(ModelForm):
     """Hides 'Permissions' section, adds 'Group Members' section
     """
-    users = CustomGroupMultipleChoiceField(
+    users = UserFullnameMultipleChoiceField(
         label='Group Members',
         queryset=User.objects.order_by('last_name'),
         required=False,
@@ -260,9 +262,9 @@ class BatchForm(ModelForm):
         required=False,
         widget=FilteredSelectMultiple('Worker Groups', False),
     )
-    can_work_on_users = ModelMultipleChoiceField(
+    can_work_on_users = UserFullnameMultipleChoiceField(
         label='Users that can work on this Batch',
-        queryset=User.objects.all(),
+        queryset=User.objects.order_by('first_name', 'last_name'),
         required=False,
         widget=FilteredSelectMultiple('Worker Users', False),
     )
@@ -828,9 +830,9 @@ class ProjectForm(ModelForm):
         required=False,
         widget=FilteredSelectMultiple('Worker Groups', False),
     )
-    can_work_on_users = ModelMultipleChoiceField(
+    can_work_on_users = UserFullnameMultipleChoiceField(
         label='Users that can work on this Project',
-        queryset=User.objects.all(),
+        queryset=User.objects.order_by('first_name', 'last_name'),
         required=False,
         widget=FilteredSelectMultiple('Worker Users', False),
     )
