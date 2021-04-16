@@ -337,6 +337,33 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
         self.assertTrue(Batch.objects.filter(name='batch_save_modified').exists())
 
+    def test_batch_change_remove_and_add_user(self):
+        project = Project.objects.create(name='testproject')
+        batch = Batch.objects.create(name='testbatch', project=project)
+        user_to_add = User.objects.create_user('user_to_add', password='secret')
+        user_to_remove = User.objects.create_user('user_to_remove', password='secret')
+        user_to_remove.add_obj_perm('can_work_on_batch', batch)
+        self.assertFalse(user_to_add.has_perm('can_work_on_batch', batch))
+        self.assertTrue(user_to_remove.has_perm('can_work_on_batch', batch))
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.post(reverse('turkle_admin:turkle_batch_change',
+                                       args=(batch.id,)),
+                               {
+                                   'assignments_per_task': 1,
+                                   'project': batch.project.id,
+                                   'name': 'newname',
+                                   'custom_permissions': True,
+                                   'can_work_on_users': [user_to_add.id],
+                               })
+        self.assertTrue(b'Please correct the error' not in response.content)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], '/admin/turkle/batch/')
+        self.assertEqual(Batch.objects.filter(name='newname').count(), 1)
+        self.assertTrue(user_to_add.has_perm('can_work_on_batch', batch))
+        self.assertFalse(user_to_remove.has_perm('can_work_on', batch))
+
     def test_batch_change_update_non_published(self):
         self.test_batch_add()
         batch = Batch.objects.get(name='batch_save')
@@ -474,7 +501,7 @@ class TestGroupAdmin(django.test.TestCase):
         self.assertTrue(b'testgroup' in response.content)
 
 
-class TestProject(django.test.TestCase):
+class TestProjectAdmin(django.test.TestCase):
     def setUp(self):
         self.user = User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
 
@@ -535,9 +562,11 @@ class TestProject(django.test.TestCase):
     def test_post_change_project_custom_permissions(self):
         project = Project.objects.create(name='testproject')
         user = User.objects.create_user('testuser', password='secret')
+        user_not_in_group = User.objects.create_user('nogroup', password='secret')
         group = Group.objects.create(name='testgroup')
         user.groups.add(group)
         self.assertFalse(user.has_perm('can_work_on', project))
+        self.assertFalse(user_not_in_group.has_perm('can_work_on', project))
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
@@ -549,20 +578,25 @@ class TestProject(django.test.TestCase):
                                    'html_template': '<p>${foo}: ${bar}</p><textarea>',
                                    'name': 'newname',
                                    'can_work_on_groups': [group.id],
+                                   'can_work_on_users': [user_not_in_group.id],
                                })
         self.assertTrue(b'Please correct the error' not in response.content)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], '/admin/turkle/project/')
         self.assertEqual(Project.objects.filter(name='newname').count(), 1)
         self.assertTrue(user.has_perm('can_work_on', project))
+        self.assertTrue(user_not_in_group.has_perm('can_work_on', project))
 
     def test_post_change_project_remove_all_groups(self):
         project = Project.objects.create(name='testproject')
         user = User.objects.create_user('testuser', password='secret')
+        user_not_in_group = User.objects.create_user('nogroup', password='secret')
         group = Group.objects.create(name='testgroup')
         user.groups.add(group)
         group.add_obj_perm('can_work_on', project)
+        user_not_in_group.add_obj_perm('can_work_on', project)
         self.assertTrue(user.has_perm('can_work_on', project))
+        self.assertTrue(user_not_in_group.has_perm('can_work_on', project))
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
@@ -579,6 +613,7 @@ class TestProject(django.test.TestCase):
         self.assertEqual(response['Location'], '/admin/turkle/project/')
         self.assertEqual(Project.objects.filter(name='newname').count(), 1)
         self.assertFalse(user.has_perm('can_work_on', project))
+        self.assertFalse(user_not_in_group.has_perm('can_work_on', project))
 
     def test_post_change_project_remove_and_add_group(self):
         project = Project.objects.create(name='testproject')
@@ -609,6 +644,32 @@ class TestProject(django.test.TestCase):
         self.assertEqual(Project.objects.filter(name='newname').count(), 1)
         self.assertTrue(user_for_add.has_perm('can_work_on', project))
         self.assertFalse(user_for_remove.has_perm('can_work_on', project))
+
+    def test_post_change_project_remove_and_add_user(self):
+        project = Project.objects.create(name='testproject')
+        user_to_add = User.objects.create_user('user_to_add', password='secret')
+        user_to_remove = User.objects.create_user('user_to_remove', password='secret')
+        user_to_remove.add_obj_perm('can_work_on', project)
+        self.assertFalse(user_to_add.has_perm('can_work_on', project))
+        self.assertTrue(user_to_remove.has_perm('can_work_on', project))
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.post(reverse('turkle_admin:turkle_project_change',
+                                       args=(project.id,)),
+                               {
+                                   'assignments_per_task': 1,
+                                   'custom_permissions': True,
+                                   'html_template': '<p>${foo}: ${bar}</p><textarea>',
+                                   'name': 'newname',
+                                   'can_work_on_users': [user_to_add.id],
+                               })
+        self.assertTrue(b'Please correct the error' not in response.content)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], '/admin/turkle/project/')
+        self.assertEqual(Project.objects.filter(name='newname').count(), 1)
+        self.assertTrue(user_to_add.has_perm('can_work_on', project))
+        self.assertFalse(user_to_remove.has_perm('can_work_on', project))
 
 
 class TestReviewBatch(django.test.TestCase):
