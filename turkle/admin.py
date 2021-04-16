@@ -260,6 +260,12 @@ class BatchForm(ModelForm):
         required=False,
         widget=FilteredSelectMultiple('Worker Groups', False),
     )
+    can_work_on_users = ModelMultipleChoiceField(
+        label='Users that can work on this Batch',
+        queryset=User.objects.all(),
+        required=False,
+        widget=FilteredSelectMultiple('Worker Users', False),
+    )
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -274,7 +280,7 @@ class BatchForm(ModelForm):
             'class': 'hidden',
             'data-parsley-errors-container': '#file-upload-error',
         })
-        self.fields['custom_permissions'].label = 'Restrict access to specific Groups of Workers '
+        self.fields['custom_permissions'].label = 'Restrict access to specific Groups and/or Users'
         self.fields['project'].label = 'Project'
         self.fields['name'].label = 'Batch Name'
 
@@ -302,17 +308,26 @@ class BatchForm(ModelForm):
             if 'custom_permissions' not in self.initial:
                 self.fields['custom_permissions'].initial = project.custom_permissions
 
-            # Pre-populate list of Groups with permissions for associated Project
-            initial_group_ids = [str(id)
-                                 for id in get_groups_with_perms(project).
-                                 values_list('id', flat=True)]
+            # Pre-populate lists of Groups/Users with permissions for associated Project
+            initial_group_ids = [
+                str(id)
+                for id in get_groups_with_perms(project).values_list('id', flat=True)]
+            initial_user_ids = [
+                str(id)
+                for id in get_users_with_perms(project, with_group_users=False).
+                values_list('id', flat=True)]
         else:
-            # Pre-populate list of Groups with permissions for this Batch
-            # (List will be empty when Adding, but can be non-empty when Changing)
-            initial_group_ids = [str(id)
-                                 for id in get_groups_with_perms(self.instance).
-                                 values_list('id', flat=True)]
+            # Pre-populate lists of Groups/Users with permissions for this Batch
+            # (Lists will be empty when Adding, but can be non-empty when Changing)
+            initial_group_ids = [
+                str(id)
+                for id in get_groups_with_perms(self.instance).values_list('id', flat=True)]
+            initial_user_ids = [
+                str(id)
+                for id in get_users_with_perms(self.instance, with_group_users=False).
+                values_list('id', flat=True)]
         self.fields['can_work_on_groups'].initial = initial_group_ids
+        self.fields['can_work_on_users'].initial = initial_user_ids
 
         # csv_file field not required if changing existing Batch
         #
@@ -605,7 +620,10 @@ class BatchAdmin(admin.ModelAdmin):
                     'fields': ('assignments_per_task', 'allotted_assignment_time')
                 }),
                 ('Permissions', {
-                    'fields': ('login_required', 'custom_permissions', 'can_work_on_groups')
+                    'fields': (
+                        'login_required', 'custom_permissions',
+                        'can_work_on_groups', 'can_work_on_users'
+                    )
                 }),
             )
         else:
@@ -621,7 +639,10 @@ class BatchAdmin(admin.ModelAdmin):
                     'fields': ('assignments_per_task', 'allotted_assignment_time')
                 }),
                 ('Permissions', {
-                    'fields': ('login_required', 'custom_permissions', 'can_work_on_groups')
+                    'fields': (
+                        'login_required', 'custom_permissions',
+                        'can_work_on_groups', 'can_work_on_users'
+                    )
                 }),
             )
 
@@ -838,9 +859,9 @@ class ProjectForm(ModelForm):
             'all associated Batches.  Workers can only access a Batch if both the Batch ' + \
             'itself and the associated Project are Active.'
 
-        initial_group_ids = [str(id)
-                             for id in get_groups_with_perms(self.instance).
-                             values_list('id', flat=True)]
+        initial_group_ids = [
+            str(id)
+            for id in get_groups_with_perms(self.instance).values_list('id', flat=True)]
         self.fields['can_work_on_groups'].initial = initial_group_ids
 
         initial_user_ids = [
