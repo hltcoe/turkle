@@ -34,6 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Project-level settings are only used as defaults for new Batches.
   Reorganized Add/Change Batch forms to match field order on Add/Change
   Project forms.
+- Permission to work on a Batch can now be restricted to specific Users.
+  Previously, Batch access could only be restricted at the Group level,
+  which in practice lead to the creation of many single-User Groups.
 - Updated to use Django 2 style URLs.
 
 ### Fixed
