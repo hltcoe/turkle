@@ -779,31 +779,30 @@ class BatchAdmin(admin.ModelAdmin):
             super().save_model(request, obj, form, change)
             logger.info("User(%i) updating Batch(%i) %s", request.user.id, obj.id, obj.name)
 
-        if 'custom_permissions' in form.data:
-            if 'can_work_on_groups' in form.data:
-                existing_groups = set(get_groups_with_perms(obj))
-                form_groups = set(form.cleaned_data['can_work_on_groups'])
-                groups_to_add = form_groups.difference(existing_groups)
-                groups_to_remove = existing_groups.difference(form_groups)
-                for group in groups_to_add:
-                    assign_perm('can_work_on_batch', group, obj)
-                for group in groups_to_remove:
-                    remove_perm('can_work_on_batch', group, obj)
-            else:
-                for group in get_groups_with_perms(obj):
-                    remove_perm('can_work_on_batch', group, obj)
-            if 'can_work_on_users' in form.data:
-                existing_users = set(get_users_with_perms(obj, with_group_users=False))
-                form_users = set(form.cleaned_data['can_work_on_users'])
-                users_to_add = form_users.difference(existing_users)
-                users_to_remove = existing_users.difference(form_users)
-                for user in users_to_add:
-                    assign_perm('can_work_on_batch', user, obj)
-                for user in users_to_remove:
-                    remove_perm('can_work_on_batch', user, obj)
-            else:
-                for user in get_users_with_perms(obj, with_group_users=False):
-                    remove_perm('can_work_on_batch', user, obj)
+        if 'can_work_on_groups' in form.data:
+            existing_groups = set(get_groups_with_perms(obj))
+            form_groups = set(form.cleaned_data['can_work_on_groups'])
+            groups_to_add = form_groups.difference(existing_groups)
+            groups_to_remove = existing_groups.difference(form_groups)
+            for group in groups_to_add:
+                assign_perm('can_work_on_batch', group, obj)
+            for group in groups_to_remove:
+                remove_perm('can_work_on_batch', group, obj)
+        else:
+            for group in get_groups_with_perms(obj):
+                remove_perm('can_work_on_batch', group, obj)
+        if 'can_work_on_users' in form.data:
+            existing_users = set(get_users_with_perms(obj, with_group_users=False))
+            form_users = set(form.cleaned_data['can_work_on_users'])
+            users_to_add = form_users.difference(existing_users)
+            users_to_remove = existing_users.difference(form_users)
+            for user in users_to_add:
+                assign_perm('can_work_on_batch', user, obj)
+            for user in users_to_remove:
+                remove_perm('can_work_on_batch', user, obj)
+        else:
+            for user in get_users_with_perms(obj, with_group_users=False):
+                remove_perm('can_work_on_batch', user, obj)
 
     def stats(self, obj):
         stats_url = reverse('turkle_admin:batch_stats', kwargs={'batch_id': obj.id})
@@ -1157,31 +1156,30 @@ class ProjectAdmin(GuardedModelAdmin):
         else:
             logger.info("User(%i) updating Project(%i) %s", request.user.id, obj.id, obj.name)
 
-        if 'custom_permissions' in form.data:
-            if 'can_work_on_groups' in form.data:
-                existing_groups = set(get_groups_with_perms(obj))
-                form_groups = set(form.cleaned_data['can_work_on_groups'])
-                groups_to_add = form_groups.difference(existing_groups)
-                groups_to_remove = existing_groups.difference(form_groups)
-                for group in groups_to_add:
-                    assign_perm('can_work_on', group, obj)
-                for group in groups_to_remove:
-                    remove_perm('can_work_on', group, obj)
-            else:
-                for group in get_groups_with_perms(obj):
-                    remove_perm('can_work_on', group, obj)
-            if 'can_work_on_users' in form.data:
-                existing_users = set(get_users_with_perms(obj, with_group_users=False))
-                form_users = set(form.cleaned_data['can_work_on_users'])
-                users_to_add = form_users.difference(existing_users)
-                users_to_remove = existing_users.difference(form_users)
-                for user in users_to_add:
-                    assign_perm('can_work_on', user, obj)
-                for user in users_to_remove:
-                    remove_perm('can_work_on', user, obj)
-            else:
-                for user in get_users_with_perms(obj, with_group_users=False):
-                    remove_perm('can_work_on', user, obj)
+        if 'can_work_on_groups' in form.data:
+            existing_groups = set(get_groups_with_perms(obj))
+            form_groups = set(form.cleaned_data['can_work_on_groups'])
+            groups_to_add = form_groups.difference(existing_groups)
+            groups_to_remove = existing_groups.difference(form_groups)
+            for group in groups_to_add:
+                assign_perm('can_work_on', group, obj)
+            for group in groups_to_remove:
+                remove_perm('can_work_on', group, obj)
+        else:
+            for group in get_groups_with_perms(obj):
+                remove_perm('can_work_on', group, obj)
+        if 'can_work_on_users' in form.data:
+            existing_users = set(get_users_with_perms(obj, with_group_users=False))
+            form_users = set(form.cleaned_data['can_work_on_users'])
+            users_to_add = form_users.difference(existing_users)
+            users_to_remove = existing_users.difference(form_users)
+            for user in users_to_add:
+                assign_perm('can_work_on', user, obj)
+            for user in users_to_remove:
+                remove_perm('can_work_on', user, obj)
+        else:
+            for user in get_users_with_perms(obj, with_group_users=False):
+                remove_perm('can_work_on', user, obj)
 
     def delete_model(self, request, obj):
         logger.info("User(%i) deleting Project(%i) %s", request.user.id, obj.id, obj.name)
