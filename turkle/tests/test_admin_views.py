@@ -364,6 +364,32 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertTrue(user_to_add.has_perm('can_work_on_batch', batch))
         self.assertFalse(user_to_remove.has_perm('can_work_on', batch))
 
+    def test_batch_change_remove_and_add_user_with_custom_permissions_disabled(self):
+        project = Project.objects.create(name='testproject')
+        batch = Batch.objects.create(name='testbatch', project=project)
+        user_to_add = User.objects.create_user('user_to_add', password='secret')
+        user_to_remove = User.objects.create_user('user_to_remove', password='secret')
+        user_to_remove.add_obj_perm('can_work_on_batch', batch)
+        self.assertFalse(user_to_add.has_perm('can_work_on_batch', batch))
+        self.assertTrue(user_to_remove.has_perm('can_work_on_batch', batch))
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.post(reverse('turkle_admin:turkle_batch_change',
+                                       args=(batch.id,)),
+                               {
+                                   'assignments_per_task': 1,
+                                   'project': batch.project.id,
+                                   'name': 'newname',
+                                   'can_work_on_users': [user_to_add.id],
+                               })
+        self.assertTrue(b'Please correct the error' not in response.content)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], '/admin/turkle/batch/')
+        self.assertEqual(Batch.objects.filter(name='newname').count(), 1)
+        self.assertTrue(user_to_add.has_perm('can_work_on_batch', batch))
+        self.assertFalse(user_to_remove.has_perm('can_work_on', batch))
+
     def test_batch_change_update_non_published(self):
         self.test_batch_add()
         batch = Batch.objects.get(name='batch_save')
@@ -634,6 +660,35 @@ class TestProjectAdmin(django.test.TestCase):
                                {
                                    'assignments_per_task': 1,
                                    'custom_permissions': True,
+                                   'html_template': '<p>${foo}: ${bar}</p><textarea>',
+                                   'name': 'newname',
+                                   'can_work_on_groups': [group_to_add.id],
+                               })
+        self.assertTrue(b'Please correct the error' not in response.content)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], '/admin/turkle/project/')
+        self.assertEqual(Project.objects.filter(name='newname').count(), 1)
+        self.assertTrue(user_for_add.has_perm('can_work_on', project))
+        self.assertFalse(user_for_remove.has_perm('can_work_on', project))
+
+    def test_post_change_project_remove_and_add_group_with_custom_permissions_disabled(self):
+        project = Project.objects.create(name='testproject')
+        group_to_add = Group.objects.create(name='group_to_add')
+        group_to_remove = Group.objects.create(name='group_to_remove')
+        user_for_add = User.objects.create_user('user_for_add', password='secret')
+        user_for_remove = User.objects.create_user('user_for_remove', password='secret')
+        group_to_remove.add_obj_perm('can_work_on', project)
+        user_for_add.groups.add(group_to_add)
+        user_for_remove.groups.add(group_to_remove)
+        self.assertFalse(user_for_add.has_perm('can_work_on', project))
+        self.assertTrue(user_for_remove.has_perm('can_work_on', project))
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.post(reverse('turkle_admin:turkle_project_change',
+                                       args=(project.id,)),
+                               {
+                                   'assignments_per_task': 1,
                                    'html_template': '<p>${foo}: ${bar}</p><textarea>',
                                    'name': 'newname',
                                    'can_work_on_groups': [group_to_add.id],
