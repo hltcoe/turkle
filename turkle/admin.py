@@ -26,7 +26,8 @@ from django.urls import path, reverse
 from django.utils.html import format_html, format_html_join
 from django.utils.translation import ngettext
 from guardian.admin import GuardedModelAdmin
-from guardian.shortcuts import assign_perm, get_groups_with_perms, remove_perm
+from guardian.shortcuts import (assign_perm, get_groups_with_perms, get_users_with_perms,
+                                remove_perm)
 import humanfriendly
 
 from .models import Batch, Project, TaskAssignment
@@ -59,7 +60,9 @@ class TurkleAdminSite(admin.AdminSite):
         return my_urls + urls
 
 
-class CustomGroupMultipleChoiceField(ModelMultipleChoiceField):
+class UserFullnameMultipleChoiceField(ModelMultipleChoiceField):
+    """MultipleChoiceField that displays User's username and full name
+    """
     def label_from_instance(self, user):
         return '%s (%s)' % (user.get_full_name(), user.username)
 
@@ -67,7 +70,7 @@ class CustomGroupMultipleChoiceField(ModelMultipleChoiceField):
 class CustomGroupAdminForm(ModelForm):
     """Hides 'Permissions' section, adds 'Group Members' section
     """
-    users = CustomGroupMultipleChoiceField(
+    users = UserFullnameMultipleChoiceField(
         label='Group Members',
         queryset=User.objects.order_by('last_name'),
         required=False,
@@ -253,11 +256,18 @@ class BatchForm(ModelForm):
         initial=Batch._meta.get_field('allotted_assignment_time').get_default(),
         required=False)
 
-    worker_permissions = ModelMultipleChoiceField(
-        label='Worker Groups with access to this Batch',
+    can_work_on_groups = ModelMultipleChoiceField(
+        label='Groups that can work on this Batch',
         queryset=Group.objects.all(),
         required=False,
         widget=FilteredSelectMultiple('Worker Groups', False),
+    )
+    can_work_on_users = UserFullnameMultipleChoiceField(
+        label='Users that can work on this Batch',
+        queryset=User.objects.order_by('first_name', 'last_name')
+                             .exclude(username='AnonymousUser'),
+        required=False,
+        widget=FilteredSelectMultiple('Worker Users', False),
     )
 
     def __init__(self, *args, **kwargs):
@@ -273,7 +283,7 @@ class BatchForm(ModelForm):
             'class': 'hidden',
             'data-parsley-errors-container': '#file-upload-error',
         })
-        self.fields['custom_permissions'].label = 'Restrict access to specific Groups of Workers '
+        self.fields['custom_permissions'].label = 'Restrict access to specific Groups and/or Users'
         self.fields['project'].label = 'Project'
         self.fields['name'].label = 'Batch Name'
 
@@ -301,17 +311,26 @@ class BatchForm(ModelForm):
             if 'custom_permissions' not in self.initial:
                 self.fields['custom_permissions'].initial = project.custom_permissions
 
-            # Pre-populate list of Groups with permissions for associated Project
-            initial_group_ids = [str(id)
-                                 for id in get_groups_with_perms(project).
-                                 values_list('id', flat=True)]
+            # Pre-populate lists of Groups/Users with permissions for associated Project
+            initial_group_ids = [
+                str(id)
+                for id in get_groups_with_perms(project).values_list('id', flat=True)]
+            initial_user_ids = [
+                str(id)
+                for id in get_users_with_perms(project, with_group_users=False).
+                values_list('id', flat=True)]
         else:
-            # Pre-populate list of Groups with permissions for this Batch
-            # (List will be empty when Adding, but can be non-empty when Changing)
-            initial_group_ids = [str(id)
-                                 for id in get_groups_with_perms(self.instance).
-                                 values_list('id', flat=True)]
-        self.fields['worker_permissions'].initial = initial_group_ids
+            # Pre-populate lists of Groups/Users with permissions for this Batch
+            # (Lists will be empty when Adding, but can be non-empty when Changing)
+            initial_group_ids = [
+                str(id)
+                for id in get_groups_with_perms(self.instance).values_list('id', flat=True)]
+            initial_user_ids = [
+                str(id)
+                for id in get_users_with_perms(self.instance, with_group_users=False).
+                values_list('id', flat=True)]
+        self.fields['can_work_on_groups'].initial = initial_group_ids
+        self.fields['can_work_on_users'].initial = initial_user_ids
 
         # csv_file field not required if changing existing Batch
         #
@@ -604,7 +623,10 @@ class BatchAdmin(admin.ModelAdmin):
                     'fields': ('assignments_per_task', 'allotted_assignment_time')
                 }),
                 ('Permissions', {
-                    'fields': ('login_required', 'custom_permissions', 'worker_permissions')
+                    'fields': (
+                        'login_required', 'custom_permissions',
+                        'can_work_on_groups', 'can_work_on_users'
+                    )
                 }),
             )
         else:
@@ -620,7 +642,10 @@ class BatchAdmin(admin.ModelAdmin):
                     'fields': ('assignments_per_task', 'allotted_assignment_time')
                 }),
                 ('Permissions', {
-                    'fields': ('login_required', 'custom_permissions', 'worker_permissions')
+                    'fields': (
+                        'login_required', 'custom_permissions',
+                        'can_work_on_groups', 'can_work_on_users'
+                    )
                 }),
             )
 
@@ -755,9 +780,9 @@ class BatchAdmin(admin.ModelAdmin):
             logger.info("User(%i) updating Batch(%i) %s", request.user.id, obj.id, obj.name)
 
         if 'custom_permissions' in form.data:
-            if 'worker_permissions' in form.data:
+            if 'can_work_on_groups' in form.data:
                 existing_groups = set(get_groups_with_perms(obj))
-                form_groups = set(form.cleaned_data['worker_permissions'])
+                form_groups = set(form.cleaned_data['can_work_on_groups'])
                 groups_to_add = form_groups.difference(existing_groups)
                 groups_to_remove = existing_groups.difference(form_groups)
                 for group in groups_to_add:
@@ -767,6 +792,18 @@ class BatchAdmin(admin.ModelAdmin):
             else:
                 for group in get_groups_with_perms(obj):
                     remove_perm('can_work_on_batch', group, obj)
+            if 'can_work_on_users' in form.data:
+                existing_users = set(get_users_with_perms(obj, with_group_users=False))
+                form_users = set(form.cleaned_data['can_work_on_users'])
+                users_to_add = form_users.difference(existing_users)
+                users_to_remove = existing_users.difference(form_users)
+                for user in users_to_add:
+                    assign_perm('can_work_on_batch', user, obj)
+                for user in users_to_remove:
+                    remove_perm('can_work_on_batch', user, obj)
+            else:
+                for user in get_users_with_perms(obj, with_group_users=False):
+                    remove_perm('can_work_on_batch', user, obj)
 
     def stats(self, obj):
         stats_url = reverse('turkle_admin:batch_stats', kwargs={'batch_id': obj.id})
@@ -788,11 +825,18 @@ class ProjectForm(ModelForm):
         required=False)
 
     template_file_upload = FileField(label='HTML template file', required=False)
-    worker_permissions = ModelMultipleChoiceField(
-        label='Worker Groups with access to this Project',
+    can_work_on_groups = ModelMultipleChoiceField(
+        label='Groups that can work on this Project',
         queryset=Group.objects.all(),
         required=False,
         widget=FilteredSelectMultiple('Worker Groups', False),
+    )
+    can_work_on_users = UserFullnameMultipleChoiceField(
+        label='Users that can work on this Project',
+        queryset=User.objects.order_by('first_name', 'last_name')
+                             .exclude(username='AnonymousUser'),
+        required=False,
+        widget=FilteredSelectMultiple('Worker Users', False),
     )
 
     def __init__(self, *args, **kwargs):
@@ -817,7 +861,7 @@ class ProjectForm(ModelForm):
         self.fields['assignments_per_task'].help_text = 'Changing this ' + \
             'parameter DOES NOT change the number of Assignments per Task for already ' + \
             'published Batches of Tasks.'
-        self.fields['custom_permissions'].label = 'Restrict access to specific Groups of Workers '
+        self.fields['custom_permissions'].label = 'Restrict access to specific Groups and/or Users'
         self.fields['html_template'].label = 'HTML template text'
         limit = str(get_turkle_template_limit())
         self.fields['html_template'].help_text = 'You can edit the template text directly, ' + \
@@ -831,9 +875,16 @@ class ProjectForm(ModelForm):
             'all associated Batches.  Workers can only access a Batch if both the Batch ' + \
             'itself and the associated Project are Active.'
 
-        initial_ids = [str(id)
-                       for id in get_groups_with_perms(self.instance).values_list('id', flat=True)]
-        self.fields['worker_permissions'].initial = initial_ids
+        initial_group_ids = [
+            str(id)
+            for id in get_groups_with_perms(self.instance).values_list('id', flat=True)]
+        self.fields['can_work_on_groups'].initial = initial_group_ids
+
+        initial_user_ids = [
+            str(id)
+            for id in get_users_with_perms(self.instance, with_group_users=False).
+            values_list('id', flat=True)]
+        self.fields['can_work_on_users'].initial = initial_user_ids
 
     def clean_allotted_assignment_time(self):
         """Clean 'allotted_assignment_time' form field
@@ -903,7 +954,10 @@ class ProjectAdmin(GuardedModelAdmin):
                     'fields': ('assignments_per_task', 'allotted_assignment_time')
                 }),
                 ('Default Permissions for new Batches', {
-                    'fields': ('login_required', 'custom_permissions', 'worker_permissions')
+                    'fields': (
+                        'login_required', 'custom_permissions',
+                        'can_work_on_groups', 'can_work_on_users'
+                    )
                 }),
             )
         else:
@@ -923,7 +977,10 @@ class ProjectAdmin(GuardedModelAdmin):
                     'fields': ('assignments_per_task', 'allotted_assignment_time')
                 }),
                 ('Default Permissions for new Batches', {
-                    'fields': ('login_required', 'custom_permissions', 'worker_permissions')
+                    'fields': (
+                        'login_required', 'custom_permissions',
+                        'can_work_on_groups', 'can_work_on_users'
+                    )
                 }),
             )
 
@@ -1101,9 +1158,9 @@ class ProjectAdmin(GuardedModelAdmin):
             logger.info("User(%i) updating Project(%i) %s", request.user.id, obj.id, obj.name)
 
         if 'custom_permissions' in form.data:
-            if 'worker_permissions' in form.data:
+            if 'can_work_on_groups' in form.data:
                 existing_groups = set(get_groups_with_perms(obj))
-                form_groups = set(form.cleaned_data['worker_permissions'])
+                form_groups = set(form.cleaned_data['can_work_on_groups'])
                 groups_to_add = form_groups.difference(existing_groups)
                 groups_to_remove = existing_groups.difference(form_groups)
                 for group in groups_to_add:
@@ -1113,6 +1170,18 @@ class ProjectAdmin(GuardedModelAdmin):
             else:
                 for group in get_groups_with_perms(obj):
                     remove_perm('can_work_on', group, obj)
+            if 'can_work_on_users' in form.data:
+                existing_users = set(get_users_with_perms(obj, with_group_users=False))
+                form_users = set(form.cleaned_data['can_work_on_users'])
+                users_to_add = form_users.difference(existing_users)
+                users_to_remove = existing_users.difference(form_users)
+                for user in users_to_add:
+                    assign_perm('can_work_on', user, obj)
+                for user in users_to_remove:
+                    remove_perm('can_work_on', user, obj)
+            else:
+                for user in get_users_with_perms(obj, with_group_users=False):
+                    remove_perm('can_work_on', user, obj)
 
     def delete_model(self, request, obj):
         logger.info("User(%i) deleting Project(%i) %s", request.user.id, obj.id, obj.name)
