@@ -264,7 +264,8 @@ class BatchForm(ModelForm):
     )
     can_work_on_users = UserFullnameMultipleChoiceField(
         label='Users that can work on this Batch',
-        queryset=User.objects.order_by('first_name', 'last_name'),
+        queryset=User.objects.order_by('first_name', 'last_name')
+                             .exclude(username='AnonymousUser'),
         required=False,
         widget=FilteredSelectMultiple('Worker Users', False),
     )
@@ -832,7 +833,8 @@ class ProjectForm(ModelForm):
     )
     can_work_on_users = UserFullnameMultipleChoiceField(
         label='Users that can work on this Project',
-        queryset=User.objects.order_by('first_name', 'last_name'),
+        queryset=User.objects.order_by('first_name', 'last_name')
+                             .exclude(username='AnonymousUser'),
         required=False,
         widget=FilteredSelectMultiple('Worker Users', False),
     )
