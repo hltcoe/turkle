@@ -25,6 +25,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - Deprecate support for (EOL) Python 3.5, add support for
   Python 3.9.
+- On the Add/Change Batch and Add/Change Project forms, changes made
+  to Group and User permissions while editing the form are now saved
+  even if the "Restrict access" checkbox is unchecked (hiding the
+  form widgets for selecting Groups and Users) when the form is
+  submitted
 - On the Add/Change User admin forms, the ability to assign superuser
   status or grant model-level permission privileges to Users is now
   restricted to superusers
