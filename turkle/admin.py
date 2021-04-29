@@ -1024,19 +1024,19 @@ class ProjectAdmin(GuardedModelAdmin):
         uncompleted_tas_active_batches = 0
         uncompleted_tas_inactive_batches = 0
 
-        batch_ids = task_duration_by_batch.keys()
         stats_batches = []
-        for batch in Batch.objects.filter(id__in=batch_ids).order_by('name'):
+        for batch in project.batch_set.order_by('name'):
             has_completed_assignments = batch.id in task_duration_by_batch
             if has_completed_assignments:
+                assignments_completed = len(task_duration_by_batch[batch.id])
                 last_finished_time = task_updated_at_by_batch[batch.id][-1]
                 mean_work_time = int(statistics.mean(task_duration_by_batch[batch.id]))
                 median_work_time = int(statistics.median(task_duration_by_batch[batch.id]))
             else:
+                assignments_completed = 0
                 last_finished_time = 'N/A'
                 mean_work_time = 'N/A'
                 median_work_time = 'N/A'
-            assignments_completed = len(task_duration_by_batch[batch.id])
             total_task_assignments = batch.total_task_assignments()
             assignments_completed_percentage = '%.1f' % \
                 (100.0 * assignments_completed / total_task_assignments)
