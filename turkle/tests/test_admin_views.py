@@ -726,6 +726,23 @@ class TestProjectAdmin(django.test.TestCase):
         self.assertTrue(user_to_add.has_perm('can_work_on', project))
         self.assertFalse(user_to_remove.has_perm('can_work_on', project))
 
+    def test_project_stats_view(self):
+        project = Project.objects.create(
+            name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
+        batch_no_tasks = Batch.objects.create(
+            project=project, name='No associated tasks', published=True)
+        batch_no_completed_tasks = Batch.objects.create(
+            project=project, name='No completed tasks', published=True)
+        Task.objects.create(batch=batch_no_completed_tasks)
+
+        client = django.test.Client()
+        client.login(username='admin', password='secret')
+        response = client.get(reverse('turkle_admin:project_stats',
+                                      kwargs={'project_id': project.id}))
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(batch_no_tasks.name in str(response.content))
+        self.assertTrue(batch_no_completed_tasks.name in str(response.content))
+
 
 class TestReviewBatch(django.test.TestCase):
     def test_batch_review_bad_batch_id(self):
