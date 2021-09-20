@@ -4,7 +4,10 @@
 {% block header %}
 <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'turkle/datatables-1.10.24/datatables.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'turkle/d3-3.5.17.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'turkle/cal-heatmap-3.6.2.min.js' %}"></script>
 <link href="{% static 'turkle/datatables-1.10.24/datatables.bootstrap4.min.css' %}" rel="stylesheet" type="text/css"/>
+<link href="{% static 'turkle/cal-heatmap.css' %}" rel="stylesheet" type="text/css"/>
 <style>
 #user-statistics-div {
   margin-bottom: 1em;
@@ -22,6 +25,18 @@ $(document).ready(function() {
     info: false,
     paging: false,
     searching: false
+  });
+
+  var startDate = new Date();
+  startDate.setFullYear(startDate.getFullYear() - 1);
+
+  var cal = new CalHeatMap();
+  cal.init({
+    itemSelector: "#activity-calendar",
+    data: "{% url 'turkle_admin:activity_json' batch.id %}",
+    domain: "month",
+    subDomain: "day",
+    start: startDate,
   });
 });
 </script>
@@ -110,6 +125,8 @@ $(document).ready(function() {
       -->
     </table>
   </div>
+
+  <div id="activity-calendar"></div>
 
   <h2>User Statistics</h2>
 
