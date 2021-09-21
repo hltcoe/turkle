@@ -695,7 +695,7 @@ class BatchAdmin(admin.ModelAdmin):
                  self.admin_site.admin_view(self.download_batch_input),
                  name='download_batch_input'),
             path('<int:batch_id>/activity.json',
-                 self.admin_site.admin_view(self.activity_json), name='activity_json'),
+                 self.admin_site.admin_view(self.activity_json), name='batch_activity_json'),
             path('<int:batch_id>/stats/',
                  self.admin_site.admin_view(self.batch_stats), name='batch_stats'),
             path('update_csv_line_endings',

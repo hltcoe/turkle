@@ -40,7 +40,7 @@ $(document).ready(function() {
   var cal = new CalHeatMap();
   cal.init({
     itemSelector: "#activity-calendar",
-    data: "{% url 'turkle_admin:activity_json' batch.id %}",
+    data: "{% url 'turkle_admin:batch_activity_json' batch.id %}",
     domain: "month",
     subDomain: "day",
     start: startDate,
