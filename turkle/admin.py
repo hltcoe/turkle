@@ -514,8 +514,7 @@ class BatchAdmin(admin.ModelAdmin):
         try:
             batch = Batch.objects.get(id=batch_id)
         except ObjectDoesNotExist:
-            messages.error(request, 'Cannot find Batch with ID {}'.format(batch_id))
-            return redirect(reverse('turkle_admin:turkle_batch_changelist'))
+            return JsonResponse({})
 
         # Create dictionary mapping timestamp (in seconds) to number of TaskAssignments
         # completed at that timestamp
@@ -946,8 +945,7 @@ class ProjectAdmin(GuardedModelAdmin):
         try:
             project = Project.objects.get(id=project_id)
         except ObjectDoesNotExist:
-            messages.error(request, 'Cannot find Project with ID {}'.format(project_id))
-            return redirect(reverse('turkle_admin:turkle_batch_changelist'))
+            return JsonResponse({})
 
         # Create dictionary mapping timestamp (in seconds) to number of TaskAssignments
         # completed at that timestamp
