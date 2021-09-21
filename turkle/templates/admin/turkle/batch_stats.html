@@ -27,8 +27,15 @@ $(document).ready(function() {
     searching: false
   });
 
-  var startDate = new Date();
-  startDate.setFullYear(startDate.getFullYear() - 1);
+  var currentDate = new Date();
+  var year = currentDate.getFullYear();
+  var month = currentDate.getMonth(); // 0-indexed
+  month -= 11;
+  if (month < 0) {
+    month += 12;
+    year -= 1;
+  }
+  var startDate = new Date(year, month, 1);
 
   var cal = new CalHeatMap();
   cal.init({
