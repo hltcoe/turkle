@@ -942,12 +942,33 @@ class ProjectAdmin(GuardedModelAdmin):
     class Media:
         pass
 
+    def activity_json(self, request, project_id):
+        try:
+            project = Project.objects.get(id=project_id)
+        except ObjectDoesNotExist:
+            messages.error(request, 'Cannot find Project with ID {}'.format(project_id))
+            return redirect(reverse('turkle_admin:turkle_batch_changelist'))
+
+        # Create dictionary mapping timestamp (in seconds) to number of TaskAssignments
+        # completed at that timestamp
+        completed_at = TaskAssignment.objects.\
+            filter(completed=True).\
+            filter(task__batch__project=project).\
+            values_list('updated_at', flat=True)
+        timestamp_counts = defaultdict(int)
+        for ca in completed_at:
+            timestamp_counts[int(ca.timestamp())] += 1
+
+        return JsonResponse(timestamp_counts)
+
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [
             path('autocomplete-order-by-name',
                  self.admin_site.admin_view(ProjectSearchView.as_view(model_admin=self)),
                  name='autocomplete_project_order_by_name'),
+            path('<int:project_id>/activity.json',
+                 self.admin_site.admin_view(self.activity_json), name='project_activity_json'),
             path('<int:project_id>/stats/',
                  self.admin_site.admin_view(self.project_stats), name='project_stats'),
         ]

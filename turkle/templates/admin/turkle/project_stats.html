@@ -4,13 +4,19 @@
 {% block header %}
 <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'turkle/datatables-1.10.24/datatables.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'turkle/d3-3.5.17.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'turkle/cal-heatmap-3.6.2.min.js' %}"></script>
 <link href="{% static 'turkle/datatables-1.10.24/datatables.bootstrap4.min.css' %}" rel="stylesheet" type="text/css"/>
+<link href="{% static 'turkle/cal-heatmap.css' %}" rel="stylesheet" type="text/css"/>
 <style>
 .substat td {
   padding-left: 2em;
 }
 
-#batch-stats-div {
+#activity-calendar-container {
+  margin-bottom: 1em;
+}
+#batch-stats-container {
   margin-bottom: 1em;
 }
 </style>
@@ -26,6 +32,26 @@ $(document).ready(function() {
     info: false,
     paging: false,
     searching: false
+  });
+
+  var currentDate = new Date();
+  var year = currentDate.getFullYear();
+  var month = currentDate.getMonth(); // 0-indexed
+  month -= 11;
+  if (month < 0) {
+    month += 12;
+    year -= 1;
+  }
+  var startDate = new Date(year, month, 1);
+
+  var cal = new CalHeatMap();
+  cal.init({
+    itemSelector: "#activity-calendar",
+    data: "{% url 'turkle_admin:project_activity_json' project.id %}",
+    domain: "month",
+    subDomain: "day",
+    start: startDate,
+    weekStartOnMonday: false,
   });
 });
 </script>
@@ -123,9 +149,15 @@ $(document).ready(function() {
     </table>
   </div>
 
+  <h2>Task Assignment Completion Activity</h2>
+
+  <div id="activity-calendar-container">
+    <div id="activity-calendar"></div>
+  </div>
+
   <h2>Batch Statistics</h2>
 
-  <div id="batch-stats-div">
+  <div id="batch-stats-container">
     <table id="batch-stats" class="table table-sm table-bordered">
       <thead class="thead-light">
         <tr>
