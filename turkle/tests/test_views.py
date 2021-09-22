@@ -1001,3 +1001,41 @@ class TestSkipTask(TestCase):
                                       kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertTrue('{}/assignment/'.format(self.task_two.id) in response['Location'])
+
+
+class TestStats(django.test.TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user('mr.user', 'foo@bar.foo', 'secret')
+        self.staff = User.objects.create_user('ms.staff', 'foo@bar.foo', 'secret', is_staff=True)
+
+    def test_stats_self(self):
+        client = django.test.Client()
+        client.login(username='mr.user', password='secret')
+        response = client.get(reverse('stats'))
+        self.assertTrue(b'error' not in response.content)
+        self.assertEqual(response.status_code, 200)
+
+    def test_stats_for_user_self_as_user(self):
+        client = django.test.Client()
+        client.login(username='mr.user', password='secret')
+        response = client.get(reverse('stats_for_user', kwargs={'user_id': self.user.id}))
+        self.assertTrue(b'error' not in response.content)
+        self.assertEqual(response.status_code, 200)
+
+    def test_stats_for_user_other_as_not_staff(self):
+        client = django.test.Client()
+        client.login(username='mr.user', password='secret')
+        response = client.get(reverse('stats_for_user', kwargs={'user_id': self.staff.id}))
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response['Location'], reverse('index'))
+        messages = list(get_messages(response.wsgi_request))
+        self.assertEqual(len(messages), 1)
+        self.assertEqual(str(messages[0]),
+                         u"You cannot view another User's statistics unless you are Staff")
+
+    def test_stats_for_user_other_as_staff(self):
+        client = django.test.Client()
+        client.login(username='ms.staff', password='secret')
+        response = client.get(reverse('stats_for_user', kwargs={'user_id': self.user.id}))
+        self.assertTrue(b'error' not in response.content)
+        self.assertEqual(response.status_code, 200)
