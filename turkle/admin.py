@@ -969,6 +969,8 @@ class ProjectAdmin(GuardedModelAdmin):
                  self.admin_site.admin_view(self.activity_json), name='project_activity_json'),
             path('<int:project_id>/stats/',
                  self.admin_site.admin_view(self.project_stats), name='project_stats'),
+            path('site-stats/',
+                 self.admin_site.admin_view(self.site_stats), name='site_stats'),
         ]
         return my_urls + urls
 
@@ -1227,6 +1229,17 @@ class ProjectAdmin(GuardedModelAdmin):
     def delete_model(self, request, obj):
         logger.info("User(%i) deleting Project(%i) %s", request.user.id, obj.id, obj.name)
         super().delete_model(request, obj)
+
+    def site_stats(self, request):
+        if 'days' in request.GET:
+            days = int(request.GET['days'])
+        else:
+            days = 7
+        projects = Project.get_with_recently_updated_taskassignments(days)
+        return render(request, 'admin/turkle/site_stats.html', {
+            'days': days,
+            'projects': projects,
+        })
 
     def stats(self, obj):
         stats_url = reverse('turkle_admin:project_stats', kwargs={'project_id': obj.id})
