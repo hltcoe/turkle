@@ -5,6 +5,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- Add "Activity Calendar Heatmap" visualization to Batch Stats
+  and Project Stats admin views showing how many Task Assignments
+  were completed for each day of the past year.
 ### Changed
 - Users with Staff privileges can now access User Stats view for
   any User.  The User table on the User Admin changelist page now
