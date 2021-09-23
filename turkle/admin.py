@@ -510,6 +510,24 @@ class BatchAdmin(admin.ModelAdmin):
         h += format_html(' {} / {}'.format(tfa, ta))
         return h
 
+    def activity_json(self, request, batch_id):
+        try:
+            batch = Batch.objects.get(id=batch_id)
+        except ObjectDoesNotExist:
+            return JsonResponse({})
+
+        # Create dictionary mapping timestamp (in seconds) to number of TaskAssignments
+        # completed at that timestamp
+        completed_at = TaskAssignment.objects.\
+            filter(completed=True).\
+            filter(task__batch=batch).\
+            values_list('updated_at', flat=True)
+        timestamp_counts = defaultdict(int)
+        for ca in completed_at:
+            timestamp_counts[int(ca.timestamp())] += 1
+
+        return JsonResponse(timestamp_counts)
+
     def batch_stats(self, request, batch_id):
         try:
             batch = Batch.objects.get(id=batch_id)
@@ -675,6 +693,8 @@ class BatchAdmin(admin.ModelAdmin):
             path('<int:batch_id>/input/',
                  self.admin_site.admin_view(self.download_batch_input),
                  name='download_batch_input'),
+            path('<int:batch_id>/activity.json',
+                 self.admin_site.admin_view(self.activity_json), name='batch_activity_json'),
             path('<int:batch_id>/stats/',
                  self.admin_site.admin_view(self.batch_stats), name='batch_stats'),
             path('update_csv_line_endings',
@@ -921,12 +941,32 @@ class ProjectAdmin(GuardedModelAdmin):
     class Media:
         pass
 
+    def activity_json(self, request, project_id):
+        try:
+            project = Project.objects.get(id=project_id)
+        except ObjectDoesNotExist:
+            return JsonResponse({})
+
+        # Create dictionary mapping timestamp (in seconds) to number of TaskAssignments
+        # completed at that timestamp
+        completed_at = TaskAssignment.objects.\
+            filter(completed=True).\
+            filter(task__batch__project=project).\
+            values_list('updated_at', flat=True)
+        timestamp_counts = defaultdict(int)
+        for ca in completed_at:
+            timestamp_counts[int(ca.timestamp())] += 1
+
+        return JsonResponse(timestamp_counts)
+
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [
             path('autocomplete-order-by-name',
                  self.admin_site.admin_view(ProjectSearchView.as_view(model_admin=self)),
                  name='autocomplete_project_order_by_name'),
+            path('<int:project_id>/activity.json',
+                 self.admin_site.admin_view(self.activity_json), name='project_activity_json'),
             path('<int:project_id>/stats/',
                  self.admin_site.admin_view(self.project_stats), name='project_stats'),
         ]
