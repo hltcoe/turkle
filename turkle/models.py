@@ -114,7 +114,7 @@ class TaskAssignment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(null=True)
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
 
     @classmethod
     def expire_all_abandoned(cls):
