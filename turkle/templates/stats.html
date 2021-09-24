@@ -4,13 +4,43 @@
 {% block head %}
 
 <link href="{% static 'turkle/bootstrap-datepicker-1.8.0/css/bootstrap-datepicker.css' %}" rel="stylesheet" type="text/css"/>
+<link href="{% static 'turkle/cal-heatmap.css' %}" rel="stylesheet" type="text/css"/>
+
 <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'turkle/bootstrap-datepicker-1.8.0/js/bootstrap-datepicker.js' %}"></script>
+<script type="text/javascript" src="{% static 'turkle/d3-3.5.17.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'turkle/cal-heatmap-3.6.2.min.js' %}"></script>
 
 <script>
 $(document).ready(function() {
   $('.datepicker').datepicker({
     format: 'yyyy-mm-dd',
+  });
+
+  // Set startDate to include previous 11 months plus all of current month
+  var currentDate = new Date();
+  var year = currentDate.getFullYear();
+  var month = currentDate.getMonth(); // 0-indexed
+  month -= 11;
+  if (month < 0) {
+    month += 12;
+    year -= 1;
+  }
+  var startDate = new Date(year, month, 1);
+
+  // Use template variable for startDate if template variable defined
+  {% if start_date %}
+  startDate = new Date("{{ start_date }}");
+  {% endif %}
+
+  var cal = new CalHeatMap();
+  cal.init({
+    itemSelector: "#activity-calendar",
+    data: "{% url 'user_activity_json' user_id %}",
+    domain: "month",
+    subDomain: "day",
+    start: startDate,
+    weekStartOnMonday: false,
   });
 });
 </script>
@@ -44,6 +74,10 @@ $(document).ready(function() {
   </form>
 
   <hr>
+
+  <div id="activity-calendar-container" style="margin-bottom: 2em;">
+    <div id="activity-calendar"></div>
+  </div>
 
   <h3>
     Total Task Assignments: {{ total_completed }}

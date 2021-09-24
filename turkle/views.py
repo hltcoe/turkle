@@ -1,3 +1,4 @@
+from collections import defaultdict
 from functools import wraps
 import logging
 import urllib
@@ -484,6 +485,7 @@ def stats_for_user(request, user_id):
             'total_completed': tas.count(),
             'total_elapsed_time': format_seconds(elapsed_seconds_overall),
             'full_name': name,
+            'user_id': user.id
         }
     )
 
@@ -498,6 +500,28 @@ def update_auto_accept(request):
     accept_status = (request.POST['auto_accept'] == 'true')
     request.session['auto_accept_status'] = accept_status
     return JsonResponse({})
+
+
+def user_activity_json(request, user_id):
+    if request.user.id != user_id and not request.user.is_staff:
+        return JsonResponse({})
+
+    try:
+        user = User.objects.get(id=user_id)
+    except ObjectDoesNotExist:
+        return JsonResponse({})
+
+    # Create dictionary mapping timestamp (in seconds) to number of TaskAssignments
+    # completed at that timestamp
+    completed_at = TaskAssignment.objects.\
+        filter(completed=True).\
+        filter(assigned_to=user).\
+        values_list('updated_at', flat=True)
+    timestamp_counts = defaultdict(int)
+    for ca in completed_at:
+        timestamp_counts[int(ca.timestamp())] += 1
+
+    return JsonResponse(timestamp_counts)
 
 
 def _add_task_id_to_skip_session(session, batch_id, task_id):

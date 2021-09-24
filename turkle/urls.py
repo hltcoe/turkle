@@ -16,12 +16,14 @@ from .views import (
     stats_for_self,
     stats_for_user,
     update_auto_accept,
+    user_activity_json,
 )
 
 urlpatterns = [
     path('', index, name='index'),
     path('stats/', stats_for_self, name='stats'),
     path('stats/user/<int:user_id>/', stats_for_user, name='stats_for_user'),
+    path('stats/user/<int:user_id>/activity.json', user_activity_json, name='user_activity_json'),
     path('help/', help_page, name='help'),
     path('update_auto_accept/', update_auto_accept, name='update_auto_accept'),
     path('task/<int:task_id>/', preview, name='preview'),
