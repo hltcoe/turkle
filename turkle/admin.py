@@ -16,7 +16,7 @@ from django.contrib.auth.models import Group, User
 from django.contrib.admin.templatetags.admin_list import _boolean_icon
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import DurationField, ExpressionWrapper, F
+from django.db.models import Count, DurationField, ExpressionWrapper, F, Max, Q
 from django.forms import (FileField, FileInput, HiddenInput, IntegerField,
                           ModelForm, ModelMultipleChoiceField, TextInput, ValidationError, Widget)
 from django.http import HttpResponse, JsonResponse
@@ -1236,10 +1236,21 @@ class ProjectAdmin(GuardedModelAdmin):
         else:
             days = 7
         recent_past = datetime.now(timezone.utc) - timedelta(days=days)
-        active_user_count = User.objects.\
-            filter(taskassignment__updated_at__gt=recent_past).distinct().count()
+
+        active_users = User.objects.\
+            filter(Q(taskassignment__updated_at__gt=recent_past) &
+                   Q(taskassignment__completed=True)).\
+            distinct().\
+            annotate(
+                total_assignments=Count('taskassignment',
+                                        filter=(Q(taskassignment__updated_at__gt=recent_past) &
+                                                Q(taskassignment__completed=True)))).\
+            annotate(last_finished_time=Max('taskassignment__updated_at',
+                                            filter=Q(taskassignment__completed=True)))
+        active_user_count = active_users.count()
         projects = Project.get_with_recently_updated_taskassignments(days)
         return render(request, 'admin/turkle/site_stats.html', {
+            'active_users': active_users,
             'active_user_count': active_user_count,
             'days': days,
             'projects': projects,
