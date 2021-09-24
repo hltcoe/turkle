@@ -1235,8 +1235,12 @@ class ProjectAdmin(GuardedModelAdmin):
             days = int(request.GET['days'])
         else:
             days = 7
+        recent_past = datetime.now(timezone.utc) - timedelta(days=days)
+        active_user_count = User.objects.\
+            filter(taskassignment__updated_at__gt=recent_past).distinct().count()
         projects = Project.get_with_recently_updated_taskassignments(days)
         return render(request, 'admin/turkle/site_stats.html', {
+            'active_user_count': active_user_count,
             'days': days,
             'projects': projects,
         })

@@ -55,6 +55,8 @@ $(document).ready(function() {
     <a href="?days=30" role="button" class="btn btn-primary">Last 30 days</a>
   </div>
 
+  <h1>Users Active in last {{ days }} Days: {{ active_user_count }}</h1>
+
   <h1>Projects Active in last {{ days }} Days:</h1>
 
   {% for project in projects %}
