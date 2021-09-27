@@ -141,7 +141,8 @@ class GroupFilter(AutocompleteFilter):
 class CustomUserAdmin(UserAdmin):
     actions = ['activate_users', 'deactivate_users']
     list_filter = ('is_active', 'is_staff', 'is_superuser', GroupFilter, 'date_joined')
-    list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active')
+    list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active',
+                    'stats')
 
     # required by django-admin-autocomplete-filter 0.5
     class Media:
@@ -215,6 +216,11 @@ class CustomUserAdmin(UserAdmin):
         if '_save' in request.POST:
             return redirect(reverse('turkle_admin:auth_user_changelist'))
         return super().response_add(request, obj, post_url_continue)
+
+    def stats(self, obj):
+        stats_url = reverse('stats_for_user', kwargs={'user_id': obj.id})
+        return format_html('<a href="{}" class="button">Stats</a>'.
+                           format(stats_url))
 
 
 class CustomButtonFileWidget(FileInput):
