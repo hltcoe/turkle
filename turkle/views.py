@@ -1,8 +1,10 @@
+from collections import defaultdict
 from functools import wraps
 import logging
 import urllib
 
 from django.contrib import messages
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.utils import OperationalError
@@ -391,15 +393,29 @@ def skip_task(request, batch_id, task_id):
     return redirect(preview_next_task, batch_id)
 
 
-def stats(request):
-    def format_seconds(s):
-        """Converts seconds to string"""
-        return '%dh %dm' % (s//3600, (s//60) % 60)
-
+def stats_for_self(request):
     if not request.user.is_authenticated:
         messages.error(
             request,
             u'You must be logged in to view the user statistics page')
+        return redirect(index)
+
+    return stats_for_user(request, request.user.id)
+
+
+def stats_for_user(request, user_id):
+    def format_seconds(s):
+        """Converts seconds to string"""
+        return '%dh %dm' % (s//3600, (s//60) % 60)
+
+    try:
+        user = User.objects.get(id=user_id)
+    except ObjectDoesNotExist:
+        messages.error(request, u'Cannot find User with ID {}'.format(user_id))
+        return redirect(index)
+
+    if request.user.id != user_id and not request.user.is_staff:
+        messages.error(request, u"You cannot view another User's statistics unless you are Staff")
         return redirect(index)
 
     try:
@@ -411,15 +427,15 @@ def stats(request):
     except MultiValueDictKeyError:
         end_date = None
 
-    tas = TaskAssignment.objects.filter(completed=True).filter(assigned_to=request.user)
+    tas = TaskAssignment.objects.filter(completed=True).filter(assigned_to=user)
     if start_date:
         tas = tas.filter(updated_at__gte=start_date)
     if end_date:
         tas = tas.filter(updated_at__lte=end_date)
 
-    projects = Project.objects.filter(batch__task__taskassignment__assigned_to=request.user).\
+    projects = Project.objects.filter(batch__task__taskassignment__assigned_to=user).\
         distinct()
-    batches = Batch.objects.filter(task__taskassignment__assigned_to=request.user).distinct()
+    batches = Batch.objects.filter(task__taskassignment__assigned_to=user).distinct()
 
     elapsed_seconds_overall = 0
     project_stats = []
@@ -455,9 +471,9 @@ def stats(request):
     if end_date:
         end_date = end_date.strftime('%Y-%m-%d')
 
-    name = request.user.get_full_name()
+    name = user.get_full_name()
     if not name:
-        name = request.user.get_username()
+        name = user.get_username()
 
     return render(
         request,
@@ -469,6 +485,7 @@ def stats(request):
             'total_completed': tas.count(),
             'total_elapsed_time': format_seconds(elapsed_seconds_overall),
             'full_name': name,
+            'user_id': user.id
         }
     )
 
@@ -483,6 +500,28 @@ def update_auto_accept(request):
     accept_status = (request.POST['auto_accept'] == 'true')
     request.session['auto_accept_status'] = accept_status
     return JsonResponse({})
+
+
+def user_activity_json(request, user_id):
+    if request.user.id != user_id and not request.user.is_staff:
+        return JsonResponse({})
+
+    try:
+        user = User.objects.get(id=user_id)
+    except ObjectDoesNotExist:
+        return JsonResponse({})
+
+    # Create dictionary mapping timestamp (in seconds) to number of TaskAssignments
+    # completed at that timestamp
+    completed_at = TaskAssignment.objects.\
+        filter(completed=True).\
+        filter(assigned_to=user).\
+        values_list('updated_at', flat=True)
+    timestamp_counts = defaultdict(int)
+    for ca in completed_at:
+        timestamp_counts[int(ca.timestamp())] += 1
+
+    return JsonResponse(timestamp_counts)
 
 
 def _add_task_id_to_skip_session(session, batch_id, task_id):
