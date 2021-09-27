@@ -79,7 +79,9 @@ $(document).ready(function() {
         {% for active_user in active_users %}
         <tr>
           <td data-order="{{ active_user.last_name }}, {{ active_user.first_name }}">
-            {{ active_user.first_name }} {{ active_user.last_name }}
+            <a href="{% url 'stats_for_user' active_user.id %}">
+              {{ active_user.first_name }} {{ active_user.last_name }}
+            </a>
           </td>
           <td>{{ active_user.username }}</td>
           <td>{{ active_user.total_assignments }}</td>
