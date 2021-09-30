@@ -16,12 +16,6 @@
 </style>
 <script>
 $(document).ready(function() {
-  $('#user-stats').DataTable({
-    info: false,
-    paging: false,
-    searching: false
-  });
-
   // Set startDate to include previous 11 months plus all of current month
   var currentDate = new Date();
   var year = currentDate.getFullYear();
@@ -61,37 +55,6 @@ $(document).ready(function() {
     <a href="?days=2" role="button" class="btn btn-primary">Last 2 days</a>
     <a href="?days=7" role="button" class="btn btn-primary">Last 7 days</a>
     <a href="?days=30" role="button" class="btn btn-primary">Last 30 days</a>
-  </div>
-
-  <h1>Active Users in last {{ days }} Days: {{ active_user_count }}</h1>
-
-  <div style="margin-bottom: 2em;">
-    <table id="user-stats" class="table table-sm table-bordered thead-light">
-      <thead class="thead-light">
-        <tr>
-          <th>Name</th>
-          <th>Username</th>
-          <th>Assignments</th>
-          <th>Most Recent</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for active_user in active_users %}
-        <tr>
-          <td data-order="{{ active_user.last_name }}, {{ active_user.first_name }}">
-            <a href="{% url 'stats_for_user' active_user.id %}">
-              {{ active_user.first_name }} {{ active_user.last_name }}
-            </a>
-          </td>
-          <td>{{ active_user.username }}</td>
-          <td>{{ active_user.total_assignments }}</td>
-          <td data-order="{{ active_user.last_finished_time|date:"c" }}">
-            {{ active_user.last_finished_time }}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
   </div>
 
   <h1>Active Projects in last {{ days }} Days:</h1>

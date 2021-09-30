@@ -7,8 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
 - Add "Activity Calendar Heatmap" visualization to Batch Stats and
-  Project Stats admin views and User Stats view showing how many
-  Task Assignments were completed for each day of the past year.
+  Project Stats admin views and User Stats view.  Visualization shows
+  how many Task Assignments were completed for each day of the past
+  year.
+- Add "Active Projects" admin view that uses the "Activity Calendar
+  Heatmap" visualization to show activity on all projects active
+  in last N days.
+- Add "Active Users" admin view that lists all users active in last
+  N days.
 ### Changed
 - Users with Staff privileges can now access User Stats view for
   any User.  The User table on the User Admin changelist page now

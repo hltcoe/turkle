@@ -952,6 +952,18 @@ class ProjectAdmin(GuardedModelAdmin):
             days = int(request.GET['days'])
         else:
             days = 7
+
+        projects = Project.get_with_recently_updated_taskassignments(days)
+        return render(request, 'admin/turkle/active_projects.html', {
+            'days': days,
+            'projects': projects,
+        })
+
+    def active_users(self, request):
+        if 'days' in request.GET:
+            days = int(request.GET['days'])
+        else:
+            days = 7
         recent_past = datetime.now(timezone.utc) - timedelta(days=days)
 
         active_users = User.objects.\
@@ -965,12 +977,10 @@ class ProjectAdmin(GuardedModelAdmin):
             annotate(last_finished_time=Max('taskassignment__updated_at',
                                             filter=Q(taskassignment__completed=True)))
         active_user_count = active_users.count()
-        projects = Project.get_with_recently_updated_taskassignments(days)
-        return render(request, 'admin/turkle/active_projects.html', {
+        return render(request, 'admin/turkle/active_users.html', {
             'active_users': active_users,
             'active_user_count': active_user_count,
             'days': days,
-            'projects': projects,
         })
 
     def activity_json(self, request, project_id):
@@ -1003,6 +1013,8 @@ class ProjectAdmin(GuardedModelAdmin):
                  self.admin_site.admin_view(self.project_stats), name='project_stats'),
             path('active-projects/',
                  self.admin_site.admin_view(self.active_projects), name='active_projects'),
+            path('active-users/',
+                 self.admin_site.admin_view(self.active_users), name='active_users'),
         ]
         return my_urls + urls
 

@@ -17,9 +17,25 @@
 
 {% block content %}
 {{ block.super }}
-<a href="{% url 'turkle_admin:expire_abandoned_assignments' %}" class="button">
-  Expire Abandoned Assignments
-</a>
+<p>
+  <h3>
+    <a href="{% url 'turkle_admin:active_projects' %}">
+      Active Projects
+    </a>
+  </h3>
+</p>
+<p>
+  <h3>
+    <a href="{% url 'turkle_admin:active_users' %}">
+      Active Users
+    </a>
+  </h3>
+</p>
+<p style="margin-top: 2em;">
+  <a href="{% url 'turkle_admin:expire_abandoned_assignments' %}" class="button">
+    Expire Abandoned Assignments
+  </a>
+</p>
 {% endblock %}
 
 {% block sidebar %}{% endblock %}
