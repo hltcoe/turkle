@@ -114,7 +114,7 @@ class TaskAssignment(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(null=True)
     task = models.ForeignKey(Task, on_delete=models.CASCADE)
-    updated_at = models.DateTimeField(auto_now=True)
+    updated_at = models.DateTimeField(auto_now=True, db_index=True)
 
     @classmethod
     def expire_all_abandoned(cls):
@@ -718,6 +718,20 @@ class Project(TaskAssignmentStatistics, models.Model):
 
     # Fieldnames are automatically extracted from html_template text
     fieldnames = JSONField(blank=True)
+
+    @classmethod
+    def get_with_recently_updated_taskassignments(cls, n_days):
+        """Return QuerySet of Projects with TaskAssignments modified in last N days
+
+        Args:
+            n_days (int): Number of days to use for "recently updated" window
+        Returns:
+            QuerySet
+        """
+        recent_past = (datetime.datetime.now(datetime.timezone.utc) -
+                       datetime.timedelta(days=n_days))
+        return Project.objects.\
+            filter(batch__task__taskassignment__updated_at__gt=recent_past).distinct()
 
     def assignments_completed_by(self, user):
         """

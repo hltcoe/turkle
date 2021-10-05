@@ -16,7 +16,7 @@ from django.contrib.auth.models import Group, User
 from django.contrib.admin.templatetags.admin_list import _boolean_icon
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import DurationField, ExpressionWrapper, F
+from django.db.models import Count, DurationField, ExpressionWrapper, F, Max, Q
 from django.forms import (FileField, FileInput, HiddenInput, IntegerField,
                           ModelForm, ModelMultipleChoiceField, TextInput, ValidationError, Widget)
 from django.http import HttpResponse, JsonResponse
@@ -947,6 +947,42 @@ class ProjectAdmin(GuardedModelAdmin):
     class Media:
         pass
 
+    def active_projects(self, request):
+        if 'days' in request.GET:
+            days = int(request.GET['days'])
+        else:
+            days = 7
+
+        projects = Project.get_with_recently_updated_taskassignments(days)
+        return render(request, 'admin/turkle/active_projects.html', {
+            'days': days,
+            'projects': projects,
+        })
+
+    def active_users(self, request):
+        if 'days' in request.GET:
+            days = int(request.GET['days'])
+        else:
+            days = 7
+        recent_past = datetime.now(timezone.utc) - timedelta(days=days)
+
+        active_users = User.objects.\
+            filter(Q(taskassignment__updated_at__gt=recent_past) &
+                   Q(taskassignment__completed=True)).\
+            distinct().\
+            annotate(
+                total_assignments=Count('taskassignment',
+                                        filter=(Q(taskassignment__updated_at__gt=recent_past) &
+                                                Q(taskassignment__completed=True)))).\
+            annotate(last_finished_time=Max('taskassignment__updated_at',
+                                            filter=Q(taskassignment__completed=True)))
+        active_user_count = active_users.count()
+        return render(request, 'admin/turkle/active_users.html', {
+            'active_users': active_users,
+            'active_user_count': active_user_count,
+            'days': days,
+        })
+
     def activity_json(self, request, project_id):
         try:
             project = Project.objects.get(id=project_id)
@@ -975,6 +1011,10 @@ class ProjectAdmin(GuardedModelAdmin):
                  self.admin_site.admin_view(self.activity_json), name='project_activity_json'),
             path('<int:project_id>/stats/',
                  self.admin_site.admin_view(self.project_stats), name='project_stats'),
+            path('active-projects/',
+                 self.admin_site.admin_view(self.active_projects), name='active_projects'),
+            path('active-users/',
+                 self.admin_site.admin_view(self.active_users), name='active_users'),
         ]
         return my_urls + urls
 
