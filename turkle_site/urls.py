@@ -1,6 +1,4 @@
 from django.contrib import admin
-from django.contrib.staticfiles.storage import staticfiles_storage
-from django.views.generic.base import RedirectView
 from django.urls import include, path
 
 from turkle.admin import admin_site
