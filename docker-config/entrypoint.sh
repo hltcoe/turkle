@@ -18,4 +18,4 @@ fi
 
 python manage.py migrate --noinput
 cron &
-gunicorn --env TURKLE_DOCKER=1 ${ADDITIONAL_FLAGS} --bind 0.0.0.0:8080 turkle_site.wsgi
+gunicorn --env TURKLE_DOCKER=1 ${ADDITIONAL_FLAGS} --capture-output --bind 0.0.0.0:8080 turkle_site.wsgi
