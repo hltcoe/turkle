@@ -16,7 +16,6 @@ Dockerfiles:
 
 SQLite Docker image
 -------------------
-
 You can build the SQLite Turkle image using::
 
     docker build --force-rm -t hltcoe/turkle -f Dockerfile-sqlite .
@@ -28,7 +27,6 @@ host port 18080, use::
 
 MySQL Docker image
 ------------------
-
 The MySQL version of Turkle requires two containers - one for Turkle,
 and the other for MySQL.  This multi-container Docker application is
 configured and controlled by docker-compose.
@@ -59,9 +57,11 @@ restart the application::
 Any database migrations for the upgraded version of Turkle will be
 automatically applied when the application is brought back up.
 
+If you'd like to run the MySQL docker image on its own, look at the
+environment variables set in the docker compose configuration file.
+
 Changing the admin password
 ---------------------------
-
 The SQLite Docker container has a super-user named ``admin`` with a
 default password of ``admin``.  For the MySQL Docker container, the
 super-user username and password are set by one of the
@@ -87,10 +87,14 @@ accepts, you can pass environment variables to the container:
 
 Example::
   docker run -d -e WORKERS=3 -e THREADS=4 -e CONNECTIONS=2000 -p 8080:8080 hltcoe/turkle
-  
+
+Logging
+------------------
+The gunicorn and Turkle application logs are sent to the console and are
+available using `docker logs`.
+
 Running Dockerized Turkle with a URL prefix
 -------------------------------------------
-
 If you want to reverse proxy the Turkle container so that Turkle is not available
 at the root of the web server, you need to pass an environment to the container.
 
