@@ -1,6 +1,6 @@
 FROM python:3.9-slim-buster
 MAINTAINER Craig Harman <craig@craigharman.net>
-LABEL Description="Image for running a Turkle interface"
+LABEL Description="Image for running a Turkle interface using sqlite"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     cron \
