@@ -23,7 +23,7 @@ docker-build:
   before_script:
     - docker info
   script:
-    - docker build -t turkle .
+    - docker build -t turkle -f Dockerfile-sqlite .
     - docker build -t turkle.mysql -f Dockerfile-MySQL .
   tags:
     - docker
