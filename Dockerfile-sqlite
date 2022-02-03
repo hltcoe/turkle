@@ -1,16 +1,17 @@
-FROM centos:8
+FROM python:3.9-slim-buster
 MAINTAINER Craig Harman <craig@craigharman.net>
 LABEL Description="Image for running a Turkle interface"
 
-RUN yum install epel-release -y && \
-    yum install crontabs git patch python3 python3-pip -y && \
-    yum clean all -y
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    cron \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/turkle
 
 COPY requirements.txt /opt/turkle/requirements.txt
-RUN pip3.6 install --upgrade -r requirements.txt
-RUN pip3.6 install gunicorn whitenoise
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir --upgrade -r requirements.txt && \
+    pip install --no-cache-dir gunicorn whitenoise
 
 COPY turkle /opt/turkle/turkle
 COPY manage.py /opt/turkle/manage.py
@@ -23,8 +24,8 @@ COPY docker-config/turkle.crontab /etc/cron.d/turkle
 RUN crontab /etc/cron.d/turkle
 
 ENV TURKLE_DOCKER=1
-RUN python3.6 manage.py collectstatic
-RUN python3.6 manage.py migrate
+RUN python manage.py collectstatic
+RUN python manage.py migrate
 RUN ./create_turkle_admin.sh
 
 VOLUME /opt/turkle
