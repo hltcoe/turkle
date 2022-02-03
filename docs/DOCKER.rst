@@ -5,7 +5,7 @@ Instead of installing Turkle and dependencies directly, you can run
 Turkle as a Docker container, using the admin UI or scripts to manage
 Projects and Batches of Tasks.
 
-This repo comes with two Dockerfiles.  The default file ``Dockerfile``
+This repo comes with two Dockerfiles.  The file ``Dockerfile-sqlite``
 uses SQLite as the database backend.  The file ``Dockerfile-MySQL`` uses
 MySQL as the database backend.  The Turkle images created by both
 Dockerfiles:
@@ -19,7 +19,7 @@ SQLite Docker image
 
 You can build the SQLite Turkle image using::
 
-    docker build --force-rm -t hltcoe/turkle .
+    docker build --force-rm -t hltcoe/turkle -f Dockerfile-sqlite .
 
 To launch a Turkle container that maps container port 8080 to Docker
 host port 18080, use::
@@ -38,7 +38,7 @@ with the commands::
 
     docker-compose build
     docker-compose up -d
-    docker-compose run turkle python3.6 manage.py createsuperuser
+    docker-compose run turkle python manage.py createsuperuser
 
 This will stand up a Turkle server listening on port 8080.
 
