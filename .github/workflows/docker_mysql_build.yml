@@ -1,4 +1,4 @@
-name: sqlite Docker Build
+name: MySQL Docker Build
 on:
   push:
     branches:
@@ -20,5 +20,5 @@ jobs:
       - name: Build Docker image
         uses: docker/build-push-action@v2
         with:
-          file: Dockerfile-sqlite
+          file: Dockerfile-MySQL
           push: false
