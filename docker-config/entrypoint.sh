@@ -1,5 +1,7 @@
 #!/bin/bash
 
+printenv > /etc/environment
+
 ADDITIONAL_FLAGS=""
 
 if [ ! -z $WORKERS ]; then
