@@ -14,6 +14,6 @@ if [ ! -z $THREADS ]; then
     ADDITIONAL_FLAGS="${ADDITIONAL_FLAGS} --threads=${THREADS}"
 fi
 
-python3.6 manage.py migrate --noinput
-crond &
+python manage.py migrate --noinput
+cron &
 gunicorn --env TURKLE_DOCKER=1 ${ADDITIONAL_FLAGS} --bind 0.0.0.0:8080 turkle_site.wsgi

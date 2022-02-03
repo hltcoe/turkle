@@ -38,7 +38,7 @@ with the commands::
 
     docker-compose build
     docker-compose up -d
-    docker-compose run turkle python3.6 manage.py createsuperuser
+    docker-compose run turkle python manage.py createsuperuser
 
 This will stand up a Turkle server listening on port 8080.
 

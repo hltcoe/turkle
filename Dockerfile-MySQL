@@ -1,16 +1,19 @@
-FROM centos:8
+FROM python:3.9-slim-buster
 MAINTAINER Craig Harman <craig@craigharman.net>
 LABEL Description="Image for running a Turkle interface using MySQL"
 
-RUN yum install epel-release -y && \
-    yum install crontabs gcc git mysql-devel patch python3-devel python3-pip -y && \
-    yum clean all -y
-
 WORKDIR /opt/turkle
-
 COPY requirements.txt /opt/turkle/requirements.txt
-RUN pip3.6 install --upgrade -r requirements.txt
-RUN pip3.6 install gunicorn mysqlclient whitenoise
+
+RUN set -eux; \
+    apt-get update; \
+    apt-get install -y --no-install-recommends cron default-libmysqlclient-dev build-essential; \
+    pip install --no-cache-dir --upgrade pip; \
+    pip install --no-cache-dir --upgrade -r requirements.txt; \
+    pip install --no-cache-dir gunicorn mysqlclient whitenoise; \
+    apt-get remove --purge -y build-essential; \
+    apt-get autoremove -y; \
+    rm -rf /var/lib/apt/lists/*
 
 COPY turkle /opt/turkle/turkle
 COPY manage.py /opt/turkle/manage.py
@@ -22,7 +25,7 @@ COPY docker-config/turkle.crontab /etc/cron.d/turkle
 RUN crontab /etc/cron.d/turkle
 
 ENV TURKLE_DOCKER=1
-RUN python3.6 manage.py collectstatic
+RUN python manage.py collectstatic
 
 VOLUME /opt/turkle
 
