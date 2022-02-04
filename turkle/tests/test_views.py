@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import django.test
 from django.contrib.auth.models import Group, User
 from django.contrib.messages import get_messages

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import datetime
 import os.path
 
@@ -277,7 +276,6 @@ class TestBatchAdmin(django.test.TestCase):
                     'csv_file': fp
                 })
         self.assertEqual(response.status_code, 200)
-        print(response.content)
         self.assertTrue(b'Please correct the error' in response.content)
         self.assertTrue(b'extra fields' not in response.content)
         self.assertTrue(b'missing fields' in response.content)
