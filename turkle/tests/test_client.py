@@ -20,7 +20,7 @@ class TestClient(django.test.LiveServerTestCase):
 
     def test_login_failure(self):
         # swallow stdout error messages from client
-        with contextlib.redirect_stdout(io.StringIO()) as f:
+        with contextlib.redirect_stdout(io.StringIO()):
             client = TurkleClient(self.live_server_url, "admin", "chicken")
             self.assertFalse(client.add_user("tony", "password"))
 
@@ -28,7 +28,7 @@ class TestClient(django.test.LiveServerTestCase):
         self.assertTrue(self.client.add_user("tony", "password"))
 
     def test_add_user_invalid_username(self):
-        with contextlib.redirect_stdout(io.StringIO()) as f:
+        with contextlib.redirect_stdout(io.StringIO()):
             self.assertFalse(self.client.add_user("tony#", "password"))
 
     def test_download(self):
@@ -60,5 +60,5 @@ class TestClient(django.test.LiveServerTestCase):
         options.template = os.path.join(resources_dir, 'sentiment.html')
         options.csv = os.path.join(resources_dir, 'sentiment_bad.csv')
 
-        with contextlib.redirect_stdout(io.StringIO()) as f:
+        with contextlib.redirect_stdout(io.StringIO()):
             self.assertFalse(self.client.upload(options))
