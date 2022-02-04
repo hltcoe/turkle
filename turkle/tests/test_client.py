@@ -1,8 +1,11 @@
 import argparse
-import django.test
+import contextlib
+import io
 import os
-import requests
 import tempfile
+
+import django.test
+import requests
 
 from scripts.client import TurkleClient
 
@@ -16,14 +19,17 @@ class TestClient(django.test.LiveServerTestCase):
         self.client = TurkleClient(self.live_server_url, "admin", "password")
 
     def test_login_failure(self):
-        client = TurkleClient(self.live_server_url, "admin", "chicken")
-        self.assertFalse(client.add_user("tony", "password"))
+        # swallow stdout error messages from client
+        with contextlib.redirect_stdout(io.StringIO()) as f:
+            client = TurkleClient(self.live_server_url, "admin", "chicken")
+            self.assertFalse(client.add_user("tony", "password"))
 
     def test_add_user(self):
         self.assertTrue(self.client.add_user("tony", "password"))
 
     def test_add_user_invalid_username(self):
-        self.assertFalse(self.client.add_user("tony#", "password"))
+        with contextlib.redirect_stdout(io.StringIO()) as f:
+            self.assertFalse(self.client.add_user("tony#", "password"))
 
     def test_download(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -54,4 +60,5 @@ class TestClient(django.test.LiveServerTestCase):
         options.template = os.path.join(resources_dir, 'sentiment.html')
         options.csv = os.path.join(resources_dir, 'sentiment_bad.csv')
 
-        self.assertFalse(self.client.upload(options))
+        with contextlib.redirect_stdout(io.StringIO()) as f:
+            self.assertFalse(self.client.upload(options))

@@ -2,7 +2,6 @@ beautifulsoup4
 Django~=2.2.13
 django-admin-autocomplete-filter==0.5
 django-guardian==2.3.0
-django-nose==1.4.5
 humanfriendly
 jsonfield==2.0.2
 requests
