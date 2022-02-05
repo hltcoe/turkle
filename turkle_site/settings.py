@@ -7,6 +7,7 @@ import types
 
 DEBUG = False
 ALLOWED_HOSTS = ['*']
+X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 TURKLE_SITE_NAME = 'Turkle'
 
@@ -64,6 +65,7 @@ TEMPLATES = [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.i18n',
                 'django.template.context_processors.media',
+                'django.template.context_processors.request',
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
