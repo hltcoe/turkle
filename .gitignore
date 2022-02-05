@@ -12,3 +12,5 @@ logs/
 !hits/tests/resources/*.csv
 !hits/tests/resources/*.html
 .DS_Store
+*.egg-info/
+build/

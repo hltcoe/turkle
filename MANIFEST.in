@@ -1,0 +1,2 @@
+recursive-include turkle/static *
+recursive-include turkle/templates *
