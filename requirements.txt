@@ -1,7 +1,7 @@
 beautifulsoup4
-Django~=2.2.13
-django-admin-autocomplete-filter==0.5
-django-guardian==2.3.0
+Django~=3.1.14
+django-admin-autocomplete-filter==0.7.1
+django-guardian==2.4.0
 humanfriendly
-jsonfield==2.0.2
+jsonfield==3.1.0
 requests
