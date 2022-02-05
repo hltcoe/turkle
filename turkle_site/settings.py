@@ -127,10 +127,6 @@ LOGIN_REDIRECT_URL = 'index'
 # This requires MTA configuration.
 TURKLE_EMAIL_ENABLED = False
 
-# Uncomment and configure (Note: this does not work for sqlite databases)
-# DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
-# DBBACKUP_STORAGE_OPTIONS = {'location': '/opt/backups'}
-
 
 # Docker specific configuration
 
