@@ -102,6 +102,10 @@ INSTALLED_APPS = (
     'turkle',
     'django.contrib.admin',
 
+    'rest_framework',
+    'rest_framework.authtoken',
+    'turkle.api',
+
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     'guardian',
@@ -113,6 +117,14 @@ AUTHENTICATION_BACKENDS = (
     'guardian.backends.ObjectPermissionBackend',
 )
 
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ]
+}
 
 # Set max size for file uploads and POST requests to 100MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 104857600
