@@ -7,6 +7,7 @@ import types
 
 DEBUG = False
 ALLOWED_HOSTS = ['*']
+X_FRAME_OPTIONS = 'SAMEORIGIN'
 
 TURKLE_SITE_NAME = 'Turkle'
 
@@ -64,6 +65,7 @@ TEMPLATES = [
                 'django.template.context_processors.debug',
                 'django.template.context_processors.i18n',
                 'django.template.context_processors.media',
+                'django.template.context_processors.request',
                 'django.template.context_processors.static',
                 'django.template.context_processors.tz',
                 'django.contrib.messages.context_processors.messages',
@@ -124,10 +126,6 @@ LOGIN_REDIRECT_URL = 'index'
 # If True, the "Password Reset" link will be added to the login form.
 # This requires MTA configuration.
 TURKLE_EMAIL_ENABLED = False
-
-# Uncomment and configure (Note: this does not work for sqlite databases)
-# DBBACKUP_STORAGE = 'django.core.files.storage.FileSystemStorage'
-# DBBACKUP_STORAGE_OPTIONS = {'location': '/opt/backups'}
 
 
 # Docker specific configuration
