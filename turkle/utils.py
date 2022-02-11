@@ -23,9 +23,12 @@ def get_turkle_template_limit(in_bytes=False):
 
 def turkle_vars(request):
     """add variables to the template context"""
+    meta_tags = settings.META_TAGS if hasattr(settings, 'META_TAGS') else []
+
     return {
         'turkle_site_name': get_site_name(),
         'turkle_template_limit': get_turkle_template_limit(),
         'turkle_version': __version__,
         'turkle_email_enabled': settings.TURKLE_EMAIL_ENABLED,
+        'turkle_meta_tags': meta_tags,
     }
