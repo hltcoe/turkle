@@ -1,6 +1,6 @@
 from django.test import TestCase
 
-from turkle.templatetags.meta_tag import meta_tag
+from turkle.templatetags.turkle_tags import meta_tag
 
 
 class TestMetaTag(TestCase):
