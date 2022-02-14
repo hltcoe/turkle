@@ -123,6 +123,7 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600
 TURKLE_TEMPLATE_LIMIT = 64
 
 LOGIN_REDIRECT_URL = 'index'
+LOGOUT_REDIRECT_URL = 'index'
 
 # If True, the "Password Reset" link will be added to the login form.
 # This requires MTA configuration.
