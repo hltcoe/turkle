@@ -123,6 +123,7 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600
 TURKLE_TEMPLATE_LIMIT = 64
 
 LOGIN_REDIRECT_URL = 'index'
+LOGOUT_REDIRECT_URL = 'index'
 
 # HTML HEAD <meta> tags: list of dictionaries where each dictionary is a tag
 # Ex: {'name': 'robots', 'content': 'noindex'} renders as <meta name="robots" content="noindex">
