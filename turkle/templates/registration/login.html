@@ -4,6 +4,12 @@
 
 {% block body %}
 
+{% load turkle_tags %}
+{% is_installed "consent" as consent_installed %}
+{% if consent_installed %}
+{% load consent_tags %}{% consent_banner %}
+{% endif %}
+
 {% if form.non_field_errors %}
 {% for error in form.non_field_errors %}
 <div class="alert alert-error" role="alert">
