@@ -4,10 +4,12 @@
 
 {% block body %}
 
+<div class="container-fluid mt-3">
+
 {% load turkle_tags %}
 {% is_installed "consent" as consent_installed %}
 {% if consent_installed %}
-{% load consent_tags %}{% consent_banner %}
+{% include "consent/banner.html" %}
 {% endif %}
 
 {% if form.non_field_errors %}
@@ -63,5 +65,6 @@
   </div>
   <input type="hidden" name="next" value="{{ next }}">
 </form>
+</div>
 
 {% endblock %}
