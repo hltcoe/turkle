@@ -1,7 +1,13 @@
 from django import template
+from django.conf import settings
 from django.utils.safestring import mark_safe
 
 register = template.Library()
+
+
+@register.simple_tag
+def is_installed(app):
+    return app in settings.INSTALLED_APPS
 
 
 @register.filter
