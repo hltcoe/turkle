@@ -14,3 +14,8 @@ def is_installed(app):
 def meta_tag(tag):
     attributes = [f"{key}=\"{value}\"" for key, value in tag.items()]
     return mark_safe(f"<meta {' '.join(attributes)}>")
+
+
+@register.filter()
+def add_class(field, css):
+    return field.as_widget(attrs={"class":css})
