@@ -18,4 +18,4 @@ def meta_tag(tag):
 
 @register.filter()
 def add_class(field, css):
-    return field.as_widget(attrs={"class":css})
+    return field.as_widget(attrs={"class": css})
