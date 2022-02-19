@@ -98,6 +98,17 @@ be able to view the site at http://localhost/ or whatever the appropriate host n
 Instructions for using Gunicorn with nginx are found on its `deploy page`_.
 You will still need to configure nginx to serve the static files as we did with Apache.
 
+Emails behind proxy
+```````````````````
+If your site has been configured for emails, the emails for password resets
+will use the localhost URL rather than the external URL.
+To configure this, set this variable in the local_settings.py file::
+
+    USE_X_FORWARDED_HOST = True
+
+This will cause Django to pick up the HTTP_X_FORWARDED_HOST header
+when populating the protocol, domain, and site_name for the emails.
+
 Production Database Configuration
 ---------------------------------
 
