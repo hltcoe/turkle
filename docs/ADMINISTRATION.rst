@@ -102,9 +102,12 @@ Emails behind proxy
 ```````````````````
 If your site has been configured for emails, the emails for password resets
 will use the localhost URL rather than the external URL.
-To configure this, define this variable in the local_settings.py file::
+To configure this, set this variable in the local_settings.py file::
 
-    TURKLE_EMAIL_CONTEXT = {'site_name': 'Turkle', 'domain': 'example.org.com', 'protocol': 'https'}
+    USE_X_FORWARDED_HOST = True
+
+This will cause Django to pick up the HTTP_X_FORWARDED_HOST header
+when populating the protocol, domain, and site_name for the emails.
 
 Production Database Configuration
 ---------------------------------
