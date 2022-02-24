@@ -121,7 +121,13 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600
 # max size of template in KB
 TURKLE_TEMPLATE_LIMIT = 64
 
+LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'index'
+LOGOUT_REDIRECT_URL = 'index'
+
+# HTML HEAD <meta> tags: list of dictionaries where each dictionary is a tag
+# Ex: {'name': 'robots', 'content': 'noindex'} renders as <meta name="robots" content="noindex">
+META_TAGS = []
 
 # If True, the "Password Reset" link will be added to the login form.
 # This requires MTA configuration.

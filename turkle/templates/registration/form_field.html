@@ -1,0 +1,10 @@
+{% load turkle_tags %}
+<div class="form-group row {% if field.errors %}has-error{% endif %}">
+  <label for="{{ field.id_for_label }}" class="col-sm-4 control-label">{{ field.label }}</label>
+  <div class="col-sm-8">
+    {{ field|add_class:"form-control" }}
+    {% if field.errors %}
+      <span class='text-danger'>{{ field.errors|join:'<br />' }}</span>
+    {% endif %}
+  </div>
+</div>
