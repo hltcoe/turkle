@@ -8,7 +8,7 @@ import statistics
 import sys
 
 from bs4 import BeautifulSoup
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Count, IntegerField, OuterRef, Prefetch, Subquery
@@ -18,6 +18,8 @@ from guardian.core import ObjectPermissionChecker
 from guardian.models import GroupObjectPermission
 from guardian.shortcuts import assign_perm, get_group_perms, get_groups_with_perms
 from jsonfield import JSONField
+
+User = get_user_model()
 
 from .utils import get_turkle_template_limit
 
