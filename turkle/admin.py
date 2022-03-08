@@ -12,6 +12,7 @@ from admin_auto_filters.views import AutocompleteJsonView
 from django.contrib import admin, messages
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.contrib.admin.templatetags.admin_list import _boolean_icon
 from django.core.exceptions import ObjectDoesNotExist
@@ -29,7 +30,6 @@ from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import (assign_perm, get_groups_with_perms, get_users_with_perms,
                                 remove_perm)
 import humanfriendly
-from django.contrib.auth import get_user_model
 
 from .models import Batch, Project, TaskAssignment
 from .utils import get_site_name, get_turkle_template_limit
