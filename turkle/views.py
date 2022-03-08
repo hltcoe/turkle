@@ -4,7 +4,8 @@ import logging
 import urllib
 
 from django.contrib import messages
-from django.contrib.auth.models import User
+
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
 from django.db.utils import OperationalError
@@ -15,6 +16,8 @@ from django.utils.datastructures import MultiValueDictKeyError
 from django.utils.dateparse import parse_date
 
 from .models import Task, TaskAssignment, Batch, Project
+
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 

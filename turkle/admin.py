@@ -12,7 +12,8 @@ from admin_auto_filters.views import AutocompleteJsonView
 from django.contrib import admin, messages
 from django.contrib.admin.widgets import FilteredSelectMultiple
 from django.contrib.auth.admin import GroupAdmin, UserAdmin
-from django.contrib.auth.models import Group, User
+from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.contrib.admin.templatetags.admin_list import _boolean_icon
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
@@ -32,6 +33,8 @@ import humanfriendly
 
 from .models import Batch, Project, TaskAssignment
 from .utils import get_site_name, get_turkle_template_limit
+
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 
