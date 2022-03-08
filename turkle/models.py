@@ -8,6 +8,7 @@ import statistics
 import sys
 
 from bs4 import BeautifulSoup
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -19,9 +20,9 @@ from guardian.models import GroupObjectPermission
 from guardian.shortcuts import assign_perm, get_group_perms, get_groups_with_perms
 from jsonfield import JSONField
 
-User = get_user_model()
-
 from .utils import get_turkle_template_limit
+
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 
@@ -111,7 +112,7 @@ class TaskAssignment(models.Model):
         verbose_name = "Task Assignment"
 
     answers = JSONField(blank=True)
-    assigned_to = models.ForeignKey(User, db_index=True, null=True, on_delete=models.CASCADE)
+    assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, db_index=True, null=True, on_delete=models.CASCADE)
     completed = models.BooleanField(db_index=True, default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(null=True)
@@ -182,7 +183,7 @@ class Batch(TaskAssignmentStatistics, models.Model):
     assignments_per_task = models.IntegerField(default=1, verbose_name='Assignments per Task')
     completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(User, null=True, related_name='created_batches',
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, related_name='created_batches',
                                    on_delete=models.CASCADE, verbose_name='creator')
     custom_permissions = models.BooleanField(default=False)
     filename = models.CharField(max_length=1024)
@@ -706,7 +707,7 @@ class Project(TaskAssignmentStatistics, models.Model):
     allotted_assignment_time = models.IntegerField(default=24)
     assignments_per_task = models.IntegerField(db_index=True, default=1)
     created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(User, null=True, related_name='created_projects',
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, related_name='created_projects',
                                    on_delete=models.CASCADE, verbose_name='creator')
     custom_permissions = models.BooleanField(default=False)
     filename = models.CharField(max_length=1024, blank=True)
@@ -715,7 +716,7 @@ class Project(TaskAssignmentStatistics, models.Model):
     login_required = models.BooleanField(db_index=True, default=True)
     name = models.CharField(max_length=1024)
     updated_at = models.DateTimeField(auto_now=True)
-    updated_by = models.ForeignKey(User, null=True, related_name='updated_projects',
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, related_name='updated_projects',
                                    on_delete=models.CASCADE)
 
     # Fieldnames are automatically extracted from html_template text

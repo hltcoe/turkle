@@ -31,10 +31,10 @@ from guardian.shortcuts import (assign_perm, get_groups_with_perms, get_users_wi
 import humanfriendly
 from django.contrib.auth import get_user_model
 
-User = get_user_model()
-
 from .models import Batch, Project, TaskAssignment
 from .utils import get_site_name, get_turkle_template_limit
+
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 
