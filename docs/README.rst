@@ -130,6 +130,18 @@ Style Guideline
 
 Python code should be formatted according to `PEP 8`_.
 
+Building Docs
+-------------
+The Turkle documentation is built with Sphinx.
+To install::
+
+    pip install sphinx sphinx-rtd-theme
+
+To build from the docs directory::
+
+    make html
+
+
 Release process
 ---------------
 
