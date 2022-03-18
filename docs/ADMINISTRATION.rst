@@ -134,13 +134,13 @@ Log into the MySQL client and run the following commands::
 Third, update Turkle's settings to point at this database::
 
     DATABASES = {
-	'default': {
-	    'ENGINE': 'django.db.backends.mysql',
-	    'NAME': 'turkle',
-	    'USER': 'turkleuser',
-	    'PASSWORD': 'password',
-	    'HOST': 'localhost'
-	}
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': 'turkle',
+            'USER': 'turkleuser',
+            'PASSWORD': 'password',
+            'HOST': 'localhost'
+        }
     }
 
 The last step is running the Turkle install steps (migrate and createsuperuser).
@@ -167,13 +167,13 @@ Log into the psql client and run the following commands::
 Third, update Turkle's settings to point at this database::
 
     DATABASES = {
-	'default': {
-	    'ENGINE': 'django.db.backends.postgresql_psycopg2',
-	    'NAME': 'turkle',
-	    'USER': 'turkleuser',
-	    'PASSWORD': 'password',
-	    'HOST': 'localhost'
-	}
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': 'turkle',
+            'USER': 'turkleuser',
+            'PASSWORD': 'password',
+            'HOST': 'localhost'
+        }
     }
 
 The last step is running the Turkle install steps (migrate and
