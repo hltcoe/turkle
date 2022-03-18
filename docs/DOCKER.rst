@@ -100,14 +100,14 @@ at the root of the web server, you need to pass an environment to the container.
 
 If this is your reverse proxy configuration for Apache::
 
-     <Location "/annotate">
-	 ProxyPass http://localhost:8080
-	 ProxyPassReverse http://localhost:8080
-     </Location>
+    <Location "/annotate">
+        ProxyPass http://localhost:8080
+        ProxyPassReverse http://localhost:8080
+    </Location>
 
 Then run the docker container::
 
-     docker run -d --name [container_name] -p 8080:8080 -e TURKLE_PREFIX='annotate' hltcoe/turkle
+    docker run -d --name [container_name] -p 8080:8080 -e TURKLE_PREFIX='annotate' hltcoe/turkle
 
 This passes the URL prefix to the Turkle application through an environment variable.
 Note that the application will be functional when directly hitting the application server.

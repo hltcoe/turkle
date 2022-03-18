@@ -9,22 +9,22 @@ document with ``head`` and ``body`` tags.  Turkle renders the page for a
 Task by inserting your HTML template code into an HTML ``form`` element
 in the body of an HTML document.  The document looks like this::
 
-     <!DOCTYPE html>
-     <html>
-       <head>
-	 <title></title>
-	 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
-       </head>
-       <body>
-	 <form name="mturk_form" method="post" id="mturk_form"
-	       target="_parent" action='/some/submit/url'>
-	   <!-- YOUR HTML IS INSERTED HERE -->
-	   {% if not project_html_template.has_submit_button %}
-	   <input type="submit" id="submitButton" value="Submit" />
-	   {% endif %}
-	 </form>
-       </body>
-     </html>
+    <!DOCTYPE html>
+    <html>
+      <head>
+        <title></title>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+      </head>
+      <body>
+        <form name="mturk_form" method="post" id="mturk_form"
+          target="_parent" action='/some/submit/url'>
+          <!-- YOUR HTML IS INSERTED HERE -->
+          {% if not project_html_template.has_submit_button %}
+          <input type="submit" id="submitButton" value="Submit" />
+          {% endif %}
+        </form>
+      </body>
+    </html>
 
 Turkle displays the combined HTML document in an iframe, so that your
 code is isolated from any CSS and JavaScript libraries used by the
@@ -52,8 +52,8 @@ then the CSV input file's header row should have fields named 'foo'
 and 'bar'::
 
     "foo","bar"
-	"1","one"
-	"2","two"
+    "1","one"
+    "2","two"
 
 When a Worker views the web page for a Task or Task Assignment, the
 template variables will be replaced with the corresponding values from
@@ -76,7 +76,7 @@ saved in JSON or Concrete_.
 Here is a sample CSV file that contains a JSON array::
 
     "json_array"
-	"[3,6,9]"
+    "[3,6,9]"
 
 JavaScript code in a template can access this JSON array using::
 
@@ -136,20 +136,20 @@ Backspace keys when the user is not editing a text field::
 
     $(document).ready(function() {
       $(document).on('keydown', function(e) {
-	var keyCode = e.keyCode || e.which;
+        var keyCode = e.keyCode || e.which;
 
-	// Disable use of enter key UNLESS used within a textarea
-	if (keyCode == 13 && !$(document.activeElement).is('textarea')) {
-	  e.preventDefault();
-	  return false;
-	}
+        // Disable use of enter key UNLESS used within a textarea
+        if (keyCode == 13 && !$(document.activeElement).is('textarea')) {
+          e.preventDefault();
+	      return false;
+        }
 
-	// Disable backspace key outside of input and textarea fields, since some browsers
-	// (such as Firefox on Windows) trigger the "Back" action when backspace is pressed
-	if (keyCode == 8 && !$(document.activeElement).is('input') && !$(document.activeElement).is('textarea')) {
-	  e.preventDefault();
-	  return false;
-	}
+        // Disable backspace key outside of input and textarea fields, since some browsers
+        // (such as Firefox on Windows) trigger the "Back" action when backspace is pressed
+        if (keyCode == 8 && !$(document.activeElement).is('input') && !$(document.activeElement).is('textarea')) {
+          e.preventDefault();
+          return false;
+        }
       });
     });
 
