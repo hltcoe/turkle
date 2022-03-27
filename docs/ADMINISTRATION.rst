@@ -76,7 +76,7 @@ adding the appropriate string to the MIDDLEWARE list::
         'whitenoise.middleware.WhiteNoiseMiddleware',
     ) + MIDDLEWARE
 
-Note that you need to follow the previous instructions on configuring static files
+Note that you need to follow the previous instructions on configuring ``STATIC_ROOT``
 before running with whitenoise.
 
 Apache as a reverse proxy
