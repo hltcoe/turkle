@@ -32,3 +32,7 @@ def turkle_vars(request):
         'turkle_email_enabled': settings.TURKLE_EMAIL_ENABLED,
         'turkle_meta_tags': meta_tags,
     }
+
+
+def are_anonymous_tasks_allowed():
+    return getattr(settings, 'TURKLE_ANONYMOUS_TASKS', True)
