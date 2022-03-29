@@ -32,7 +32,7 @@ from guardian.shortcuts import (assign_perm, get_groups_with_perms, get_users_wi
 import humanfriendly
 
 from .models import Batch, Project, TaskAssignment
-from .utils import get_site_name, get_turkle_template_limit
+from .utils import are_anonymous_tasks_allowed, get_site_name, get_turkle_template_limit
 
 User = get_user_model()
 
@@ -298,6 +298,10 @@ class BatchForm(ModelForm):
 
         self.fields['active'].help_text = 'Workers can only access a Batch if both the Batch ' + \
             'itself and the associated Project are Active.'
+
+        if not are_anonymous_tasks_allowed():
+            # default value of login_required is True
+            self.fields['login_required'].widget = HiddenInput()
 
         if self.instance._state.adding and 'project' in self.initial:
             # We are adding a new Batch where the associated Project has been specified.
@@ -878,6 +882,10 @@ class ProjectForm(ModelForm):
         # customized admin template file:
         #   turkle/templates/admin/turkle/project/change_form.html
         self.fields['filename'].widget = HiddenInput()
+
+        if not are_anonymous_tasks_allowed():
+            # default value of login_required is True
+            self.fields['login_required'].widget = HiddenInput()
 
         self.fields['allotted_assignment_time'].label = 'Allotted Assignment Time (hours)'
         self.fields['allotted_assignment_time'].help_text = 'If a user abandons a Task, ' + \
