@@ -48,7 +48,7 @@ $(document).ready(function() {
   var cal = new CalHeatMap();
   cal.init({
     itemSelector: "#activity-calendar",
-    data: "{% url 'turkle_admin:project_activity_json' project.id %}",
+    data: "{% url 'admin:turkle_project_activity_json' project.id %}",
     domain: "month",
     subDomain: "day",
     start: startDate,
@@ -174,7 +174,7 @@ $(document).ready(function() {
         {% for stats_batch in stats_batches %}
         <tr>
           <td>
-            <a href="{% url 'turkle_admin:batch_stats' stats_batch.batch_id %}">
+            <a href="{% url 'admin:turkle_batch_stats' stats_batch.batch_id %}">
               {{ stats_batch.name }}
             </a>
           </td>

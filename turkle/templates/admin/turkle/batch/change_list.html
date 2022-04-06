@@ -22,7 +22,7 @@ $(function () {
   });
 
   $('#csv_unix_line_endings').change(function() {
-    $.post("{% url 'turkle_admin:update_csv_line_endings' %}", {'csv_unix_line_endings': this.checked});
+    $.post("{% url 'admin:turkle_update_csv_line_endings' %}", {'csv_unix_line_endings': this.checked});
   });
 });
 </script>

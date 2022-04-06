@@ -49,12 +49,12 @@ $(function () {
 
       <a href="#" id="next_task" role="button" class="btn btn-sm btn-info">Next Task</a>
 
-      <form method="post" action="{% url 'turkle_admin:publish_batch' batch_id  %}">
+      <form method="post" action="{% url 'admin:turkle_publish_batch' batch_id  %}">
         {% csrf_token %}
         <input type="submit" id="publishButton" value="Publish Batch" />
       </form>
 
-      <form method="post" action="{% url 'turkle_admin:cancel_batch' batch_id %}">
+      <form method="post" action="{% url 'admin:turkle_cancel_batch' batch_id %}">
         {% csrf_token %}
         <input type="submit" id="cancelButton" value="Cancel Batch" />
       </form>

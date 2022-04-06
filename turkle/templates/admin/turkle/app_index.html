@@ -19,20 +19,20 @@
 {{ block.super }}
 <p>
   <h3>
-    <a href="{% url 'turkle_admin:active_projects' %}">
+    <a href="{% url 'admin:turkle_active_projects' %}">
       Active Projects
     </a>
   </h3>
 </p>
 <p>
   <h3>
-    <a href="{% url 'turkle_admin:active_users' %}">
+    <a href="{% url 'admin:turkle_active_users' %}">
       Active Users
     </a>
   </h3>
 </p>
 <p style="margin-top: 2em;">
-  <a href="{% url 'turkle_admin:expire_abandoned_assignments' %}" class="button">
+  <a href="{% url 'admin:turkle_expire_abandoned_assignments' %}" class="button">
     Expire Abandoned Assignments
   </a>
 </p>

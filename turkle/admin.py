@@ -51,14 +51,14 @@ class TurkleAdminSite(admin.AdminSite):
     def expire_abandoned_assignments(self, request):
         (total_deleted, _) = TaskAssignment.expire_all_abandoned()
         messages.info(request, 'All {} abandoned Tasks have been expired'.format(total_deleted))
-        return redirect(reverse('turkle_admin:index'))
+        return redirect(reverse('admin:index'))
 
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [
             path('expire_abandoned_assignments/',
                  self.admin_view(self.expire_abandoned_assignments),
-                 name='expire_abandoned_assignments'),
+                 name='turkle_expire_abandoned_assignments'),
         ]
         return my_urls + urls
 
@@ -207,17 +207,17 @@ class CustomUserAdmin(UserAdmin):
         my_urls = [
             path('autocomplete-batch-owner',
                  self.admin_site.admin_view(BatchCreatorSearchView.as_view(model_admin=self)),
-                 name='autocomplete_batch_owner'),
+                 name='turkle_autocomplete_batch_owner'),
             path('autocomplete-project-owner',
                  self.admin_site.admin_view(ProjectCreatorSearchView.as_view(model_admin=self)),
-                 name='autocomplete_project_owner'),
+                 name='turkle_autocomplete_project_owner'),
         ]
         return my_urls + urls
 
     def response_add(self, request, obj, post_url_continue=None):
         # if user clicks save, send to list of users rather than edit screen
         if '_save' in request.POST:
-            return redirect(reverse('turkle_admin:auth_user_changelist'))
+            return redirect(reverse('admin:auth_user_changelist'))
         return super().response_add(request, obj, post_url_continue)
 
     def stats(self, obj):
@@ -251,7 +251,7 @@ class ProjectNameReadOnlyWidget(Widget):
         return format_html(
             '<div class="readonly"><a href="{}">{}</a></div>'
             '<input name="project" id="id_project" type="hidden" value="{}" />'.format(
-                reverse('turkle_admin:turkle_project_change', args=[self.project_id]),
+                reverse('admin:turkle_project_change', args=[self.project_id]),
                 self.project_name, self.project_id))
 
 
@@ -458,7 +458,7 @@ class BatchCreatorFilter(AutocompleteFilter):
     field_name = 'created_by'
 
     def get_autocomplete_url(self, request, model_admin):
-        return reverse('turkle_admin:autocomplete_batch_owner')
+        return reverse('admin:turkle_autocomplete_batch_owner')
 
 
 class BatchCreatorSearchView(AutocompleteJsonView):
@@ -471,7 +471,7 @@ class ProjectCreatorFilter(AutocompleteFilter):
     field_name = 'created_by'
 
     def get_autocomplete_url(self, request, model_admin):
-        return reverse('turkle_admin:autocomplete_project_owner')
+        return reverse('admin:turkle_autocomplete_project_owner')
 
 
 class ProjectCreatorSearchView(AutocompleteJsonView):
@@ -484,7 +484,7 @@ class ProjectFilter(AutocompleteFilter):
     field_name = 'project'
 
     def get_autocomplete_url(self, request, model_admin):
-        return reverse('turkle_admin:autocomplete_project_order_by_name')
+        return reverse('admin:turkle_autocomplete_project_order_by_name')
 
 
 class ProjectSearchView(AutocompleteJsonView):
@@ -546,7 +546,7 @@ class BatchAdmin(admin.ModelAdmin):
             batch = Batch.objects.get(id=batch_id)
         except ObjectDoesNotExist:
             messages.error(request, 'Cannot find Batch with ID {}'.format(batch_id))
-            return redirect(reverse('turkle_admin:turkle_batch_changelist'))
+            return redirect(reverse('admin:turkle_batch_changelist'))
 
         tasks = batch.finished_task_assignments()\
             .annotate(duration=ExpressionWrapper(F('updated_at') - F('created_at'),
@@ -617,7 +617,7 @@ class BatchAdmin(admin.ModelAdmin):
         except ObjectDoesNotExist:
             messages.error(request, 'Cannot find Batch with ID {}'.format(batch_id))
 
-        return redirect(reverse('turkle_admin:turkle_batch_changelist'))
+        return redirect(reverse('admin:turkle_batch_changelist'))
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         extra_context = extra_context or {}
@@ -632,11 +632,11 @@ class BatchAdmin(admin.ModelAdmin):
         return super().changelist_view(request, extra_context=c)
 
     def download_csv(self, obj):
-        download_url = reverse('turkle_admin:download_batch', kwargs={'batch_id': obj.id})
+        download_url = reverse('admin:turkle_download_batch', kwargs={'batch_id': obj.id})
         return format_html('<a href="{}" class="button">CSV results</a>'.format(download_url))
 
     def download_input(self, obj):
-        download_url = reverse('turkle_admin:download_batch_input', kwargs={'batch_id': obj.id})
+        download_url = reverse('admin:turkle_download_batch_input', kwargs={'batch_id': obj.id})
         return format_html('<a href="{}" class="button">CSV input</a>'.format(download_url))
 
     def get_fieldsets(self, request, obj=None):
@@ -696,23 +696,24 @@ class BatchAdmin(admin.ModelAdmin):
         urls = super().get_urls()
         my_urls = [
             path('<int:batch_id>/cancel/',
-                 self.admin_site.admin_view(self.cancel_batch), name='cancel_batch'),
+                 self.admin_site.admin_view(self.cancel_batch), name='turkle_cancel_batch'),
             path('<int:batch_id>/review/',
-                 self.admin_site.admin_view(self.review_batch), name='review_batch'),
+                 self.admin_site.admin_view(self.review_batch), name='turkle_review_batch'),
             path('<int:batch_id>/publish/',
-                 self.admin_site.admin_view(self.publish_batch), name='publish_batch'),
+                 self.admin_site.admin_view(self.publish_batch), name='turkle_publish_batch'),
             path('<int:batch_id>/download/',
-                 self.admin_site.admin_view(self.download_batch), name='download_batch'),
+                 self.admin_site.admin_view(self.download_batch), name='turkle_download_batch'),
             path('<int:batch_id>/input/',
                  self.admin_site.admin_view(self.download_batch_input),
-                 name='download_batch_input'),
+                 name='turkle_download_batch_input'),
             path('<int:batch_id>/activity.json',
-                 self.admin_site.admin_view(self.activity_json), name='batch_activity_json'),
+                 self.admin_site.admin_view(self.activity_json),
+                 name='turkle_batch_activity_json'),
             path('<int:batch_id>/stats/',
-                 self.admin_site.admin_view(self.batch_stats), name='batch_stats'),
+                 self.admin_site.admin_view(self.batch_stats), name='turkle_batch_stats'),
             path('update_csv_line_endings',
                  self.admin_site.admin_view(self.update_csv_line_endings),
-                 name='update_csv_line_endings'),
+                 name='turkle_update_csv_line_endings'),
         ]
         return my_urls + urls
 
@@ -725,7 +726,7 @@ class BatchAdmin(admin.ModelAdmin):
         except ObjectDoesNotExist:
             messages.error(request, 'Cannot find Batch with ID {}'.format(batch_id))
 
-        return redirect(reverse('turkle_admin:turkle_batch_changelist'))
+        return redirect(reverse('admin:turkle_batch_changelist'))
 
     def download_batch(self, request, batch_id):
         batch = Batch.objects.get(id=batch_id)
@@ -754,12 +755,12 @@ class BatchAdmin(admin.ModelAdmin):
         return response
 
     def response_add(self, request, obj, post_url_continue=None):
-        return redirect(reverse('turkle_admin:review_batch', kwargs={'batch_id': obj.id}))
+        return redirect(reverse('admin:turkle_review_batch', kwargs={'batch_id': obj.id}))
 
     def response_change(self, request, obj):
         # catch unpublished batch when saved to redirect to review page
         if not obj.published:
-            return redirect(reverse('turkle_admin:review_batch', kwargs={'batch_id': obj.id}))
+            return redirect(reverse('admin:turkle_review_batch', kwargs={'batch_id': obj.id}))
         return super().response_change(request, obj)
 
     def review_batch(self, request, batch_id):
@@ -768,7 +769,7 @@ class BatchAdmin(admin.ModelAdmin):
             batch = Batch.objects.get(id=batch_id)
         except ObjectDoesNotExist:
             messages.error(request, 'Cannot find Batch with ID {}'.format(batch_id))
-            return redirect(reverse('turkle_admin:turkle_batch_changelist'))
+            return redirect(reverse('admin:turkle_batch_changelist'))
 
         task_ids = list(batch.task_set.values_list('id', flat=True))
         task_ids_as_json = json.dumps(task_ids)
@@ -838,7 +839,7 @@ class BatchAdmin(admin.ModelAdmin):
                 remove_perm('can_work_on_batch', user, obj)
 
     def stats(self, obj):
-        stats_url = reverse('turkle_admin:batch_stats', kwargs={'batch_id': obj.id})
+        stats_url = reverse('admin:turkle_batch_stats', kwargs={'batch_id': obj.id})
         return format_html('<a href="{}" class="button">Stats</a>'.
                            format(stats_url))
 
@@ -1017,15 +1018,16 @@ class ProjectAdmin(GuardedModelAdmin):
         my_urls = [
             path('autocomplete-order-by-name',
                  self.admin_site.admin_view(ProjectSearchView.as_view(model_admin=self)),
-                 name='autocomplete_project_order_by_name'),
+                 name='turkle_autocomplete_project_order_by_name'),
             path('<int:project_id>/activity.json',
-                 self.admin_site.admin_view(self.activity_json), name='project_activity_json'),
+                 self.admin_site.admin_view(self.activity_json),
+                 name='turkle_project_activity_json'),
             path('<int:project_id>/stats/',
-                 self.admin_site.admin_view(self.project_stats), name='project_stats'),
+                 self.admin_site.admin_view(self.project_stats), name='turkle_project_stats'),
             path('active-projects/',
-                 self.admin_site.admin_view(self.active_projects), name='active_projects'),
+                 self.admin_site.admin_view(self.active_projects), name='turkle_active_projects'),
             path('active-users/',
-                 self.admin_site.admin_view(self.active_users), name='active_users'),
+                 self.admin_site.admin_view(self.active_users), name='turkle_active_users'),
         ]
         return my_urls + urls
 
@@ -1097,7 +1099,7 @@ class ProjectAdmin(GuardedModelAdmin):
             project = Project.objects.get(id=project_id)
         except ObjectDoesNotExist:
             messages.error(request, 'Cannot find Project with ID {}'.format(project_id))
-            return redirect(reverse('turkle_admin:turkle_project_changelist'))
+            return redirect(reverse('admin:turkle_project_changelist'))
 
         tasks = project.finished_task_assignments()\
             .annotate(duration=ExpressionWrapper(F('updated_at') - F('created_at'),
@@ -1237,7 +1239,7 @@ class ProjectAdmin(GuardedModelAdmin):
 
     def publish_tasks(self, instance):
         publish_tasks_url = '%s?project=%d' % (
-            reverse('turkle_admin:turkle_batch_add'),
+            reverse('admin:turkle_batch_add'),
             instance.id)
         return format_html('<a href="{}" class="button">Publish Tasks</a>'.
                            format(publish_tasks_url))
@@ -1286,12 +1288,12 @@ class ProjectAdmin(GuardedModelAdmin):
         super().delete_model(request, obj)
 
     def stats(self, obj):
-        stats_url = reverse('turkle_admin:project_stats', kwargs={'project_id': obj.id})
+        stats_url = reverse('admin:turkle_project_stats', kwargs={'project_id': obj.id})
         return format_html('<a href="{}" class="button">Stats</a>'.
                            format(stats_url))
 
 
-admin_site = TurkleAdminSite(name='turkle_admin')
+admin_site = TurkleAdminSite()
 admin_site.register(Group, CustomGroupAdmin)
 admin_site.register(User, CustomUserAdmin)
 admin_site.register(Batch, BatchAdmin)

@@ -61,13 +61,13 @@ $(document).ready(function() {
 
   {% for project in projects %}
   <h3>
-    <a href="{% url 'turkle_admin:project_stats' project.id %}">
+    <a href="{% url 'admin:turkle_project_stats' project.id %}">
       {{ project.name }}
     </a>
   </h3>
   <div id="activity-calendar-{{ project.id }}"
        class="activity-calendar"
-       data-project-activity-json="{% url 'turkle_admin:project_activity_json' project.id %}">
+       data-project-activity-json="{% url 'admin:turkle_project_activity_json' project.id %}">
   </div>
   {% endfor %}
 

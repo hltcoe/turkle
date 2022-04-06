@@ -23,9 +23,9 @@ class TestCancelOrPublishBatch(django.test.TestCase):
         batch_id = self.batch.id
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.post(reverse('turkle_admin:cancel_batch', kwargs={'batch_id': batch_id}))
+        response = client.post(reverse('admin:turkle_cancel_batch', kwargs={'batch_id': batch_id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('turkle_admin:turkle_batch_changelist'))
+        self.assertEqual(response['Location'], reverse('admin:turkle_batch_changelist'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 0)
 
@@ -33,9 +33,9 @@ class TestCancelOrPublishBatch(django.test.TestCase):
         batch_id = 666
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.post(reverse('turkle_admin:cancel_batch', kwargs={'batch_id': batch_id}))
+        response = client.post(reverse('admin:turkle_cancel_batch', kwargs={'batch_id': batch_id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('turkle_admin:turkle_batch_changelist'))
+        self.assertEqual(response['Location'], reverse('admin:turkle_batch_changelist'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]), 'Cannot find Batch with ID 666')
@@ -45,10 +45,10 @@ class TestCancelOrPublishBatch(django.test.TestCase):
         client = django.test.Client()
         self.assertFalse(self.batch.published)
         client.login(username='admin', password='secret')
-        response = client.post(reverse('turkle_admin:publish_batch',
+        response = client.post(reverse('admin:turkle_publish_batch',
                                        kwargs={'batch_id': batch_id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('turkle_admin:turkle_batch_changelist'))
+        self.assertEqual(response['Location'], reverse('admin:turkle_batch_changelist'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 0)
         self.batch.refresh_from_db()
@@ -58,10 +58,10 @@ class TestCancelOrPublishBatch(django.test.TestCase):
         batch_id = 666
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.post(reverse('turkle_admin:publish_batch',
+        response = client.post(reverse('admin:turkle_publish_batch',
                                        kwargs={'batch_id': batch_id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('turkle_admin:turkle_batch_changelist'))
+        self.assertEqual(response['Location'], reverse('admin:turkle_batch_changelist'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]), 'Cannot find Batch with ID 666')
@@ -94,7 +94,7 @@ class TestExpireAbandonedAssignments(django.test.TestCase):
         User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.get(reverse('turkle_admin:expire_abandoned_assignments'))
+        response = client.get(reverse('admin:turkle_expire_abandoned_assignments'))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], '/admin/')
         self.assertEqual(TaskAssignment.objects.count(), 0)
@@ -249,7 +249,7 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(Batch.objects.filter(name='batch_save').exists())
         matching_batch = Batch.objects.filter(name='batch_save').first()
-        self.assertEqual(response['Location'], reverse('turkle_admin:review_batch',
+        self.assertEqual(response['Location'], reverse('admin:turkle_review_batch',
                                                        kwargs={'batch_id': matching_batch.id}))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
@@ -346,7 +346,7 @@ class TestBatchAdmin(django.test.TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.post(reverse('turkle_admin:turkle_batch_change',
+        response = client.post(reverse('admin:turkle_batch_change',
                                        args=(batch.id,)),
                                {
                                    'assignments_per_task': 1,
@@ -373,7 +373,7 @@ class TestBatchAdmin(django.test.TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.post(reverse('turkle_admin:turkle_batch_change',
+        response = client.post(reverse('admin:turkle_batch_change',
                                        args=(batch.id,)),
                                {
                                    'assignments_per_task': 1,
@@ -411,7 +411,7 @@ class TestBatchAdmin(django.test.TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.get(reverse('turkle_admin:batch_stats', kwargs={'batch_id': batch.id}))
+        response = client.get(reverse('admin:turkle_batch_stats', kwargs={'batch_id': batch.id}))
         self.assertEqual(response.status_code, 200)
 
 
@@ -425,14 +425,14 @@ class TestUserAdmin(django.test.TestCase):
         client = django.test.Client()
         client.login(username='admin', password='secret')
         # 1=AnonymousUser, 2=admin, 3=normal_user
-        response = client.post(reverse('turkle_admin:auth_user_changelist'), {
+        response = client.post(reverse('admin:auth_user_changelist'), {
             'action': 'deactivate_users',
             'index': 0,
             'select_across': 0,
             '_selected_action': [3]
         })
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('turkle_admin:auth_user_changelist'))
+        self.assertEqual(response['Location'], reverse('admin:auth_user_changelist'))
         messages = [m.message for m in get_messages(response.wsgi_request)]
         self.assertEqual(len(messages), 1)
         self.assertTrue("1 user was deactivated" in messages[0])
@@ -446,31 +446,31 @@ class TestGroupAdmin(django.test.TestCase):
     def test_get_group_add(self):
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.get(reverse('turkle_admin:auth_group_add'))
+        response = client.get(reverse('admin:auth_group_add'))
         self.assertEqual(response.status_code, 200)
         self.assertFalse(b'error' in response.content)
 
     def test_post_group_add(self):
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.post(reverse('turkle_admin:auth_group_add'), {
+        response = client.post(reverse('admin:auth_group_add'), {
             'name': 'testgroup',
         })
         self.assertFalse(b'error' in response.content)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('turkle_admin:auth_group_changelist'))
+        self.assertEqual(response['Location'], reverse('admin:auth_group_changelist'))
 
     def test_post_group_add_add_users(self):
         user_to_add = User.objects.create_user('user_to_add', password='secret')
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.post(reverse('turkle_admin:auth_group_add'), {
+        response = client.post(reverse('admin:auth_group_add'), {
             'name': 'testgroup',
             'users': [user_to_add.id]
         })
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('turkle_admin:auth_group_changelist'))
+        self.assertEqual(response['Location'], reverse('admin:auth_group_changelist'))
 
         group = Group.objects.get(name='testgroup')
         self.assertEqual(user_to_add, group.user_set.get(id=user_to_add.id))
@@ -479,7 +479,7 @@ class TestGroupAdmin(django.test.TestCase):
         group = Group.objects.create(name='testgroup')
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.get(reverse('turkle_admin:auth_group_change', args=(group.id,)))
+        response = client.get(reverse('admin:auth_group_change', args=(group.id,)))
         self.assertEqual(response.status_code, 200)
         self.assertFalse(b'error' in response.content)
 
@@ -488,11 +488,11 @@ class TestGroupAdmin(django.test.TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.post(reverse('turkle_admin:auth_group_change', args=(group.id,)), {
+        response = client.post(reverse('admin:auth_group_change', args=(group.id,)), {
             'name': 'newname',
         })
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('turkle_admin:auth_group_changelist'))
+        self.assertEqual(response['Location'], reverse('admin:auth_group_changelist'))
         group.refresh_from_db()
         self.assertEqual(group.name, 'newname')
 
@@ -504,12 +504,12 @@ class TestGroupAdmin(django.test.TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.post(reverse('turkle_admin:auth_group_change', args=(group.id,)), {
+        response = client.post(reverse('admin:auth_group_change', args=(group.id,)), {
             'name': 'newname',
             'users': [user_to_add.id],
         })
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('turkle_admin:auth_group_changelist'))
+        self.assertEqual(response['Location'], reverse('admin:auth_group_changelist'))
         group.refresh_from_db()
         self.assertEqual(group.name, 'newname')
         self.assertEqual(1, group.user_set.filter(username='user_to_add').count())
@@ -519,7 +519,7 @@ class TestGroupAdmin(django.test.TestCase):
         Group.objects.create(name='testgroup')
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.get(reverse('turkle_admin:auth_group_changelist'))
+        response = client.get(reverse('admin:auth_group_changelist'))
         self.assertEqual(response.status_code, 200)
         self.assertFalse(b'error' in response.content)
         self.assertTrue(b'testgroup' in response.content)
@@ -532,7 +532,7 @@ class TestProjectAdmin(django.test.TestCase):
     def test_get_add_project(self):
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.get(reverse('turkle_admin:turkle_project_add'))
+        response = client.get(reverse('admin:turkle_project_add'))
         self.assertTrue(b'Please correct the error' not in response.content)
         self.assertEqual(response.status_code, 200)
 
@@ -541,7 +541,7 @@ class TestProjectAdmin(django.test.TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.post(reverse('turkle_admin:turkle_project_add'),
+        response = client.post(reverse('admin:turkle_project_add'),
                                {
                                    'assignments_per_task': 1,
                                    'name': 'foo',
@@ -560,7 +560,7 @@ class TestProjectAdmin(django.test.TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.get(reverse('turkle_admin:turkle_project_change',
+        response = client.get(reverse('admin:turkle_project_change',
                                       args=(project.id,)))
         self.assertTrue(b'Please correct the error' not in response.content)
         self.assertEqual(response.status_code, 200)
@@ -571,7 +571,7 @@ class TestProjectAdmin(django.test.TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.post(reverse('turkle_admin:turkle_project_change',
+        response = client.post(reverse('admin:turkle_project_change',
                                        args=(project.id,)),
                                {
                                    'assignments_per_task': 1,
@@ -594,7 +594,7 @@ class TestProjectAdmin(django.test.TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.post(reverse('turkle_admin:turkle_project_change',
+        response = client.post(reverse('admin:turkle_project_change',
                                        args=(project.id,)),
                                {
                                    'assignments_per_task': 1,
@@ -624,7 +624,7 @@ class TestProjectAdmin(django.test.TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.post(reverse('turkle_admin:turkle_project_change',
+        response = client.post(reverse('admin:turkle_project_change',
                                        args=(project.id,)),
                                {
                                    'assignments_per_task': 1,
@@ -653,7 +653,7 @@ class TestProjectAdmin(django.test.TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.post(reverse('turkle_admin:turkle_project_change',
+        response = client.post(reverse('admin:turkle_project_change',
                                        args=(project.id,)),
                                {
                                    'assignments_per_task': 1,
@@ -683,7 +683,7 @@ class TestProjectAdmin(django.test.TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.post(reverse('turkle_admin:turkle_project_change',
+        response = client.post(reverse('admin:turkle_project_change',
                                        args=(project.id,)),
                                {
                                    'assignments_per_task': 1,
@@ -708,7 +708,7 @@ class TestProjectAdmin(django.test.TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.post(reverse('turkle_admin:turkle_project_change',
+        response = client.post(reverse('admin:turkle_project_change',
                                        args=(project.id,)),
                                {
                                    'assignments_per_task': 1,
@@ -735,7 +735,7 @@ class TestProjectAdmin(django.test.TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.get(reverse('turkle_admin:project_stats',
+        response = client.get(reverse('admin:turkle_project_stats',
                                       kwargs={'project_id': project.id}))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(batch_no_tasks.name in str(response.content))
@@ -748,9 +748,9 @@ class TestReviewBatch(django.test.TestCase):
         batch_id = 666
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.post(reverse('turkle_admin:review_batch', kwargs={'batch_id': batch_id}))
+        response = client.post(reverse('admin:turkle_review_batch', kwargs={'batch_id': batch_id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('turkle_admin:turkle_batch_changelist'))
+        self.assertEqual(response['Location'], reverse('admin:turkle_batch_changelist'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]), 'Cannot find Batch with ID 666')
