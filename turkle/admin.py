@@ -10,11 +10,12 @@ import statistics
 from admin_auto_filters.filters import AutocompleteFilter
 from admin_auto_filters.views import AutocompleteJsonView
 from django.contrib import admin, messages
-from django.contrib.admin.widgets import FilteredSelectMultiple
-from django.contrib.auth.admin import GroupAdmin, UserAdmin
-from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Group
 from django.contrib.admin.templatetags.admin_list import _boolean_icon
+from django.contrib.admin.views.main import ChangeList
+from django.contrib.admin.widgets import FilteredSelectMultiple
+from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import GroupAdmin, UserAdmin
+from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Count, DurationField, ExpressionWrapper, F, Max, Q
@@ -31,7 +32,7 @@ from guardian.shortcuts import (assign_perm, get_groups_with_perms, get_users_wi
                                 remove_perm)
 import humanfriendly
 
-from .models import Batch, Project, TaskAssignment
+from .models import ActiveUser, Batch, Project, TaskAssignment
 from .utils import are_anonymous_tasks_allowed, get_turkle_template_limit
 
 User = get_user_model()
@@ -951,30 +952,6 @@ class ProjectAdmin(GuardedModelAdmin):
             'projects': projects,
         })
 
-    def active_users(self, request):
-        if 'days' in request.GET:
-            days = int(request.GET['days'])
-        else:
-            days = 7
-        recent_past = datetime.now(timezone.utc) - timedelta(days=days)
-
-        active_users = User.objects.\
-            filter(Q(taskassignment__updated_at__gt=recent_past) &
-                   Q(taskassignment__completed=True)).\
-            distinct().\
-            annotate(
-                total_assignments=Count('taskassignment',
-                                        filter=(Q(taskassignment__updated_at__gt=recent_past) &
-                                                Q(taskassignment__completed=True)))).\
-            annotate(last_finished_time=Max('taskassignment__updated_at',
-                                            filter=Q(taskassignment__completed=True)))
-        active_user_count = active_users.count()
-        return render(request, 'admin/turkle/active_users.html', {
-            'active_users': active_users,
-            'active_user_count': active_user_count,
-            'days': days,
-        })
-
     def activity_json(self, request, project_id):
         try:
             project = Project.objects.get(id=project_id)
@@ -1006,8 +983,8 @@ class ProjectAdmin(GuardedModelAdmin):
                  self.admin_site.admin_view(self.project_stats), name='turkle_project_stats'),
             path('active-projects/',
                  self.admin_site.admin_view(self.active_projects), name='turkle_active_projects'),
-            path('active-users/',
-                 self.admin_site.admin_view(self.active_users), name='turkle_active_users'),
+            # backward compatability
+            path('active-users/', lambda x: redirect(reverse('admin:turkle_activeuser_changelist'))),
         ]
         return my_urls + urls
 
@@ -1273,15 +1250,19 @@ class ProjectAdmin(GuardedModelAdmin):
                            format(stats_url))
 
 
-class TaskAssignmentAdmin(admin.ModelAdmin):
+class ViewOnlyAdminMixin:
     def has_add_permission(self, request):
-        # turn off manually adding an assignment
         return False
 
     def has_change_permission(self, request, obj=None):
-        # turn off manually editing an assignment
         return False
 
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+class TaskAssignmentAdmin(ViewOnlyAdminMixin, admin.ModelAdmin):
+    """View for assignments to expire abandoned ones"""
     def expire_abandoned_assignments(self, request):
         (total_deleted, _) = TaskAssignment.expire_all_abandoned()
         messages.info(request, 'All {} abandoned Tasks have been expired'.format(total_deleted))
@@ -1297,12 +1278,79 @@ class TaskAssignmentAdmin(admin.ModelAdmin):
         return my_urls + urls
 
 
+class ActiveUserPeriodListFilter(admin.SimpleListFilter):
+    """Filter active users by period of activity"""
+    title = 'active period'
+    parameter_name = 'period'
+    default_value = '7'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('1', 'last 1 day'),
+            ('2', 'last 2 days'),
+            ('7', 'last 7 days'),
+            ('30', 'last 30 days'),
+        )
+
+    def choices(self, changelist):
+        # override to remove 'All' as a choice
+        for lookup, title in self.lookup_choices:
+            yield {
+                'selected': self.value() == str(lookup),
+                'query_string': changelist.get_query_string({self.parameter_name: lookup}),
+                'display': title,
+            }
+
+    def value(self):
+        # override to provide a default value
+        period_value = super().value()
+        return period_value if period_value else self.default_value
+
+    def queryset(self, request, queryset):
+        # handling of filter value is done in ActiveUserAdmin, so return queryset as is
+        return queryset
+
+
+class ActiveUserChangeList(ChangeList):
+    def url_for_result(self, result):
+        # change URL for active user to point to stats page
+        return reverse('stats_for_user', kwargs={'user_id': result.id})
+
+
+class ActiveUserAdmin(ViewOnlyAdminMixin, admin.ModelAdmin):
+    """Active user admin with recency filter.
+
+    ActiveUser is a proxy class for User. Its manager queries based on recent assignments.
+    This Admin is view only and customized with a period filter.
+    Passing a value to the original queryset is non-standard in Django and must be done
+    because of the way we are querying for active users.
+    """
+    list_display = ('name', 'username', 'assignments', 'most_recent')
+    list_filter = (ActiveUserPeriodListFilter,)
+
+    def get_changelist(self, request, **kwargs):
+        return ActiveUserChangeList
+
+    def get_queryset(self, request):
+        # override to pass n_days from filter directly to manager
+        period = request.GET.get(ActiveUserPeriodListFilter.parameter_name,
+                                 ActiveUserPeriodListFilter.default_value)
+        qs = self.model._default_manager.get_queryset(n_days=period)
+        # in some future version of Django, this might be handled by the ChangeList
+        # see to do comment in django/contrib/admin/options.py
+        ordering = self.get_ordering(request)
+        if ordering:
+            qs = qs.order_by(*ordering)
+        return qs
+
+
 # replace default Group and User admin with ours
 admin.site.unregister(Group)
 admin.site.unregister(User)
 admin.site.register(Group, CustomGroupAdmin)
 admin.site.register(User, CustomUserAdmin)
 
+admin.site.register(ActiveUser, ActiveUserAdmin)
 admin.site.register(Batch, BatchAdmin)
 admin.site.register(Project, ProjectAdmin)
 admin.site.register(TaskAssignment, TaskAssignmentAdmin)
