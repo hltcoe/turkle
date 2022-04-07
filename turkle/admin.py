@@ -32,7 +32,7 @@ from guardian.shortcuts import (assign_perm, get_groups_with_perms, get_users_wi
 import humanfriendly
 
 from .models import Batch, Project, TaskAssignment
-from .utils import are_anonymous_tasks_allowed, get_site_name, get_turkle_template_limit
+from .utils import are_anonymous_tasks_allowed, get_turkle_template_limit
 
 User = get_user_model()
 
@@ -41,26 +41,6 @@ logger = logging.getLogger(__name__)
 
 def _format_timespan(sec):
     return '{} ({:,}s)'.format(humanfriendly.format_timespan(sec, max_units=6), sec)
-
-
-class TurkleAdminSite(admin.AdminSite):
-    app_index_template = 'admin/turkle/app_index.html'
-    site_header = get_site_name() + ' administration'
-    site_title = get_site_name() + ' site admin'
-
-    def expire_abandoned_assignments(self, request):
-        (total_deleted, _) = TaskAssignment.expire_all_abandoned()
-        messages.info(request, 'All {} abandoned Tasks have been expired'.format(total_deleted))
-        return redirect(reverse('admin:index'))
-
-    def get_urls(self):
-        urls = super().get_urls()
-        my_urls = [
-            path('expire_abandoned_assignments/',
-                 self.admin_view(self.expire_abandoned_assignments),
-                 name='turkle_expire_abandoned_assignments'),
-        ]
-        return my_urls + urls
 
 
 class UserFullnameMultipleChoiceField(ModelMultipleChoiceField):
@@ -1293,8 +1273,36 @@ class ProjectAdmin(GuardedModelAdmin):
                            format(stats_url))
 
 
-admin_site = TurkleAdminSite()
-admin_site.register(Group, CustomGroupAdmin)
-admin_site.register(User, CustomUserAdmin)
-admin_site.register(Batch, BatchAdmin)
-admin_site.register(Project, ProjectAdmin)
+class TaskAssignmentAdmin(admin.ModelAdmin):
+    def has_add_permission(self, request):
+        # turn off manually adding an assignment
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        # turn off manually editing an assignment
+        return False
+
+    def expire_abandoned_assignments(self, request):
+        (total_deleted, _) = TaskAssignment.expire_all_abandoned()
+        messages.info(request, 'All {} abandoned Tasks have been expired'.format(total_deleted))
+        return redirect(reverse('admin:index'))
+
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path('expire_abandoned_assignments/',
+                 self.admin_site.admin_view(self.expire_abandoned_assignments),
+                 name='turkle_expire_abandoned_assignments'),
+        ]
+        return my_urls + urls
+
+
+# replace default Group and User admin with ours
+admin.site.unregister(Group)
+admin.site.unregister(User)
+admin.site.register(Group, CustomGroupAdmin)
+admin.site.register(User, CustomUserAdmin)
+
+admin.site.register(Batch, BatchAdmin)
+admin.site.register(Project, ProjectAdmin)
+admin.site.register(TaskAssignment, TaskAssignmentAdmin)
