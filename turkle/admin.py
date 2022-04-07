@@ -18,7 +18,7 @@ from django.contrib.auth.admin import GroupAdmin, UserAdmin
 from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import Count, DurationField, ExpressionWrapper, F, Max, Q
+from django.db.models import DurationField, ExpressionWrapper, F
 from django.forms import (FileField, FileInput, HiddenInput, IntegerField,
                           ModelForm, ModelMultipleChoiceField, TextInput, ValidationError, Widget)
 from django.http import HttpResponse, JsonResponse
@@ -32,7 +32,7 @@ from guardian.shortcuts import (assign_perm, get_groups_with_perms, get_users_wi
                                 remove_perm)
 import humanfriendly
 
-from .models import ActiveUser, Batch, Project, TaskAssignment
+from .models import ActiveUser, ActiveProject, Batch, Project, TaskAssignment
 from .utils import are_anonymous_tasks_allowed, get_turkle_template_limit
 
 User = get_user_model()
@@ -940,18 +940,6 @@ class ProjectAdmin(GuardedModelAdmin):
     class Media:
         pass
 
-    def active_projects(self, request):
-        if 'days' in request.GET:
-            days = int(request.GET['days'])
-        else:
-            days = 7
-
-        projects = Project.get_with_recently_updated_taskassignments(days)
-        return render(request, 'admin/turkle/active_projects.html', {
-            'days': days,
-            'projects': projects,
-        })
-
     def activity_json(self, request, project_id):
         try:
             project = Project.objects.get(id=project_id)
@@ -981,9 +969,8 @@ class ProjectAdmin(GuardedModelAdmin):
                  name='turkle_project_activity_json'),
             path('<int:project_id>/stats/',
                  self.admin_site.admin_view(self.project_stats), name='turkle_project_stats'),
-            path('active-projects/',
-                 self.admin_site.admin_view(self.active_projects), name='turkle_active_projects'),
             # backward compatability
+            path('active-projects/', lambda x: redirect(reverse('admin:turkle_activeproject_changelist'))),
             path('active-users/', lambda x: redirect(reverse('admin:turkle_activeuser_changelist'))),
         ]
         return my_urls + urls
@@ -1278,8 +1265,8 @@ class TaskAssignmentAdmin(ViewOnlyAdminMixin, admin.ModelAdmin):
         return my_urls + urls
 
 
-class ActiveUserPeriodListFilter(admin.SimpleListFilter):
-    """Filter active users by period of activity"""
+class ActiveObjectPeriodListFilter(admin.SimpleListFilter):
+    """Filter active objects by period of activity"""
     title = 'active period'
     parameter_name = 'period'
     default_value = '7'
@@ -1307,7 +1294,7 @@ class ActiveUserPeriodListFilter(admin.SimpleListFilter):
         return period_value if period_value else self.default_value
 
     def queryset(self, request, queryset):
-        # handling of filter value is done in ActiveUserAdmin, so return queryset as is
+        # handling of filter value is done in model admin, so return queryset as is
         return queryset
 
 
@@ -1325,16 +1312,45 @@ class ActiveUserAdmin(ViewOnlyAdminMixin, admin.ModelAdmin):
     Passing a value to the original queryset is non-standard in Django and must be done
     because of the way we are querying for active users.
     """
-    list_display = ('name', 'username', 'assignments', 'most_recent')
-    list_filter = (ActiveUserPeriodListFilter,)
+    list_display = ('name', 'username', 'completed_assignments', 'most_recent')
+    list_filter = (ActiveObjectPeriodListFilter,)
+    list_per_page = 20
 
     def get_changelist(self, request, **kwargs):
         return ActiveUserChangeList
 
     def get_queryset(self, request):
         # override to pass n_days from filter directly to manager
-        period = request.GET.get(ActiveUserPeriodListFilter.parameter_name,
-                                 ActiveUserPeriodListFilter.default_value)
+        period = request.GET.get(ActiveObjectPeriodListFilter.parameter_name,
+                                 ActiveObjectPeriodListFilter.default_value)
+        qs = self.model._default_manager.get_queryset(n_days=period)
+        # in some future version of Django, this might be handled by the ChangeList
+        # see to do comment in django/contrib/admin/options.py
+        ordering = self.get_ordering(request)
+        if ordering:
+            qs = qs.order_by(*ordering)
+        return qs
+
+
+class ActiveProjectChangeList(ChangeList):
+    def url_for_result(self, result):
+        # change URL for active project to point to stats page
+        return reverse('admin:turkle_project_stats', kwargs={'project_id': result.id})
+
+
+class ActiveProjectAdmin(ViewOnlyAdminMixin, admin.ModelAdmin):
+    """Active project admin with recency filter."""
+    list_display = ('name', 'created_by', 'completed_assignments', 'most_recent')
+    list_filter = (ActiveObjectPeriodListFilter,)
+    list_per_page = 20
+
+    def get_changelist(self, request, **kwargs):
+        return ActiveProjectChangeList
+
+    def get_queryset(self, request):
+        # override to pass n_days from filter directly to manager
+        period = request.GET.get(ActiveObjectPeriodListFilter.parameter_name,
+                                 ActiveObjectPeriodListFilter.default_value)
         qs = self.model._default_manager.get_queryset(n_days=period)
         # in some future version of Django, this might be handled by the ChangeList
         # see to do comment in django/contrib/admin/options.py
@@ -1351,6 +1367,7 @@ admin.site.register(Group, CustomGroupAdmin)
 admin.site.register(User, CustomUserAdmin)
 
 admin.site.register(ActiveUser, ActiveUserAdmin)
+admin.site.register(ActiveProject, ActiveProjectAdmin)
 admin.site.register(Batch, BatchAdmin)
 admin.site.register(Project, ProjectAdmin)
 admin.site.register(TaskAssignment, TaskAssignmentAdmin)

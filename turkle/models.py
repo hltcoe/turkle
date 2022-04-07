@@ -69,9 +69,9 @@ class ActiveUser(User):
         return f"{self.first_name} {self.last_name}"
     name.admin_order_field = 'first_name'
 
-    def assignments(self):
+    def completed_assignments(self):
         return self.total_assignments
-    assignments.admin_order_field = 'total_assignments'
+    completed_assignments.admin_order_field = 'total_assignments'
 
     def most_recent(self):
         return self.last_finished_time
@@ -769,19 +769,6 @@ class Project(TaskAssignmentStatistics, models.Model):
     # Fieldnames are automatically extracted from html_template text
     fieldnames = JSONField(blank=True)
 
-    @classmethod
-    def get_with_recently_updated_taskassignments(cls, n_days):
-        """Return QuerySet of Projects with TaskAssignments modified in last N days
-
-        Args:
-            n_days (int): Number of days to use for "recently updated" window
-        Returns:
-            QuerySet
-        """
-        recent_past = timezone.now() - timedelta(days=n_days)
-        return Project.objects.\
-            filter(batch__task__taskassignment__updated_at__gt=recent_past).distinct()
-
     def assignments_completed_by(self, user):
         """
         Returns:
@@ -880,3 +867,39 @@ class Project(TaskAssignmentStatistics, models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ActiveProjectManager(models.Manager):
+    """Query projects by activity on assignments"""
+    def get_queryset(self, **kwargs):
+        n_days = int(kwargs.get('n_days', 7))
+        time_cutoff = timezone.now() - timedelta(days=n_days)
+        return super().get_queryset().\
+            filter(Q(batch__task__taskassignment__updated_at__gt=time_cutoff) &
+                   Q(batch__task__taskassignment__completed=True)).\
+            distinct().\
+            annotate(assignments=Count(
+                'batch__task__taskassignment',
+                filter=(Q(batch__task__taskassignment__updated_at__gt=time_cutoff) &
+                        Q(batch__task__taskassignment__completed=True)))).\
+            annotate(last_finished_time=Max(
+                'batch__task__taskassignment__updated_at',
+                filter=Q(batch__task__taskassignment__completed=True)))
+        #return Project.get_with_recently_updated_taskassignments(n_days)
+
+
+class ActiveProject(Project):
+    """Proxy object for Project using annotations from its manager"""
+    objects = ActiveProjectManager()
+
+    class Meta:
+        proxy=True
+        ordering = ['name']
+
+    def completed_assignments(self):
+        return self.assignments
+    completed_assignments.admin_order_field = 'assignments'
+
+    def most_recent(self):
+        return self.last_finished_time
+    most_recent.admin_order_field = 'last_finished_time'
