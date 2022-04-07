@@ -1,6 +1,18 @@
-/* Django admin css has align-right and align-left, but not align-center */
+/* Django admin css removed these classes in 3.0 */
+.float-right {
+    float: right;
+}
+.float-left {
+    float: left;
+}
 .align-center {
     text-align: center;
+}
+.align-right {
+    text-align: right;
+}
+.align-left {
+    text-align: left;
 }
 
 /* Based on bootstrap inline form CSS */
