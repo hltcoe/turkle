@@ -19,7 +19,7 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import DurationField, ExpressionWrapper, F
-from django.forms import (FileField, FileInput, HiddenInput, IntegerField,
+from django.forms import (FileField, FileInput, HiddenInput, IntegerField, Media,
                           ModelForm, ModelMultipleChoiceField, TextInput, ValidationError, Widget)
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
@@ -487,9 +487,10 @@ class BatchAdmin(admin.ModelAdmin):
     search_fields = ['name']
     autocomplete_fields = ['project']
 
-    # required by django-admin-autocomplete-filter 0.5
     class Media:
-        pass
+        css = {
+            'all': ('turkle/css/admin-turkle.css',),
+        }
 
     def assignments_completed(self, obj):
         tfa = obj.total_finished_task_assignments()
@@ -760,6 +761,8 @@ class BatchAdmin(admin.ModelAdmin):
             'task_ids_as_json': task_ids_as_json,
             'site_header': self.admin_site.site_header,
             'site_title': self.admin_site.site_title,
+            'title': 'Review Batch',
+            'media': Media(self.Media),
         })
 
     def save_model(self, request, obj, form, change):
@@ -936,9 +939,10 @@ class ProjectAdmin(GuardedModelAdmin):
     exclude = ('fieldnames',)
     readonly_fields = ('extracted_template_variables',)
 
-    # required by django-admin-autocomplete-filter 0.5
     class Media:
-        pass
+        css = {
+            'all': ('turkle/css/admin-turkle.css',),
+        }
 
     def activity_json(self, request, project_id):
         try:

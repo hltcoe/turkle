@@ -1,6 +1,11 @@
 {% extends "admin/base_site.html" %}
 {% load static %}
 
+{% block extrastyle %}
+  {{ block.super }}
+  {{ media.css }}
+{% endblock %}
+
 {% block extrahead %}
 {{ block.super }}
 <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
@@ -39,7 +44,6 @@ $(function () {
 {% endblock %}
 
 {% block content %}
-
 <div class="clearfix container">
   <div class="float-right">
     <span class="inline-form-buttons">
@@ -72,5 +76,4 @@ $(function () {
   </div>
 
 </div>
-
 {% endblock %}
