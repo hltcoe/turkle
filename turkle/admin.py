@@ -763,6 +763,9 @@ class BatchAdmin(admin.ModelAdmin):
             'site_title': self.admin_site.site_title,
             'title': 'Review Batch',
             'media': Media(self.Media),
+            # below is for the breadcrumbs
+            'opts': self.model._meta,
+            'has_view_permission': self.has_view_permission(request, batch),
         })
 
     def save_model(self, request, obj, form, change):
