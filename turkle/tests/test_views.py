@@ -153,8 +153,8 @@ class TestAcceptNextTask(TestCase):
 
         # Per the Django docs:
         #   To modify the session and then save it, it must be stored in a variable first
-        #   (because a new SessionStore is created every time this property is accessed
-        #     https://docs.djangoproject.com/en/1.11/topics/testing/tools/#persistent-state
+        #   (because a new SessionStore is created every time this property is accessed)
+        #   https://docs.djangoproject.com/en/3.1/topics/testing/tools/#persistent-state
         s = client.session
         s.update({
             'skipped_tasks_in_batch': {str(self.batch.id): [str(self.task.id)]}

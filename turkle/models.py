@@ -155,7 +155,7 @@ class TaskAssignment(models.Model):
         because "there are no native date/time fields in SQLite and
         Django currently emulates these features using a text field,"
         per the Django Docs:
-          https://docs.djangoproject.com/en/2.1/ref/models/querysets/#aggregation-functions
+          https://docs.djangoproject.com/en/3.1/ref/models/querysets/#aggregation-functions
 
         Returns:
             Integer for seconds elapsed between Task assignment and submission
@@ -253,7 +253,7 @@ class Batch(TaskAssignmentStatistics, models.Model):
         #  "Aggregates may be used within a Subquery, but they require a specific
         #   combination of filter(), values(), and annotate() to get the subquery
         #   grouping correct."
-        #     https://docs.djangoproject.com/en/2.2/ref/models/expressions/#using-aggregates-within-a-subquery-expression
+        #     https://docs.djangoproject.com/en/3.1/ref/models/expressions/#using-aggregates-within-a-subquery-expression
         # The specific syntax we use here for count subqueries is adapted from:
         #   https://github.com/martsberger/django-sql-utils
         # where we are using the pattern:
