@@ -976,9 +976,11 @@ class ProjectAdmin(GuardedModelAdmin):
                  name='turkle_project_activity_json'),
             path('<int:project_id>/stats/',
                  self.admin_site.admin_view(self.project_stats), name='turkle_project_stats'),
-            # backward compatability
-            path('active-projects/', lambda x: redirect(reverse('admin:turkle_activeproject_changelist'))),
-            path('active-users/', lambda x: redirect(reverse('admin:turkle_activeuser_changelist'))),
+            # backward compatibility for active-projects and active-users.
+            path('active-projects/',
+                 lambda x: redirect(reverse('admin:turkle_activeproject_changelist'))),
+            path('active-users/',
+                 lambda x: redirect(reverse('admin:turkle_activeuser_changelist'))),
         ]
         return my_urls + urls
 

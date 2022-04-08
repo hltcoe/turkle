@@ -62,7 +62,7 @@ class ActiveUser(User):
     objects = ActiveUserManager()
 
     class Meta:
-        proxy=True
+        proxy = True
         ordering = ['first_name']
 
     def name(self):
@@ -885,7 +885,6 @@ class ActiveProjectManager(models.Manager):
             annotate(last_finished_time=Max(
                 'batch__task__taskassignment__updated_at',
                 filter=Q(batch__task__taskassignment__completed=True)))
-        #return Project.get_with_recently_updated_taskassignments(n_days)
 
 
 class ActiveProject(Project):
@@ -893,7 +892,7 @@ class ActiveProject(Project):
     objects = ActiveProjectManager()
 
     class Meta:
-        proxy=True
+        proxy = True
         ordering = ['name']
 
     def completed_assignments(self):
