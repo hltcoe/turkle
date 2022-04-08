@@ -1321,7 +1321,7 @@ class ActiveUserAdmin(ViewOnlyAdminMixin, admin.ModelAdmin):
     """
     list_display = ('name', 'username', 'completed_assignments', 'most_recent')
     list_filter = (ActiveObjectPeriodListFilter,)
-    list_per_page = 2
+    list_per_page = 20
     preserve_filters = False
 
     def get_changelist(self, request, **kwargs):
