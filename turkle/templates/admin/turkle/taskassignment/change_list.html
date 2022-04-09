@@ -6,7 +6,15 @@
 {% block content_title %}<h1>Task Assignments</h1>{% endblock %}
 
 {% block content %}
-<p style="margin-top: 2em;">
+<div class="results">
+  <table id="result_list">
+    <tbody>
+      <tr><td>Number of incomplete tasks</td><td>{{ num_incomplete_tasks }}</td></tr>
+      <tr><td>Number of expired tasks</td><td>{{ num_expired_tasks }}</td></tr>
+    </tbody>
+  </table>
+</div>
+<p class="mt-2">
   <a href="{% url 'admin:turkle_expire_abandoned_assignments' %}" class="button">
     Expire Abandoned Assignments
   </a>

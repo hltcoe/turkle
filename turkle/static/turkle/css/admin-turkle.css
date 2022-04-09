@@ -35,6 +35,12 @@
 .mr-2 {
   margin-right: 2em;
 }
+.mt-2 {
+  margin-top: 2em;
+}
+.mb-2 {
+  margin-bottom: 2em;
+}
 
 iframe {
   top: 0;

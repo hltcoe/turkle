@@ -1,7 +1,7 @@
 from bisect import bisect_left
 from collections import defaultdict
 import csv
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from io import StringIO
 import json
 import logging
@@ -25,6 +25,7 @@ from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.templatetags.static import static
 from django.urls import path, reverse
+from django.utils import timezone
 from django.utils.html import format_html, format_html_join
 from django.utils.translation import ngettext
 from guardian.admin import GuardedModelAdmin
@@ -1145,7 +1146,7 @@ class ProjectAdmin(GuardedModelAdmin):
             })
 
         if tasks:
-            now = datetime.now(timezone.utc)
+            now = timezone.now()
             tca_1_day = len(tasks) - bisect_left(tasks_updated_at, now - timedelta(days=1))
             tca_7_day = len(tasks) - bisect_left(tasks_updated_at, now - timedelta(days=7))
             tca_30_day = len(tasks) - bisect_left(tasks_updated_at, now - timedelta(days=30))
@@ -1259,6 +1260,26 @@ class ViewOnlyAdminMixin:
 
 class TaskAssignmentAdmin(ViewOnlyAdminMixin, admin.ModelAdmin):
     """View for assignments to expire abandoned ones"""
+
+    class Media:
+        css = {
+            'all': ('turkle/css/admin-turkle.css',),
+        }
+
+    def changelist_view(self, request, extra_context=None):
+        num_incomplete_tasks = TaskAssignment.objects.\
+            filter(completed=False).\
+            count()
+        num_expired_tasks = TaskAssignment.objects.\
+            filter(completed=False).\
+            filter(expires_at__lt=timezone.now()).\
+            count()
+        extra_context = {
+            'num_incomplete_tasks': num_incomplete_tasks,
+            'num_expired_tasks': num_expired_tasks
+        }
+        return super().changelist_view(request, extra_context)
+
     def expire_abandoned_assignments(self, request):
         (total_deleted, _) = TaskAssignment.expire_all_abandoned()
         messages.info(request, 'All {} abandoned Tasks have been expired'.format(total_deleted))
