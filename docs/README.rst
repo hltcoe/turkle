@@ -61,6 +61,9 @@ documentation of production deployments included in the
 If you would like to use Turkle in a Docker container, see the 
 :doc:`Docker guide <DOCKER>`.
 
+If you would like to add Turkle to an existing Django-based site,
+see the :doc:`Django app <APP>` guide.
+
 
 Dependencies
 ------------
