@@ -1,3 +1,5 @@
+/* Admin css for the turkle app included through Media class */
+
 /* Django admin css removed these classes in 3.0 */
 .float-right {
     float: right;
@@ -33,6 +35,12 @@
 .mr-2 {
   margin-right: 2em;
 }
+.mt-2 {
+  margin-top: 2em;
+}
+.mb-2 {
+  margin-bottom: 2em;
+}
 
 iframe {
   top: 0;
@@ -43,10 +51,6 @@ iframe {
   border: 0;
   box-sizing: inherit;
   display: block;
-}
-
-.column-large {
-  width: 40%;
 }
 
 /* Style rules copied from:  http://parsleyjs.org/src/parsley.css */
@@ -80,14 +84,4 @@ textarea.parsley-error {
 }
 .parsley-errors-list.filled {
   opacity: 1;
-}
-
-#footer {
-  background: #79aec8;
-  padding: 10px 40px;
-  border: none;
-  font-size: 14px;
-  color: #fff;
-  text-align: right;
-  margin-top: 4px;
 }

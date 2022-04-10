@@ -1,6 +1,6 @@
 import csv
 import ctypes
-import datetime
+from datetime import timedelta
 import logging
 import os.path
 import re
@@ -12,7 +12,7 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Count, IntegerField, OuterRef, Prefetch, Subquery
+from django.db.models import Count, IntegerField, Max, Q, OuterRef, Prefetch, Subquery
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from guardian.core import ObjectPermissionChecker
@@ -33,6 +33,49 @@ C_LONG_MAX = 2 ** (C_LONG_NUM_BITS-1) - 1
 # Note that field_size_limit converts its argument to a C long,
 # at least in Anaconda 3 on Windows 10.
 csv.field_size_limit(min(C_LONG_MAX, sys.maxsize))
+
+
+class ActiveUserManager(models.Manager):
+    """Query users by activity on assignments"""
+    def get_queryset(self, **kwargs):
+        # adds annotations for number of assignments and most recent assignment time
+        n_days = int(kwargs.get('n_days', 7))
+        time_cutoff = timezone.now() - timedelta(days=n_days)
+        active_users = super().get_queryset(). \
+            filter(Q(taskassignment__updated_at__gt=time_cutoff) &
+                   Q(taskassignment__completed=True)). \
+            distinct(). \
+            annotate(
+                total_assignments=Count('taskassignment',
+                                        filter=(Q(taskassignment__updated_at__gt=time_cutoff) &
+                                                Q(taskassignment__completed=True)))). \
+            annotate(last_finished_time=Max('taskassignment__updated_at',
+                                            filter=Q(taskassignment__completed=True)))
+        return active_users
+
+
+class ActiveUser(User):
+    """Proxy object for User that provides fields related to assignments.
+
+    The values for the additional fields come from annotations set by the manager.
+    """
+    objects = ActiveUserManager()
+
+    class Meta:
+        proxy = True
+        ordering = ['first_name']
+
+    def name(self):
+        return f"{self.first_name} {self.last_name}"
+    name.admin_order_field = 'first_name'
+
+    def completed_assignments(self):
+        return self.total_assignments
+    completed_assignments.admin_order_field = 'total_assignments'
+
+    def most_recent(self):
+        return self.last_finished_time
+    most_recent.admin_order_field = 'last_finished_time'
 
 
 class TaskAssignmentStatistics(object):
@@ -133,7 +176,7 @@ class TaskAssignment(models.Model):
         # set expires_at only when assignment is created
         if not self.id:
             self.expires_at = timezone.now() + \
-                datetime.timedelta(hours=self.task.batch.allotted_assignment_time)
+                timedelta(hours=self.task.batch.allotted_assignment_time)
 
         if 'csrfmiddlewaretoken' in self.answers:
             del self.answers['csrfmiddlewaretoken']
@@ -726,20 +769,6 @@ class Project(TaskAssignmentStatistics, models.Model):
     # Fieldnames are automatically extracted from html_template text
     fieldnames = JSONField(blank=True)
 
-    @classmethod
-    def get_with_recently_updated_taskassignments(cls, n_days):
-        """Return QuerySet of Projects with TaskAssignments modified in last N days
-
-        Args:
-            n_days (int): Number of days to use for "recently updated" window
-        Returns:
-            QuerySet
-        """
-        recent_past = (datetime.datetime.now(datetime.timezone.utc) -
-                       datetime.timedelta(days=n_days))
-        return Project.objects.\
-            filter(batch__task__taskassignment__updated_at__gt=recent_past).distinct()
-
     def assignments_completed_by(self, user):
         """
         Returns:
@@ -838,3 +867,38 @@ class Project(TaskAssignmentStatistics, models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ActiveProjectManager(models.Manager):
+    """Query projects by activity on assignments"""
+    def get_queryset(self, **kwargs):
+        n_days = int(kwargs.get('n_days', 7))
+        time_cutoff = timezone.now() - timedelta(days=n_days)
+        return super().get_queryset().\
+            filter(Q(batch__task__taskassignment__updated_at__gt=time_cutoff) &
+                   Q(batch__task__taskassignment__completed=True)).\
+            distinct().\
+            annotate(assignments=Count(
+                'batch__task__taskassignment',
+                filter=(Q(batch__task__taskassignment__updated_at__gt=time_cutoff) &
+                        Q(batch__task__taskassignment__completed=True)))).\
+            annotate(last_finished_time=Max(
+                'batch__task__taskassignment__updated_at',
+                filter=Q(batch__task__taskassignment__completed=True)))
+
+
+class ActiveProject(Project):
+    """Proxy object for Project using annotations from its manager"""
+    objects = ActiveProjectManager()
+
+    class Meta:
+        proxy = True
+        ordering = ['name']
+
+    def completed_assignments(self):
+        return self.assignments
+    completed_assignments.admin_order_field = 'assignments'
+
+    def most_recent(self):
+        return self.last_finished_time
+    most_recent.admin_order_field = 'last_finished_time'

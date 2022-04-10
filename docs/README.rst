@@ -61,6 +61,9 @@ documentation of production deployments included in the
 If you would like to use Turkle in a Docker container, see the 
 :doc:`Docker guide <DOCKER>`.
 
+If you would like to add Turkle to an existing Django-based site,
+see the :doc:`Django app <APP>` guide.
+
 
 Dependencies
 ------------
@@ -148,6 +151,7 @@ Release process
  1. Set version number in ``turkle/__init__.py``
  2. Update ``CHANGELOG.md``
  3. Commit and tag version
+ 4. Deploy to PyPI
  
 .. _Django: https://www.djangoproject.com
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
