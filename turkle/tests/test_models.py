@@ -2,6 +2,7 @@ import datetime
 from io import StringIO
 import os.path
 import time
+from unittest import mock
 
 from django.contrib.auth.models import AnonymousUser, Group, User
 from django.core.exceptions import ValidationError
@@ -10,7 +11,7 @@ from django.utils import timezone
 from guardian.shortcuts import assign_perm, get_group_perms
 
 from .utility import save_model
-from turkle.models import Task, TaskAssignment, Batch, Project
+from turkle.models import Task, TaskAssignment, Batch, Project, ActiveProject, ActiveProjectManager
 from turkle.utils import get_turkle_template_limit
 
 
@@ -740,6 +741,58 @@ class TestProject(django.test.TestCase):
             Project(
                 html_template=template,
             ).clean()
+
+
+class TestActiveProjectManager(django.test.TestCase):
+    now = timezone.now()
+
+    @staticmethod
+    def create_project_with_assignment(completed, num_assignments=1):
+        project = Project(name='test', html_template='<p>${number}</p><textarea>')
+        project.save()
+        batch = Batch(name='test', project=project)
+        batch.save()
+        task = Task(batch=batch, input_csv_fields={'number': '1'})
+        task.save()
+        for _ in range(num_assignments):
+            TaskAssignment(
+                assigned_to=None,
+                completed=completed,
+                task=task
+            ).save()
+
+    @mock.patch("django.utils.timezone.now")
+    def test_get_queryset_filtering_projects_based_on_time(self, mock_now):
+        manager = ActiveProjectManager()
+        manager.model = ActiveProject
+        mock_now.return_value = self.now
+        self.create_project_with_assignment(True)
+        mock_now.return_value = self.now - datetime.timedelta(days=2)
+        self.create_project_with_assignment(True)
+
+        mock_now.return_value = self.now
+        self.assertEqual(1, len(manager.get_queryset(n_days=1)))
+        self.assertEqual(2, len(manager.get_queryset(n_days=3)))
+
+    @mock.patch("django.utils.timezone.now")
+    def test_get_queryset_filtering_projects_based_on_completed(self, mock_now):
+        manager = ActiveProjectManager()
+        manager.model = ActiveProject
+        mock_now.return_value = self.now
+        self.create_project_with_assignment(True)
+        self.create_project_with_assignment(False)
+
+        self.assertEqual(1, len(manager.get_queryset(n_days=1)))
+
+    @mock.patch("django.utils.timezone.now")
+    def test_get_queryset_set_assignments(self, mock_now):
+        manager = ActiveProjectManager()
+        manager.model = ActiveProject
+        mock_now.return_value = self.now
+        self.create_project_with_assignment(True, num_assignments=3)
+
+        project = manager.get_queryset(n_days=1)[0]
+        self.assertEqual(3, project.completed_assignments())
 
 
 class TestTask(django.test.TestCase):
