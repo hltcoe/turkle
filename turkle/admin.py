@@ -1393,8 +1393,10 @@ class ActiveProjectAdmin(ViewOnlyAdminMixin, admin.ModelAdmin):
 
 
 # replace default Group and User admin with ours
-admin.site.unregister(Group)
-admin.site.unregister(User)
+if admin.site.is_registered(Group):
+    admin.site.unregister(Group)
+if admin.site.is_registered(User):
+    admin.site.unregister(User)
 admin.site.register(Group, CustomGroupAdmin)
 admin.site.register(User, CustomUserAdmin)
 
