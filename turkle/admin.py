@@ -1280,10 +1280,11 @@ class TaskAssignmentAdmin(ViewOnlyAdminMixin, admin.ModelAdmin):
         }
         return super().changelist_view(request, extra_context)
 
-    def expire_abandoned_assignments(self, request):
+    @staticmethod
+    def expire_abandoned_assignments(request):
         (total_deleted, _) = TaskAssignment.expire_all_abandoned()
         messages.info(request, 'All {} abandoned Tasks have been expired'.format(total_deleted))
-        return redirect(reverse('admin:index'))
+        return redirect(reverse('admin:turkle_taskassignment_changelist'))
 
     def get_urls(self):
         urls = super().get_urls()
