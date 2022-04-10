@@ -96,7 +96,7 @@ class TestExpireAbandonedAssignments(django.test.TestCase):
         client.login(username='admin', password='secret')
         response = client.get(reverse('admin:turkle_expire_abandoned_assignments'))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], '/admin/')
+        self.assertEqual(response['Location'], '/admin/turkle/taskassignment/')
         self.assertEqual(TaskAssignment.objects.count(), 0)
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
