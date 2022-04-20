@@ -76,7 +76,7 @@ def index(request):
                 'accept_next_task_url': reverse('accept_next_task',
                                                 kwargs={'batch_id': batch['id']})
             })
-    return render(request, 'index.html', {
+    return render(request, 'turkle/index.html', {
         'abandoned_assignments': abandoned_assignments,
         'batch_rows': batch_rows
     })
@@ -172,7 +172,7 @@ def accept_next_task(request, batch_id):
 
 
 def help_page(request):
-    return render(request, 'help.html')
+    return render(request, 'turkle/help.html')
 
 
 def task_assignment(request, task_id, task_assignment_id):
@@ -223,7 +223,7 @@ def task_assignment(request, task_id, task_assignment_id):
                 safe=''))
         return render(
             request,
-            'task_assignment.html',
+            'turkle/task_assignment.html',
             {
                 'auto_accept_status': auto_accept_status,
                 'http_get_params': http_get_params,
@@ -276,7 +276,7 @@ def task_assignment_iframe(request, task_id, task_assignment_id):
 
     return render(
         request,
-        'task_assignment_iframe.html',
+        'turkle/task_assignment_iframe.html',
         {
             'task': task,
             'task_assignment': task_assignment,
@@ -302,7 +302,7 @@ def preview(request, task_id):
 
     http_get_params = "?assignmentId=ASSIGNMENT_ID_NOT_AVAILABLE&hitId={}".format(
         task.id)
-    return render(request, 'preview.html', {
+    return render(request, 'turkle/preview.html', {
         'http_get_params': http_get_params,
         'task': task
     })
@@ -324,7 +324,7 @@ def preview_iframe(request, task_id):
         messages.error(request, 'You do not have permission to view this Task')
         return redirect(index)
 
-    return render(request, 'preview_iframe.html', {'task': task})
+    return render(request, 'turkle/preview_iframe.html', {'task': task})
 
 
 def preview_next_task(request, batch_id):
@@ -480,7 +480,7 @@ def stats_for_user(request, user_id):
 
     return render(
         request,
-        'stats.html',
+        'turkle/stats.html',
         {
             'project_stats': project_stats,
             'end_date': end_date,
