@@ -3,20 +3,14 @@
 
 {% block head %}
 
-<link href="{% static 'turkle/bootstrap-datepicker-1.8.0/css/bootstrap-datepicker.css' %}" rel="stylesheet" type="text/css"/>
 <link href="{% static 'turkle/cal-heatmap.css' %}" rel="stylesheet" type="text/css"/>
 
 <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'turkle/bootstrap-datepicker-1.8.0/js/bootstrap-datepicker.js' %}"></script>
 <script type="text/javascript" src="{% static 'turkle/d3-3.5.17.min.js' %}"></script>
 <script type="text/javascript" src="{% static 'turkle/cal-heatmap-3.6.2.min.js' %}"></script>
 
 <script>
 $(document).ready(function() {
-  $('.datepicker').datepicker({
-    format: 'yyyy-mm-dd',
-  });
-
   // Set startDate to include previous 11 months plus all of current month
   var currentDate = new Date();
   var year = currentDate.getFullYear();
@@ -58,12 +52,12 @@ $(document).ready(function() {
     <div class="row">
       <div class="col-sm">
         <label for="start_date">Start Date:</label>
-        <input id="start_date" name="start_date" class="datepicker" placeholder="YYYY-MM-DD" size="12"
+        <input type="date" id="start_date" name="start_date"
                {% if start_date %}value="{{ start_date }}"{% endif %}>
       </div>
       <div class="col-sm">
         <label for="end_date">End Date:</label>
-        <input id="end_date" name="end_date" class="datepicker" placeholder="YYYY-MM-DD" size="12"
+        <input type="date" id="end_date" name="end_date"
                {% if end_date %}value="{{ end_date }}"{% endif %}>
       </div>
       <div class="col-sm">
