@@ -1,10 +1,11 @@
 from collections import defaultdict
+from datetime import datetime
 from functools import wraps
 import logging
 import urllib
 
+from django.conf import settings
 from django.contrib import messages
-
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import transaction
@@ -12,8 +13,9 @@ from django.db.utils import OperationalError
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
-from django.utils.datastructures import MultiValueDictKeyError
+from django.utils import timezone
 from django.utils.dateparse import parse_date
+from django.utils.datastructures import MultiValueDictKeyError
 
 from .models import Task, TaskAssignment, Batch, Project
 
@@ -406,6 +408,15 @@ def stats_for_self(request):
     return stats_for_user(request, request.user.id)
 
 
+def parse_date_with_timezone(value):
+    """wrapper for Django's parse_date() that uses timezone when appropriate"""
+    date = parse_date(value)
+    dt = datetime(date.year, date.month, date.day)
+    if settings.USE_TZ:
+        dt = timezone.make_aware(dt)
+    return dt
+
+
 def stats_for_user(request, user_id):
     def format_seconds(s):
         """Converts seconds to string"""
@@ -422,11 +433,11 @@ def stats_for_user(request, user_id):
         return redirect(index)
 
     try:
-        start_date = parse_date(request.GET['start_date'])
+        start_date = parse_date_with_timezone(request.GET['start_date'])
     except MultiValueDictKeyError:
         start_date = None
     try:
-        end_date = parse_date(request.GET['end_date'])
+        end_date = parse_date_with_timezone(request.GET['end_date'])
     except MultiValueDictKeyError:
         end_date = None
 

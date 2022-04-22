@@ -3,10 +3,12 @@ from django.contrib.auth.models import Group, User
 from django.contrib.messages import get_messages
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 from guardian.shortcuts import assign_perm
 from .utility import save_model
 
 from turkle.models import Task, TaskAssignment, Batch, Project
+from turkle.views import parse_date_with_timezone
 
 
 class TestAcceptTask(TestCase):
@@ -1005,6 +1007,14 @@ class TestStats(django.test.TestCase):
     def setUp(self):
         self.user = User.objects.create_user('mr.user', 'foo@bar.foo', 'secret')
         self.staff = User.objects.create_user('ms.staff', 'foo@bar.foo', 'secret', is_staff=True)
+
+    def test_parse_date_with_timezone_with_valid_string(self):
+        dt = parse_date_with_timezone("2022-04-01")
+        self.assertEqual(dt.year, 2022)
+        self.assertEqual(dt.month, 4)
+        self.assertEqual(dt.day, 1)
+        self.assertEqual(dt.hour, 0)
+        self.assertIsNotNone(dt.tzinfo)
 
     def test_stats_self(self):
         client = django.test.Client()
