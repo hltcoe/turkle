@@ -445,7 +445,7 @@ def stats_for_user(request, user_id):
     if start_date:
         tas = tas.filter(updated_at__gte=start_date)
     if end_date:
-        # days a day to include assignments completed on the selected end date
+        # adds a day to include assignments completed on the selected end date
         tas = tas.filter(updated_at__lte=end_date + timedelta(days=1))
 
     projects = Project.objects.filter(batch__task__taskassignment__assigned_to=user).\
