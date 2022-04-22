@@ -3,7 +3,6 @@ from django.contrib.auth.models import Group, User
 from django.contrib.messages import get_messages
 from django.test import TestCase
 from django.urls import reverse
-from django.utils import timezone
 from guardian.shortcuts import assign_perm
 from .utility import save_model
 
