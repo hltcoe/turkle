@@ -108,10 +108,13 @@ def accept_task(request, batch_id, task_id):
         with transaction.atomic():
             # Lock access to the specified Task
             # len() forces execution of query to create lock
-            len(Task.objects.filter(id=task_id).select_for_update())
+            if connection.vendor != "postgresql":
+                len(batch.available_task_ids_for(request.user).select_for_update())
 
-            # Will throw ObjectDoesNotExist exception if Task no longer available
-            batch.available_tasks_for(request.user).get(id=task_id)
+            task_id = _skip_aware_next_available_task_id(request, batch)
+
+            if connection.vendor == "postgresql":
+                len(Task.objects.filter(id=task_id).select_for_update())
 
             ha = TaskAssignment()
             if request.user.is_authenticated:
