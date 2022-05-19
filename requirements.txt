@@ -1,5 +1,5 @@
 beautifulsoup4
-Django~=3.1.14
+Django>=3.1.14
 django-admin-autocomplete-filter==0.7.1
 django-guardian==2.4.0
 humanfriendly
