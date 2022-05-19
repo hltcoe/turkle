@@ -444,11 +444,12 @@ class BatchCreatorFilter(AutocompleteFilter):
 
 
 class BatchCreatorSearchView(AutocompleteJsonView):
+    model_admin = None
     def get_queryset(self):
         return super().get_queryset().exclude(created_batches=None)
 
 
-class ProjectCreatorFilter(AutocompleteFilter):
+class ProjectCreatorFilter(AutocompleteFilter):    
     title = 'creator'
     field_name = 'created_by'
 
@@ -457,6 +458,7 @@ class ProjectCreatorFilter(AutocompleteFilter):
 
 
 class ProjectCreatorSearchView(AutocompleteJsonView):
+    model_admin = None
     def get_queryset(self):
         return super().get_queryset().exclude(created_projects=None)
 
@@ -470,6 +472,7 @@ class ProjectFilter(AutocompleteFilter):
 
 
 class ProjectSearchView(AutocompleteJsonView):
+    model_admin = None
     def get_queryset(self):
         return super().get_queryset().order_by('name')
 
