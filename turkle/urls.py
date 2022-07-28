@@ -19,6 +19,8 @@ from .views import (
     user_activity_json,
 )
 
+app_name = 'turkle'
+
 urlpatterns = [
     path('', index, name='index'),
     path('stats/', stats_for_self, name='stats'),

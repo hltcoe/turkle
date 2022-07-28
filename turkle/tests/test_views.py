@@ -22,13 +22,13 @@ class TestAcceptTask(TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.get(reverse('accept_task',
+        response = client.get(reverse('turkle:accept_task',
                                       kwargs={'batch_id': self.batch.id,
                                               'task_id': self.task.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(self.task.taskassignment_set.count(), 1)
         self.assertEqual(response['Location'],
-                         reverse('task_assignment',
+                         reverse('turkle:task_assignment',
                                  kwargs={'task_id': self.task.id,
                                          'task_assignment_id':
                                          self.task.taskassignment_set.first().id}))
@@ -37,13 +37,13 @@ class TestAcceptTask(TestCase):
         self.assertEqual(self.task.taskassignment_set.count(), 0)
 
         client = django.test.Client()
-        response = client.get(reverse('accept_task',
+        response = client.get(reverse('turkle:accept_task',
                                       kwargs={'batch_id': self.batch.id,
                                               'task_id': self.task.id}))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(self.task.taskassignment_set.count(), 1)
         self.assertEqual(response['Location'],
-                         reverse('task_assignment',
+                         reverse('turkle:task_assignment',
                                  kwargs={'task_id': self.task.id,
                                          'task_assignment_id':
                                          self.task.taskassignment_set.first().id}))
@@ -56,11 +56,11 @@ class TestAcceptTask(TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.get(reverse('accept_task',
+        response = client.get(reverse('turkle:accept_task',
                                       kwargs={'batch_id': self.batch.id,
                                               'task_id': self.task.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(response['Location'], reverse('turkle:index'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
@@ -92,7 +92,7 @@ class TestAcceptNextTask(TestCase):
 
         client = django.test.Client()
         client.login(username='testuser', password='secret')
-        response = client.get(reverse('accept_next_task',
+        response = client.get(reverse('turkle:accept_next_task',
                                       kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         # We are redirected to the task_assignment view, but we can't predict the
@@ -103,7 +103,7 @@ class TestAcceptNextTask(TestCase):
 
     def test_accept_next_task_as_anon(self):
         client = django.test.Client()
-        response = client.get(reverse('accept_next_task',
+        response = client.get(reverse('turkle:accept_next_task',
                                       kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         # We are redirected to the task_assignment view, but we can't predict the
@@ -116,10 +116,10 @@ class TestAcceptNextTask(TestCase):
 
         client = django.test.Client()
         client.login(username='testuser', password='secret')
-        response = client.get(reverse('accept_next_task',
+        response = client.get(reverse('turkle:accept_next_task',
                                       kwargs={'batch_id': 666}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(response['Location'], reverse('turkle:index'))
         self.assertEqual(self.task.taskassignment_set.count(), 0)
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
@@ -134,10 +134,10 @@ class TestAcceptNextTask(TestCase):
 
         client = django.test.Client()
         client.login(username='testuser', password='secret')
-        response = client.get(reverse('accept_next_task',
+        response = client.get(reverse('turkle:accept_next_task',
                                       kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(response['Location'], reverse('turkle:index'))
         self.assertEqual(self.task.taskassignment_set.count(), 1)
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
@@ -162,7 +162,7 @@ class TestAcceptNextTask(TestCase):
         })
         s.save()
 
-        response = client.get(reverse('accept_next_task',
+        response = client.get(reverse('turkle:accept_next_task',
                                       kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertTrue('{}/assignment/'.format(task_two.id) in response['Location'])
@@ -176,10 +176,10 @@ class TestAcceptNextTask(TestCase):
 
         client = django.test.Client()
         client.login(username='testuser', password='secret')
-        response = client.get(reverse('accept_next_task',
+        response = client.get(reverse('turkle:accept_next_task',
                                       kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(response['Location'], reverse('turkle:index'))
         self.assertEqual(self.task.taskassignment_set.count(), 0)
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
@@ -195,10 +195,10 @@ class TestAcceptNextTask(TestCase):
 
         client = django.test.Client()
         client.login(username='testuser', password='secret')
-        response = client.get(reverse('accept_next_task',
+        response = client.get(reverse('turkle:accept_next_task',
                                       kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(response['Location'], reverse('turkle:index'))
         self.assertEqual(self.task.taskassignment_set.count(), 0)
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
@@ -231,7 +231,7 @@ class TestDownloadBatchCSV(TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        download_url = reverse('admin:turkle_download_batch', kwargs={'batch_id': self.batch.id})
+        download_url = reverse('turkle:admin:turkle_download_batch', kwargs={'batch_id': self.batch.id})
         response = client.get(download_url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get('Content-Disposition'),
@@ -240,7 +240,7 @@ class TestDownloadBatchCSV(TestCase):
     def test_get_as_rando(self):
         client = django.test.Client()
         client.login(username='not_admin', password='secret')
-        download_url = reverse('admin:turkle_download_batch', kwargs={'batch_id': self.batch.id})
+        download_url = reverse('turkle:admin:turkle_download_batch', kwargs={'batch_id': self.batch.id})
         response = client.get(download_url)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], '/admin/login/?next=%s' % download_url)
@@ -294,7 +294,7 @@ class TestIndex(django.test.TestCase):
         assign_perm('can_work_on_batch', user_direct_access, batch)
         direct_access_client = django.test.Client()
         direct_access_client.login(username='user_direct_access', password='secret')
-        response = direct_access_client.get(reverse('index'))
+        response = direct_access_client.get(reverse('turkle:index'))
         self.assertFalse(b'No Tasks available' in response.content)
         self.assertTrue(b'MY_TEMPLATE_NAME' in response.content)
         self.assertTrue(b'MY_BATCH_NAME' in response.content)
@@ -306,7 +306,7 @@ class TestIndex(django.test.TestCase):
         assign_perm('can_work_on_batch', group, batch)
         group_access_client = django.test.Client()
         group_access_client.login(username='user_group_access', password='secret')
-        response = group_access_client.get(reverse('index'))
+        response = group_access_client.get(reverse('turkle:index'))
         self.assertEqual(response.status_code, 200)
         self.assertFalse(b'No Tasks available' in response.content)
         self.assertTrue(b'MY_TEMPLATE_NAME' in response.content)
@@ -316,7 +316,7 @@ class TestIndex(django.test.TestCase):
         User.objects.create_user('out_user', password='secret')
         out_client = django.test.Client()
         out_client.login(username='out_user', password='secret')
-        response = out_client.get(reverse('index'))
+        response = out_client.get(reverse('turkle:index'))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(b'No Tasks available' in response.content)
         self.assertFalse(b'MY_TEMPLATE_NAME' in response.content)
@@ -336,7 +336,7 @@ class TestIndex(django.test.TestCase):
         Task.objects.create(batch=batch)
 
         anon_client = django.test.Client()
-        response = anon_client.get(reverse('index'))
+        response = anon_client.get(reverse('turkle:index'))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(b'No Tasks available' in response.content)
         self.assertFalse(b'MY_TEMPLATE_NAME' in response.content)
@@ -345,7 +345,7 @@ class TestIndex(django.test.TestCase):
         known_client = django.test.Client()
         User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
         known_client.login(username='admin', password='secret')
-        response = known_client.get(reverse('index'))
+        response = known_client.get(reverse('turkle:index'))
         self.assertEqual(response.status_code, 200)
         self.assertFalse(b'No Tasks available' in response.content)
         self.assertTrue(b'MY_TEMPLATE_NAME' in response.content)
@@ -365,7 +365,7 @@ class TestIndex(django.test.TestCase):
         Task.objects.create(batch=batch)
 
         anon_client = django.test.Client()
-        response = anon_client.get(reverse('index'))
+        response = anon_client.get(reverse('turkle:index'))
         self.assertEqual(response.status_code, 200)
         self.assertFalse(b'No Tasks available' in response.content)
         self.assertTrue(b'MY_TEMPLATE_NAME' in response.content)
@@ -374,7 +374,7 @@ class TestIndex(django.test.TestCase):
         known_client = django.test.Client()
         User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
         known_client.login(username='admin', password='secret')
-        response = known_client.get(reverse('index'))
+        response = known_client.get(reverse('turkle:index'))
         self.assertEqual(response.status_code, 200)
         self.assertFalse(b'No Tasks available' in response.content)
         self.assertTrue(b'MY_TEMPLATE_NAME' in response.content)
@@ -397,7 +397,7 @@ class TestIndex(django.test.TestCase):
         Task.objects.create(batch=batch)
 
         anon_client = django.test.Client()
-        response = anon_client.get(reverse('index'))
+        response = anon_client.get(reverse('turkle:index'))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(b'No Tasks available' in response.content)
         self.assertFalse(b'MY_TEMPLATE_NAME' in response.content)
@@ -406,7 +406,7 @@ class TestIndex(django.test.TestCase):
         known_client = django.test.Client()
         User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
         known_client.login(username='admin', password='secret')
-        response = known_client.get(reverse('index'))
+        response = known_client.get(reverse('turkle:index'))
         self.assertEqual(response.status_code, 200)
         self.assertFalse(b'No Tasks available' in response.content)
         self.assertTrue(b'MY_TEMPLATE_NAME' in response.content)
@@ -433,7 +433,7 @@ class TestIndexAbandonedAssignments(TestCase):
 
         client = django.test.Client()
         client.login(username='testuser', password='secret')
-        response = client.get(reverse('index'))
+        response = client.get(reverse('turkle:index'))
         self.assertEqual(response.status_code, 200)
         self.assertTrue(b'You have abandoned' in response.content)
 
@@ -450,7 +450,7 @@ class TestIndexAbandonedAssignments(TestCase):
 
         client = django.test.Client()
         client.login(username='testuser', password='secret')
-        response = client.get(reverse('index'))
+        response = client.get(reverse('turkle:index'))
         self.assertEqual(response.status_code, 200)
         self.assertFalse(b'You have abandoned' in response.content)
 
@@ -467,7 +467,7 @@ class TestIndexAbandonedAssignments(TestCase):
 
         client = django.test.Client()
         client.login(username='testuser', password='secret')
-        response = client.get(reverse('index'))
+        response = client.get(reverse('turkle:index'))
         self.assertEqual(response.status_code, 200)
         self.assertFalse(b'You have abandoned' in response.content)
 
@@ -480,7 +480,7 @@ class TestIndexAbandonedAssignments(TestCase):
 
         client = django.test.Client()
         client.login(username='testuser', password='secret')
-        response = client.get(reverse('index'))
+        response = client.get(reverse('turkle:index'))
         self.assertEqual(response.status_code, 200)
         self.assertFalse(b'You have abandoned' in response.content)
 
@@ -502,7 +502,7 @@ class TestTaskAssignment(TestCase):
 
     def test_get_task_assignment(self):
         client = django.test.Client()
-        response = client.get(reverse('task_assignment',
+        response = client.get(reverse('turkle:task_assignment',
                                       kwargs={'task_id': self.task.id,
                                               'task_assignment_id': self.task_assignment.id}))
         self.assertEqual(response.status_code, 200)
@@ -511,11 +511,11 @@ class TestTaskAssignment(TestCase):
 
     def test_get_task_assignment_with_bad_task_id(self):
         client = django.test.Client()
-        response = client.get(reverse('task_assignment',
+        response = client.get(reverse('turkle:task_assignment',
                                       kwargs={'task_id': 666,
                                               'task_assignment_id': self.task_assignment.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(response['Location'], reverse('turkle:index'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
@@ -523,11 +523,11 @@ class TestTaskAssignment(TestCase):
 
     def test_get_task_assignment_with_bad_task_assignment_id(self):
         client = django.test.Client()
-        response = client.get(reverse('task_assignment',
+        response = client.get(reverse('turkle:task_assignment',
                                       kwargs={'task_id': self.task.id,
                                               'task_assignment_id': 666}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(response['Location'], reverse('turkle:index'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
@@ -541,11 +541,11 @@ class TestTaskAssignment(TestCase):
 
         client = django.test.Client()
         client.login(username='wrong_user', password='secret')
-        response = client.get(reverse('task_assignment',
+        response = client.get(reverse('turkle:task_assignment',
                                       kwargs={'task_id': self.task.id,
                                               'task_assignment_id': self.task_assignment.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(response['Location'], reverse('turkle:index'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertTrue('You do not have permission to work on the Task Assignment with ID'
@@ -557,11 +557,11 @@ class TestTaskAssignment(TestCase):
         self.task_assignment.save()
 
         client = django.test.Client()
-        response = client.get(reverse('task_assignment',
+        response = client.get(reverse('turkle:task_assignment',
                                       kwargs={'task_id': self.task.id,
                                               'task_assignment_id': self.task_assignment.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(response['Location'], reverse('turkle:index'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertTrue('You do not have permission to work on the Task Assignment with ID'
@@ -574,12 +574,12 @@ class TestTaskAssignment(TestCase):
         s.update({'auto_accept_status': False})
         s.save()
 
-        response = client.post(reverse('task_assignment',
+        response = client.post(reverse('turkle:task_assignment',
                                        kwargs={'task_id': self.task.id,
                                                'task_assignment_id': self.task_assignment.id}),
                                {'foo': 'bar'})
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(response['Location'], reverse('turkle:index'))
 
     def test_submit_assignment_with_auto_accept(self):
         client = django.test.Client()
@@ -588,12 +588,12 @@ class TestTaskAssignment(TestCase):
         s.update({'auto_accept_status': True})
         s.save()
 
-        response = client.post(reverse('task_assignment',
+        response = client.post(reverse('turkle:task_assignment',
                                        kwargs={'task_id': self.task.id,
                                                'task_assignment_id': self.task_assignment.id}),
                                {'foo': 'bar'})
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('accept_next_task',
+        self.assertEqual(response['Location'], reverse('turkle:accept_next_task',
                                                        kwargs={'batch_id': self.task.batch_id}))
 
 
@@ -619,11 +619,11 @@ class TestTaskAssignmentIFrame(TestCase):
 
         client = django.test.Client()
         client.login(username='wrong_user', password='secret')
-        response = client.get(reverse('task_assignment_iframe',
+        response = client.get(reverse('turkle:task_assignment_iframe',
                                       kwargs={'task_id': self.task.id,
                                               'task_assignment_id': self.task_assignment.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(response['Location'], reverse('turkle:index'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertTrue('You do not have permission to work on the Task Assignment with ID'
@@ -637,7 +637,7 @@ class TestTaskAssignmentIFrame(TestCase):
         self.assertTrue(self.project.html_template_has_submit_button)
 
         client = django.test.Client()
-        response = client.get(reverse('task_assignment_iframe',
+        response = client.get(reverse('turkle:task_assignment_iframe',
                                       kwargs={'task_id': self.task.id,
                                               'task_assignment_id': self.task_assignment.id}))
         self.assertEqual(response.status_code, 200)
@@ -651,7 +651,7 @@ class TestTaskAssignmentIFrame(TestCase):
         self.assertFalse(self.project.html_template_has_submit_button)
 
         client = django.test.Client()
-        response = client.get(reverse('task_assignment_iframe',
+        response = client.get(reverse('turkle:task_assignment_iframe',
                                       kwargs={'task_id': self.task.id,
                                               'task_assignment_id': self.task_assignment.id}))
         self.assertEqual(response.status_code, 200)
@@ -679,7 +679,7 @@ class TestPreview(TestCase):
 
     def test_get_preview(self):
         client = django.test.Client()
-        response = client.get(reverse('preview', kwargs={'task_id': self.task.id}))
+        response = client.get(reverse('turkle:preview', kwargs={'task_id': self.task.id}))
         self.assertEqual(response.status_code, 200)
 
     def test_get_preview_as_anonymous_but_login_required(self):
@@ -687,18 +687,18 @@ class TestPreview(TestCase):
         self.project.save()
 
         client = django.test.Client()
-        response = client.get(reverse('preview', kwargs={'task_id': self.task.id}))
+        response = client.get(reverse('turkle:preview', kwargs={'task_id': self.task.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(response['Location'], reverse('turkle:index'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]), 'You do not have permission to view this Task')
 
     def test_get_preview_bad_task_id(self):
         client = django.test.Client()
-        response = client.get(reverse('preview', kwargs={'task_id': 666}))
+        response = client.get(reverse('turkle:preview', kwargs={'task_id': 666}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(response['Location'], reverse('turkle:index'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
@@ -706,14 +706,14 @@ class TestPreview(TestCase):
 
     def test_get_preview_iframe(self):
         client = django.test.Client()
-        response = client.get(reverse('preview_iframe', kwargs={'task_id': self.task.id}))
+        response = client.get(reverse('turkle:preview_iframe', kwargs={'task_id': self.task.id}))
         self.assertEqual(response.status_code, 200)
 
     def test_get_preview_iframe_bad_task_id(self):
         client = django.test.Client()
-        response = client.get(reverse('preview_iframe', kwargs={'task_id': 666}))
+        response = client.get(reverse('turkle:preview_iframe', kwargs={'task_id': 666}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(response['Location'], reverse('turkle:index'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
@@ -725,27 +725,27 @@ class TestPreview(TestCase):
 
         client = django.test.Client()
 
-        response = client.get(reverse('preview_iframe', kwargs={'task_id': self.task.id}))
+        response = client.get(reverse('turkle:preview_iframe', kwargs={'task_id': self.task.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(response['Location'], reverse('turkle:index'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]), 'You do not have permission to view this Task')
 
     def test_preview_next_task(self):
         client = django.test.Client()
-        response = client.get(reverse('preview_next_task', kwargs={'batch_id': self.batch.id}))
+        response = client.get(reverse('turkle:preview_next_task', kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('preview',
+        self.assertEqual(response['Location'], reverse('turkle:preview',
                                                        kwargs={'task_id': self.task.id}))
 
     def test_preview_next_task_no_more_tasks(self):
         self.task.completed = True
         self.task.save()
         client = django.test.Client()
-        response = client.get(reverse('preview_next_task', kwargs={'batch_id': self.batch.id}))
+        response = client.get(reverse('turkle:preview_next_task', kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(response['Location'], reverse('turkle:index'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertTrue('No more Tasks are available for Batch' in str(messages[0]))
@@ -773,11 +773,11 @@ class TestReturnTaskAssignment(TestCase):
 
         client = django.test.Client()
         client.login(username='testuser', password='secret')
-        response = client.get(reverse('return_task_assignment',
+        response = client.get(reverse('turkle:return_task_assignment',
                                       kwargs={'task_id': self.task.id,
                                               'task_assignment_id': task_assignment.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(response['Location'], reverse('turkle:index'))
 
     def test_return_completed_task_assignment(self):
         user = User.objects.create_user('testuser', password='secret')
@@ -791,11 +791,11 @@ class TestReturnTaskAssignment(TestCase):
 
         client = django.test.Client()
         client.login(username='testuser', password='secret')
-        response = client.get(reverse('return_task_assignment',
+        response = client.get(reverse('turkle:return_task_assignment',
                                       kwargs={'task_id': self.task.id,
                                               'task_assignment_id': task_assignment.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(response['Location'], reverse('turkle:index'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
@@ -809,11 +809,11 @@ class TestReturnTaskAssignment(TestCase):
         task_assignment.save()
 
         client = django.test.Client()
-        response = client.get(reverse('return_task_assignment',
+        response = client.get(reverse('turkle:return_task_assignment',
                                       kwargs={'task_id': self.task.id,
                                               'task_assignment_id': task_assignment.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(response['Location'], reverse('turkle:index'))
 
     def test_return_task_assignment__anon_user_returns_other_users_task(self):
         user = User.objects.create_user('testuser', password='secret')
@@ -825,11 +825,11 @@ class TestReturnTaskAssignment(TestCase):
         task_assignment.save()
 
         client = django.test.Client()
-        response = client.get(reverse('return_task_assignment',
+        response = client.get(reverse('turkle:return_task_assignment',
                                       kwargs={'task_id': self.task.id,
                                               'task_assignment_id': task_assignment.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(response['Location'], reverse('turkle:index'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
@@ -846,11 +846,11 @@ class TestReturnTaskAssignment(TestCase):
 
         client = django.test.Client()
         client.login(username='testuser', password='secret')
-        response = client.get(reverse('return_task_assignment',
+        response = client.get(reverse('turkle:return_task_assignment',
                                       kwargs={'task_id': self.task.id,
                                               'task_assignment_id': task_assignment.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(response['Location'], reverse('turkle:index'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
@@ -868,61 +868,61 @@ class TestSkipTask(TestCase):
     def test_preview_next_task_order(self):
         client = django.test.Client()
 
-        response = client.get(reverse('preview_next_task', kwargs={'batch_id': self.batch.id}))
+        response = client.get(reverse('turkle:preview_next_task', kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('preview',
+        self.assertEqual(response['Location'], reverse('turkle:preview',
                                                        kwargs={'task_id': self.task_one.id}))
 
         # Since no Tasks have been completed or skipped, preview_next_task redirects to same Task
-        response = client.get(reverse('preview_next_task', kwargs={'batch_id': self.batch.id}))
+        response = client.get(reverse('turkle:preview_next_task', kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('preview',
+        self.assertEqual(response['Location'], reverse('turkle:preview',
                                                        kwargs={'task_id': self.task_one.id}))
 
     def test_skip_task(self):
         client = django.test.Client()
 
         # Skip task_one
-        response = client.post(reverse('skip_task', kwargs={'batch_id': self.batch.id,
+        response = client.post(reverse('turkle:skip_task', kwargs={'batch_id': self.batch.id,
                                                             'task_id': self.task_one.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('preview_next_task',
+        self.assertEqual(response['Location'], reverse('turkle:preview_next_task',
                                                        kwargs={'batch_id': self.batch.id}))
 
         # Verify that task_one has been skipped
-        response = client.get(reverse('preview_next_task',
+        response = client.get(reverse('turkle:preview_next_task',
                                       kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('preview',
+        self.assertEqual(response['Location'], reverse('turkle:preview',
                                                        kwargs={'task_id': self.task_two.id}))
 
         # Skip task_two
-        response = client.post(reverse('skip_task', kwargs={'batch_id': self.batch.id,
+        response = client.post(reverse('turkle:skip_task', kwargs={'batch_id': self.batch.id,
                                                             'task_id': self.task_two.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('preview_next_task',
+        self.assertEqual(response['Location'], reverse('turkle:preview_next_task',
                                                        kwargs={'batch_id': self.batch.id}))
 
         # Verify that task_two has been skipped
-        response = client.get(reverse('preview_next_task',
+        response = client.get(reverse('turkle:preview_next_task',
                                       kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('preview',
+        self.assertEqual(response['Location'], reverse('turkle:preview',
                                                        kwargs={'task_id': self.task_three.id}))
 
         # Skip task_three
-        response = client.post(reverse('skip_task', kwargs={'batch_id': self.batch.id,
+        response = client.post(reverse('turkle:skip_task', kwargs={'batch_id': self.batch.id,
                                                             'task_id': self.task_three.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('preview_next_task',
+        self.assertEqual(response['Location'], reverse('turkle:preview_next_task',
                                                        kwargs={'batch_id': self.batch.id}))
 
         # Verify that, with all existing Tasks skipped, we have been redirected back to
         # task_one and that info message is displayed about only skipped Tasks remaining
-        response = client.get(reverse('preview_next_task',
+        response = client.get(reverse('turkle:preview_next_task',
                                       kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('preview',
+        self.assertEqual(response['Location'], reverse('turkle:preview',
                                                        kwargs={'task_id': self.task_one.id}))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
@@ -935,49 +935,49 @@ class TestSkipTask(TestCase):
         ha_one.save()
 
         # Skip task_one
-        response = client.post(reverse('skip_and_accept_next_task',
+        response = client.post(reverse('turkle:skip_and_accept_next_task',
                                        kwargs={'batch_id': self.batch.id,
                                                'task_id': self.task_one.id,
                                                'task_assignment_id': ha_one.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('accept_next_task',
+        self.assertEqual(response['Location'], reverse('turkle:accept_next_task',
                                                        kwargs={'batch_id': self.batch.id}))
 
         # Verify that task_one has been skipped
-        response = client.get(reverse('accept_next_task',
+        response = client.get(reverse('turkle:accept_next_task',
                                       kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertTrue('{}/assignment/'.format(self.task_two.id) in response['Location'])
 
         # Skip task_two
         ha_two = self.task_two.taskassignment_set.first()
-        response = client.post(reverse('skip_and_accept_next_task',
+        response = client.post(reverse('turkle:skip_and_accept_next_task',
                                        kwargs={'batch_id': self.batch.id,
                                                'task_id': self.task_two.id,
                                                'task_assignment_id': ha_two.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('accept_next_task',
+        self.assertEqual(response['Location'], reverse('turkle:accept_next_task',
                                                        kwargs={'batch_id': self.batch.id}))
 
         # Verify that task_two has been skipped
-        response = client.get(reverse('accept_next_task',
+        response = client.get(reverse('turkle:accept_next_task',
                                       kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertTrue('{}/assignment/'.format(self.task_three.id) in response['Location'])
 
         # Skip task_three
         ha_three = self.task_three.taskassignment_set.first()
-        response = client.post(reverse('skip_and_accept_next_task',
+        response = client.post(reverse('turkle:skip_and_accept_next_task',
                                        kwargs={'batch_id': self.batch.id,
                                                'task_id': self.task_three.id,
                                                'task_assignment_id': ha_three.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('accept_next_task',
+        self.assertEqual(response['Location'], reverse('turkle:accept_next_task',
                                                        kwargs={'batch_id': self.batch.id}))
 
         # Verify that, with all existing Tasks skipped, we have been redirected back to
         # task_one and that info message is displayed about only skipped Tasks remaining
-        response = client.get(reverse('accept_next_task',
+        response = client.get(reverse('turkle:accept_next_task',
                                       kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertTrue('{}/assignment/'.format(self.task_one.id) in response['Location'])
@@ -987,16 +987,16 @@ class TestSkipTask(TestCase):
 
         # Skip task_one for a second time
         ha_one = self.task_one.taskassignment_set.first()
-        response = client.post(reverse('skip_and_accept_next_task',
+        response = client.post(reverse('turkle:skip_and_accept_next_task',
                                        kwargs={'batch_id': self.batch.id,
                                                'task_id': self.task_one.id,
                                                'task_assignment_id': ha_one.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('accept_next_task',
+        self.assertEqual(response['Location'], reverse('turkle:accept_next_task',
                                                        kwargs={'batch_id': self.batch.id}))
 
         # Verify that task_one has been skipped for a second time
-        response = client.get(reverse('accept_next_task',
+        response = client.get(reverse('turkle:accept_next_task',
                                       kwargs={'batch_id': self.batch.id}))
         self.assertEqual(response.status_code, 302)
         self.assertTrue('{}/assignment/'.format(self.task_two.id) in response['Location'])
@@ -1018,23 +1018,23 @@ class TestStats(django.test.TestCase):
     def test_stats_self(self):
         client = django.test.Client()
         client.login(username='mr.user', password='secret')
-        response = client.get(reverse('stats'))
+        response = client.get(reverse('turkle:stats'))
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 200)
 
     def test_stats_for_user_self_as_user(self):
         client = django.test.Client()
         client.login(username='mr.user', password='secret')
-        response = client.get(reverse('stats_for_user', kwargs={'user_id': self.user.id}))
+        response = client.get(reverse('turkle:stats_for_user', kwargs={'user_id': self.user.id}))
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 200)
 
     def test_stats_for_user_other_as_not_staff(self):
         client = django.test.Client()
         client.login(username='mr.user', password='secret')
-        response = client.get(reverse('stats_for_user', kwargs={'user_id': self.staff.id}))
+        response = client.get(reverse('turkle:stats_for_user', kwargs={'user_id': self.staff.id}))
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], reverse('index'))
+        self.assertEqual(response['Location'], reverse('turkle:index'))
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
@@ -1043,6 +1043,6 @@ class TestStats(django.test.TestCase):
     def test_stats_for_user_other_as_staff(self):
         client = django.test.Client()
         client.login(username='ms.staff', password='secret')
-        response = client.get(reverse('stats_for_user', kwargs={'user_id': self.user.id}))
+        response = client.get(reverse('turkle:stats_for_user', kwargs={'user_id': self.user.id}))
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 200)

@@ -203,7 +203,7 @@ class CustomUserAdmin(UserAdmin):
         return super().response_add(request, obj, post_url_continue)
 
     def stats(self, obj):
-        stats_url = reverse('stats_for_user', kwargs={'user_id': obj.id})
+        stats_url = reverse('turkle:stats_for_user', kwargs={'user_id': obj.id})
         return format_html('<a href="{}" class="button">Stats</a>'.
                            format(stats_url))
 
@@ -1335,7 +1335,7 @@ class ActiveObjectPeriodListFilter(admin.SimpleListFilter):
 class ActiveUserChangeList(ChangeList):
     def url_for_result(self, result):
         # change URL for active user to point to stats page
-        return reverse('stats_for_user', kwargs={'user_id': result.id})
+        return reverse('turkle:stats_for_user', kwargs={'user_id': result.id})
 
 
 class ActiveUserAdmin(ViewOnlyAdminMixin, admin.ModelAdmin):

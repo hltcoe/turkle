@@ -73,9 +73,9 @@ def index(request):
                 'batch_name': batch['name'],
                 'batch_published': batch['created_at'],
                 'assignments_available': total_tasks_available,
-                'preview_next_task_url': reverse('preview_next_task',
+                'preview_next_task_url': reverse('turkle:preview_next_task',
                                                  kwargs={'batch_id': batch['id']}),
-                'accept_next_task_url': reverse('accept_next_task',
+                'accept_next_task_url': reverse('turkle:accept_next_task',
                                                 kwargs={'batch_id': batch['id']})
             })
     return render(request, 'turkle/index.html', {
@@ -222,7 +222,7 @@ def task_assignment(request, task_id, task_assignment_id):
             task.id,
             request.user.id,
             urllib.parse.quote(
-                reverse('task_assignment', kwargs={
+                reverse('turkle:task_assignment', kwargs={
                     'task_id': task.id, 'task_assignment_id': task_assignment.id}),
                 safe=''))
         return render(
