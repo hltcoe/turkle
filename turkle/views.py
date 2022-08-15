@@ -36,7 +36,7 @@ def handle_db_lock(func):
             # If it happens often, switch to mysql or postgres.
             if str(ex) == 'database is locked':
                 messages.error(request, u'The database is busy. Please try again.')
-                return redirect(index)
+                return redirect(reverse("turkle:index"))
             raise ex
     return wrapper
 
@@ -97,12 +97,12 @@ def accept_task(request, batch_id, task_id):
         batch = Batch.objects.get(id=batch_id)
     except ObjectDoesNotExist:
         messages.error(request, u'Cannot find Task Batch with ID {}'.format(batch_id))
-        return redirect(index)
+        return redirect(reverse("turkle:index"))
     try:
         task = Task.objects.get(id=task_id)
     except ObjectDoesNotExist:
         messages.error(request, u'Cannot find Task with ID {}'.format(task_id))
-        return redirect(index)
+        return redirect(reverse("turkle:index"))
 
     try:
         with transaction.atomic():
@@ -129,9 +129,9 @@ def accept_task(request, batch_id, task_id):
                 logger.info('Anonymous user accepted Task(%i)', task.id)
     except ObjectDoesNotExist:
         messages.error(request, u'The Task with ID {} is no longer available'.format(task_id))
-        return redirect(index)
+        return redirect(reverse("turkle:index"))
 
-    return redirect(task_assignment, task.id, ha.id)
+    return redirect(reverse("turkle:task_assignment", args=(task.id, ha.id)))
 
 
 @handle_db_lock
@@ -166,13 +166,13 @@ def accept_next_task(request, batch_id):
                     logger.info('Anonymous user accepted Task(%i)', task_id)
     except ObjectDoesNotExist:
         messages.error(request, u'Cannot find Task Batch with ID {}'.format(batch_id))
-        return redirect(index)
+        return redirect(reverse("turkle:index"))
 
     if task_id:
-        return redirect(task_assignment, task_id, ha.id)
+        return redirect(reverse("turkle:task_assignment", args=(task_id, ha.id)))
     else:
         messages.error(request, u'No more Tasks available for Batch {}'.format(batch.name))
-        return redirect(index)
+        return redirect(reverse("turkle:index"))
 
 
 def help_page(request):
@@ -191,13 +191,13 @@ def task_assignment(request, task_id, task_assignment_id):
         task = Task.objects.get(id=task_id)
     except ObjectDoesNotExist:
         messages.error(request, 'Cannot find Task with ID {}'.format(task_id))
-        return redirect(index)
+        return redirect(reverse("turkle:index"))
     try:
         task_assignment = TaskAssignment.objects.get(id=task_assignment_id)
     except ObjectDoesNotExist:
         messages.error(request,
                        'Cannot find Task Assignment with ID {}'.format(task_assignment_id))
-        return redirect(index)
+        return redirect(reverse("turkle:index"))
 
     if request.user.is_authenticated:
         if request.user != task_assignment.assigned_to:
@@ -205,14 +205,14 @@ def task_assignment(request, task_id, task_assignment_id):
                 request,
                 'You do not have permission to work on the Task Assignment with ID {}'.
                 format(task_assignment.id))
-            return redirect(index)
+            return redirect(reverse("turkle:index"))
     else:
         if task_assignment.assigned_to is not None:
             messages.error(
                 request,
                 'You do not have permission to work on the Task Assignment with ID {}'.
                 format(task_assignment.id))
-            return redirect(index)
+            return redirect(reverse("turkle:index"))
 
     auto_accept_status = request.session.get('auto_accept_status', False)
 
@@ -245,9 +245,9 @@ def task_assignment(request, task_id, task_assignment_id):
             logger.info('Anonymous user submitted Task(%i)', task.id)
 
         if request.session.get('auto_accept_status'):
-            return redirect(accept_next_task, task.batch.id)
+            return redirect(reverse("turkle:accept_next_task", (task.batch.id,)))
         else:
-            return redirect(index)
+            return redirect(reverse("turkle:index"))
 
 
 def task_assignment_iframe(request, task_id, task_assignment_id):
@@ -262,13 +262,13 @@ def task_assignment_iframe(request, task_id, task_assignment_id):
         task = Task.objects.get(id=task_id)
     except ObjectDoesNotExist:
         messages.error(request, 'Cannot find Task with ID {}'.format(task_id))
-        return redirect(index)
+        return redirect(reverse("turkle:index"))
     try:
         task_assignment = TaskAssignment.objects.get(id=task_assignment_id)
     except ObjectDoesNotExist:
         messages.error(request,
                        'Cannot find Task Assignment with ID {}'.format(task_assignment_id))
-        return redirect(index)
+        return redirect(reverse("turkle:index"))
 
     if request.user.is_authenticated:
         if request.user != task_assignment.assigned_to:
@@ -276,7 +276,7 @@ def task_assignment_iframe(request, task_id, task_assignment_id):
                 request,
                 'You do not have permission to work on the Task Assignment with ID {}'.
                 format(task_assignment.id))
-            return redirect(index)
+            return redirect(reverse("turkle:index"))
 
     return render(
         request,
@@ -298,11 +298,11 @@ def preview(request, task_id):
         task = Task.objects.get(id=task_id)
     except ObjectDoesNotExist:
         messages.error(request, 'Cannot find Task with ID {}'.format(task_id))
-        return redirect(index)
+        return redirect(reverse("turkle:index"))
 
     if not task.batch.project.available_for(request.user):
         messages.error(request, 'You do not have permission to view this Task')
-        return redirect(index)
+        return redirect(reverse("turkle:index"))
 
     http_get_params = "?assignmentId=ASSIGNMENT_ID_NOT_AVAILABLE&hitId={}".format(
         task.id)
@@ -322,11 +322,11 @@ def preview_iframe(request, task_id):
         task = Task.objects.get(id=task_id)
     except ObjectDoesNotExist:
         messages.error(request, 'Cannot find Task with ID {}'.format(task_id))
-        return redirect(index)
+        return redirect(reverse("turkle:index"))
 
     if not task.batch.project.available_for(request.user):
         messages.error(request, 'You do not have permission to view this Task')
-        return redirect(index)
+        return redirect(reverse("turkle:index"))
 
     return render(request, 'turkle/preview_iframe.html', {'task': task})
 
@@ -341,16 +341,16 @@ def preview_next_task(request, batch_id):
         batch = Batch.objects.get(id=batch_id)
     except ObjectDoesNotExist:
         messages.error(request, 'Cannot find Task Batch with ID {}'.format(batch_id))
-        return redirect(index)
+        return redirect(reverse("turkle:index"))
 
     task_id = _skip_aware_next_available_task_id(request, batch)
 
     if task_id:
-        return redirect(preview, task_id)
+        return redirect(reverse("turkle:preview", args=(task_id,)))
     else:
         messages.error(request,
                        'No more Tasks are available for Batch "{}"'.format(batch.name))
-        return redirect(index)
+        return redirect(reverse("turkle:index"))
 
 
 def return_task_assignment(request, task_id, task_assignment_id):
@@ -366,7 +366,7 @@ def return_task_assignment(request, task_id, task_assignment_id):
         logger.info('User(%i) returned Task(%i)', request.user.id, int(task_id))
     else:
         logger.info('Anonymous user returned Task(%i)', int(task_id))
-    return redirect(index)
+    return redirect(reverse("turkle:index"))
 
 
 def skip_and_accept_next_task(request, batch_id, task_id, task_assignment_id):
@@ -384,7 +384,7 @@ def skip_and_accept_next_task(request, batch_id, task_id, task_assignment_id):
         logger.info('User(%i) skipped Task(%i)', request.user.id, int(task_id))
     else:
         logger.info('Anonymous user skipped Task(%i)', int(task_id))
-    return redirect(accept_next_task, batch_id)
+    return redirect(reverse("turkle:accept_next_task", args=(batch_id,)))
 
 
 def skip_task(request, batch_id, task_id):
@@ -397,7 +397,7 @@ def skip_task(request, batch_id, task_id):
       users session variables.
     """
     _add_task_id_to_skip_session(request.session, batch_id, task_id)
-    return redirect(preview_next_task, batch_id)
+    return redirect(reverse("turkle:preview_next_task", args=(batch_id,)))
 
 
 def stats_for_self(request):
@@ -405,7 +405,7 @@ def stats_for_self(request):
         messages.error(
             request,
             u'You must be logged in to view the user statistics page')
-        return redirect(index)
+        return redirect(reverse("turkle:index"))
 
     return stats_for_user(request, request.user.id)
 
@@ -428,11 +428,11 @@ def stats_for_user(request, user_id):
         user = User.objects.get(id=user_id)
     except ObjectDoesNotExist:
         messages.error(request, u'Cannot find User with ID {}'.format(user_id))
-        return redirect(index)
+        return redirect(reverse("turkle:index"))
 
     if request.user.id != user_id and not request.user.is_staff:
         messages.error(request, u"You cannot view another User's statistics unless you are Staff")
-        return redirect(index)
+        return redirect(reverse("turkle:index"))
 
     try:
         start_date = parse_date_with_timezone(request.GET['start_date'])
@@ -575,28 +575,28 @@ def _delete_task_assignment(request, task_id, task_assignment_id):
         task = Task.objects.get(id=task_id)
     except ObjectDoesNotExist:
         messages.error(request, 'Cannot find Task with ID {}'.format(task_id))
-        return redirect(index)
+        return redirect(reverse("turkle:index"))
     try:
         task_assignment = TaskAssignment.objects.get(id=task_assignment_id)
     except ObjectDoesNotExist:
         messages.error(request,
                        'Cannot find Task Assignment with ID {}'.format(task_assignment_id))
-        return redirect(index)
+        return redirect(reverse("turkle:index"))
 
     if task_assignment.completed:
         messages.error(request, u"The Task can't be returned because it has been completed")
-        return redirect(index)
+        return redirect(reverse("turkle:index"))
     if request.user.is_authenticated:
         if task_assignment.assigned_to != request.user:
             messages.error(request, 'The Task you are trying to return belongs to another user')
-            return redirect(index)
+            return redirect(reverse("turkle:index"))
     else:
         if task_assignment.assigned_to is not None:
             messages.error(request, 'The Task you are trying to return belongs to another user')
-            return redirect(index)
+            return redirect(reverse("turkle:index"))
         if task.batch.project.login_required:
             messages.error(request, 'You do not have permission to access this Task')
-            return redirect(index)
+            return redirect(reverse("turkle:index"))
 
     task_assignment.delete()
 
