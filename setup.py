@@ -15,6 +15,7 @@ setuptools.setup(
     version=ns["__version__"],
     description="Django-based clone of Amazon's Mechanical Turk service",
     long_description=long_description,
+    long_description_content_type="text/x-rst",
     url="https://github.com/hltcoe/turkle",
     project_urls={
         "Documentation": "https://turkle.readthedocs.io/",
