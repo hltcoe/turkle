@@ -8,7 +8,7 @@ from django.conf import settings
 from django.contrib import messages
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
+from django.db import connection, transaction
 from django.db.utils import OperationalError
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
@@ -146,7 +146,12 @@ def accept_next_task(request, batch_id):
 
             # Lock access to all Tasks available to current user in the batch
             # Force evaluation of the query set with len()
-            len(batch.available_task_ids_for(request.user).select_for_update())
+            # But postgres does not support select_for_update() with outer join
+            if connection.vendor != "postgresql":
+                len(batch.available_task_ids_for(request.user).select_for_update())
+            else:
+                # Locks a few more tasks for multiple annotation batches than above
+                len(batch.unfinished_tasks().select_for_update())
 
             task_id = _skip_aware_next_available_task_id(request, batch)
 
