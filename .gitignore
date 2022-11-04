@@ -15,3 +15,5 @@ logs/
 *.egg-info/
 build/
 _build/
+dist/
+turkle_site/local_settings.py
