@@ -105,7 +105,7 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     'guardian',
-    'admin_auto_filters',
+    'djaa_list_filter',
 )
 
 AUTHENTICATION_BACKENDS = (
