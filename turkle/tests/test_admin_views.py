@@ -395,7 +395,7 @@ class TestBatchAdmin(django.test.TestCase):
         client = django.test.Client()
         client.login(username='admin', password='secret')
         response = client.post(
-            '/admin/turkle/batch/%d/change/' % batch.id,
+            f'/admin/turkle/batch/{batch.id}/change/',
             {
                 'assignments_per_task': 1,
                 'project': batch.project.id,
@@ -403,7 +403,7 @@ class TestBatchAdmin(django.test.TestCase):
             })
         self.assertTrue(b'error' not in response.content)
         self.assertEqual(response.status_code, 302)
-        self.assertEqual(response['Location'], '/admin/turkle/batch/1/review/')
+        self.assertEqual(response['Location'], f'/admin/turkle/batch/{batch.id}/review/')
 
     def test_batch_stats_view(self):
         self.test_batch_add()
@@ -420,16 +420,15 @@ class TestUserAdmin(django.test.TestCase):
         User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
 
     def test_deactivate_users(self):
-        User.objects.create_user('normal_user', password='secret')
+        user = User.objects.create_user('normal_user', password='secret')
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        # 1=AnonymousUser, 2=admin, 3=normal_user
         response = client.post(reverse('admin:auth_user_changelist'), {
             'action': 'deactivate_users',
             'index': 0,
             'select_across': 0,
-            '_selected_action': [3]
+            '_selected_action': [user.id]
         })
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('admin:auth_user_changelist'))
