@@ -49,7 +49,7 @@ Installation
 Turkle works with Python 3.6+.
 
 This Installation section covers the quickest and easiest way to use
-Turkle with a handful of users on your local network - using the
+Turkle with a handful of users on your local network by using the
 Django development web server with the SQLite database backend.
 
 If you want to use Turkle with more than a handful of Workers or host
@@ -98,7 +98,11 @@ Next, create an admin account::
 Upgrading
 ---------
 
-After copying over the new code, run the migrate script::
+After copying over the new code, update to the new Python dependencies in your virtual environment::
+
+    pip install -r requirements.txt
+
+Then run the migrate script to update your database::
 
     python manage.py migrate
 
