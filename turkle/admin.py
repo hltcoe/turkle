@@ -7,8 +7,8 @@ import json
 import logging
 import statistics
 
-from admin_auto_filters.filters import AutocompleteFilter
-from admin_auto_filters.views import AutocompleteJsonView
+from djaa_list_filter.admin import AjaxAutocompleteListFilterModelAdmin
+
 from django.contrib import admin, messages
 from django.contrib.admin.templatetags.admin_list import _boolean_icon
 from django.contrib.admin.views.main import ChangeList
@@ -118,20 +118,12 @@ class CustomGroupAdmin(GroupAdmin):
         return obj.user_set.count()
 
 
-class GroupFilter(AutocompleteFilter):
-    title = 'groups'
-    field_name = 'groups'
-
-
-class CustomUserAdmin(UserAdmin):
+class CustomUserAdmin(UserAdmin, AjaxAutocompleteListFilterModelAdmin):
     actions = ['activate_users', 'deactivate_users']
-    list_filter = ('is_active', 'is_staff', 'is_superuser', GroupFilter, 'date_joined')
+    list_filter = ('is_active', 'is_staff', 'is_superuser', 'date_joined')
     list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active',
                     'stats')
-
-    # required by django-admin-autocomplete-filter 0.5
-    class Media:
-        pass
+    autocomplete_list_filter = ('groups',)
 
     def activate_users(self, request, queryset):
         updated = queryset.update(is_active=True)
@@ -183,18 +175,6 @@ class CustomUserAdmin(UserAdmin):
 
     def get_readonly_fields(self, request, obj=None):
         return ('last_login', 'date_joined')
-
-    def get_urls(self):
-        urls = super().get_urls()
-        my_urls = [
-            path('autocomplete-batch-owner',
-                 self.admin_site.admin_view(BatchCreatorSearchView.as_view(model_admin=self)),
-                 name='turkle_autocomplete_batch_owner'),
-            path('autocomplete-project-owner',
-                 self.admin_site.admin_view(ProjectCreatorSearchView.as_view(model_admin=self)),
-                 name='turkle_autocomplete_project_owner'),
-        ]
-        return my_urls + urls
 
     def response_add(self, request, obj, post_url_continue=None):
         # if user clicks save, send to list of users rather than edit screen
@@ -435,46 +415,7 @@ def deactivate_projects(modeladmin, request, queryset):
 deactivate_projects.short_description = "Deactivate selected Projects"
 
 
-class BatchCreatorFilter(AutocompleteFilter):
-    title = 'creator'
-    field_name = 'created_by'
-
-    def get_autocomplete_url(self, request, model_admin):
-        return reverse('admin:turkle_autocomplete_batch_owner')
-
-
-class BatchCreatorSearchView(AutocompleteJsonView):
-    def get_queryset(self):
-        return super().get_queryset().exclude(created_batches=None)
-
-
-class ProjectCreatorFilter(AutocompleteFilter):
-    title = 'creator'
-    field_name = 'created_by'
-
-    def get_autocomplete_url(self, request, model_admin):
-        return reverse('admin:turkle_autocomplete_project_owner')
-
-
-class ProjectCreatorSearchView(AutocompleteJsonView):
-    def get_queryset(self):
-        return super().get_queryset().exclude(created_projects=None)
-
-
-class ProjectFilter(AutocompleteFilter):
-    title = 'project'
-    field_name = 'project'
-
-    def get_autocomplete_url(self, request, model_admin):
-        return reverse('admin:turkle_autocomplete_project_order_by_name')
-
-
-class ProjectSearchView(AutocompleteJsonView):
-    def get_queryset(self):
-        return super().get_queryset().order_by('name')
-
-
-class BatchAdmin(admin.ModelAdmin):
+class BatchAdmin(AjaxAutocompleteListFilterModelAdmin):
     actions = [activate_batches, deactivate_batches]
     form = BatchForm
     formfield_overrides = {
@@ -484,7 +425,8 @@ class BatchAdmin(admin.ModelAdmin):
         'name', 'project', 'is_active', 'assignments_completed',
         'stats', 'download_input', 'download_csv',
         )
-    list_filter = ('active', 'completed', BatchCreatorFilter, ProjectFilter)
+    list_filter = ('active', 'completed')
+    autocomplete_list_filter = ('project', 'created_by',)
     search_fields = ['name']
     autocomplete_fields = ['project']
 
@@ -929,14 +871,15 @@ class ProjectForm(ModelForm):
             return data
 
 
-class ProjectAdmin(GuardedModelAdmin):
+class ProjectAdmin(GuardedModelAdmin, AjaxAutocompleteListFilterModelAdmin):
     actions = [activate_projects, deactivate_projects]
     change_form_template = 'admin/turkle/project/change_form.html'
     form = ProjectForm
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
-    list_filter = ('active', ProjectCreatorFilter)
+    list_filter = ('active',)
+    autocomplete_list_filter = ('created_by',)
     search_fields = ['name']
 
     # Fieldnames are extracted from form text, and should not be edited directly
@@ -969,9 +912,6 @@ class ProjectAdmin(GuardedModelAdmin):
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [
-            path('autocomplete-order-by-name',
-                 self.admin_site.admin_view(ProjectSearchView.as_view(model_admin=self)),
-                 name='turkle_autocomplete_project_order_by_name'),
             path('<int:project_id>/activity.json',
                  self.admin_site.admin_view(self.activity_json),
                  name='turkle_project_activity_json'),
