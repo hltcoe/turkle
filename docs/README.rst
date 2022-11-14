@@ -49,7 +49,7 @@ Installation
 Turkle works with Python 3.6+.
 
 This Installation section covers the quickest and easiest way to use
-Turkle with a handful of users on your local network - using the
+Turkle with a handful of users on your local network by using the
 Django development web server with the SQLite database backend.
 
 If you want to use Turkle with more than a handful of Workers or host
@@ -60,6 +60,9 @@ documentation of production deployments included in the
 
 If you would like to use Turkle in a Docker container, see the 
 :doc:`Docker guide <DOCKER>`.
+
+If you would like to add Turkle to an existing Django-based site,
+see the :doc:`Django app <APP>` guide.
 
 
 Dependencies
@@ -95,7 +98,11 @@ Next, create an admin account::
 Upgrading
 ---------
 
-After copying over the new code, run the migrate script::
+After copying over the new code, update to the new Python dependencies in your virtual environment::
+
+    pip install -r requirements.txt
+
+Then run the migrate script to update your database::
 
     python manage.py migrate
 
@@ -130,12 +137,25 @@ Style Guideline
 
 Python code should be formatted according to `PEP 8`_.
 
+Building Docs
+-------------
+The Turkle documentation is built with Sphinx.
+To install::
+
+    pip install sphinx sphinx-rtd-theme
+
+To build from the docs directory::
+
+    make html
+
+
 Release process
 ---------------
 
  1. Set version number in ``turkle/__init__.py``
  2. Update ``CHANGELOG.md``
  3. Commit and tag version
+ 4. Deploy to PyPI
  
 .. _Django: https://www.djangoproject.com
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/

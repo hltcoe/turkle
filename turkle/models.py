@@ -1,6 +1,6 @@
 import csv
 import ctypes
-import datetime
+from datetime import timedelta
 import logging
 import os.path
 import re
@@ -8,10 +8,11 @@ import statistics
 import sys
 
 from bs4 import BeautifulSoup
-from django.contrib.auth.models import User
+from django.conf import settings
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.db.models import Count, IntegerField, OuterRef, Prefetch, Subquery
+from django.db.models import Count, IntegerField, Max, Q, OuterRef, Prefetch, Subquery
 from django.db.models.functions import Coalesce
 from django.utils import timezone
 from guardian.core import ObjectPermissionChecker
@@ -20,6 +21,8 @@ from guardian.shortcuts import assign_perm, get_group_perms, get_groups_with_per
 from jsonfield import JSONField
 
 from .utils import get_turkle_template_limit
+
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +33,49 @@ C_LONG_MAX = 2 ** (C_LONG_NUM_BITS-1) - 1
 # Note that field_size_limit converts its argument to a C long,
 # at least in Anaconda 3 on Windows 10.
 csv.field_size_limit(min(C_LONG_MAX, sys.maxsize))
+
+
+class ActiveUserManager(models.Manager):
+    """Query users by activity on assignments"""
+    def get_queryset(self, **kwargs):
+        # adds annotations for number of assignments and most recent assignment time
+        n_days = int(kwargs.get('n_days', 7))
+        time_cutoff = timezone.now() - timedelta(days=n_days)
+        active_users = super().get_queryset(). \
+            filter(Q(taskassignment__updated_at__gt=time_cutoff) &
+                   Q(taskassignment__completed=True)). \
+            distinct(). \
+            annotate(
+                total_assignments=Count('taskassignment',
+                                        filter=(Q(taskassignment__updated_at__gt=time_cutoff) &
+                                                Q(taskassignment__completed=True)))). \
+            annotate(last_finished_time=Max('taskassignment__updated_at',
+                                            filter=Q(taskassignment__completed=True)))
+        return active_users
+
+
+class ActiveUser(User):
+    """Proxy object for User that provides fields related to assignments.
+
+    The values for the additional fields come from annotations set by the manager.
+    """
+    objects = ActiveUserManager()
+
+    class Meta:
+        proxy = True
+        ordering = ['first_name']
+
+    def name(self):
+        return f"{self.first_name} {self.last_name}"
+    name.admin_order_field = 'first_name'
+
+    def completed_assignments(self):
+        return self.total_assignments
+    completed_assignments.admin_order_field = 'total_assignments'
+
+    def most_recent(self):
+        return self.last_finished_time
+    most_recent.admin_order_field = 'last_finished_time'
 
 
 class TaskAssignmentStatistics(object):
@@ -109,7 +155,8 @@ class TaskAssignment(models.Model):
         verbose_name = "Task Assignment"
 
     answers = JSONField(blank=True)
-    assigned_to = models.ForeignKey(User, db_index=True, null=True, on_delete=models.CASCADE)
+    assigned_to = models.ForeignKey(settings.AUTH_USER_MODEL, db_index=True, null=True,
+                                    on_delete=models.CASCADE)
     completed = models.BooleanField(db_index=True, default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField(null=True)
@@ -129,7 +176,7 @@ class TaskAssignment(models.Model):
         # set expires_at only when assignment is created
         if not self.id:
             self.expires_at = timezone.now() + \
-                datetime.timedelta(hours=self.task.batch.allotted_assignment_time)
+                timedelta(hours=self.task.batch.allotted_assignment_time)
 
         if 'csrfmiddlewaretoken' in self.answers:
             del self.answers['csrfmiddlewaretoken']
@@ -151,7 +198,7 @@ class TaskAssignment(models.Model):
         because "there are no native date/time fields in SQLite and
         Django currently emulates these features using a text field,"
         per the Django Docs:
-          https://docs.djangoproject.com/en/2.1/ref/models/querysets/#aggregation-functions
+          https://docs.djangoproject.com/en/3.1/ref/models/querysets/#aggregation-functions
 
         Returns:
             Integer for seconds elapsed between Task assignment and submission
@@ -180,8 +227,9 @@ class Batch(TaskAssignmentStatistics, models.Model):
     assignments_per_task = models.IntegerField(default=1, verbose_name='Assignments per Task')
     completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(User, null=True, related_name='created_batches',
-                                   on_delete=models.CASCADE, verbose_name='creator')
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
+                                   related_name='created_batches', on_delete=models.CASCADE,
+                                   verbose_name='creator')
     custom_permissions = models.BooleanField(default=False)
     filename = models.CharField(max_length=1024)
     login_required = models.BooleanField(db_index=True, default=True)
@@ -248,7 +296,7 @@ class Batch(TaskAssignmentStatistics, models.Model):
         #  "Aggregates may be used within a Subquery, but they require a specific
         #   combination of filter(), values(), and annotate() to get the subquery
         #   grouping correct."
-        #     https://docs.djangoproject.com/en/2.2/ref/models/expressions/#using-aggregates-within-a-subquery-expression
+        #     https://docs.djangoproject.com/en/3.1/ref/models/expressions/#using-aggregates-within-a-subquery-expression
         # The specific syntax we use here for count subqueries is adapted from:
         #   https://github.com/martsberger/django-sql-utils
         # where we are using the pattern:
@@ -704,7 +752,8 @@ class Project(TaskAssignmentStatistics, models.Model):
     allotted_assignment_time = models.IntegerField(default=24)
     assignments_per_task = models.IntegerField(db_index=True, default=1)
     created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(User, null=True, related_name='created_projects',
+    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
+                                   related_name='created_projects',
                                    on_delete=models.CASCADE, verbose_name='creator')
     custom_permissions = models.BooleanField(default=False)
     filename = models.CharField(max_length=1024, blank=True)
@@ -713,25 +762,12 @@ class Project(TaskAssignmentStatistics, models.Model):
     login_required = models.BooleanField(db_index=True, default=True)
     name = models.CharField(max_length=1024)
     updated_at = models.DateTimeField(auto_now=True)
-    updated_by = models.ForeignKey(User, null=True, related_name='updated_projects',
+    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
+                                   related_name='updated_projects',
                                    on_delete=models.CASCADE)
 
     # Fieldnames are automatically extracted from html_template text
     fieldnames = JSONField(blank=True)
-
-    @classmethod
-    def get_with_recently_updated_taskassignments(cls, n_days):
-        """Return QuerySet of Projects with TaskAssignments modified in last N days
-
-        Args:
-            n_days (int): Number of days to use for "recently updated" window
-        Returns:
-            QuerySet
-        """
-        recent_past = (datetime.datetime.now(datetime.timezone.utc) -
-                       datetime.timedelta(days=n_days))
-        return Project.objects.\
-            filter(batch__task__taskassignment__updated_at__gt=recent_past).distinct()
 
     def assignments_completed_by(self, user):
         """
@@ -831,3 +867,38 @@ class Project(TaskAssignmentStatistics, models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ActiveProjectManager(models.Manager):
+    """Query projects by activity on assignments"""
+    def get_queryset(self, **kwargs):
+        n_days = int(kwargs.get('n_days', 7))
+        time_cutoff = timezone.now() - timedelta(days=n_days)
+        return super().get_queryset().\
+            filter(Q(batch__task__taskassignment__updated_at__gt=time_cutoff) &
+                   Q(batch__task__taskassignment__completed=True)).\
+            distinct().\
+            annotate(assignments=Count(
+                'batch__task__taskassignment',
+                filter=(Q(batch__task__taskassignment__updated_at__gt=time_cutoff) &
+                        Q(batch__task__taskassignment__completed=True)))).\
+            annotate(last_finished_time=Max(
+                'batch__task__taskassignment__updated_at',
+                filter=Q(batch__task__taskassignment__completed=True)))
+
+
+class ActiveProject(Project):
+    """Proxy object for Project using annotations from its manager"""
+    objects = ActiveProjectManager()
+
+    class Meta:
+        proxy = True
+        ordering = ['name']
+
+    def completed_assignments(self):
+        return self.assignments
+    completed_assignments.admin_order_field = 'assignments'
+
+    def most_recent(self):
+        return self.last_finished_time
+    most_recent.admin_order_field = 'last_finished_time'

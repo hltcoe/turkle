@@ -2,6 +2,7 @@ import datetime
 from io import StringIO
 import os.path
 import time
+from unittest import mock
 
 from django.contrib.auth.models import AnonymousUser, Group, User
 from django.core.exceptions import ValidationError
@@ -10,176 +11,8 @@ from django.utils import timezone
 from guardian.shortcuts import assign_perm, get_group_perms
 
 from .utility import save_model
-from turkle.models import Task, TaskAssignment, Batch, Project
+from turkle.models import Task, TaskAssignment, Batch, Project, ActiveProject, ActiveProjectManager
 from turkle.utils import get_turkle_template_limit
-
-
-class TestTaskAssignment(django.test.TestCase):
-    def test_task_marked_as_completed(self):
-        # When assignment_per_task==1, completing 1 Assignment marks Task as complete
-        project = Project(name='test', html_template='<p>${number} - ${letter}</p><textarea>')
-        project.save()
-        batch = Batch(name='test', project=project)
-        batch.save()
-
-        task = Task(
-            batch=batch,
-            input_csv_fields={'number': '1', 'letter': 'a'}
-        )
-        task.save()
-
-        self.assertEqual(batch.assignments_per_task, 1)
-        self.assertFalse(task.completed)
-        self.assertFalse(batch.completed)
-
-        TaskAssignment(
-            assigned_to=None,
-            completed=True,
-            task=task
-        ).save()
-
-        task.refresh_from_db()
-        batch.refresh_from_db()
-        self.assertTrue(task.completed)
-        self.assertTrue(batch.completed)
-
-    def test_task_marked_as_completed_two_way_redundancy(self):
-        # When assignment_per_task==2, completing 2 Assignments marks Task as complete
-        project = Project(name='test', html_template='<p>${number} - ${letter}</p><textarea>')
-        project.save()
-        batch = Batch(name='test', project=project)
-        batch.assignments_per_task = 2
-        batch.save()
-
-        task = Task(
-            batch=batch,
-            input_csv_fields={'number': '1', 'letter': 'a'}
-        )
-        task.save()
-        self.assertFalse(task.completed)
-        self.assertFalse(batch.completed)
-
-        TaskAssignment(
-            assigned_to=None,
-            completed=True,
-            task=task
-        ).save()
-        task.refresh_from_db()
-        batch.refresh_from_db()
-        self.assertFalse(task.completed)
-        self.assertFalse(batch.completed)
-
-        TaskAssignment(
-            assigned_to=None,
-            completed=True,
-            task=task
-        ).save()
-        task.refresh_from_db()
-        batch.refresh_from_db()
-        self.assertTrue(task.completed)
-        self.assertTrue(batch.completed)
-
-    def test_expire_all_abandoned(self):
-        t = timezone.now()
-        dt = datetime.timedelta(hours=2)
-        past = t - dt
-
-        project = Project(login_required=False)
-        project.save()
-        batch = Batch(
-            allotted_assignment_time=1,
-            project=project
-        )
-        batch.save()
-        task = Task(batch=batch)
-        task.save()
-        ha = TaskAssignment(
-            completed=False,
-            expires_at=past,
-            task=task,
-        )
-        # Bypass TaskAssignment's save(), which updates expires_at
-        super(TaskAssignment, ha).save()
-        self.assertEqual(TaskAssignment.objects.count(), 1)
-        TaskAssignment.expire_all_abandoned()
-        self.assertEqual(TaskAssignment.objects.count(), 0)
-
-    def test_expire_all_abandoned__dont_delete_completed(self):
-        t = timezone.now()
-        dt = datetime.timedelta(hours=2)
-        past = t - dt
-
-        project = Project(login_required=False)
-        project.save()
-        batch = Batch(
-            allotted_assignment_time=1,
-            project=project
-        )
-        batch.save()
-        task = Task(batch=batch)
-        task.save()
-        ha = TaskAssignment(
-            completed=True,
-            expires_at=past,
-            task=task,
-        )
-        # Bypass TaskAssignment's save(), which updates expires_at
-        super(TaskAssignment, ha).save()
-        self.assertEqual(TaskAssignment.objects.count(), 1)
-        TaskAssignment.expire_all_abandoned()
-        self.assertEqual(TaskAssignment.objects.count(), 1)
-
-    def test_expire_all_abandoned__dont_delete_non_expired(self):
-        t = timezone.now()
-        dt = datetime.timedelta(hours=2)
-        future = t + dt
-
-        project = Project(login_required=False)
-        project.save()
-        batch = Batch(
-            allotted_assignment_time=1,
-            project=project
-        )
-        batch.save()
-        task = Task(batch=batch)
-        task.save()
-        ha = TaskAssignment(
-            completed=False,
-            expires_at=future,
-            task=task,
-        )
-        # Bypass TaskAssignment's save(), which updates expires_at
-        super(TaskAssignment, ha).save()
-        self.assertEqual(TaskAssignment.objects.count(), 1)
-        TaskAssignment.expire_all_abandoned()
-        self.assertEqual(TaskAssignment.objects.count(), 1)
-
-    def test_work_time_in_seconds(self):
-        project = Project.objects.create()
-        batch = Batch.objects.create(project=project)
-        task = Task.objects.create(batch=batch)
-        ta = TaskAssignment.objects.create(task=task)
-
-        em = 'Cannot compute work_time_in_seconds for incomplete TaskAssignment %d' % ta.id
-        with self.assertRaisesMessage(ValueError, em):
-            ta.work_time_in_seconds()
-
-        ta.completed = True
-        ta.save()
-        self.assertEqual(float(ta.work_time_in_seconds()).is_integer(), True)
-
-    def test_expire_time_not_updated_when_completed(self):
-        # expire_at should only be set when created, not when assignment submitted
-        project = Project.objects.create()
-        batch = Batch.objects.create(project=project)
-        task = Task.objects.create(batch=batch)
-        ta = TaskAssignment.objects.create(task=task)
-        expire_time = ta.expires_at
-        time.sleep(0.01)
-
-        ta.completed = True
-        ta.save()
-        self.assertEqual(expire_time, ta.expires_at)
 
 
 class TestBatch(django.test.TestCase):
@@ -910,11 +743,63 @@ class TestProject(django.test.TestCase):
             ).clean()
 
 
-class TestModels(django.test.TestCase):
+class TestActiveProjectManager(django.test.TestCase):
+    now = timezone.now()
+
+    @staticmethod
+    def create_project_with_assignment(completed, num_assignments=1):
+        project = Project(name='test', html_template='<p>${number}</p><textarea>')
+        project.save()
+        batch = Batch(name='test', project=project)
+        batch.save()
+        task = Task(batch=batch, input_csv_fields={'number': '1'})
+        task.save()
+        for _ in range(num_assignments):
+            TaskAssignment(
+                assigned_to=None,
+                completed=completed,
+                task=task
+            ).save()
+
+    @mock.patch("django.utils.timezone.now")
+    def test_get_queryset_filtering_projects_based_on_time(self, mock_now):
+        manager = ActiveProjectManager()
+        manager.model = ActiveProject
+        mock_now.return_value = self.now
+        self.create_project_with_assignment(True)
+        mock_now.return_value = self.now - datetime.timedelta(days=2)
+        self.create_project_with_assignment(True)
+
+        mock_now.return_value = self.now
+        self.assertEqual(1, len(manager.get_queryset(n_days=1)))
+        self.assertEqual(2, len(manager.get_queryset(n_days=3)))
+
+    @mock.patch("django.utils.timezone.now")
+    def test_get_queryset_filtering_projects_based_on_completed(self, mock_now):
+        manager = ActiveProjectManager()
+        manager.model = ActiveProject
+        mock_now.return_value = self.now
+        self.create_project_with_assignment(True)
+        self.create_project_with_assignment(False)
+
+        self.assertEqual(1, len(manager.get_queryset(n_days=1)))
+
+    @mock.patch("django.utils.timezone.now")
+    def test_get_queryset_set_assignments(self, mock_now):
+        manager = ActiveProjectManager()
+        manager.model = ActiveProject
+        mock_now.return_value = self.now
+        self.create_project_with_assignment(True, num_assignments=3)
+
+        project = manager.get_queryset(n_days=1)[0]
+        self.assertEqual(3, project.completed_assignments())
+
+
+class TestTask(django.test.TestCase):
 
     def setUp(self):
         """
-        Sets up Project, Task objects, and saves them to the DB.
+        Sets up Project, Batch, Task objects, and saves them to the DB.
         The Project form HTML only displays the one input variable.
         The Task has inputs and answers and refers to the Project form.
         """
@@ -1017,7 +902,7 @@ class TestModels(django.test.TestCase):
 
 
 class TestGenerateForm(django.test.TestCase):
-
+    """Tests generating the form for a Task from the template and csv data"""
     def setUp(self):
         with open('turkle/tests/resources/form_0.html') as f:
             html_template = f.read()
@@ -1086,7 +971,169 @@ class TestGenerateForm(django.test.TestCase):
         self.assertEqual(expect, actual)
 
 
-__all__ = (
-    'TestGenerateForm',
-    'TestModels',
-)
+class TestTaskAssignment(django.test.TestCase):
+    def test_task_marked_as_completed(self):
+        # When assignment_per_task==1, completing 1 Assignment marks Task as complete
+        project = Project(name='test', html_template='<p>${number} - ${letter}</p><textarea>')
+        project.save()
+        batch = Batch(name='test', project=project)
+        batch.save()
+
+        task = Task(
+            batch=batch,
+            input_csv_fields={'number': '1', 'letter': 'a'}
+        )
+        task.save()
+
+        self.assertEqual(batch.assignments_per_task, 1)
+        self.assertFalse(task.completed)
+        self.assertFalse(batch.completed)
+
+        TaskAssignment(
+            assigned_to=None,
+            completed=True,
+            task=task
+        ).save()
+
+        task.refresh_from_db()
+        batch.refresh_from_db()
+        self.assertTrue(task.completed)
+        self.assertTrue(batch.completed)
+
+    def test_task_marked_as_completed_two_way_redundancy(self):
+        # When assignment_per_task==2, completing 2 Assignments marks Task as complete
+        project = Project(name='test', html_template='<p>${number} - ${letter}</p><textarea>')
+        project.save()
+        batch = Batch(name='test', project=project)
+        batch.assignments_per_task = 2
+        batch.save()
+
+        task = Task(
+            batch=batch,
+            input_csv_fields={'number': '1', 'letter': 'a'}
+        )
+        task.save()
+        self.assertFalse(task.completed)
+        self.assertFalse(batch.completed)
+
+        TaskAssignment(
+            assigned_to=None,
+            completed=True,
+            task=task
+        ).save()
+        task.refresh_from_db()
+        batch.refresh_from_db()
+        self.assertFalse(task.completed)
+        self.assertFalse(batch.completed)
+
+        TaskAssignment(
+            assigned_to=None,
+            completed=True,
+            task=task
+        ).save()
+        task.refresh_from_db()
+        batch.refresh_from_db()
+        self.assertTrue(task.completed)
+        self.assertTrue(batch.completed)
+
+    def test_expire_all_abandoned(self):
+        t = timezone.now()
+        dt = datetime.timedelta(hours=2)
+        past = t - dt
+
+        project = Project(login_required=False)
+        project.save()
+        batch = Batch(
+            allotted_assignment_time=1,
+            project=project
+        )
+        batch.save()
+        task = Task(batch=batch)
+        task.save()
+        ha = TaskAssignment(
+            completed=False,
+            expires_at=past,
+            task=task,
+        )
+        # Bypass TaskAssignment's save(), which updates expires_at
+        super(TaskAssignment, ha).save()
+        self.assertEqual(TaskAssignment.objects.count(), 1)
+        TaskAssignment.expire_all_abandoned()
+        self.assertEqual(TaskAssignment.objects.count(), 0)
+
+    def test_expire_all_abandoned__dont_delete_completed(self):
+        t = timezone.now()
+        dt = datetime.timedelta(hours=2)
+        past = t - dt
+
+        project = Project(login_required=False)
+        project.save()
+        batch = Batch(
+            allotted_assignment_time=1,
+            project=project
+        )
+        batch.save()
+        task = Task(batch=batch)
+        task.save()
+        ha = TaskAssignment(
+            completed=True,
+            expires_at=past,
+            task=task,
+        )
+        # Bypass TaskAssignment's save(), which updates expires_at
+        super(TaskAssignment, ha).save()
+        self.assertEqual(TaskAssignment.objects.count(), 1)
+        TaskAssignment.expire_all_abandoned()
+        self.assertEqual(TaskAssignment.objects.count(), 1)
+
+    def test_expire_all_abandoned__dont_delete_non_expired(self):
+        t = timezone.now()
+        dt = datetime.timedelta(hours=2)
+        future = t + dt
+
+        project = Project(login_required=False)
+        project.save()
+        batch = Batch(
+            allotted_assignment_time=1,
+            project=project
+        )
+        batch.save()
+        task = Task(batch=batch)
+        task.save()
+        ha = TaskAssignment(
+            completed=False,
+            expires_at=future,
+            task=task,
+        )
+        # Bypass TaskAssignment's save(), which updates expires_at
+        super(TaskAssignment, ha).save()
+        self.assertEqual(TaskAssignment.objects.count(), 1)
+        TaskAssignment.expire_all_abandoned()
+        self.assertEqual(TaskAssignment.objects.count(), 1)
+
+    def test_work_time_in_seconds(self):
+        project = Project.objects.create()
+        batch = Batch.objects.create(project=project)
+        task = Task.objects.create(batch=batch)
+        ta = TaskAssignment.objects.create(task=task)
+
+        em = 'Cannot compute work_time_in_seconds for incomplete TaskAssignment %d' % ta.id
+        with self.assertRaisesMessage(ValueError, em):
+            ta.work_time_in_seconds()
+
+        ta.completed = True
+        ta.save()
+        self.assertEqual(float(ta.work_time_in_seconds()).is_integer(), True)
+
+    def test_expire_time_not_updated_when_completed(self):
+        # expire_at should only be set when created, not when assignment submitted
+        project = Project.objects.create()
+        batch = Batch.objects.create(project=project)
+        task = Task.objects.create(batch=batch)
+        ta = TaskAssignment.objects.create(task=task)
+        expire_time = ta.expires_at
+        time.sleep(0.01)
+
+        ta.completed = True
+        ta.save()
+        self.assertEqual(expire_time, ta.expires_at)

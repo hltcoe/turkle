@@ -1,0 +1,37 @@
+{% extends "turkle/task_base.html" %}
+{% load static %}
+
+{% block head %}
+{{ block.super }}
+<script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid content">
+  <div class="alert alert-primary my-2">
+    <h2 class="alert-heading text-center">This is only a preview.</h2>
+    <div class="text-center">Any changes will not be saved. You must accept the task first before working on it.</div>
+  </div>
+  <div class="task-preview">
+    <iframe src="{% url 'preview_iframe' task.id %}{{ http_get_params }}"
+            id="task_assignment_iframe">
+    </iframe>
+  </div>
+</div>
+{% endblock %}
+
+{% block subheader_right %}
+<div class="inline-form-buttons">
+  <form method="post" action="{% url 'accept_task' task.batch_id task.id %}">
+    {% csrf_token %}
+    <input type="submit" id="acceptButton" class="btn btn-sm btn-primary" value="Accept Task" />
+  </form>
+
+  <form method="post" action="{% url 'skip_task' task.batch_id task.id %}">
+    {% csrf_token %}
+    <input type="submit" id="skipButton" class="btn btn-sm btn-danger" value="Skip Task" />
+  </form>
+
+  <a href="{% url 'index' %}" role="button" class="btn btn-sm btn-danger">Stop Preview</a>
+</div>
+{% endblock %}

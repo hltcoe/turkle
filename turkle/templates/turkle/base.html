@@ -4,21 +4,33 @@
     <title>{{turkle_site_name}}</title>
     {% load static %}
     <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    {% load turkle_tags %}{% for tag in turkle_meta_tags %}{{ tag|meta_tag }}{% endfor %}
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon-32x32.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon-16x16.png' %}">
     <link href="{% static "turkle/css/turkle.css" %}" rel="stylesheet" type="text/css"/>
     <link href="{% static "turkle/bootstrap-4.1.3/css/bootstrap.min.css" %}" rel="stylesheet" type="text/css"/>
     <link href="{% static "turkle/bootstrap4-glyphicons/css/bootstrap-glyphicons.min.css" %}" rel="stylesheet" type="text/css"/>
-    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'favicon-32x32.png' %}">
-    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'favicon-16x16.png' %}">
-    {% block header %}
+    {% block head %}
     {% endblock %}
   </head>
   <body>
-    <div class="container-fluid">
-      <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid header">
+      <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand" href="{% url 'index' %}" title="Home">{{turkle_site_name}}</a>
         <ul class="navbar-nav mr-auto">
+          {% if user.is_staff %}
           <li class="nav-item active">
             <a class="nav-link" href="{% url 'admin:index' %}" title="Administration">Admin</a>
+          </li>
+          {% endif %}
+          {% if user.is_authenticated %}
+          <li class="nav-item active">
+            <a class="nav-link" href="{% url 'stats' %}" title="Your Progress">Stats</a>
+          </li>
+          {% endif %}
+          <li class="nav-item active">
+            <a class="nav-link" href="{% url 'help' %}">Help</a>
           </li>
         </ul>
         <span class="navbar-text">
@@ -31,7 +43,7 @@
           {% endif %}
         </span>
       </nav>
-      {% block header_row %}
+      {% block subheader %}
       {% endblock %}
 
       <div id="messages_container">

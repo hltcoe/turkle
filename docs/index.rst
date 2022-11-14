@@ -13,6 +13,7 @@ Welcome to Turkle's documentation!
    README.rst
    ADMINISTRATION.rst
    DOCKER.rst
+   APP.rst
    REQUESTERS.rst
    TEMPLATE-GUIDE.rst
 

@@ -1,0 +1,10 @@
+/* Turkle admin theme - see admin-turkle.css for app css */
+#footer {
+  background: #79aec8;
+  padding: 10px 40px;
+  border: none;
+  font-size: 14px;
+  color: #fff;
+  text-align: right;
+  margin-top: 4px;
+}

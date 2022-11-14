@@ -1,0 +1,141 @@
+{% extends "turkle/base.html" %}
+{% load static %}
+
+{% block head %}
+
+<link href="{% static 'turkle/cal-heatmap.css' %}" rel="stylesheet" type="text/css"/>
+
+<script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'turkle/d3-3.5.17.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'turkle/cal-heatmap-3.6.2.min.js' %}"></script>
+
+<script>
+$(document).ready(function() {
+  // Set startDate to include previous 11 months plus all of current month
+  var currentDate = new Date();
+  var year = currentDate.getFullYear();
+  var month = currentDate.getMonth(); // 0-indexed
+  month -= 11;
+  if (month < 0) {
+    month += 12;
+    year -= 1;
+  }
+  var startDate = new Date(year, month, 1);
+
+  // Use template variable for startDate if template variable defined
+  {% if start_date %}
+  startDate = new Date("{{ start_date }}");
+  {% endif %}
+
+  var cal = new CalHeatMap();
+  cal.init({
+    itemSelector: "#activity-calendar",
+    data: "{% url 'user_activity_json' user_id %}",
+    domain: "month",
+    subDomain: "day",
+    start: startDate,
+    weekStartOnMonday: false,
+  });
+});
+</script>
+{% endblock %}
+
+{% block body %}
+
+<div class="container-fluid mt-5">
+
+  <h2>Statistics for {{ full_name }}</h2>
+
+  <hr>
+
+  <form>
+    <div class="row">
+      <div class="col-sm">
+        <label for="start_date">Start Date:</label>
+        <input type="date" id="start_date" name="start_date"
+               {% if start_date %}value="{{ start_date }}"{% endif %}>
+      </div>
+      <div class="col-sm">
+        <label for="end_date">End Date:</label>
+        <input type="date" id="end_date" name="end_date"
+               {% if end_date %}value="{{ end_date }}"{% endif %}>
+      </div>
+      <div class="col-sm">
+        <input type="submit" id="submitButton" class="btn btn-primary"
+               value="Compute Statistics for Dates">
+      </div>
+    </div>
+  </form>
+
+  <hr>
+
+  <div id="activity-calendar-container" style="margin-bottom: 2em;">
+    <div id="activity-calendar"></div>
+  </div>
+
+  <h3>
+    Total Task Assignments: {{ total_completed }}
+    {% if not start_date and not end_date %}
+    (All time)
+    {% else %}
+    ({% if start_date %}{{ start_date }}{% endif %} - {% if end_date %}{{ end_date }}{% endif %})
+    {% endif %}
+  </h3>
+  <h3>Total Elapsed Time: {{ total_elapsed_time }}</h3>
+
+  <div>
+    <table class="table table-sm table-bordered thead-light">
+      <tr class="thead-dark">
+        <th scope="col" class="column-large"></th>
+        <th scope="col"># Tasks (Project)</th>
+        <th scope="col"># Tasks (Batch)</th>
+        <th scope="col">Elapsed Time (Project)</th>
+        <th scope="col">Elapsed Time (Batch)</th>
+      </tr>
+      {% for project in project_stats %}
+      <tr class="thead-light">
+        <th>
+          PROJECT: {{ project.project_name }}
+        </th>
+        <th>
+          {{ project.total_completed_project }}
+        </th>
+        <th></th>
+        <th>
+          {{ project.elapsed_time_project }}
+        </th>
+        <th></th>
+      </tr>
+      {% for batch in project.batch_stats %}
+      <tr>
+        <td class="pl-4 font-italic">
+            BATCH: {{ batch.batch_name }}
+        </td>
+        <td></td>
+        <td>
+          {{ batch.total_completed_batch }}
+        </td>
+        <td></td>
+        <td>
+          {{ batch.elapsed_time_batch }}
+        </td>
+      </tr>
+      {% endfor %}
+      {% endfor %}
+    </table>
+  </div>
+
+  <hr>
+
+  <div>
+    <b>Elapsed Time</b> is the time between when you Accept a Task
+    Assignment and when you Submit that Task Assignment.  Elapsed Time
+    is not the same thing as "time worked".  If you Accept a Task
+    Assignment, leave for lunch, and then Submit the task after lunch,
+    the amount of Elapsed Time will be longer than the amount of time
+    you spent working on the Task.
+  </div>
+
+</div>
+
+{% endblock %}

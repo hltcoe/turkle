@@ -1,0 +1,3 @@
+include requirements.txt
+recursive-include turkle/static *
+recursive-include turkle/templates *

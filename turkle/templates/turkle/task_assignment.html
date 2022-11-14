@@ -1,0 +1,83 @@
+{% extends "turkle/task_base.html" %}
+{% load static %}
+
+{% block head %}
+{{ block.super }}
+<script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
+<script type="text/javascript" src="{% static 'turkle/jquery.countdown-2.2.0.js' %}"></script>
+<script>
+$(function () {
+  var csrftoken = $("[name=csrfmiddlewaretoken]").val();
+
+  function csrfSafeMethod(method) {
+    // these HTTP methods do not require CSRF protection
+    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
+  }
+  $.ajaxSetup({
+    beforeSend: function(xhr, settings) {
+      if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+        xhr.setRequestHeader("X-CSRFToken", csrftoken);
+      }
+    }
+  });
+
+  $('#update_auto_accept').change(function() {
+    $.post("{% url 'update_auto_accept' %}", {'auto_accept': this.checked});
+  });
+
+  var expirationTime = new Date('{{ task_assignment.expires_at|date:'c' }}');
+  $("#expiration-timer").countdown(expirationTime)
+                        .on('update.countdown', function(event) {
+                          var format = '%I:%M';
+                          // if 3 full days left or more, display as days rather than hours:mins
+                          if (event.offset.totalDays > 2) {
+                            format = "%-D day%!D";
+                          }
+                          $(this).text(event.strftime('Expires in ' + format));
+                        })
+                        .on('finish.countdown', function(event) {
+                          // "Gray out" background of iFrame
+                          $('#iframe_container').css('background', '#000');
+                          $('#task_assignment_iframe').css('background', '#fff')
+                                                     .css('opacity', '0.8');
+                          $('#messages_container').append(
+                            $('<div>').addClass('alert alert-error').attr('role', 'alert')
+                                      .text('Task Assignment has expired'));
+                        });
+
+  $('#task_assignment_iframe').focus();
+});
+</script>
+{% endblock %}
+
+{% block body %}
+<div class="container-fluid content">
+  <iframe src="{% url 'task_assignment_iframe' task.id task_assignment.id %}{{ http_get_params }}"
+            id="task_assignment_iframe">
+  </iframe>
+</div>
+{% endblock %}
+
+{% block subheader_right %}
+<span>
+  <input type="checkbox" id="update_auto_accept"
+         {% if auto_accept_status %} checked="checked" {% endif %} >
+  <label class="form-check-label" for="update_auto_accept">Auto-accept next Task</label>
+</span>
+
+<div class="inline-form-buttons">
+  <form method="post" action="{% url 'return_task_assignment' task.id task_assignment.id %}">
+    {% csrf_token %}
+    <input type="submit" id="returnButton" class="btn btn-sm btn-danger" value="Return Task" />
+  </form>
+
+  <form method="post" action="{% url 'skip_and_accept_next_task' task.batch_id task.id task_assignment.id %}">
+    {% csrf_token %}
+    <input type="submit" id="skipButton" class="btn btn-sm btn-danger" value="Skip Task" />
+  </form>
+</div>
+
+<span class="pl-3">
+  <span id="expiration-timer" class="small"></span>
+</span>
+{% endblock %}

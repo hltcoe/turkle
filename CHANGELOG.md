@@ -5,6 +5,28 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Upgrade to Django 3.2
+
+## [2.7.0] - 2022-11-01
+### Changed
+ - Upgrade to Django 3.1
+ - Upgrade dependencies
+ - Made Turkle an installable package
+### Fixed
+ - postgres database support fixed
+
+## [2.6.2] - 2022-03-28
+### Added
+ - Adds `TURKLE_ANONYMOUS_TASKS` flag to turn off anonymous tasks
+
+## [2.6.1] - 2022-02-24
+### Fixed
+ - Display of password validation errors
+### Added
+ - Configurable metatags
+ - Hook in login template for consent banner
+ - Documentation for configuring email behind reverse proxy
 
 ## [2.6.0] - 2022-02-03
 ### Fixed

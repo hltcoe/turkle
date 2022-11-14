@@ -1,28 +1,31 @@
 from bisect import bisect_left
 from collections import defaultdict
 import csv
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from io import StringIO
 import json
 import logging
 import statistics
 
-from admin_auto_filters.filters import AutocompleteFilter
-from admin_auto_filters.views import AutocompleteJsonView
+from djaa_list_filter.admin import AjaxAutocompleteListFilterModelAdmin
+
 from django.contrib import admin, messages
-from django.contrib.admin.widgets import FilteredSelectMultiple
-from django.contrib.auth.admin import GroupAdmin, UserAdmin
-from django.contrib.auth.models import Group, User
 from django.contrib.admin.templatetags.admin_list import _boolean_icon
+from django.contrib.admin.views.main import ChangeList
+from django.contrib.admin.widgets import FilteredSelectMultiple
+from django.contrib.auth import get_user_model
+from django.contrib.auth.admin import GroupAdmin, UserAdmin
+from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
-from django.db.models import Count, DurationField, ExpressionWrapper, F, Max, Q
-from django.forms import (FileField, FileInput, HiddenInput, IntegerField,
+from django.db.models import DurationField, ExpressionWrapper, F
+from django.forms import (FileField, FileInput, HiddenInput, IntegerField, Media,
                           ModelForm, ModelMultipleChoiceField, TextInput, ValidationError, Widget)
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.templatetags.static import static
 from django.urls import path, reverse
+from django.utils import timezone
 from django.utils.html import format_html, format_html_join
 from django.utils.translation import ngettext
 from guardian.admin import GuardedModelAdmin
@@ -30,34 +33,16 @@ from guardian.shortcuts import (assign_perm, get_groups_with_perms, get_users_wi
                                 remove_perm)
 import humanfriendly
 
-from .models import Batch, Project, TaskAssignment
-from .utils import get_site_name, get_turkle_template_limit
+from .models import ActiveUser, ActiveProject, Batch, Project, TaskAssignment
+from .utils import are_anonymous_tasks_allowed, get_turkle_template_limit
+
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 
 
 def _format_timespan(sec):
     return '{} ({:,}s)'.format(humanfriendly.format_timespan(sec, max_units=6), sec)
-
-
-class TurkleAdminSite(admin.AdminSite):
-    app_index_template = 'admin/turkle/app_index.html'
-    site_header = get_site_name() + ' administration'
-    site_title = get_site_name() + ' site admin'
-
-    def expire_abandoned_assignments(self, request):
-        (total_deleted, _) = TaskAssignment.expire_all_abandoned()
-        messages.info(request, 'All {} abandoned Tasks have been expired'.format(total_deleted))
-        return redirect(reverse('turkle_admin:index'))
-
-    def get_urls(self):
-        urls = super().get_urls()
-        my_urls = [
-            path('expire_abandoned_assignments/',
-                 self.admin_view(self.expire_abandoned_assignments),
-                 name='expire_abandoned_assignments'),
-        ]
-        return my_urls + urls
 
 
 class UserFullnameMultipleChoiceField(ModelMultipleChoiceField):
@@ -133,20 +118,12 @@ class CustomGroupAdmin(GroupAdmin):
         return obj.user_set.count()
 
 
-class GroupFilter(AutocompleteFilter):
-    title = 'groups'
-    field_name = 'groups'
-
-
-class CustomUserAdmin(UserAdmin):
+class CustomUserAdmin(UserAdmin, AjaxAutocompleteListFilterModelAdmin):
     actions = ['activate_users', 'deactivate_users']
-    list_filter = ('is_active', 'is_staff', 'is_superuser', GroupFilter, 'date_joined')
+    list_filter = ('is_active', 'is_staff', 'is_superuser', 'date_joined')
     list_display = ('username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active',
                     'stats')
-
-    # required by django-admin-autocomplete-filter 0.5
-    class Media:
-        pass
+    autocomplete_list_filter = ('groups',)
 
     def activate_users(self, request, queryset):
         updated = queryset.update(is_active=True)
@@ -199,22 +176,10 @@ class CustomUserAdmin(UserAdmin):
     def get_readonly_fields(self, request, obj=None):
         return ('last_login', 'date_joined')
 
-    def get_urls(self):
-        urls = super().get_urls()
-        my_urls = [
-            path('autocomplete-batch-owner',
-                 self.admin_site.admin_view(BatchCreatorSearchView.as_view(model_admin=self)),
-                 name='autocomplete_batch_owner'),
-            path('autocomplete-project-owner',
-                 self.admin_site.admin_view(ProjectCreatorSearchView.as_view(model_admin=self)),
-                 name='autocomplete_project_owner'),
-        ]
-        return my_urls + urls
-
     def response_add(self, request, obj, post_url_continue=None):
         # if user clicks save, send to list of users rather than edit screen
         if '_save' in request.POST:
-            return redirect(reverse('turkle_admin:auth_user_changelist'))
+            return redirect(reverse('admin:auth_user_changelist'))
         return super().response_add(request, obj, post_url_continue)
 
     def stats(self, obj):
@@ -248,7 +213,7 @@ class ProjectNameReadOnlyWidget(Widget):
         return format_html(
             '<div class="readonly"><a href="{}">{}</a></div>'
             '<input name="project" id="id_project" type="hidden" value="{}" />'.format(
-                reverse('turkle_admin:turkle_project_change', args=[self.project_id]),
+                reverse('admin:turkle_project_change', args=[self.project_id]),
                 self.project_name, self.project_id))
 
 
@@ -295,6 +260,10 @@ class BatchForm(ModelForm):
 
         self.fields['active'].help_text = 'Workers can only access a Batch if both the Batch ' + \
             'itself and the associated Project are Active.'
+
+        if not are_anonymous_tasks_allowed():
+            # default value of login_required is True
+            self.fields['login_required'].widget = HiddenInput()
 
         if self.instance._state.adding and 'project' in self.initial:
             # We are adding a new Batch where the associated Project has been specified.
@@ -446,46 +415,7 @@ def deactivate_projects(modeladmin, request, queryset):
 deactivate_projects.short_description = "Deactivate selected Projects"
 
 
-class BatchCreatorFilter(AutocompleteFilter):
-    title = 'creator'
-    field_name = 'created_by'
-
-    def get_autocomplete_url(self, request, model_admin):
-        return reverse('turkle_admin:autocomplete_batch_owner')
-
-
-class BatchCreatorSearchView(AutocompleteJsonView):
-    def get_queryset(self):
-        return super().get_queryset().exclude(created_batches=None)
-
-
-class ProjectCreatorFilter(AutocompleteFilter):
-    title = 'creator'
-    field_name = 'created_by'
-
-    def get_autocomplete_url(self, request, model_admin):
-        return reverse('turkle_admin:autocomplete_project_owner')
-
-
-class ProjectCreatorSearchView(AutocompleteJsonView):
-    def get_queryset(self):
-        return super().get_queryset().exclude(created_projects=None)
-
-
-class ProjectFilter(AutocompleteFilter):
-    title = 'project'
-    field_name = 'project'
-
-    def get_autocomplete_url(self, request, model_admin):
-        return reverse('turkle_admin:autocomplete_project_order_by_name')
-
-
-class ProjectSearchView(AutocompleteJsonView):
-    def get_queryset(self):
-        return super().get_queryset().order_by('name')
-
-
-class BatchAdmin(admin.ModelAdmin):
+class BatchAdmin(AjaxAutocompleteListFilterModelAdmin):
     actions = [activate_batches, deactivate_batches]
     form = BatchForm
     formfield_overrides = {
@@ -495,13 +425,15 @@ class BatchAdmin(admin.ModelAdmin):
         'name', 'project', 'is_active', 'assignments_completed',
         'stats', 'download_input', 'download_csv',
         )
-    list_filter = ('active', 'completed', BatchCreatorFilter, ProjectFilter)
+    list_filter = ('active', 'completed')
+    autocomplete_list_filter = ('project', 'created_by',)
     search_fields = ['name']
     autocomplete_fields = ['project']
 
-    # required by django-admin-autocomplete-filter 0.5
     class Media:
-        pass
+        css = {
+            'all': ('turkle/css/admin-turkle.css',),
+        }
 
     def assignments_completed(self, obj):
         tfa = obj.total_finished_task_assignments()
@@ -539,7 +471,7 @@ class BatchAdmin(admin.ModelAdmin):
             batch = Batch.objects.get(id=batch_id)
         except ObjectDoesNotExist:
             messages.error(request, 'Cannot find Batch with ID {}'.format(batch_id))
-            return redirect(reverse('turkle_admin:turkle_batch_changelist'))
+            return redirect(reverse('admin:turkle_batch_changelist'))
 
         tasks = batch.finished_task_assignments()\
             .annotate(duration=ExpressionWrapper(F('updated_at') - F('created_at'),
@@ -610,7 +542,7 @@ class BatchAdmin(admin.ModelAdmin):
         except ObjectDoesNotExist:
             messages.error(request, 'Cannot find Batch with ID {}'.format(batch_id))
 
-        return redirect(reverse('turkle_admin:turkle_batch_changelist'))
+        return redirect(reverse('admin:turkle_batch_changelist'))
 
     def change_view(self, request, object_id, form_url='', extra_context=None):
         extra_context = extra_context or {}
@@ -625,11 +557,11 @@ class BatchAdmin(admin.ModelAdmin):
         return super().changelist_view(request, extra_context=c)
 
     def download_csv(self, obj):
-        download_url = reverse('turkle_admin:download_batch', kwargs={'batch_id': obj.id})
+        download_url = reverse('admin:turkle_download_batch', kwargs={'batch_id': obj.id})
         return format_html('<a href="{}" class="button">CSV results</a>'.format(download_url))
 
     def download_input(self, obj):
-        download_url = reverse('turkle_admin:download_batch_input', kwargs={'batch_id': obj.id})
+        download_url = reverse('admin:turkle_download_batch_input', kwargs={'batch_id': obj.id})
         return format_html('<a href="{}" class="button">CSV input</a>'.format(download_url))
 
     def get_fieldsets(self, request, obj=None):
@@ -689,23 +621,24 @@ class BatchAdmin(admin.ModelAdmin):
         urls = super().get_urls()
         my_urls = [
             path('<int:batch_id>/cancel/',
-                 self.admin_site.admin_view(self.cancel_batch), name='cancel_batch'),
+                 self.admin_site.admin_view(self.cancel_batch), name='turkle_cancel_batch'),
             path('<int:batch_id>/review/',
-                 self.admin_site.admin_view(self.review_batch), name='review_batch'),
+                 self.admin_site.admin_view(self.review_batch), name='turkle_review_batch'),
             path('<int:batch_id>/publish/',
-                 self.admin_site.admin_view(self.publish_batch), name='publish_batch'),
+                 self.admin_site.admin_view(self.publish_batch), name='turkle_publish_batch'),
             path('<int:batch_id>/download/',
-                 self.admin_site.admin_view(self.download_batch), name='download_batch'),
+                 self.admin_site.admin_view(self.download_batch), name='turkle_download_batch'),
             path('<int:batch_id>/input/',
                  self.admin_site.admin_view(self.download_batch_input),
-                 name='download_batch_input'),
+                 name='turkle_download_batch_input'),
             path('<int:batch_id>/activity.json',
-                 self.admin_site.admin_view(self.activity_json), name='batch_activity_json'),
+                 self.admin_site.admin_view(self.activity_json),
+                 name='turkle_batch_activity_json'),
             path('<int:batch_id>/stats/',
-                 self.admin_site.admin_view(self.batch_stats), name='batch_stats'),
+                 self.admin_site.admin_view(self.batch_stats), name='turkle_batch_stats'),
             path('update_csv_line_endings',
                  self.admin_site.admin_view(self.update_csv_line_endings),
-                 name='update_csv_line_endings'),
+                 name='turkle_update_csv_line_endings'),
         ]
         return my_urls + urls
 
@@ -718,7 +651,7 @@ class BatchAdmin(admin.ModelAdmin):
         except ObjectDoesNotExist:
             messages.error(request, 'Cannot find Batch with ID {}'.format(batch_id))
 
-        return redirect(reverse('turkle_admin:turkle_batch_changelist'))
+        return redirect(reverse('admin:turkle_batch_changelist'))
 
     def download_batch(self, request, batch_id):
         batch = Batch.objects.get(id=batch_id)
@@ -747,12 +680,12 @@ class BatchAdmin(admin.ModelAdmin):
         return response
 
     def response_add(self, request, obj, post_url_continue=None):
-        return redirect(reverse('turkle_admin:review_batch', kwargs={'batch_id': obj.id}))
+        return redirect(reverse('admin:turkle_review_batch', kwargs={'batch_id': obj.id}))
 
     def response_change(self, request, obj):
         # catch unpublished batch when saved to redirect to review page
         if not obj.published:
-            return redirect(reverse('turkle_admin:review_batch', kwargs={'batch_id': obj.id}))
+            return redirect(reverse('admin:turkle_review_batch', kwargs={'batch_id': obj.id}))
         return super().response_change(request, obj)
 
     def review_batch(self, request, batch_id):
@@ -761,7 +694,7 @@ class BatchAdmin(admin.ModelAdmin):
             batch = Batch.objects.get(id=batch_id)
         except ObjectDoesNotExist:
             messages.error(request, 'Cannot find Batch with ID {}'.format(batch_id))
-            return redirect(reverse('turkle_admin:turkle_batch_changelist'))
+            return redirect(reverse('admin:turkle_batch_changelist'))
 
         task_ids = list(batch.task_set.values_list('id', flat=True))
         task_ids_as_json = json.dumps(task_ids)
@@ -771,6 +704,11 @@ class BatchAdmin(admin.ModelAdmin):
             'task_ids_as_json': task_ids_as_json,
             'site_header': self.admin_site.site_header,
             'site_title': self.admin_site.site_title,
+            'title': 'Review Batch',
+            'media': Media(self.Media),
+            # below is for the breadcrumbs
+            'opts': self.model._meta,
+            'has_view_permission': self.has_view_permission(request, batch),
         })
 
     def save_model(self, request, obj, form, change):
@@ -831,7 +769,7 @@ class BatchAdmin(admin.ModelAdmin):
                 remove_perm('can_work_on_batch', user, obj)
 
     def stats(self, obj):
-        stats_url = reverse('turkle_admin:batch_stats', kwargs={'batch_id': obj.id})
+        stats_url = reverse('admin:turkle_batch_stats', kwargs={'batch_id': obj.id})
         return format_html('<a href="{}" class="button">Stats</a>'.
                            format(stats_url))
 
@@ -875,6 +813,10 @@ class ProjectForm(ModelForm):
         # customized admin template file:
         #   turkle/templates/admin/turkle/project/change_form.html
         self.fields['filename'].widget = HiddenInput()
+
+        if not are_anonymous_tasks_allowed():
+            # default value of login_required is True
+            self.fields['login_required'].widget = HiddenInput()
 
         self.fields['allotted_assignment_time'].label = 'Allotted Assignment Time (hours)'
         self.fields['allotted_assignment_time'].help_text = 'If a user abandons a Task, ' + \
@@ -929,59 +871,25 @@ class ProjectForm(ModelForm):
             return data
 
 
-class ProjectAdmin(GuardedModelAdmin):
+class ProjectAdmin(GuardedModelAdmin, AjaxAutocompleteListFilterModelAdmin):
     actions = [activate_projects, deactivate_projects]
     change_form_template = 'admin/turkle/project/change_form.html'
     form = ProjectForm
     formfield_overrides = {
         models.CharField: {'widget': TextInput(attrs={'size': '60'})},
     }
-    list_filter = ('active', ProjectCreatorFilter)
+    list_filter = ('active',)
+    autocomplete_list_filter = ('created_by',)
     search_fields = ['name']
 
     # Fieldnames are extracted from form text, and should not be edited directly
     exclude = ('fieldnames',)
     readonly_fields = ('extracted_template_variables',)
 
-    # required by django-admin-autocomplete-filter 0.5
     class Media:
-        pass
-
-    def active_projects(self, request):
-        if 'days' in request.GET:
-            days = int(request.GET['days'])
-        else:
-            days = 7
-
-        projects = Project.get_with_recently_updated_taskassignments(days)
-        return render(request, 'admin/turkle/active_projects.html', {
-            'days': days,
-            'projects': projects,
-        })
-
-    def active_users(self, request):
-        if 'days' in request.GET:
-            days = int(request.GET['days'])
-        else:
-            days = 7
-        recent_past = datetime.now(timezone.utc) - timedelta(days=days)
-
-        active_users = User.objects.\
-            filter(Q(taskassignment__updated_at__gt=recent_past) &
-                   Q(taskassignment__completed=True)).\
-            distinct().\
-            annotate(
-                total_assignments=Count('taskassignment',
-                                        filter=(Q(taskassignment__updated_at__gt=recent_past) &
-                                                Q(taskassignment__completed=True)))).\
-            annotate(last_finished_time=Max('taskassignment__updated_at',
-                                            filter=Q(taskassignment__completed=True)))
-        active_user_count = active_users.count()
-        return render(request, 'admin/turkle/active_users.html', {
-            'active_users': active_users,
-            'active_user_count': active_user_count,
-            'days': days,
-        })
+        css = {
+            'all': ('turkle/css/admin-turkle.css',),
+        }
 
     def activity_json(self, request, project_id):
         try:
@@ -1004,17 +912,16 @@ class ProjectAdmin(GuardedModelAdmin):
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [
-            path('autocomplete-order-by-name',
-                 self.admin_site.admin_view(ProjectSearchView.as_view(model_admin=self)),
-                 name='autocomplete_project_order_by_name'),
             path('<int:project_id>/activity.json',
-                 self.admin_site.admin_view(self.activity_json), name='project_activity_json'),
+                 self.admin_site.admin_view(self.activity_json),
+                 name='turkle_project_activity_json'),
             path('<int:project_id>/stats/',
-                 self.admin_site.admin_view(self.project_stats), name='project_stats'),
+                 self.admin_site.admin_view(self.project_stats), name='turkle_project_stats'),
+            # backward compatibility for active-projects and active-users.
             path('active-projects/',
-                 self.admin_site.admin_view(self.active_projects), name='active_projects'),
+                 lambda x: redirect(reverse('admin:turkle_activeproject_changelist'))),
             path('active-users/',
-                 self.admin_site.admin_view(self.active_users), name='active_users'),
+                 lambda x: redirect(reverse('admin:turkle_activeuser_changelist'))),
         ]
         return my_urls + urls
 
@@ -1086,7 +993,7 @@ class ProjectAdmin(GuardedModelAdmin):
             project = Project.objects.get(id=project_id)
         except ObjectDoesNotExist:
             messages.error(request, 'Cannot find Project with ID {}'.format(project_id))
-            return redirect(reverse('turkle_admin:turkle_project_changelist'))
+            return redirect(reverse('admin:turkle_project_changelist'))
 
         tasks = project.finished_task_assignments()\
             .annotate(duration=ExpressionWrapper(F('updated_at') - F('created_at'),
@@ -1179,7 +1086,7 @@ class ProjectAdmin(GuardedModelAdmin):
             })
 
         if tasks:
-            now = datetime.now(timezone.utc)
+            now = timezone.now()
             tca_1_day = len(tasks) - bisect_left(tasks_updated_at, now - timedelta(days=1))
             tca_7_day = len(tasks) - bisect_left(tasks_updated_at, now - timedelta(days=7))
             tca_30_day = len(tasks) - bisect_left(tasks_updated_at, now - timedelta(days=30))
@@ -1226,7 +1133,7 @@ class ProjectAdmin(GuardedModelAdmin):
 
     def publish_tasks(self, instance):
         publish_tasks_url = '%s?project=%d' % (
-            reverse('turkle_admin:turkle_batch_add'),
+            reverse('admin:turkle_batch_add'),
             instance.id)
         return format_html('<a href="{}" class="button">Publish Tasks</a>'.
                            format(publish_tasks_url))
@@ -1275,13 +1182,167 @@ class ProjectAdmin(GuardedModelAdmin):
         super().delete_model(request, obj)
 
     def stats(self, obj):
-        stats_url = reverse('turkle_admin:project_stats', kwargs={'project_id': obj.id})
+        stats_url = reverse('admin:turkle_project_stats', kwargs={'project_id': obj.id})
         return format_html('<a href="{}" class="button">Stats</a>'.
                            format(stats_url))
 
 
-admin_site = TurkleAdminSite(name='turkle_admin')
-admin_site.register(Group, CustomGroupAdmin)
-admin_site.register(User, CustomUserAdmin)
-admin_site.register(Batch, BatchAdmin)
-admin_site.register(Project, ProjectAdmin)
+class ViewOnlyAdminMixin:
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+class TaskAssignmentAdmin(ViewOnlyAdminMixin, admin.ModelAdmin):
+    """View for assignments to expire abandoned ones"""
+
+    class Media:
+        css = {
+            'all': ('turkle/css/admin-turkle.css',),
+        }
+
+    def changelist_view(self, request, extra_context=None):
+        num_incomplete_tasks = TaskAssignment.objects.\
+            filter(completed=False).\
+            count()
+        num_expired_tasks = TaskAssignment.objects.\
+            filter(completed=False).\
+            filter(expires_at__lt=timezone.now()).\
+            count()
+        extra_context = {
+            'num_incomplete_tasks': num_incomplete_tasks,
+            'num_expired_tasks': num_expired_tasks
+        }
+        return super().changelist_view(request, extra_context)
+
+    @staticmethod
+    def expire_abandoned_assignments(request):
+        (total_deleted, _) = TaskAssignment.expire_all_abandoned()
+        messages.info(request, 'All {} abandoned Tasks have been expired'.format(total_deleted))
+        return redirect(reverse('admin:turkle_taskassignment_changelist'))
+
+    def get_urls(self):
+        urls = super().get_urls()
+        my_urls = [
+            path('expire_abandoned_assignments/',
+                 self.admin_site.admin_view(self.expire_abandoned_assignments),
+                 name='turkle_expire_abandoned_assignments'),
+        ]
+        return my_urls + urls
+
+
+class ActiveObjectPeriodListFilter(admin.SimpleListFilter):
+    """Filter active objects by period of activity"""
+    title = 'active period'
+    parameter_name = 'period'
+    default_value = '7'
+
+    def lookups(self, request, model_admin):
+        return (
+            ('1', 'last 1 day'),
+            ('2', 'last 2 days'),
+            ('7', 'last 7 days'),
+            ('30', 'last 30 days'),
+        )
+
+    def choices(self, changelist):
+        # override to remove 'All' as a choice
+        for lookup, title in self.lookup_choices:
+            yield {
+                'selected': self.value() == str(lookup),
+                'query_string': changelist.get_query_string({self.parameter_name: lookup}),
+                'display': title,
+            }
+
+    def value(self):
+        # override to provide a default value
+        period_value = super().value()
+        return period_value if period_value else self.default_value
+
+    def queryset(self, request, queryset):
+        # handling of filter value is done in model admin, so return queryset as is
+        return queryset
+
+
+class ActiveUserChangeList(ChangeList):
+    def url_for_result(self, result):
+        # change URL for active user to point to stats page
+        return reverse('stats_for_user', kwargs={'user_id': result.id})
+
+
+class ActiveUserAdmin(ViewOnlyAdminMixin, admin.ModelAdmin):
+    """Active user admin with recency filter.
+
+    ActiveUser is a proxy class for User. Its manager queries based on recent assignments.
+    This Admin is view only and customized with a period filter.
+    Passing a value to the original queryset is non-standard in Django and must be done
+    because of the way we are querying for active users.
+    """
+    list_display = ('name', 'username', 'completed_assignments', 'most_recent')
+    list_filter = (ActiveObjectPeriodListFilter,)
+    list_per_page = 20
+    preserve_filters = False
+
+    def get_changelist(self, request, **kwargs):
+        return ActiveUserChangeList
+
+    def get_queryset(self, request):
+        # override to pass n_days from filter directly to manager
+        period = request.GET.get(ActiveObjectPeriodListFilter.parameter_name,
+                                 ActiveObjectPeriodListFilter.default_value)
+        qs = self.model._default_manager.get_queryset(n_days=period)
+        # in some future version of Django, this might be handled by the ChangeList
+        # see to do comment in django/contrib/admin/options.py
+        ordering = self.get_ordering(request)
+        if ordering:
+            qs = qs.order_by(*ordering)
+        return qs
+
+
+class ActiveProjectChangeList(ChangeList):
+    def url_for_result(self, result):
+        # change URL for active project to point to stats page
+        return reverse('admin:turkle_project_stats', kwargs={'project_id': result.id})
+
+
+class ActiveProjectAdmin(ViewOnlyAdminMixin, admin.ModelAdmin):
+    """Active project admin with recency filter."""
+    list_display = ('name', 'created_by', 'completed_assignments', 'most_recent')
+    list_filter = (ActiveObjectPeriodListFilter,)
+    list_per_page = 20
+    preserve_filters = False
+
+    def get_changelist(self, request, **kwargs):
+        return ActiveProjectChangeList
+
+    def get_queryset(self, request):
+        # override to pass n_days from filter directly to manager
+        period = request.GET.get(ActiveObjectPeriodListFilter.parameter_name,
+                                 ActiveObjectPeriodListFilter.default_value)
+        qs = self.model._default_manager.get_queryset(n_days=period)
+        # in some future version of Django, this might be handled by the ChangeList
+        # see to do comment in django/contrib/admin/options.py
+        ordering = self.get_ordering(request)
+        if ordering:
+            qs = qs.order_by(*ordering)
+        return qs
+
+
+# replace default Group and User admin with ours
+if admin.site.is_registered(Group):
+    admin.site.unregister(Group)
+if admin.site.is_registered(User):
+    admin.site.unregister(User)
+admin.site.register(Group, CustomGroupAdmin)
+admin.site.register(User, CustomUserAdmin)
+
+admin.site.register(ActiveUser, ActiveUserAdmin)
+admin.site.register(ActiveProject, ActiveProjectAdmin)
+admin.site.register(Batch, BatchAdmin)
+admin.site.register(Project, ProjectAdmin)
+admin.site.register(TaskAssignment, TaskAssignmentAdmin)

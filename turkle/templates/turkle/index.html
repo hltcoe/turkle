@@ -1,0 +1,76 @@
+{% extends "turkle/base.html" %}
+{% load static %}
+
+{% block body %}
+
+{% if abandoned_assignments %}
+<div class="container-fluid">
+  {% for aa in abandoned_assignments %}
+  <div class="alert alert-warning clearfix" role="alert">
+    <div class="float-left">
+      You have abandoned <b>Task {{ aa.task.id }}</b>
+      from Project <b>{{ aa.task.batch.project.name }}</b>,
+      Batch <b>{{ aa.task.batch.name }}</b>
+    </div>
+
+    <div class="float-right">
+      <div class="inline-form-buttons">
+        <a href="{% url 'task_assignment' aa.task.id aa.task_assignment_id %}" class="btn btn-sm btn-primary">
+          Resume working on Task
+        </a>
+        <form method="post" action="{% url 'return_task_assignment' aa.task.id aa.task_assignment_id %}">
+          {% csrf_token %}
+          <input type="submit" class="btn btn-sm btn-primary" value="Return Task" />
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{% block content %}
+{% endblock %}
+
+<div class="container-fluid content mt-2">
+  {% if batch_rows %}
+  <table class="table table-bordered table-hover">
+    <tr class="thead-dark">
+      <th>Project</th>
+      <th>Batch</th>
+      <th>Batch Published</th>
+      <th>Tasks Available</th>
+      <th></th>
+      <th></th>
+    </tr>
+    {% for batch_row in batch_rows %}
+    <tr>
+      <td>{{ batch_row.project_name }}</td>
+      <td>{{ batch_row.batch_name }}</td>
+      <td>{{ batch_row.batch_published }}</td>
+      <td>{{ batch_row.assignments_available }}</td>
+      <td>
+        <a href="{{ batch_row.preview_next_task_url }}" role="button" class="btn btn-sm btn-primary">
+          Preview next Task
+        </a>
+      </td>
+      <td>
+        <form method="post" action="{{ batch_row.accept_next_task_url }}">
+          {% csrf_token %}
+          <input type="submit" class="btn btn-sm btn-primary" value="Accept next Task" />
+        </form>
+      </td>
+    </tr>
+    {% endfor %}
+  </table>
+  {% else %}
+  <h1>No Tasks available at this time</h1>
+  {% if not user.is_authenticated  %}
+  <h4>
+    You may need to <a href="{% url 'login' %}">Login</a> to see available Tasks
+  </h4>
+  {% endif %}
+  {% endif %}
+</div>
+
+{% endblock %}

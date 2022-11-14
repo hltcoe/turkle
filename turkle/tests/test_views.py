@@ -7,6 +7,7 @@ from guardian.shortcuts import assign_perm
 from .utility import save_model
 
 from turkle.models import Task, TaskAssignment, Batch, Project
+from turkle.views import parse_date_with_timezone
 
 
 class TestAcceptTask(TestCase):
@@ -153,8 +154,8 @@ class TestAcceptNextTask(TestCase):
 
         # Per the Django docs:
         #   To modify the session and then save it, it must be stored in a variable first
-        #   (because a new SessionStore is created every time this property is accessed
-        #     https://docs.djangoproject.com/en/1.11/topics/testing/tools/#persistent-state
+        #   (because a new SessionStore is created every time this property is accessed)
+        #   https://docs.djangoproject.com/en/3.1/topics/testing/tools/#persistent-state
         s = client.session
         s.update({
             'skipped_tasks_in_batch': {str(self.batch.id): [str(self.task.id)]}
@@ -230,7 +231,7 @@ class TestDownloadBatchCSV(TestCase):
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        download_url = reverse('turkle_admin:download_batch', kwargs={'batch_id': self.batch.id})
+        download_url = reverse('admin:turkle_download_batch', kwargs={'batch_id': self.batch.id})
         response = client.get(download_url)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.get('Content-Disposition'),
@@ -239,7 +240,7 @@ class TestDownloadBatchCSV(TestCase):
     def test_get_as_rando(self):
         client = django.test.Client()
         client.login(username='not_admin', password='secret')
-        download_url = reverse('turkle_admin:download_batch', kwargs={'batch_id': self.batch.id})
+        download_url = reverse('admin:turkle_download_batch', kwargs={'batch_id': self.batch.id})
         response = client.get(download_url)
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], '/admin/login/?next=%s' % download_url)
@@ -1005,6 +1006,14 @@ class TestStats(django.test.TestCase):
     def setUp(self):
         self.user = User.objects.create_user('mr.user', 'foo@bar.foo', 'secret')
         self.staff = User.objects.create_user('ms.staff', 'foo@bar.foo', 'secret', is_staff=True)
+
+    def test_parse_date_with_timezone_with_valid_string(self):
+        dt = parse_date_with_timezone("2022-04-01")
+        self.assertEqual(dt.year, 2022)
+        self.assertEqual(dt.month, 4)
+        self.assertEqual(dt.day, 1)
+        self.assertEqual(dt.hour, 0)
+        self.assertIsNotNone(dt.tzinfo)
 
     def test_stats_self(self):
         client = django.test.Client()

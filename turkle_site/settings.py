@@ -30,6 +30,9 @@ DATABASES = {
     }
 }
 
+# Use an Integer as the default primary key
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
+
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
@@ -109,7 +112,7 @@ INSTALLED_APPS = (
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
     'guardian',
-    'admin_auto_filters',
+    'djaa_list_filter',
 )
 
 AUTHENTICATION_BACKENDS = (
@@ -133,7 +136,13 @@ FILE_UPLOAD_MAX_MEMORY_SIZE = 104857600
 # max size of template in KB
 TURKLE_TEMPLATE_LIMIT = 64
 
+LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'index'
+LOGOUT_REDIRECT_URL = 'index'
+
+# HTML HEAD <meta> tags: list of dictionaries where each dictionary is a tag
+# Ex: {'name': 'robots', 'content': 'noindex'} renders as <meta name="robots" content="noindex">
+META_TAGS = []
 
 # If True, the "Password Reset" link will be added to the login form.
 # This requires MTA configuration.

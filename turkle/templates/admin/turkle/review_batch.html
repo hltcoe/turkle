@@ -1,5 +1,10 @@
 {% extends "admin/base_site.html" %}
-{% load static %}
+{% load static admin_urls %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  {{ media.css }}
+{% endblock %}
 
 {% block extrahead %}
 {{ block.super }}
@@ -38,8 +43,16 @@ $(function () {
 </script>
 {% endblock %}
 
-{% block content %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">Home</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+&rsaquo; {% if has_view_permission %}<a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>{% else %}{{ opts.verbose_name_plural|capfirst }}{% endif %}
+&rsaquo; Review Batch
+</div>
+{% endblock %}
 
+{% block content %}
 <div class="clearfix container">
   <div class="float-right">
     <span class="inline-form-buttons">
@@ -49,12 +62,12 @@ $(function () {
 
       <a href="#" id="next_task" role="button" class="btn btn-sm btn-info">Next Task</a>
 
-      <form method="post" action="{% url 'turkle_admin:publish_batch' batch_id  %}">
+      <form method="post" action="{% url 'admin:turkle_publish_batch' batch_id  %}">
         {% csrf_token %}
         <input type="submit" id="publishButton" value="Publish Batch" />
       </form>
 
-      <form method="post" action="{% url 'turkle_admin:cancel_batch' batch_id %}">
+      <form method="post" action="{% url 'admin:turkle_cancel_batch' batch_id %}">
         {% csrf_token %}
         <input type="submit" id="cancelButton" value="Cancel Batch" />
       </form>
@@ -72,5 +85,4 @@ $(function () {
   </div>
 
 </div>
-
 {% endblock %}

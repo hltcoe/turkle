@@ -1,20 +1,25 @@
 from collections import defaultdict
+from datetime import datetime, timedelta
 from functools import wraps
 import logging
 import urllib
 
+from django.conf import settings
 from django.contrib import messages
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
-from django.db import transaction
+from django.db import connection, transaction
 from django.db.utils import OperationalError
 from django.http import JsonResponse
 from django.shortcuts import redirect, render
 from django.urls import reverse
-from django.utils.datastructures import MultiValueDictKeyError
+from django.utils import timezone
 from django.utils.dateparse import parse_date
+from django.utils.datastructures import MultiValueDictKeyError
 
 from .models import Task, TaskAssignment, Batch, Project
+
+User = get_user_model()
 
 logger = logging.getLogger(__name__)
 
@@ -73,7 +78,7 @@ def index(request):
                 'accept_next_task_url': reverse('accept_next_task',
                                                 kwargs={'batch_id': batch['id']})
             })
-    return render(request, 'index.html', {
+    return render(request, 'turkle/index.html', {
         'abandoned_assignments': abandoned_assignments,
         'batch_rows': batch_rows
     })
@@ -141,7 +146,12 @@ def accept_next_task(request, batch_id):
 
             # Lock access to all Tasks available to current user in the batch
             # Force evaluation of the query set with len()
-            len(batch.available_task_ids_for(request.user).select_for_update())
+            # But postgres does not support select_for_update() with outer join
+            if connection.vendor != "postgresql":
+                len(batch.available_task_ids_for(request.user).select_for_update())
+            else:
+                # Locks a few more tasks for multiple annotation batches than above
+                len(batch.unfinished_tasks().select_for_update())
 
             task_id = _skip_aware_next_available_task_id(request, batch)
 
@@ -169,7 +179,7 @@ def accept_next_task(request, batch_id):
 
 
 def help_page(request):
-    return render(request, 'help.html')
+    return render(request, 'turkle/help.html')
 
 
 def task_assignment(request, task_id, task_assignment_id):
@@ -220,7 +230,7 @@ def task_assignment(request, task_id, task_assignment_id):
                 safe=''))
         return render(
             request,
-            'task_assignment.html',
+            'turkle/task_assignment.html',
             {
                 'auto_accept_status': auto_accept_status,
                 'http_get_params': http_get_params,
@@ -273,7 +283,7 @@ def task_assignment_iframe(request, task_id, task_assignment_id):
 
     return render(
         request,
-        'task_assignment_iframe.html',
+        'turkle/task_assignment_iframe.html',
         {
             'task': task,
             'task_assignment': task_assignment,
@@ -299,7 +309,7 @@ def preview(request, task_id):
 
     http_get_params = "?assignmentId=ASSIGNMENT_ID_NOT_AVAILABLE&hitId={}".format(
         task.id)
-    return render(request, 'preview.html', {
+    return render(request, 'turkle/preview.html', {
         'http_get_params': http_get_params,
         'task': task
     })
@@ -321,7 +331,7 @@ def preview_iframe(request, task_id):
         messages.error(request, 'You do not have permission to view this Task')
         return redirect(index)
 
-    return render(request, 'preview_iframe.html', {'task': task})
+    return render(request, 'turkle/preview_iframe.html', {'task': task})
 
 
 def preview_next_task(request, batch_id):
@@ -403,6 +413,15 @@ def stats_for_self(request):
     return stats_for_user(request, request.user.id)
 
 
+def parse_date_with_timezone(value):
+    """wrapper for Django's parse_date() that uses timezone when appropriate"""
+    date = parse_date(value)
+    dt = datetime(date.year, date.month, date.day)
+    if settings.USE_TZ:
+        dt = timezone.make_aware(dt)
+    return dt
+
+
 def stats_for_user(request, user_id):
     def format_seconds(s):
         """Converts seconds to string"""
@@ -419,11 +438,11 @@ def stats_for_user(request, user_id):
         return redirect(index)
 
     try:
-        start_date = parse_date(request.GET['start_date'])
+        start_date = parse_date_with_timezone(request.GET['start_date'])
     except MultiValueDictKeyError:
         start_date = None
     try:
-        end_date = parse_date(request.GET['end_date'])
+        end_date = parse_date_with_timezone(request.GET['end_date'])
     except MultiValueDictKeyError:
         end_date = None
 
@@ -431,7 +450,8 @@ def stats_for_user(request, user_id):
     if start_date:
         tas = tas.filter(updated_at__gte=start_date)
     if end_date:
-        tas = tas.filter(updated_at__lte=end_date)
+        # adds a day to include assignments completed on the selected end date
+        tas = tas.filter(updated_at__lte=end_date + timedelta(days=1))
 
     projects = Project.objects.filter(batch__task__taskassignment__assigned_to=user).\
         distinct()
@@ -477,7 +497,7 @@ def stats_for_user(request, user_id):
 
     return render(
         request,
-        'stats.html',
+        'turkle/stats.html',
         {
             'project_stats': project_stats,
             'end_date': end_date,

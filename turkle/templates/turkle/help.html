@@ -1,0 +1,48 @@
+{% extends "turkle/base.html" %}
+{% load static %}
+
+{% block body %}
+
+<div class="container mt-4">
+  <h2>Help</h2>
+  <div class="row">
+    <div class="col-sm">
+      <h5>Accept next Task</h5>
+      <hr>
+      <p>
+        The task is assigned to you.
+        If you do not finish it, you will be reminded on the main page that you have abandoned the task.
+        If you do not complete it by the deadline, it is returned to the task list.
+      </p>
+    </div>
+    <div class="col-sm">
+      <h5>Auto-accept next Task</h5>
+      <hr>
+      <p>
+        Rather than being returned to the main page each time, the next task is automatically assigned to you.
+      </p>
+    </div>
+  </div>
+  <div class="row">
+    <div class="col-sm">
+      <h5>Return Task</h5>
+      <hr>
+      <p>
+        Returns the currently assigned task so that it is no longer assigned to you.
+        If you accept a task from the same batch, that returned task could be assigned to you again.
+        If you do not want to work on that particular task, you should skip it.
+      </p>
+    </div>
+    <div class="col-sm">
+      <h5>Skip Task</h5>
+      <hr>
+      <p>
+        Skip to the next available task in the Batch.
+        The task is removed from your assignments.
+        You may see it again if all other tasks have been completed and no one else completed it.
+      </p>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
