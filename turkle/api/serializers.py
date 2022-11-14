@@ -38,6 +38,11 @@ class GroupSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
+    """
+    Serializer for the User object
+
+    Required fields: username, password
+    """
     groups = serializers.SlugRelatedField(many=True, read_only=True, slug_field='name')
     is_active = serializers.BooleanField(default=True)
     password = serializers.CharField(write_only=True)
@@ -52,6 +57,8 @@ class UserSerializer(serializers.ModelSerializer):
         user.set_password(validated_data['password'])
         user.save()
         return user
+
+
 
 
 class ProjectSerializer(serializers.ModelSerializer):

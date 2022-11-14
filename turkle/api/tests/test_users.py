@@ -1,10 +1,15 @@
 from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APITestCase
+
+from . import TurkleAPITestCase
 
 
-class UsersTests(APITestCase):
+class UsersTests(TurkleAPITestCase):
+    """
+    Turkle adds an anonymous user and then TurkleAPITestCase.setUp() adds a root user for authentication
+    """
+
     def test_create(self):
         url = reverse('users-list')
         data = {
@@ -15,15 +20,16 @@ class UsersTests(APITestCase):
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(User.objects.count(), 2)  # anonymous user is user 1
+        self.assertEqual(User.objects.count(), self.root.id + 1)  # user added after the root user in setUp()
         self.assertEqual(User.objects.get(username='testuser').first_name, 'Test')
 
     def test_list(self):
         url = reverse('users-list')
         response = self.client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+        self.assertEqual(len(response.data), 2)
         self.assertEqual(response.data[0]['username'], 'AnonymousUser')
+        self.assertEqual(response.data[1]['username'], 'root')
 
     def test_retrieve(self):
         url = reverse('users-details', args=[1])
@@ -32,7 +38,7 @@ class UsersTests(APITestCase):
         self.assertEqual(response.data['username'], 'AnonymousUser')
 
     def test_retrieve_with_bad_id(self):
-        url = reverse('users-details', args=[2])
+        url = reverse('users-details', args=[99])
         response = self.client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 

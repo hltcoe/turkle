@@ -1,10 +1,15 @@
 from django.contrib.auth.models import Group, User
 from django.urls import reverse
 from rest_framework import status
-from rest_framework.test import APITestCase
+
+from . import TurkleAPITestCase
 
 
-class GroupsTests(APITestCase):
+class GroupsTests(TurkleAPITestCase):
+    """
+    Turkle is created with a default Turkle User Admin group.
+    """
+
     def test_create(self):
         url = reverse('groups-list')
         data = {
