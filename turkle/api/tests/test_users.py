@@ -11,7 +11,7 @@ class UsersTests(TurkleAPITestCase):
     """
 
     def test_create(self):
-        url = reverse('users-list')
+        url = reverse('users-list-create')
         data = {
             'username': 'testuser',
             'first_name': 'Test',
@@ -24,7 +24,7 @@ class UsersTests(TurkleAPITestCase):
         self.assertEqual(User.objects.get(username='testuser').first_name, 'Test')
 
     def test_list(self):
-        url = reverse('users-list')
+        url = reverse('users-list-create')
         response = self.client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)

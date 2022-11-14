@@ -11,7 +11,7 @@ class GroupsTests(TurkleAPITestCase):
     """
 
     def test_create(self):
-        url = reverse('groups-list')
+        url = reverse('groups-list-create')
         data = {
             'name': 'New Group',
             'users': ['AnonymousUser'],
@@ -22,7 +22,7 @@ class GroupsTests(TurkleAPITestCase):
         self.assertEqual(User.objects.get(username='AnonymousUser').groups.all()[0].name, 'New Group')
 
     def test_list(self):
-        url = reverse('groups-list')
+        url = reverse('groups-list-create')
         response = self.client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
