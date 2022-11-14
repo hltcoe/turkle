@@ -59,13 +59,27 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
-
-
 class ProjectSerializer(serializers.ModelSerializer):
-    created_by = UserSerializer()
-    updated_by = UserSerializer()
+    created_by = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        default=serializers.CurrentUserDefault()
+    )
+    updated_by = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        default=serializers.CurrentUserDefault()
+    )
+    active = serializers.BooleanField(default=True)
+    login_required = serializers.BooleanField(default=True)
 
     class Meta:
         model = Project
         fields = ['id', 'name', 'created_at', 'created_by', 'updated_at', 'updated_by',
-                  'active', 'allotted_assignment_time', 'assignments_per_task']
+                  'active', 'allotted_assignment_time', 'assignments_per_task', 'login_required',
+                  'html_template']
+
+    def get_fields(self):
+        # Optionally remove fields that shouldn't be serialized as set in view
+        fields = super().get_fields()
+        for field in self.turkle_exclude_fields:
+            fields.pop(field, default=None)
+        return fields

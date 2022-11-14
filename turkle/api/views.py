@@ -1,21 +1,23 @@
 from django.contrib.auth.models import Group, User
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, viewsets
-from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from ..models import Project
 from .serializers import GroupSerializer, ProjectSerializer, UserSerializer
 
 
-class ProjectList(APIView):
-    """
-    List all snippets, or create a new snippet.
-    """
-    def get(self, request, format=None):
-        projects = Project.objects.all()
-        serializer = ProjectSerializer(projects, many=True)
-        return Response(serializer.data)
+class ProjectListCreate(generics.ListCreateAPIView):
+    queryset = Project.objects.all()
+    serializer_class = ProjectSerializer
+
+    def get(self, request, *args, **kwargs):
+        self.serializer_class.turkle_exclude_fields = ['html_template']
+        return super().get(request, *args, **kwargs)
+
+    def post(self, request, *args, **kwargs):
+        self.serializer_class.turkle_exclude_fields = []
+        return self.create(request, *args, **kwargs)
 
 
 class GroupListCreate(generics.ListCreateAPIView):
