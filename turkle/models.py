@@ -793,6 +793,7 @@ class Project(TaskAssignmentStatistics, models.Model):
             return True
 
     def clean(self):
+        # duplicated in ProjectSerializer
         super().clean()
         if len(self.html_template) > get_turkle_template_limit(True):
             raise ValidationError({'html_template': 'Template is too large'}, code='invalid')
@@ -800,6 +801,24 @@ class Project(TaskAssignmentStatistics, models.Model):
             raise ValidationError('When login is not required to access the Project, ' +
                                   'the number of Assignments per Task must be 1')
         self.process_template()
+
+    def process_template(self):
+        # duplicated in ProjectSerializer
+        soup = BeautifulSoup(self.html_template, 'html.parser')
+        self.html_template_has_submit_button = bool(soup.select('input[type=submit]'))
+
+        # Extract fieldnames from html_template text, save fieldnames as keys of JSON dict
+        unique_fieldnames = set(re.findall(r'\${(\w+)}', self.html_template))
+        self.fieldnames = dict((fn, True) for fn in unique_fieldnames)
+
+        # Matching mTurk we confirm at least one input, select, or textarea
+        if soup.find('input') is None and soup.find('select') is None \
+                and soup.find('textarea') is None:
+            msg = "Template does not contain any fields for responses. " + \
+                  "Please include at least one field (input, select, or textarea)." + \
+                  "This usually means you are generating HTML with JavaScript." + \
+                  "If so, add an unused hidden input."
+            raise ValidationError({'html_template': msg}, code='invalid')
 
     def copy_permissions_to_batches(self):
         """Copy permissions from this Project to all associated Batches
@@ -828,23 +847,6 @@ class Project(TaskAssignmentStatistics, models.Model):
         """
         return TaskAssignment.objects.filter(task__batch__project_id=self.id)\
                                      .filter(completed=True)
-
-    def process_template(self):
-        soup = BeautifulSoup(self.html_template, 'html.parser')
-        self.html_template_has_submit_button = bool(soup.select('input[type=submit]'))
-
-        # Extract fieldnames from html_template text, save fieldnames as keys of JSON dict
-        unique_fieldnames = set(re.findall(r'\${(\w+)}', self.html_template))
-        self.fieldnames = dict((fn, True) for fn in unique_fieldnames)
-
-        # Matching mTurk we confirm at least one input, select, or textarea
-        if soup.find('input') is None and soup.find('select') is None \
-                and soup.find('textarea') is None:
-            msg = "Template does not contain any fields for responses. " + \
-                  "Please include at least one field (input, select, or textarea)." + \
-                  "This usually means you are generating HTML with JavaScript." + \
-                  "If so, add an unused hidden input."
-            raise ValidationError({'html_template': msg}, code='invalid')
 
     def total_assignments_completed_by(self, user):
         """
