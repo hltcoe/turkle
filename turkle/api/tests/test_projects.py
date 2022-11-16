@@ -1,4 +1,3 @@
-from django.contrib.auth.models import User
 from django.urls import reverse
 from rest_framework import status
 
@@ -12,7 +11,8 @@ class ProjectsTests(TurkleAPITestCase):
         url = reverse('projects-list-create')
         data = {
             'name': 'Project 1',
-            'html_template': '<html><label>${field1}</label><input type="text"><input type="submit"></html>'
+            'html_template': '<html><label>${field1}</label><input type="text"><input type="submit"></html>',
+            'filename': 'template.html'
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -26,7 +26,8 @@ class ProjectsTests(TurkleAPITestCase):
         url = reverse('projects-list-create')
         data = {
             'name': 'Project 1',
-            'html_template': ''
+            'html_template': '',
+            'filename': 'template.html'
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -36,6 +37,7 @@ class ProjectsTests(TurkleAPITestCase):
         url = reverse('projects-list-create')
         data = {
             'name': 'Project 1',
+            'filename': 'template.html'
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -45,7 +47,8 @@ class ProjectsTests(TurkleAPITestCase):
         url = reverse('projects-list-create')
         data = {
             'name': 'Project 1',
-            'html_template': '<html></html>'
+            'html_template': '<html></html>',
+            'filename': 'template.html'
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)

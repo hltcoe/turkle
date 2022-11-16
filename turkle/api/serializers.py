@@ -1,10 +1,12 @@
+import csv
+import io
 import re
 
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import Group, User
 from rest_framework import serializers
 
-from ..models import Project
+from ..models import Batch, Project
 from ..utils import get_turkle_template_limit
 
 
@@ -72,6 +74,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         queryset=User.objects.all(),
         default=serializers.CurrentUserDefault()
     )
+    filename = serializers.CharField(required=True)
     active = serializers.BooleanField(default=True)
     login_required = serializers.BooleanField(default=True)
 
@@ -79,7 +82,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         model = Project
         fields = ['id', 'name', 'created_at', 'created_by', 'updated_at', 'updated_by',
                   'active', 'allotted_assignment_time', 'assignments_per_task', 'login_required',
-                  'html_template']
+                  'filename', 'html_template']
 
     def get_fields(self):
         # Optionally remove fields that shouldn't be serialized - set fields in view
@@ -116,3 +119,45 @@ class ProjectSerializer(serializers.ModelSerializer):
         attrs['fieldnames'] = dict((fn, True) for fn in unique_fieldnames)
 
         return attrs
+
+
+class BatchSerializer(serializers.ModelSerializer):
+    created_by = serializers.PrimaryKeyRelatedField(
+        queryset=User.objects.all(),
+        default=serializers.CurrentUserDefault()
+    )
+    filename = serializers.CharField(required=True)
+    csv_text = serializers.CharField(required=True, write_only=True)
+    active = serializers.BooleanField(default=True)
+    published = serializers.BooleanField(default=True)
+    login_required = serializers.BooleanField(default=True)
+    project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all())
+
+    class Meta:
+        model = Batch
+        fields = ['id', 'name', 'created_at', 'created_by', 'project', 'filename', 'csv_text',
+                  'active', 'allotted_assignment_time', 'assignments_per_task', 'login_required',
+                  'completed', 'published']
+
+    def validate(self, attrs):
+        if 'assignments_per_task' in attrs and not attrs['login_required'] and attrs['assignments_per_task'] != 1:
+            msg = "When login is not required to access the Project, the number of Assignments per Task must be 1"
+            raise serializers.ValidationError({'assignments_per_task': msg})
+        return attrs
+
+    def create(self, validated_data):
+        csv_text = validated_data.pop('csv_text')
+        instance = super().create(validated_data)
+
+        csv_fh = io.StringIO(csv_text)
+        csv_fields = set(next(csv.reader(csv_fh)))
+        csv_fh.seek(0)
+
+        template_fields = set(instance.project.fieldnames)
+        if csv_fields != template_fields:
+            # should we error here? If so, move to validate
+            # html interface sets a warning if this happens
+            pass
+        instance.create_tasks_from_csv(csv_fh)
+
+        return instance
