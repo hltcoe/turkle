@@ -49,14 +49,6 @@ class UserListCreate(generics.ListCreateAPIView):
     serializer_class = UserSerializer
 
 
-class UsernameViewSet(viewsets.ViewSet):
-    def retrieve(self, request, pk=None):
-        queryset = User.objects.filter(username=pk)
-        user = get_object_or_404(queryset)
-        serializer = UserSerializer(user)
-        return Response(serializer.data)
-
-
 class UserRetrieveUpdateDestroy(generics.RetrieveUpdateDestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
