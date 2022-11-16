@@ -1,7 +1,7 @@
 from django.urls import reverse
 from rest_framework import status
 
-from turkle.models import Batch, Project, Task
+from turkle.models import Batch, Project
 
 from . import TurkleAPITestCase
 

@@ -27,3 +27,14 @@ class GroupsTests(TurkleAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]['name'], 'Turkle User Admin')
+
+    def test_retrieve(self):
+        url = reverse('groups-details', args=[1])
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['name'], 'Turkle User Admin')
+
+    def test_retrieve_with_bad_id(self):
+        url = reverse('groups-details', args=[99])
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
