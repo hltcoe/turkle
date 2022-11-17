@@ -73,7 +73,7 @@ class UsersTests(TurkleAPITestCase):
         self.assertEqual(response.data['first_name'], 'Test')
         self.assertEqual(response.data['last_name'], 'User')
         user = User.objects.get(username='testuser')
-        #self.assertTrue(user.check_password('qwerty'))
+        self.assertTrue(user.check_password('qwerty'))
 
     def test_put_missing_required_field(self):
         url = reverse('users-details', args=[1])
