@@ -4,7 +4,7 @@ from rest_framework.schemas import get_schema_view
 from rest_framework.renderers import JSONOpenAPIRenderer
 
 from .views import BatchListCreate, BatchRetrieve, GroupListCreate, GroupRetrieve, ProjectListCreate, ProjectRetrieve,\
-    UserListCreate, UserRetrieveUpdateDestroy
+    UserListCreate, UserRetrieveUpdate
 from ..utils import get_site_name
 
 
@@ -25,5 +25,5 @@ urlpatterns = [
     path('projects/', ProjectListCreate.as_view(), name='projects-list-create'),
     path('projects/<int:pk>', ProjectRetrieve.as_view(), name='projects-details'),
     path('users/', UserListCreate.as_view(), name='users-list-create'),
-    path('users/<int:pk>', UserRetrieveUpdateDestroy.as_view(), name='users-details'),
+    path('users/<int:pk>', UserRetrieveUpdate.as_view(), name='users-details'),
 ]
