@@ -84,13 +84,6 @@ class ProjectSerializer(serializers.ModelSerializer):
                   'active', 'allotted_assignment_time', 'assignments_per_task', 'login_required',
                   'filename', 'html_template']
 
-    def get_fields(self):
-        # Optionally remove fields that shouldn't be serialized - set fields in view
-        fields = super().get_fields()
-        for field in self.turkle_exclude_fields:
-            fields.pop(field, default=None)
-        return fields
-
     def validate(self, attrs):
         # duplicate model validation as drf doesn't call model clean()
         # for a discussion on this see https://github.com/encode/django-rest-framework/discussions/7850

@@ -29,22 +29,10 @@ class ProjectListCreate(generics.ListCreateAPIView):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
 
-    def get(self, request, *args, **kwargs):
-        self.serializer_class.turkle_exclude_fields = ['html_template']
-        return super().get(request, *args, **kwargs)
-
-    def post(self, request, *args, **kwargs):
-        self.serializer_class.turkle_exclude_fields = []
-        return self.create(request, *args, **kwargs)
-
 
 class ProjectRetrieve(generics.RetrieveAPIView):
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
-
-    def get(self, request, *args, **kwargs):
-        self.serializer_class.turkle_exclude_fields = []
-        return super().get(request, *args, **kwargs)
 
 
 class UserListCreate(generics.ListCreateAPIView):
