@@ -93,12 +93,16 @@ class ProjectSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         # duplicate model validation as drf doesn't call model clean()
-        # for a discussion on this see https://github.com/encode/django-rest-framework/discussions/7850
-        # also, any validation that occurs after create() is called leaves behind the object in the database
+        # for a discussion on this see:
+        # https://github.com/encode/django-rest-framework/discussions/7850
+        # also, any validation that occurs after create() is called leaves
+        # behind the object in the database so we do it all in this function
         if len(attrs['html_template']) > get_turkle_template_limit(True):
             raise serializers.ValidationError({'html_template': 'Template is too large'})
-        if 'assignments_per_task' in attrs and not attrs['login_required'] and attrs['assignments_per_task'] != 1:
-            msg = "When login is not required to access the Project, the number of Assignments per Task must be 1"
+        if 'assignments_per_task' in attrs and not attrs['login_required'] and \
+                attrs['assignments_per_task'] != 1:
+            msg = "When login is not required to access the Project, " \
+                  "the number of Assignments per Task must be 1"
             raise serializers.ValidationError({'assignments_per_task': msg})
 
         # This code is derived from process_template()
@@ -140,8 +144,10 @@ class BatchSerializer(serializers.ModelSerializer):
                   'completed', 'published']
 
     def validate(self, attrs):
-        if 'assignments_per_task' in attrs and not attrs['login_required'] and attrs['assignments_per_task'] != 1:
-            msg = "When login is not required to access the Project, the number of Assignments per Task must be 1"
+        if 'assignments_per_task' in attrs and not attrs['login_required'] and \
+                attrs['assignments_per_task'] != 1:
+            msg = "When login is not required to access the Project, " \
+                  "the number of Assignments per Task must be 1"
             raise serializers.ValidationError({'assignments_per_task': msg})
         return attrs
 

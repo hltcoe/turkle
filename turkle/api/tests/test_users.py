@@ -7,7 +7,7 @@ from . import TurkleAPITestCase
 
 class UsersTests(TurkleAPITestCase):
     """
-    Turkle adds an anonymous user and then TurkleAPITestCase.setUp() adds a root user for authentication
+    Turkle adds an anonymous user and TurkleAPITestCase.setUp() adds a root user for authentication
     """
 
     def test_create(self):
@@ -20,7 +20,8 @@ class UsersTests(TurkleAPITestCase):
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(User.objects.count(), self.root.id + 1)  # user added after the root user in setUp()
+        # user added after the root user in setUp()
+        self.assertEqual(User.objects.count(), self.root.id + 1)
         user = User.objects.get(username='testuser')
         self.assertEqual(user.first_name, 'Test')
         self.assertTrue(user.check_password('password'))
@@ -53,7 +54,8 @@ class UsersTests(TurkleAPITestCase):
 
     def test_patch_more_than_one_field(self):
         url = reverse('user-detail', args=[1])
-        response = self.client.patch(url, {'first_name': 'Ted', 'last_name': 'Roosevelt'}, format='json')
+        data = {'first_name': 'Ted', 'last_name': 'Roosevelt'}
+        response = self.client.patch(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['username'], 'AnonymousUser')
         self.assertEqual(response.data['first_name'], 'Ted')

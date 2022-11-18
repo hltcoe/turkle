@@ -19,7 +19,8 @@ class GroupsTests(TurkleAPITestCase):
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(Group.objects.count(), 2)  # Turkle admin group is 1
-        self.assertEqual(User.objects.get(username='AnonymousUser').groups.all()[0].name, 'New Group')
+        group = User.objects.get(username='AnonymousUser').groups.all()[0]
+        self.assertEqual(group.name, 'New Group')
 
     def test_list(self):
         url = reverse('group-list')

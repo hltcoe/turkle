@@ -9,9 +9,10 @@ from . import TurkleAPITestCase
 class ProjectsTests(TurkleAPITestCase):
     def test_create(self):
         url = reverse('project-list')
+        html = '<html><label>${field1}</label><input type="text"><input type="submit"></html>'
         data = {
             'name': 'Project 1',
-            'html_template': '<html><label>${field1}</label><input type="text"><input type="submit"></html>',
+            'html_template': html,
             'filename': 'template.html'
         }
         response = self.client.post(url, data, format='json')

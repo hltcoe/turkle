@@ -58,7 +58,8 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     http_method_names = ['get', 'head', 'options', 'patch', 'post', 'put']
 
-    @action(detail=False, methods=['get'], url_path=r'username/(?P<username>\w+)', url_name='username')
+    @action(
+        detail=False, url_path=r'username/(?P<username>\w+)', url_name='username')
     def retrieve_by_username(self, request, username):
         """
         Retrieve a user from a username string.
