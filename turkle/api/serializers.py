@@ -10,35 +10,35 @@ from ..models import Batch, Project
 from ..utils import get_turkle_template_limit
 
 
-class GroupUsernamesField(serializers.ListField):
-    child = serializers.CharField()
+class GroupUsersField(serializers.ListField):
+    child = serializers.IntegerField()
 
     def get_attribute(self, group):
         # Return group instance for to_representation()
         return group
 
     def to_representation(self, group):
-        users = User.objects.filter(groups__name=group.name)
-        return [user.username for user in users]
+        users = User.objects.filter(groups__id=group.id)
+        return [user.id for user in users]
 
     def to_internal_value(self, data):
-        # Returns the list of usernames for create() to use
+        # Returns the list of ids for create() to use
         return data
 
 
 class GroupSerializer(serializers.ModelSerializer):
-    users = GroupUsernamesField()
+    users = GroupUsersField()
 
     class Meta:
         model = Group
-        fields = ['name', 'users']
+        fields = ['id', 'name', 'users']
 
     def create(self, validated_data):
-        usernames = validated_data.pop('users', [])
+        user_ids = validated_data.pop('users', [])
         group = super().create(validated_data)
         group.save()
-        for username in usernames:
-            user = User.objects.get(username=username)
+        for user_id in user_ids:
+            user = User.objects.get(id=user_id)
             user.groups.add(group.id)
         return group
 
