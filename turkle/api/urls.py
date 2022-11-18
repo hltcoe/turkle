@@ -1,11 +1,32 @@
-from django.urls import path
+from django.urls import include, path
 from rest_framework import permissions
+from rest_framework.reverse import reverse
 from rest_framework.schemas import get_schema_view
 from rest_framework.renderers import JSONOpenAPIRenderer
+from rest_framework.routers import APIRootView, DefaultRouter
 
 from .views import BatchViewSet, GroupViewSet, ProjectViewSet, UserViewSet
 from ..utils import get_site_name
 
+
+class TurkleAPIRootView(APIRootView):
+    """
+    List of top level API endpoints
+    """
+    # This class is used to set the description of the root view
+    # and to add the schema endpoint to the root page
+    def get(self, request, *args, **kwargs):
+        response = super().get(request, *args, **kwargs)
+        response.data['schema'] = reverse('schema', request=request)
+        return response
+
+
+router = DefaultRouter()
+router.APIRootView = TurkleAPIRootView
+router.register(r'batches', BatchViewSet, basename='batch')
+router.register(r'groups', GroupViewSet, basename='group')
+router.register(r'projects', ProjectViewSet, basename='project')
+router.register(r'users', UserViewSet, basename='user')
 
 schema_view = get_schema_view(
     title=get_site_name() + ' API',
@@ -15,45 +36,7 @@ schema_view = get_schema_view(
     public=True
 )
 
-batch_list = BatchViewSet.as_view({
-    'get': 'list',
-    'post': 'create'
-})
-batch_detail = BatchViewSet.as_view({
-    'get': 'retrieve'
-})
-group_list = GroupViewSet.as_view({
-    'get': 'list',
-    'post': 'create'
-})
-group_detail = GroupViewSet.as_view({
-    'get': 'retrieve'
-})
-project_list = ProjectViewSet.as_view({
-    'get': 'list',
-    'post': 'create'
-})
-project_detail = ProjectViewSet.as_view({
-    'get': 'retrieve'
-})
-user_list = UserViewSet.as_view({
-    'get': 'list',
-    'post': 'create'
-})
-user_detail = UserViewSet.as_view({
-    'get': 'retrieve',
-    'patch': 'partial_update',
-    'put': 'update'
-})
-
 urlpatterns = [
-    path('schema.json', schema_view),
-    path('batches/', batch_list, name='batch-list'),
-    path('batches/<int:pk>', batch_detail, name='batch-detail'),
-    path('groups/', group_list, name='group-list'),
-    path('groups/<int:pk>/', group_detail, name='group-detail'),
-    path('projects/', project_list, name='project-list'),
-    path('projects/<int:pk>', project_detail, name='project-detail'),
-    path('users/', user_list, name='user-list'),
-    path('users/<int:pk>', user_detail, name='user-detail'),
+    path('', include(router.urls)),
+    path('schema/', schema_view, name='schema')
 ]

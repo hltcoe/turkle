@@ -13,6 +13,7 @@ class BatchViewSet(viewsets.ModelViewSet):
     """
     queryset = Batch.objects.all()
     serializer_class = BatchSerializer
+    http_method_names = ['get', 'head', 'options', 'post']
 
 
 class GroupViewSet(viewsets.ModelViewSet):
@@ -23,6 +24,7 @@ class GroupViewSet(viewsets.ModelViewSet):
     """
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
+    http_method_names = ['get', 'head', 'options', 'post']
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
@@ -33,6 +35,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     """
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
+    http_method_names = ['get', 'head', 'options', 'post']
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -45,3 +48,4 @@ class UserViewSet(viewsets.ModelViewSet):
     """
     queryset = User.objects.all()
     serializer_class = UserSerializer
+    http_method_names = ['get', 'head', 'options', 'patch', 'post', 'put']
