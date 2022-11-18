@@ -39,3 +39,16 @@ class GroupsTests(TurkleAPITestCase):
         url = reverse('group-detail', args=[99])
         response = self.client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_retrieve_with_name(self):
+        url = reverse('group-name', args=['Turkle User Admin'])
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]['id'], 1)
+
+    def test_retrieve_with_bad_name(self):
+        url = reverse('group-name', args=['Not a group'])
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)

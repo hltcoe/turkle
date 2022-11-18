@@ -34,6 +34,16 @@ class GroupViewSet(viewsets.ModelViewSet):
     serializer_class = GroupSerializer
     http_method_names = ['get', 'head', 'options', 'post']
 
+    @action(detail=False, url_path=r'name/(?P<name>[\w\ ]+)', url_name='name')
+    def retrieve_by_name(self, request, name):
+        """
+        Retrieve a list of groups by the name of the group.
+        This is a list because group names are not unique.
+        """
+        groups = Group.objects.filter(name=name)
+        serializer = self.get_serializer(groups, many=True)
+        return Response(serializer.data)
+
 
 class ProjectViewSet(viewsets.ModelViewSet):
     """
@@ -58,8 +68,7 @@ class UserViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
     http_method_names = ['get', 'head', 'options', 'patch', 'post', 'put']
 
-    @action(
-        detail=False, url_path=r'username/(?P<username>\w+)', url_name='username')
+    @action(detail=False, url_path=r'username/(?P<username>\w+)', url_name='username')
     def retrieve_by_username(self, request, username):
         """
         Retrieve a user from a username string.
