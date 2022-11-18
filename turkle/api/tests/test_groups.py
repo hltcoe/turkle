@@ -11,7 +11,7 @@ class GroupsTests(TurkleAPITestCase):
     """
 
     def test_create(self):
-        url = reverse('groups-list-create')
+        url = reverse('group-list')
         data = {
             'name': 'New Group',
             'users': ['AnonymousUser'],
@@ -22,19 +22,19 @@ class GroupsTests(TurkleAPITestCase):
         self.assertEqual(User.objects.get(username='AnonymousUser').groups.all()[0].name, 'New Group')
 
     def test_list(self):
-        url = reverse('groups-list-create')
+        url = reverse('group-list')
         response = self.client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 1)
         self.assertEqual(response.data[0]['name'], 'Turkle User Admin')
 
     def test_retrieve(self):
-        url = reverse('groups-details', args=[1])
+        url = reverse('group-detail', args=[1])
         response = self.client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['name'], 'Turkle User Admin')
 
     def test_retrieve_with_bad_id(self):
-        url = reverse('groups-details', args=[99])
+        url = reverse('group-detail', args=[99])
         response = self.client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

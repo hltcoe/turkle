@@ -8,7 +8,7 @@ from . import TurkleAPITestCase
 
 class ProjectsTests(TurkleAPITestCase):
     def test_create(self):
-        url = reverse('projects-list-create')
+        url = reverse('project-list')
         data = {
             'name': 'Project 1',
             'html_template': '<html><label>${field1}</label><input type="text"><input type="submit"></html>',
@@ -23,7 +23,7 @@ class ProjectsTests(TurkleAPITestCase):
         self.assertTrue(project.html_template_has_submit_button)
 
     def test_create_with_empty_html_template(self):
-        url = reverse('projects-list-create')
+        url = reverse('project-list')
         data = {
             'name': 'Project 1',
             'html_template': '',
@@ -34,7 +34,7 @@ class ProjectsTests(TurkleAPITestCase):
         self.assertEqual(response.content, b'{"html_template":["This field may not be blank."]}')
 
     def test_create_with_missing_html_template(self):
-        url = reverse('projects-list-create')
+        url = reverse('project-list')
         data = {
             'name': 'Project 1',
             'filename': 'template.html'
@@ -44,7 +44,7 @@ class ProjectsTests(TurkleAPITestCase):
         self.assertEqual(response.content, b'{"html_template":["This field is required."]}')
 
     def test_create_with_missing_input(self):
-        url = reverse('projects-list-create')
+        url = reverse('project-list')
         data = {
             'name': 'Project 1',
             'html_template': '<html></html>',

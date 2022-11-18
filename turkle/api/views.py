@@ -1,92 +1,47 @@
 from django.contrib.auth.models import Group, User
-from rest_framework import generics
+from rest_framework import viewsets
 
 from ..models import Batch, Project
 from .serializers import BatchSerializer, GroupSerializer, ProjectSerializer, UserSerializer
 
 
-class BatchListCreate(generics.ListCreateAPIView):
+class BatchViewSet(viewsets.ModelViewSet):
     """
-    get:
-    Return a list of the existing batches.
-
-    post:
-    Publish a new batch of tasks.
+    list:     Return a list of the existing batches.
+    retrieve: Retrieve a batch as identified by id.
+    create:   Create a new batch and return it.
     """
     queryset = Batch.objects.all()
     serializer_class = BatchSerializer
 
 
-class BatchRetrieve(generics.RetrieveAPIView):
+class GroupViewSet(viewsets.ModelViewSet):
     """
-    Retrieve details about a batch.
-    """
-    queryset = Batch.objects.all()
-    serializer_class = BatchSerializer
-
-
-class GroupListCreate(generics.ListCreateAPIView):
-    """
-    get:
-    Return a list of the existing groups.
-
-    post:
-    Create a new group.
+    list:     Return a list of the existing groups.
+    retrieve: Retrieve a group as identified by id.
+    create:   Create a new group and return it.
     """
     queryset = Group.objects.all()
     serializer_class = GroupSerializer
 
 
-class GroupRetrieve(generics.RetrieveAPIView):
+class ProjectViewSet(viewsets.ModelViewSet):
     """
-    Retrieve a group.
-    """
-    queryset = Group.objects.all()
-    serializer_class = GroupSerializer
-
-
-class ProjectListCreate(generics.ListCreateAPIView):
-    """
-    get:
-    Return a list of the existing projects.
-
-    post:
-    Create a new project.
+    list:     Return a list of the existing projects.
+    retrieve: Retrieve a project as identified by id.
+    create:   Create a new project and return it.
     """
     queryset = Project.objects.all()
     serializer_class = ProjectSerializer
 
 
-class ProjectRetrieve(generics.RetrieveAPIView):
+class UserViewSet(viewsets.ModelViewSet):
     """
-    Retrieve a project.
-    """
-    queryset = Project.objects.all()
-    serializer_class = ProjectSerializer
-
-
-class UserListCreate(generics.ListCreateAPIView):
-    """
-    get:
-    Return a list of the existing users.
-
-    post:
-    Create a new user.
-    """
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-
-
-class UserRetrieveUpdate(generics.RetrieveUpdateAPIView):
-    """
-    get:
-    Retrieve a user.
-
-    patch:
-    Update one or more fields on a user (no checks for required fields).
-
-    put:
-    Update fields on a user (required fields are checked).
+    list:           Return a list of the existing users.
+    retrieve:       Retrieve a user as identified by id.
+    create:         Create a new user and return it.
+    partial_update: Partial update one or more fields on a user (no checks for required fields).
+    update:         Update fields on a user (required fields are checked).
     """
     queryset = User.objects.all()
     serializer_class = UserSerializer

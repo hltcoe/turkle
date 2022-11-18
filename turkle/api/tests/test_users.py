@@ -11,7 +11,7 @@ class UsersTests(TurkleAPITestCase):
     """
 
     def test_create(self):
-        url = reverse('users-list-create')
+        url = reverse('user-list')
         data = {
             'username': 'testuser',
             'first_name': 'Test',
@@ -26,7 +26,7 @@ class UsersTests(TurkleAPITestCase):
         self.assertTrue(user.check_password('password'))
 
     def test_list(self):
-        url = reverse('users-list-create')
+        url = reverse('user-list')
         response = self.client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 2)
@@ -34,25 +34,25 @@ class UsersTests(TurkleAPITestCase):
         self.assertEqual(response.data[1]['username'], 'root')
 
     def test_retrieve(self):
-        url = reverse('users-details', args=[1])
+        url = reverse('user-detail', args=[1])
         response = self.client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['username'], 'AnonymousUser')
 
     def test_retrieve_with_bad_id(self):
-        url = reverse('users-details', args=[99])
+        url = reverse('user-detail', args=[99])
         response = self.client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_patch_single_field(self):
-        url = reverse('users-details', args=[1])
+        url = reverse('user-detail', args=[1])
         response = self.client.patch(url, {'first_name': 'Ted'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['username'], 'AnonymousUser')
         self.assertEqual(response.data['first_name'], 'Ted')
 
     def test_patch_more_than_one_field(self):
-        url = reverse('users-details', args=[1])
+        url = reverse('user-detail', args=[1])
         response = self.client.patch(url, {'first_name': 'Ted', 'last_name': 'Roosevelt'}, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['username'], 'AnonymousUser')
@@ -60,7 +60,7 @@ class UsersTests(TurkleAPITestCase):
         self.assertEqual(response.data['last_name'], 'Roosevelt')
 
     def test_put_all_required_fields(self):
-        url = reverse('users-details', args=[1])
+        url = reverse('user-detail', args=[1])
         data = {
             'username': 'testuser',
             'first_name': 'Test',
@@ -76,7 +76,7 @@ class UsersTests(TurkleAPITestCase):
         self.assertTrue(user.check_password('qwerty'))
 
     def test_put_missing_required_field(self):
-        url = reverse('users-details', args=[1])
+        url = reverse('user-detail', args=[1])
         data = {
             'username': 'testuser',
             'first_name': 'Test',

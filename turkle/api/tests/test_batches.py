@@ -15,7 +15,7 @@ class ProjectsTests(TurkleAPITestCase):
         )
 
     def test_create(self):
-        url = reverse('batches-list-create')
+        url = reverse('batch-list')
         data = {
             'name': 'Batch 1',
             'project': self.project.id,
@@ -32,7 +32,7 @@ class ProjectsTests(TurkleAPITestCase):
         self.assertEqual(batch.total_tasks(), 2)
 
     def test_create_with_empty_csv(self):
-        url = reverse('batches-list-create')
+        url = reverse('batch-list')
         data = {
             'name': 'Batch 1',
             'project': self.project.id,
@@ -44,7 +44,7 @@ class ProjectsTests(TurkleAPITestCase):
         self.assertEqual(response.content, b'{"csv_text":["This field may not be blank."]}')
 
     def test_create_with_missing_csv(self):
-        url = reverse('batches-list-create')
+        url = reverse('batch-list')
         data = {
             'name': 'Batch 1',
             'project': self.project.id,
