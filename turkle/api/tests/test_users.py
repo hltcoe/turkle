@@ -30,9 +30,9 @@ class UsersTests(TurkleAPITestCase):
         url = reverse('user-list')
         response = self.client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
-        self.assertEqual(response.data[0]['username'], 'AnonymousUser')
-        self.assertEqual(response.data[1]['username'], 'root')
+        self.assertEqual(len(response.data['results']), 2)
+        self.assertEqual(response.data['results'][0]['username'], 'AnonymousUser')
+        self.assertEqual(response.data['results'][1]['username'], 'root')
 
     def test_retrieve(self):
         url = reverse('user-detail', args=[1])

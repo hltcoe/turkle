@@ -2,6 +2,7 @@ from django.contrib.auth.models import Group, User
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from ..models import Batch, Project
@@ -30,7 +31,7 @@ class GroupViewSet(viewsets.ModelViewSet):
     retrieve: Retrieve a group as identified by id.
     create:   Create a new group and return it.
     """
-    queryset = Group.objects.all()
+    queryset = Group.objects.all().order_by('id')
     serializer_class = GroupSerializer
     http_method_names = ['get', 'head', 'options', 'post']
 
@@ -40,9 +41,15 @@ class GroupViewSet(viewsets.ModelViewSet):
         Retrieve a list of groups by the name of the group.
         This is a list because group names are not unique.
         """
-        groups = Group.objects.filter(name=name)
-        serializer = self.get_serializer(groups, many=True)
-        return Response(serializer.data)
+        groups = Group.objects.filter(name=name).order_by('id')
+        page = self.paginate_queryset(groups)
+        serializer = self.get_serializer(page, many=True)
+        return self.get_paginated_response(serializer.data)
+
+
+class ProjectPagination(PageNumberPagination):
+    """Page number pagination with small page sizes"""
+    page_size = 20
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
@@ -51,9 +58,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
     retrieve: Retrieve a project as identified by id.
     create:   Create a new project and return it.
     """
-    queryset = Project.objects.all()
+    queryset = Project.objects.all().order_by('id')
     serializer_class = ProjectSerializer
     http_method_names = ['get', 'head', 'options', 'post']
+    pagination_class = ProjectPagination
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -64,7 +72,7 @@ class UserViewSet(viewsets.ModelViewSet):
     partial_update: Partial update one or more fields on a user (no checks for required fields).
     update:         Update fields on a user (required fields are checked).
     """
-    queryset = User.objects.all()
+    queryset = User.objects.all().order_by('id')
     serializer_class = UserSerializer
     http_method_names = ['get', 'head', 'options', 'patch', 'post', 'put']
 

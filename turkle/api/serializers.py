@@ -49,7 +49,6 @@ class UserSerializer(serializers.ModelSerializer):
 
     Required fields: username, password
     """
-    groups = serializers.SlugRelatedField(many=True, read_only=True, slug_field='name')
     is_active = serializers.BooleanField(default=True)
     password = serializers.CharField(write_only=True)
 
