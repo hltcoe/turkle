@@ -84,3 +84,14 @@ class UsersTests(TurkleAPITestCase):
         }
         response = self.client.put(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_retrieve_with_username(self):
+        url = reverse('user-username', args=['AnonymousUser'])
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['id'], 1)
+
+    def test_retrieve_with_bad_username(self):
+        url = reverse('user-username', args=['GhostUser'])
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
