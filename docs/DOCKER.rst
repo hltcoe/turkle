@@ -14,6 +14,16 @@ Dockerfiles:
 - use gunicorn as the WSGI HTTP server
 - use Whitenoise to serve static files
 
+Prebuilt Docker images
+------------------------
+With each release of Turkle, Docker images are uploaded to Docker Hub
+and can be pulled down like this::
+
+    docker pull hltcoe/turkle:latest
+
+The above command line pulls the latest image.
+A full list of versions is available on `Docker Hub`_.
+
 SQLite Docker image
 -------------------
 You can build the SQLite Turkle image using::
@@ -112,3 +122,26 @@ Then run the docker container::
 This passes the URL prefix to the Turkle application through an environment variable.
 Note that the application will be functional when directly hitting the application server.
 If that is required, use ``SCRIPT_NAME`` with your own Docker image.
+
+Customizing the settings of Docker image
+------------------------------------------
+If you want to change the default settings of the Docker image for your application,
+the best way to accomplish that is to build a custom Docker image that depends on turkle.
+Create a Dockerfile that looks like this::
+
+    FROM hltcoe/turkle:[version]
+    COPY local_settings.py /opt/turkle/turkle_site/local_settings.py
+
+In the `local_setting.py` file, add the settings that you want to override.
+As an example, to increase the maximum template size allowed by Turkle::
+
+    TURKLE_TEMPLATE_LIMIT = 1024
+
+To confirm that the setting has been overridden, run the new docker image, connect to the container
+with a bash shell and then use the Django shell to check the setting::
+
+   python manage.py shell
+   from django.conf import settings
+   print(settings.TURKLE_TEMPLATE_LIMIT)
+
+.. _`Docker Hub`: https://hub.docker.com/r/hltcoe/turkle/tags
