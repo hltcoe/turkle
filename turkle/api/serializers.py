@@ -96,11 +96,12 @@ class UserSerializer(serializers.ModelSerializer):
     """
     is_active = serializers.BooleanField(default=True)
     password = serializers.CharField(write_only=True)
+    date_joined = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = User
         fields = ['id', 'username', 'first_name', 'last_name', 'email', 'password',
-                  'is_active', 'is_staff', 'is_superuser', 'groups']
+                  'is_active', 'is_staff', 'is_superuser', 'date_joined', 'groups']
 
     def create(self, validated_data):
         user = super().create(validated_data)
