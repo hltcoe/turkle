@@ -15,6 +15,7 @@ class BatchSerializer(serializers.ModelSerializer):
         queryset=User.objects.all(),
         default=serializers.CurrentUserDefault()
     )
+    created_at = serializers.DateTimeField(read_only=True)
     filename = serializers.CharField(required=True)
     csv_text = serializers.CharField(required=True, write_only=True)
     active = serializers.BooleanField(default=True)
@@ -124,6 +125,8 @@ class ProjectSerializer(serializers.ModelSerializer):
         queryset=User.objects.all(),
         default=serializers.CurrentUserDefault()
     )
+    created_at = serializers.DateTimeField(read_only=True)
+    updated_at = serializers.DateTimeField(read_only=True)
     filename = serializers.CharField(required=True)
     active = serializers.BooleanField(default=True)
     login_required = serializers.BooleanField(default=True)

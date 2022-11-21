@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from django.urls import reverse
 from rest_framework import status
 
@@ -54,3 +56,20 @@ class ProjectsTests(TurkleAPITestCase):
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertTrue(b'Template does not contain any fields' in response.content)
+
+    def test_create_with_create_date_set(self):
+        # the field gets ignored because it is read-only
+        date = '2022-11-14T14:12:30.974120+00:00'
+        url = reverse('project-list')
+        html = '<html><label>${field1}</label><input type="text"></html>'
+        data = {
+            'name': 'Project 1',
+            'html_template': html,
+            'filename': 'template.html',
+            'created_at': date
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(Project.objects.count(), 1)
+        project = Project.objects.get(id=1)
+        self.assertNotEqual(project.created_at.isoformat(), date)
