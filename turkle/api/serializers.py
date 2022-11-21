@@ -18,10 +18,8 @@ class BatchSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(read_only=True)
     filename = serializers.CharField(required=True)
     csv_text = serializers.CharField(required=True, write_only=True)
-    active = serializers.BooleanField(default=True)
-    published = serializers.BooleanField(default=True)
-    login_required = serializers.BooleanField(default=True)
     project = serializers.PrimaryKeyRelatedField(queryset=Project.objects.all())
+    completed = serializers.BooleanField(read_only=True)
 
     class Meta:
         model = Batch
@@ -30,9 +28,9 @@ class BatchSerializer(serializers.ModelSerializer):
                   'completed', 'published']
 
     def validate(self, attrs):
-        if 'assignments_per_task' in attrs and not attrs['login_required'] and \
-                attrs['assignments_per_task'] != 1:
-            msg = "When login is not required to access the Project, " \
+        if 'assignments_per_task' in attrs and attrs['assignments_per_task'] != 1 and \
+                'login_required' in attrs and not attrs['login_required']:
+            msg = "When login is not required to access the Batch, " \
                   "the number of Assignments per Task must be 1"
             raise serializers.ValidationError({'assignments_per_task': msg})
         return attrs
@@ -129,8 +127,6 @@ class ProjectSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
     filename = serializers.CharField(required=True)
-    active = serializers.BooleanField(default=True)
-    login_required = serializers.BooleanField(default=True)
 
     class Meta:
         model = Project
@@ -146,8 +142,8 @@ class ProjectSerializer(serializers.ModelSerializer):
         # behind the object in the database so we do it all in this function
         if len(attrs['html_template']) > get_turkle_template_limit(True):
             raise serializers.ValidationError({'html_template': 'Template is too large'})
-        if 'assignments_per_task' in attrs and not attrs['login_required'] and \
-                attrs['assignments_per_task'] != 1:
+        if 'assignments_per_task' in attrs and attrs['assignments_per_task'] != 1 and \
+                'login_required' in attrs and not attrs['login_required']:
             msg = "When login is not required to access the Project, " \
                   "the number of Assignments per Task must be 1"
             raise serializers.ValidationError({'assignments_per_task': msg})

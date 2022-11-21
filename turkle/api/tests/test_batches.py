@@ -53,3 +53,29 @@ class ProjectsTests(TurkleAPITestCase):
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.content, b'{"csv_text":["This field is required."]}')
+
+    def test_create_with_incompatible_login_required_and_assignments_per_task(self):
+        url = reverse('batch-list')
+        data = {
+            'name': 'Batch 1',
+            'project': self.project.id,
+            'csv_text': 'object\nbirds\ndogs',
+            'filename': 'data.csv',
+            'login_required': False,
+            'assignments_per_task': 2
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(b'When login is not required to access the Batch' in response.content)
+
+    def test_create_with_incompatible_assignments_per_task_but_login_not_set(self):
+        url = reverse('batch-list')
+        data = {
+            'name': 'Batch 1',
+            'project': self.project.id,
+            'csv_text': 'object\nbirds\ndogs',
+            'filename': 'data.csv',
+            'assignments_per_task': 2
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)

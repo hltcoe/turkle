@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from django.urls import reverse
 from rest_framework import status
 
@@ -73,3 +71,29 @@ class ProjectsTests(TurkleAPITestCase):
         self.assertEqual(Project.objects.count(), 1)
         project = Project.objects.get(id=1)
         self.assertNotEqual(project.created_at.isoformat(), date)
+
+    def test_create_with_incompatible_login_required_and_assignments_per_task(self):
+        url = reverse('project-list')
+        html = '<html><label>${field1}</label><input type="text"></html>'
+        data = {
+            'name': 'Project 1',
+            'html_template': html,
+            'filename': 'template.html',
+            'login_required': False,
+            'assignments_per_task': 2
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertTrue(b'When login is not required to access the Project' in response.content)
+
+    def test_create_with_incompatible_assignments_per_task_but_login_not_set(self):
+        url = reverse('project-list')
+        html = '<html><label>${field1}</label><input type="text"></html>'
+        data = {
+            'name': 'Project 1',
+            'html_template': html,
+            'filename': 'template.html',
+            'assignments_per_task': 2
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
