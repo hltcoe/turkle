@@ -33,6 +33,8 @@ class BatchSerializer(serializers.ModelSerializer):
             msg = "When login is not required to access the Batch, " \
                   "the number of Assignments per Task must be 1"
             raise serializers.ValidationError({'assignments_per_task': msg})
+        if 'login_required' not in attrs:
+            attrs['login_required'] = attrs['project'].login_required
         return attrs
 
     def create(self, validated_data):

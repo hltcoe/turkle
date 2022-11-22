@@ -54,6 +54,27 @@ class ProjectsTests(TurkleAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.content, b'{"csv_text":["This field is required."]}')
 
+    def test_create_with_missing_project(self):
+        url = reverse('batch-list')
+        data = {
+            'name': 'Batch 1',
+            'csv_text': 'object\nbirds\ndogs',
+            'filename': 'data.csv'
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_create_with_non_existent_project(self):
+        url = reverse('batch-list')
+        data = {
+            'name': 'Batch 1',
+            'project': 99,
+            'csv_text': 'object\nbirds\ndogs',
+            'filename': 'data.csv'
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
     def test_create_with_incompatible_login_required_and_assignments_per_task(self):
         url = reverse('batch-list')
         data = {
@@ -79,3 +100,17 @@ class ProjectsTests(TurkleAPITestCase):
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_create_inherit_login_required(self):
+        project = Project.objects.create(login_required=False)
+        url = reverse('batch-list')
+        data = {
+            'name': 'Batch 1',
+            'project': project.id,
+            'csv_text': 'object\nbirds\ndogs',
+            'filename': 'data.csv',
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        batch = Batch.objects.get(id=1)
+        self.assertEqual(project.login_required, batch.login_required)
