@@ -24,8 +24,9 @@ class BatchSerializer(serializers.ModelSerializer):
     class Meta:
         model = Batch
         fields = ['id', 'name', 'created_at', 'created_by', 'project', 'filename', 'csv_text',
-                  'active', 'allotted_assignment_time', 'assignments_per_task', 'login_required',
-                  'completed', 'published']
+                  'allotted_assignment_time', 'assignments_per_task',
+                  'login_required', 'custom_permissions',
+                  'active', 'completed', 'published']
 
     def validate(self, attrs):
         if 'assignments_per_task' in attrs and attrs['assignments_per_task'] != 1 and \
@@ -133,7 +134,8 @@ class ProjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Project
         fields = ['id', 'name', 'created_at', 'created_by', 'updated_at', 'updated_by',
-                  'active', 'allotted_assignment_time', 'assignments_per_task', 'login_required',
+                  'active', 'allotted_assignment_time', 'assignments_per_task',
+                  'login_required', 'custom_permissions',
                   'filename', 'html_template']
 
     def validate(self, attrs):
