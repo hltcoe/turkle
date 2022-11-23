@@ -1,5 +1,6 @@
 from django.contrib.auth.models import Group, User
 from django.shortcuts import get_object_or_404
+import guardian.shortcuts
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
@@ -62,6 +63,25 @@ class ProjectViewSet(viewsets.ModelViewSet):
     serializer_class = ProjectSerializer
     http_method_names = ['get', 'head', 'options', 'post']
     pagination_class = ProjectPagination
+
+    @action(methods=['get', 'post'], detail=True, url_path=r'permissions')
+    def retrieve_permissions(self, request, pk):
+        queryset = Project.objects.filter(id=pk)
+        project = get_object_or_404(queryset)
+        if request.method == 'GET':
+            return self.get_custom_permissions(project)
+        else:
+            pass
+
+    @staticmethod
+    def get_custom_permissions(project):
+        groups = [group.id for group in project.get_group_custom_permissions()]
+        users = [user.id for user in project.get_user_custom_permissions()]
+        return Response({'groups': groups, 'users': users})
+
+    @staticmethod
+    def add_custom_permissions(project, permissions):
+        pass
 
 
 class UserViewSet(viewsets.ModelViewSet):

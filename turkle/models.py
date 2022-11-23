@@ -17,7 +17,8 @@ from django.db.models.functions import Coalesce
 from django.utils import timezone
 from guardian.core import ObjectPermissionChecker
 from guardian.models import GroupObjectPermission
-from guardian.shortcuts import assign_perm, get_group_perms, get_groups_with_perms
+from guardian.shortcuts import assign_perm, get_group_perms, get_groups_with_perms, \
+    get_user_perms, get_users_with_perms
 from jsonfield import JSONField
 
 from .utils import get_turkle_template_limit
@@ -819,6 +820,22 @@ class Project(TaskAssignmentStatistics, models.Model):
                   "This usually means you are generating HTML with JavaScript." + \
                   "If so, add an unused hidden input."
             raise ValidationError({'html_template': msg}, code='invalid')
+
+    def get_user_custom_permissions(self):
+        """Get users who have a can_work_on permission to the project"""
+        users = []
+        for user in get_users_with_perms(self):
+            if 'can_work_on' in get_user_perms(user, self):
+                users.append(user)
+        return users
+
+    def get_group_custom_permissions(self):
+        """Get groups that have a can_work_on permission to the project"""
+        groups = []
+        for group in get_groups_with_perms(self):
+            if 'can_work_on' in get_group_perms(group, self):
+                groups.append(group)
+        return groups
 
     def copy_permissions_to_batches(self):
         """Copy permissions from this Project to all associated Batches
