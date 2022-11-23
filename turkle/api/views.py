@@ -1,13 +1,13 @@
 from django.contrib.auth.models import Group, User
 from django.shortcuts import get_object_or_404
-import guardian.shortcuts
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from ..models import Batch, Project
-from .serializers import BatchSerializer, GroupSerializer, ProjectSerializer, UserSerializer
+from .serializers import BatchSerializer, CustomPermissionsSerializer, GroupSerializer,\
+    ProjectSerializer, UserSerializer
 
 """
 Note: DRF still requires regular expressions in URLs rather than Django path expressions
@@ -64,24 +64,39 @@ class ProjectViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'head', 'options', 'post']
     pagination_class = ProjectPagination
 
-    @action(methods=['get', 'post'], detail=True, url_path=r'permissions')
-    def retrieve_permissions(self, request, pk):
-        queryset = Project.objects.filter(id=pk)
+
+class ProjectCustomPermissionsViewSet(viewsets.ViewSet):
+    """
+    get: Retrieve the current user and group permissions.
+    post: Adds additional users or groups to permissions.
+    put: Replaces user amd group permissions.
+    """
+    serializer_class = CustomPermissionsSerializer
+
+    def list(self, request, project_pk=None):
+        """Retrieve the current user and group permissions."""
+        queryset = Project.objects.filter(id=project_pk)
         project = get_object_or_404(queryset)
-        if request.method == 'GET':
-            return self.get_custom_permissions(project)
-        else:
-            pass
+        serializer = self.serializer_class(instance=project)
+        return Response(serializer.data)
 
-    @staticmethod
-    def get_custom_permissions(project):
-        groups = [group.id for group in project.get_group_custom_permissions()]
-        users = [user.id for user in project.get_user_custom_permissions()]
-        return Response({'groups': groups, 'users': users})
+    def create(self, request, project_pk=None):
+        """Adds additional users or groups to permissions."""
+        queryset = Project.objects.filter(id=project_pk)
+        project = get_object_or_404(queryset)
+        serializer = self.serializer_class(instance=project, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.add()
+        return Response(serializer.data)
 
-    @staticmethod
-    def add_custom_permissions(project, permissions):
-        pass
+    def put(self, request, project_pk=None):
+        """Adds additional users or groups to permissions."""
+        queryset = Project.objects.filter(id=project_pk)
+        project = get_object_or_404(queryset)
+        serializer = self.serializer_class(instance=project, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.update(project, serializer.validated_data)
+        return Response(serializer.data)
 
 
 class UserViewSet(viewsets.ModelViewSet):

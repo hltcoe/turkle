@@ -4,6 +4,7 @@ import re
 
 from bs4 import BeautifulSoup
 from django.contrib.auth.models import Group, User
+import guardian.shortcuts
 from rest_framework import serializers
 
 from ..models import Batch, Project
@@ -54,6 +55,74 @@ class BatchSerializer(serializers.ModelSerializer):
         instance.create_tasks_from_csv(csv_fh)
 
         return instance
+
+
+class IntegerListField(serializers.ListField):
+    child = serializers.IntegerField()
+
+
+class CustomPermissionsSerializer(serializers.Serializer):
+    users = IntegerListField()
+    groups = IntegerListField()
+
+    def to_representation(self, instance):
+        groups = sorted([group.id for group in instance.get_group_custom_permissions()])
+        users = sorted([user.id for user in instance.get_user_custom_permissions()])
+        return {'groups': groups, 'users': users}
+
+    def add(self):
+        current_permissions = self.to_representation(self.instance)
+        for user_id in self.validated_data['users']:
+            if user_id not in current_permissions['users']:
+                user = User.objects.get(id=user_id)
+                guardian.shortcuts.assign_perm('can_work_on', user, self.instance)
+        for group_id in self.validated_data['groups']:
+            if group_id not in current_permissions['groups']:
+                group = Group.objects.get(id=group_id)
+                guardian.shortcuts.assign_perm('can_work_on', group, self.instance)
+
+        return self.instance
+
+    def create(self, validated_data):
+        # required by serializer but replaced by add()
+        pass
+
+    def update(self, instance, validated_data):
+        """replaces the current permissions"""
+        # delete current permissions
+        current_permissions = self.to_representation(self.instance)
+        for user_id in current_permissions['users']:
+            user = User.objects.get(id=user_id)
+            guardian.shortcuts.remove_perm('can_work_on', user, self.instance)
+        for group_id in current_permissions['groups']:
+            group = Group.objects.get(id=group_id)
+            guardian.shortcuts.remove_perm('can_work_on', group, self.instance)
+
+        # create new ones
+        for user_id in self.validated_data['users']:
+            user = User.objects.get(id=user_id)
+            guardian.shortcuts.assign_perm('can_work_on', user, self.instance)
+        for group_id in self.validated_data['groups']:
+            group = Group.objects.get(id=group_id)
+            guardian.shortcuts.assign_perm('can_work_on', group, self.instance)
+
+        return self.instance
+
+    def validate(self, attrs):
+        attrs['users'] = attrs.get('users', [])
+        attrs['groups'] = attrs.get('groups', [])
+        for user_id in attrs['users']:
+            if not User.objects.filter(id=user_id).exists():
+                raise serializers.ValidationError(
+                    {'users': f'User with id {user_id} does not exist'}
+                )
+        for group_id in attrs['groups']:
+            if not Group.objects.filter(id=group_id).exists():
+                raise serializers.ValidationError(
+                    {'groups': f'group with id {group_id} does not exist'}
+                )
+
+        return attrs
 
 
 class GroupUsersField(serializers.ListField):

@@ -4,8 +4,10 @@ from rest_framework.reverse import reverse
 from rest_framework.schemas import get_schema_view
 from rest_framework.renderers import JSONOpenAPIRenderer
 from rest_framework.routers import APIRootView, DefaultRouter
+from rest_framework_nested import routers
 
-from .views import BatchViewSet, GroupViewSet, ProjectViewSet, UserViewSet
+from .views import BatchViewSet, GroupViewSet, ProjectViewSet, ProjectCustomPermissionsViewSet,\
+    UserViewSet
 from ..utils import get_site_name
 
 
@@ -28,6 +30,9 @@ router.register(r'groups', GroupViewSet, basename='group')
 router.register(r'projects', ProjectViewSet, basename='project')
 router.register(r'users', UserViewSet, basename='user')
 
+permissions_router = routers.NestedSimpleRouter(router, r'projects', lookup='project')
+permissions_router.register(r'permissions', ProjectCustomPermissionsViewSet, basename='test')
+
 schema_view = get_schema_view(
     title=get_site_name() + ' API',
     version='1.0',
@@ -38,5 +43,6 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('', include(permissions_router.urls)),
     path('schema/', schema_view, name='schema')
 ]
