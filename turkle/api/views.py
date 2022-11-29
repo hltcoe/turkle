@@ -6,8 +6,8 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from ..models import Batch, Project
-from .serializers import BatchSerializer, CustomPermissionsSerializer, GroupSerializer,\
-    ProjectSerializer, UserSerializer
+from .serializers import BatchSerializer, BatchCustomPermissionsSerializer, GroupSerializer,\
+    ProjectSerializer, ProjectCustomPermissionsSerializer, UserSerializer
 
 """
 Note: DRF still requires regular expressions in URLs rather than Django path expressions
@@ -24,6 +24,40 @@ class BatchViewSet(viewsets.ModelViewSet):
     queryset = Batch.objects.all()
     serializer_class = BatchSerializer
     http_method_names = ['get', 'head', 'options', 'post']
+
+
+class BatchCustomPermissionsViewSet(viewsets.ViewSet):
+    """
+    get: Retrieve the current user and group permissions.
+    post: Adds additional users or groups to permissions.
+    put: Replaces user and group permissions.
+    """
+    serializer_class = BatchCustomPermissionsSerializer
+
+    def list(self, request, batch_pk=None):
+        """Retrieve the current user and group permissions."""
+        queryset = Batch.objects.filter(id=batch_pk)
+        batch = get_object_or_404(queryset)
+        serializer = self.serializer_class(instance=batch)
+        return Response(serializer.data)
+
+    def create(self, request, batch_pk=None):
+        """Adds additional users or groups to permissions."""
+        queryset = Batch.objects.filter(id=batch_pk)
+        batch = get_object_or_404(queryset)
+        serializer = self.serializer_class(instance=batch, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.add(batch, serializer.validated_data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def put(self, request, batch_pk=None):
+        """Adds additional users or groups to permissions."""
+        queryset = Batch.objects.filter(id=batch_pk)
+        batch = get_object_or_404(queryset)
+        serializer = self.serializer_class(instance=batch, data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.update(batch, serializer.validated_data)
+        return Response(serializer.data)
 
 
 class GroupViewSet(viewsets.ModelViewSet):
@@ -71,7 +105,7 @@ class ProjectCustomPermissionsViewSet(viewsets.ViewSet):
     post: Adds additional users or groups to permissions.
     put: Replaces user and group permissions.
     """
-    serializer_class = CustomPermissionsSerializer
+    serializer_class = ProjectCustomPermissionsSerializer
 
     def list(self, request, project_pk=None):
         """Retrieve the current user and group permissions."""

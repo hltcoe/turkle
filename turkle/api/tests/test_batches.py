@@ -136,3 +136,18 @@ class ProjectsTests(TurkleAPITestCase):
         self.assertTrue(batch.custom_permissions)
         self.assertEqual([user.id for user in batch.get_user_custom_permissions()], [user1.id])
         self.assertEqual([group.id for group in batch.get_group_custom_permissions()], [group1.id])
+
+    def test_setting_permissions(self):
+        project = Project.objects.create(login_required=True, custom_permissions=True)
+        batch = Batch.objects.create(project=project)
+        url = reverse('batch-permissions-list', args=[batch.id])
+        data = {
+            'users': [1],
+            'groups': [1],
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        batch = Batch.objects.get(id=batch.id)
+        self.assertTrue(batch.custom_permissions)
+        self.assertEqual([user.id for user in batch.get_user_custom_permissions()], [1])
+        self.assertEqual([group.id for group in batch.get_group_custom_permissions()], [1])

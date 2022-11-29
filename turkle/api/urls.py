@@ -6,8 +6,8 @@ from rest_framework.renderers import JSONOpenAPIRenderer
 from rest_framework.routers import APIRootView, DefaultRouter
 from rest_framework_nested import routers
 
-from .views import BatchViewSet, GroupViewSet, ProjectViewSet, ProjectCustomPermissionsViewSet,\
-    UserViewSet
+from .views import BatchViewSet, BatchCustomPermissionsViewSet, GroupViewSet,\
+    ProjectViewSet, ProjectCustomPermissionsViewSet, UserViewSet
 from ..utils import get_site_name
 
 
@@ -30,11 +30,18 @@ router.register(r'groups', GroupViewSet, basename='group')
 router.register(r'projects', ProjectViewSet, basename='project')
 router.register(r'users', UserViewSet, basename='user')
 
-permissions_router = routers.NestedSimpleRouter(router, r'projects', lookup='project')
-permissions_router.register(
+proj_permissions_router = routers.NestedSimpleRouter(router, r'projects', lookup='project')
+proj_permissions_router.register(
     r'permissions',
     ProjectCustomPermissionsViewSet,
     basename='project-permissions'
+)
+
+batch_permissions_router = routers.NestedSimpleRouter(router, r'batches', lookup='batch')
+batch_permissions_router.register(
+    r'permissions',
+    BatchCustomPermissionsViewSet,
+    basename='batch-permissions'
 )
 
 schema_view = get_schema_view(
@@ -47,6 +54,7 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('', include(router.urls)),
-    path('', include(permissions_router.urls)),
+    path('', include(proj_permissions_router.urls)),
+    path('', include(batch_permissions_router.urls)),
     path('schema/', schema_view, name='schema')
 ]
