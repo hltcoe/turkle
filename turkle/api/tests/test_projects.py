@@ -1,9 +1,25 @@
+import json
+
+from django.contrib.auth.models import User
 from django.urls import reverse
+import guardian.shortcuts
 from rest_framework import status
 
 from turkle.models import Project
 
 from . import TurkleAPITestCase
+
+
+def create_project(client):
+    url = reverse('project-list')
+    html = '<html><label>${field1}</label><input type="text"></html>'
+    data = {
+        'name': 'Project 1',
+        'html_template': html,
+        'filename': 'template.html',
+    }
+    response = client.post(url, data, format='json')
+    assert response.status_code == status.HTTP_201_CREATED
 
 
 class ProjectsTests(TurkleAPITestCase):
@@ -98,3 +114,78 @@ class ProjectsTests(TurkleAPITestCase):
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+    def test_setting_permissions(self):
+        create_project(self.client)
+        url = reverse('project-permissions-list', args=[1])
+        data = {
+            'users': [1],
+            'groups': [1],
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        project = Project.objects.get(id=1)
+        self.assertTrue(project.custom_permissions)
+        self.assertEqual([user.id for user in project.get_user_custom_permissions()], [1])
+        self.assertEqual([group.id for group in project.get_group_custom_permissions()], [1])
+
+    def test_setting_permissions_with_bad_user(self):
+        create_project(self.client)
+        url = reverse('project-permissions-list', args=[1])
+        data = {
+            'users': [99],
+            'groups': [],
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        msg = json.loads(response.content)['users'][0]
+        self.assertEquals('User with id 99 does not exist', msg)
+
+    def test_setting_permissions_with_bad_group(self):
+        create_project(self.client)
+        url = reverse('project-permissions-list', args=[1])
+        data = {
+            'users': [1],
+            'groups': [99],
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        msg = json.loads(response.content)['groups'][0]
+        self.assertEquals('Group with id 99 does not exist', msg)
+
+    def test_adding_permissions(self):
+        user1 = User.objects.create_user('testuser1', 'password')
+        user2 = User.objects.create_user('testuser2', 'password')
+        create_project(self.client)
+        project = Project.objects.get(id=1)
+        project.custom_permissions = True
+        project.save()
+        guardian.shortcuts.assign_perm('can_work_on', user1, project)
+        url = reverse('project-permissions-list', args=[1])
+        data = {
+            'users': [user2.id],
+            'groups': [],
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(project.custom_permissions)
+        self.assertEqual([user.id for user in project.get_user_custom_permissions()],
+                         [user1.id, user2.id])
+
+    def test_replacing_permissions(self):
+        user1 = User.objects.create_user('testuser1', 'password')
+        user2 = User.objects.create_user('testuser2', 'password')
+        create_project(self.client)
+        project = Project.objects.get(id=1)
+        project.custom_permissions = True
+        project.save()
+        guardian.shortcuts.assign_perm('can_work_on', user1, project)
+        url = reverse('project-permissions-list', args=[1])
+        data = {
+            'users': [user2.id],
+            'groups': [],
+        }
+        response = self.client.put(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(project.custom_permissions)
+        self.assertEqual([user.id for user in project.get_user_custom_permissions()], [user2.id])

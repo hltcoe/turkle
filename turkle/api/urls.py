@@ -31,7 +31,11 @@ router.register(r'projects', ProjectViewSet, basename='project')
 router.register(r'users', UserViewSet, basename='user')
 
 permissions_router = routers.NestedSimpleRouter(router, r'projects', lookup='project')
-permissions_router.register(r'permissions', ProjectCustomPermissionsViewSet, basename='test')
+permissions_router.register(
+    r'permissions',
+    ProjectCustomPermissionsViewSet,
+    basename='project-permissions'
+)
 
 schema_view = get_schema_view(
     title=get_site_name() + ' API',

@@ -1,6 +1,6 @@
 from django.contrib.auth.models import Group, User
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets
+from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -86,8 +86,8 @@ class ProjectCustomPermissionsViewSet(viewsets.ViewSet):
         project = get_object_or_404(queryset)
         serializer = self.serializer_class(instance=project, data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.add()
-        return Response(serializer.data)
+        serializer.add(project, serializer.validated_data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     def put(self, request, project_pk=None):
         """Adds additional users or groups to permissions."""
