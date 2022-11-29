@@ -69,7 +69,7 @@ class ProjectCustomPermissionsViewSet(viewsets.ViewSet):
     """
     get: Retrieve the current user and group permissions.
     post: Adds additional users or groups to permissions.
-    put: Replaces user amd group permissions.
+    put: Replaces user and group permissions.
     """
     serializer_class = CustomPermissionsSerializer
 

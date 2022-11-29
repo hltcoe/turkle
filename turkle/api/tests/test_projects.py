@@ -86,7 +86,8 @@ class ProjectsTests(TurkleAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertTrue(b'When login is not required to access the Project' in response.content)
 
-    def test_create_with_incompatible_assignments_per_task_but_login_not_set(self):
+    def test_create_with_two_assignments_per_task_but_login_not_set(self):
+        # default is login required
         url = reverse('project-list')
         html = '<html><label>${field1}</label><input type="text"></html>'
         data = {
