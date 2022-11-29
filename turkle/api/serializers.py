@@ -30,16 +30,17 @@ class BatchSerializer(serializers.ModelSerializer):
                   'active', 'completed', 'published']
 
     def validate(self, attrs):
+        if 'login_required' not in attrs:
+            attrs['login_required'] = attrs['project'].login_required
         if 'assignments_per_task' in attrs and attrs['assignments_per_task'] != 1 and \
                 'login_required' in attrs and not attrs['login_required']:
             msg = "When login is not required to access the Batch, " \
                   "the number of Assignments per Task must be 1"
             raise serializers.ValidationError({'assignments_per_task': msg})
-        if 'login_required' not in attrs:
-            attrs['login_required'] = attrs['project'].login_required
         return attrs
 
     def create(self, validated_data):
+        # create tasks from CSV data and copy any custom permissions
         csv_text = validated_data.pop('csv_text')
         instance = super().create(validated_data)
 
@@ -53,6 +54,14 @@ class BatchSerializer(serializers.ModelSerializer):
             # html interface sets a warning if this happens
             pass
         instance.create_tasks_from_csv(csv_fh)
+
+        if instance.project.custom_permissions:
+            instance.custom_permissions = True
+            instance.save()
+            for user in instance.project.get_user_custom_permissions():
+                guardian.shortcuts.assign_perm('can_work_on_batch', user, instance)
+            for group in instance.project.get_group_custom_permissions():
+                guardian.shortcuts.assign_perm('can_work_on_batch', group, instance)
 
         return instance
 

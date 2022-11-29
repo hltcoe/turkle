@@ -480,6 +480,22 @@ class Batch(TaskAssignmentStatistics, models.Model):
         return TaskAssignment.objects.filter(task__batch_id=self.id)\
                                      .filter(completed=True)
 
+    def get_user_custom_permissions(self):
+        """Get users who have a can_work_on_batch permission"""
+        users = []
+        for user in get_users_with_perms(self):
+            if 'can_work_on_batch' in get_user_perms(user, self):
+                users.append(user)
+        return users
+
+    def get_group_custom_permissions(self):
+        """Get groups that have a can_work_on_batch permission"""
+        groups = []
+        for group in get_groups_with_perms(self):
+            if 'can_work_on_batch' in get_group_perms(group, self):
+                groups.append(group)
+        return groups
+
     def is_active(self):
         return self.active and self.published
     is_active.short_description = 'Active'
