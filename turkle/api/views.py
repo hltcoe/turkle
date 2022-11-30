@@ -1,4 +1,7 @@
+import io
+
 from django.contrib.auth.models import Group, User
+from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
@@ -24,6 +27,37 @@ class BatchViewSet(viewsets.ModelViewSet):
     queryset = Batch.objects.all()
     serializer_class = BatchSerializer
     http_method_names = ['get', 'head', 'options', 'post']
+
+    @action(detail=True, url_path=r'download/results', url_name='download_results')
+    def download_results(self, request, pk):
+        """
+        Download the current answers for this batch as a csv file.
+        """
+        queryset = Batch.objects.filter(id=pk)
+        batch = get_object_or_404(queryset)
+        filename = batch.csv_results_filename()
+        csv_output = io.StringIO()
+        batch.to_csv(csv_output, lineterminator='\n')
+        csv_string = csv_output.getvalue()
+        response = HttpResponse(csv_string, content_type='text/csv')
+        response['Content-Length'] = len(csv_string)
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        return response
+
+    @action(detail=True, url_path=r'download/input', url_name='download_input')
+    def download_input(self, request, pk):
+        """
+        Download the input csv for this batch.
+        """
+        queryset = Batch.objects.filter(id=pk)
+        batch = get_object_or_404(queryset)
+        csv_output = io.StringIO()
+        batch.to_input_csv(csv_output, lineterminator='\n')
+        csv_string = csv_output.getvalue()
+        response = HttpResponse(csv_string, content_type='text/csv')
+        response['Content-Length'] = len(csv_string)
+        response['Content-Disposition'] = f'attachment; filename="{batch.filename}"'
+        return response
 
 
 class BatchCustomPermissionsViewSet(viewsets.ViewSet):
