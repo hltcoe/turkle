@@ -59,6 +59,20 @@ class BatchViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = f'attachment; filename="{batch.filename}"'
         return response
 
+    @action(detail=True, url_path=r'progress', url_name='progress')
+    def progress(self, request, pk):
+        """
+        Get progress data for this batch.
+        """
+        queryset = Batch.objects.filter(id=pk)
+        batch = get_object_or_404(queryset)
+        return Response({
+            'total_tasks': batch.total_tasks(),
+            'total_task_assignments': batch.total_task_assignments(),
+            'total_finished_tasks': batch.total_finished_tasks(),
+            'total_finished_task_assignments': batch.total_finished_task_assignments()
+        })
+
 
 class BatchCustomPermissionsViewSet(viewsets.ViewSet):
     """
