@@ -104,6 +104,16 @@ class BatchSerializer(serializers.ModelSerializer):
                   'active', 'completed', 'published']
 
     def validate(self, attrs):
+        if self.partial:
+            # only allow certain attributes to be updated in a partial update
+            allowed_keys = {'name', 'active', 'allotted_assignment_time'}
+            illegal_keys = set(attrs.keys()).difference(allowed_keys)
+            if illegal_keys:
+                errors = {key: 'cannot update through patch' for key in illegal_keys}
+                raise serializers.ValidationError(errors)
+            else:
+                return attrs
+
         if 'login_required' not in attrs:
             attrs['login_required'] = attrs['project'].login_required
         if 'assignments_per_task' in attrs and attrs['assignments_per_task'] != 1 and \

@@ -23,10 +23,11 @@ class BatchViewSet(viewsets.ModelViewSet):
     list:     Return a list of the existing batches.
     retrieve: Retrieve a batch as identified by id.
     create:   Create a new batch and return it.
+    partial_update: Update the name, active status or allotted assignment time for a batch.
     """
     queryset = Batch.objects.all()
     serializer_class = BatchSerializer
-    http_method_names = ['get', 'head', 'options', 'post']
+    http_method_names = ['get', 'head', 'options', 'patch', 'post']
 
     @action(detail=True, url_path=r'download/results', url_name='download_results')
     def download_results(self, request, pk):

@@ -8,7 +8,7 @@ from turkle.models import Batch, Project, User
 from . import TurkleAPITestCase
 
 
-class ProjectsTests(TurkleAPITestCase):
+class BatchTests(TurkleAPITestCase):
     def setUp(self):
         super().setUp()
         self.project, created = Project.objects.get_or_create(
@@ -151,3 +151,25 @@ class ProjectsTests(TurkleAPITestCase):
         self.assertTrue(batch.custom_permissions)
         self.assertEqual([user.id for user in batch.get_user_custom_permissions()], [1])
         self.assertEqual([group.id for group in batch.get_group_custom_permissions()], [1])
+
+    def test_partial_update(self):
+        project = Project.objects.create()
+        batch = Batch.objects.create(name='First Batch', project=project)
+        url = reverse('batch-detail', args=[batch.id])
+        data = {
+            'name': 'Update',
+        }
+        response = self.client.patch(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        batch = Batch.objects.get(id=batch.id)
+        self.assertEqual(batch.name, 'Update')
+
+    def test_partial_with_unallowed_field(self):
+        project = Project.objects.create()
+        batch = Batch.objects.create(name='First Batch', project=project)
+        url = reverse('batch-detail', args=[batch.id])
+        data = {
+            'login_required': False,
+        }
+        response = self.client.patch(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
