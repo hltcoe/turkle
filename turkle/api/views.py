@@ -29,7 +29,7 @@ class BatchViewSet(viewsets.ModelViewSet):
     serializer_class = BatchSerializer
     http_method_names = ['get', 'head', 'options', 'patch', 'post']
 
-    @action(detail=True, url_path=r'download/results', url_name='download_results')
+    @action(detail=True, url_path=r'results', url_name='download_results')
     def download_results(self, request, pk):
         """
         Download the current answers for this batch as a csv file.
@@ -45,7 +45,7 @@ class BatchViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         return response
 
-    @action(detail=True, url_path=r'download/input', url_name='download_input')
+    @action(detail=True, url_path=r'input', url_name='download_input')
     def download_input(self, request, pk):
         """
         Download the input csv for this batch.
