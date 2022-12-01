@@ -109,7 +109,7 @@ class BatchSerializer(serializers.ModelSerializer):
             allowed_keys = {'name', 'active', 'allotted_assignment_time'}
             illegal_keys = set(attrs.keys()).difference(allowed_keys)
             if illegal_keys:
-                errors = {key: 'cannot update through patch' for key in illegal_keys}
+                errors = {key: 'Cannot update through patch' for key in illegal_keys}
                 raise serializers.ValidationError(errors)
             else:
                 return attrs
@@ -121,7 +121,24 @@ class BatchSerializer(serializers.ModelSerializer):
             msg = "When login is not required to access the Batch, " \
                   "the number of Assignments per Task must be 1"
             raise serializers.ValidationError({'assignments_per_task': msg})
+
+        self.validate_csv_fields(attrs['csv_text'], attrs['project'])
+
         return attrs
+
+    @staticmethod
+    def validate_csv_fields(csv_text, project):
+        csv_fh = io.StringIO(csv_text)
+        rows = csv.reader(csv_fh)
+        header = next(rows)
+        csv_fields = set(header)
+        template_fields = set(project.fieldnames)
+        if csv_fields != template_fields:
+            template_but_not_csv = template_fields.difference(csv_fields)
+            if template_but_not_csv:
+                msg = 'The CSV file is missing fields that are in the HTML template. ' \
+                      f'The missing fields are: {", ".join(template_but_not_csv)}'
+                raise serializers.ValidationError({'csv_text': msg})
 
     def create(self, validated_data):
         # create tasks from CSV data and copy any custom permissions
@@ -134,8 +151,8 @@ class BatchSerializer(serializers.ModelSerializer):
 
         template_fields = set(instance.project.fieldnames)
         if csv_fields != template_fields:
-            # should we error here? If so, move to validate
-            # html interface sets a warning if this happens
+            # Should we error here? If so, move to validate.
+            # HTML interface sets a warning if this happens.
             pass
         instance.create_tasks_from_csv(csv_fh)
 

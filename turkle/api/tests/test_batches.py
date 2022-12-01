@@ -13,15 +13,17 @@ class BatchTests(TurkleAPITestCase):
         super().setUp()
         self.project, created = Project.objects.get_or_create(
             name='Test Project',
-            html_template='<html><label>%{object}</label><input name="ans" type="text"><html>'
+            html_template='<html><label>%{label}</label><input name="ans" type="text"><html>'
         )
+        self.project.fieldnames = dict((fn, True) for fn in ['label'])
+        self.project.save()
 
     def test_create(self):
         url = reverse('batch-list')
         data = {
             'name': 'Batch 1',
             'project': self.project.id,
-            'csv_text': 'object\nbirds\ndogs',
+            'csv_text': 'label\nbirds\ndogs',
             'filename': 'data.csv'
         }
         response = self.client.post(url, data, format='json')
@@ -56,47 +58,63 @@ class BatchTests(TurkleAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.content, b'{"csv_text":["This field is required."]}')
 
-    def test_create_with_missing_project(self):
+    def test_create_with_missing_csv_field(self):
+        self.project.fieldnames = dict((fn, True) for fn in ['label', 'text'])
+        self.project.save()
         url = reverse('batch-list')
         data = {
             'name': 'Batch 1',
-            'csv_text': 'object\nbirds\ndogs',
+            'project': self.project.id,
+            'csv_text': 'label\nbirds\ndogs',
             'filename': 'data.csv'
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(b'The missing fields are: text', response.content)
+
+    def test_create_with_missing_project(self):
+        url = reverse('batch-list')
+        data = {
+            'name': 'Batch 1',
+            'csv_text': 'label\nbirds\ndogs',
+            'filename': 'data.csv'
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(b'This field is required', response.content)
 
     def test_create_with_non_existent_project(self):
         url = reverse('batch-list')
         data = {
             'name': 'Batch 1',
             'project': 99,
-            'csv_text': 'object\nbirds\ndogs',
+            'csv_text': 'label\nbirds\ndogs',
             'filename': 'data.csv'
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(b'Invalid pk', response.content)
 
     def test_create_with_incompatible_login_required_and_assignments_per_task(self):
         url = reverse('batch-list')
         data = {
             'name': 'Batch 1',
             'project': self.project.id,
-            'csv_text': 'object\nbirds\ndogs',
+            'csv_text': 'label\nbirds\ndogs',
             'filename': 'data.csv',
             'login_required': False,
             'assignments_per_task': 2
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertTrue(b'When login is not required to access the Batch' in response.content)
+        self.assertIn(b'When login is not required to access the Batch', response.content)
 
     def test_create_with_incompatible_assignments_per_task_but_login_not_set(self):
         url = reverse('batch-list')
         data = {
             'name': 'Batch 1',
             'project': self.project.id,
-            'csv_text': 'object\nbirds\ndogs',
+            'csv_text': 'label\nbirds\ndogs',
             'filename': 'data.csv',
             'assignments_per_task': 2
         }
@@ -109,7 +127,7 @@ class BatchTests(TurkleAPITestCase):
         data = {
             'name': 'Batch 1',
             'project': project.id,
-            'csv_text': 'object\nbirds\ndogs',
+            'csv_text': 'label\nbirds\ndogs',
             'filename': 'data.csv',
         }
         response = self.client.post(url, data, format='json')
@@ -127,7 +145,7 @@ class BatchTests(TurkleAPITestCase):
         data = {
             'name': 'Batch 1',
             'project': project.id,
-            'csv_text': 'object\nbirds\ndogs',
+            'csv_text': 'label\nbirds\ndogs',
             'filename': 'data.csv',
         }
         response = self.client.post(url, data, format='json')
@@ -173,3 +191,66 @@ class BatchTests(TurkleAPITestCase):
         }
         response = self.client.patch(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(b'Cannot update through patch', response.content)
+
+    def test_add_tasks(self):
+        url = reverse('batch-list')
+        data = {
+            'name': 'Batch 1',
+            'project': self.project.id,
+            'csv_text': 'label\nbirds\ndogs',
+            'filename': 'data.csv'
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        batch = Batch.objects.get(id=1)
+        batch.completed = True
+        batch.save()
+
+        url = reverse('batch-tasks', args=[1])
+        data = {
+            'csv_text': 'label\ncats\ndeer',
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertIn(b'"new_tasks":2', response.content)
+        batch = Batch.objects.get(id=1)
+        self.assertEqual(batch.total_tasks(), 4)
+        self.assertEqual(batch.completed, False)
+
+    def test_add_tasks_missing_csv_text(self):
+        url = reverse('batch-list')
+        data = {
+            'name': 'Batch 1',
+            'project': self.project.id,
+            'csv_text': 'label\nbirds\ndogs',
+            'filename': 'data.csv'
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        url = reverse('batch-tasks', args=[1])
+        data = {
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(b'This field is required', response.content)
+
+    def test_add_tasks_missing_csv_field(self):
+        url = reverse('batch-list')
+        data = {
+            'name': 'Batch 1',
+            'project': self.project.id,
+            'csv_text': 'label\nbirds\ndogs',
+            'filename': 'data.csv'
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+
+        url = reverse('batch-tasks', args=[1])
+        data = {
+            'csv_text': 'heading\nbirds\ndogs',
+        }
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(b'The missing fields are: label', response.content)

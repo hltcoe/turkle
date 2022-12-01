@@ -3,7 +3,7 @@ import io
 from django.contrib.auth.models import Group, User
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-from rest_framework import status, viewsets
+from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
@@ -29,7 +29,25 @@ class BatchViewSet(viewsets.ModelViewSet):
     serializer_class = BatchSerializer
     http_method_names = ['get', 'head', 'options', 'patch', 'post']
 
-    @action(detail=True, url_path=r'results', url_name='download_results')
+    @action(detail=True, methods=['post'], url_path=r'tasks', url_name='tasks')
+    def add_tasks(self, request, pk):
+        """
+        Add new tasks to an existing batch.
+        """
+        queryset = Batch.objects.filter(id=pk)
+        batch = get_object_or_404(queryset)
+        csv_text = request.data.get('csv_text', None)
+        if not csv_text:
+            raise serializers.ValidationError({'csv_text': 'This field is required.'})
+        BatchSerializer.validate_csv_fields(csv_text, batch.project)
+        csv_fh = io.StringIO(csv_text)
+        num_new_tasks = batch.create_tasks_from_csv(csv_fh)
+        if num_new_tasks > 0 and batch.completed:
+            batch.completed = False
+            batch.save()
+        return Response({'new_tasks': num_new_tasks}, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, url_path=r'results', url_name='download-results')
     def download_results(self, request, pk):
         """
         Download the current answers for this batch as a csv file.
@@ -45,7 +63,7 @@ class BatchViewSet(viewsets.ModelViewSet):
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
         return response
 
-    @action(detail=True, url_path=r'input', url_name='download_input')
+    @action(detail=True, url_path=r'input', url_name='download-input')
     def download_input(self, request, pk):
         """
         Download the input csv for this batch.
