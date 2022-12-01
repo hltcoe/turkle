@@ -69,7 +69,7 @@ class ProjectsTests(TurkleAPITestCase):
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertTrue(b'Template does not contain any fields' in response.content)
+        self.assertIn(b'Template does not contain any fields', response.content)
 
     def test_create_with_create_date_set(self):
         # the field gets ignored because it is read-only
@@ -100,7 +100,7 @@ class ProjectsTests(TurkleAPITestCase):
         }
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertTrue(b'When login is not required to access the Project' in response.content)
+        self.assertIn(b'When login is not required to access the Project', response.content)
 
     def test_create_with_two_assignments_per_task_but_login_not_set(self):
         # default is login required
