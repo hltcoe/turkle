@@ -189,3 +189,37 @@ class ProjectsTests(TurkleAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue(project.custom_permissions)
         self.assertEqual([user.id for user in project.get_user_custom_permissions()], [user2.id])
+
+    def test_partial_update(self):
+        create_project(self.client)
+        url = reverse('project-detail', args=[1])
+        data = {
+            'name': 'Update'
+        }
+        response = self.client.patch(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        project = Project.objects.get(id=1)
+        self.assertEqual(project.name, 'Update')
+
+    def test_partial_update_conflict_on_assignments(self):
+        create_project(self.client)
+        project = Project.objects.get(id=1)
+        project.login_required = False
+        project.save()
+        url = reverse('project-detail', args=[1])
+        data = {
+            'assignments_per_task': 2
+        }
+        response = self.client.patch(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_partial_update_login_required(self):
+        create_project(self.client)
+        url = reverse('project-detail', args=[1])
+        data = {
+            'login_required': False
+        }
+        response = self.client.patch(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        project = Project.objects.get(id=1)
+        self.assertEqual(project.login_required, False)

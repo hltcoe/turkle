@@ -237,35 +237,44 @@ class ProjectSerializer(serializers.ModelSerializer):
                   'filename', 'html_template']
 
     def validate(self, attrs):
-        # duplicate model validation as drf doesn't call model clean()
+        # This duplicates model validation as drf doesn't call model clean()
         # for a discussion on this see:
         # https://github.com/encode/django-rest-framework/discussions/7850
-        # also, any validation that occurs after create() is called leaves
-        # behind the object in the database so we do it all in this function
-        if len(attrs['html_template']) > get_turkle_template_limit(True):
-            raise serializers.ValidationError({'html_template': 'Template is too large'})
+        # Also, any validation that occurs after create() is called leaves
+        # behind the object in the database so we do it all in this function.
+        # Finally, this needs to support create(), update(), and partial_update()
+        # so we need to test if the attributes exist even if they are required.
+
+        # if login is not required, can only have one assignment per task
+        if self.partial and 'login_required' not in attrs:
+            # set this so we can catch if user tries to set assignments_per_task incorrectly
+            attrs['login_required'] = self.instance.login_required
         if 'assignments_per_task' in attrs and attrs['assignments_per_task'] != 1 and \
                 'login_required' in attrs and not attrs['login_required']:
             msg = "When login is not required to access the Project, " \
                   "the number of Assignments per Task must be 1"
             raise serializers.ValidationError({'assignments_per_task': msg})
 
-        # This code is derived from process_template()
-        # Matching mTurk we confirm at least one input, select, or textarea
-        soup = BeautifulSoup(attrs['html_template'], 'html.parser')
-        if soup.find('input') is None and soup.find('select') is None \
-                and soup.find('textarea') is None:
-            msg = "Template does not contain any fields for responses. " + \
-                  "Please include at least one field (input, select, or textarea)." + \
-                  "This usually means you are generating HTML with JavaScript." + \
-                  "If so, add an unused hidden input."
-            raise serializers.ValidationError({'html_template': msg})
+        if 'html_template' in attrs:
+            if len(attrs['html_template']) > get_turkle_template_limit(True):
+                raise serializers.ValidationError({'html_template': 'Template is too large'})
 
-        attrs['html_template_has_submit_button'] = bool(soup.select('input[type=submit]'))
+            # This code is derived from process_template()
+            # Matching mTurk we confirm at least one input, select, or textarea
+            soup = BeautifulSoup(attrs['html_template'], 'html.parser')
+            if soup.find('input') is None and soup.find('select') is None \
+                    and soup.find('textarea') is None:
+                msg = "Template does not contain any fields for responses. " + \
+                      "Please include at least one field (input, select, or textarea)." + \
+                      "This usually means you are generating HTML with JavaScript." + \
+                      "If so, add an unused hidden input."
+                raise serializers.ValidationError({'html_template': msg})
 
-        # Extract fieldnames from html_template text, save fieldnames as keys of JSON dict
-        unique_fieldnames = set(re.findall(r'\${(\w+)}', attrs['html_template']))
-        attrs['fieldnames'] = dict((fn, True) for fn in unique_fieldnames)
+            attrs['html_template_has_submit_button'] = bool(soup.select('input[type=submit]'))
+
+            # Extract fieldnames from html_template text, save fieldnames as keys of JSON dict
+            unique_fieldnames = set(re.findall(r'\${(\w+)}', attrs['html_template']))
+            attrs['fieldnames'] = dict((fn, True) for fn in unique_fieldnames)
 
         return attrs
 

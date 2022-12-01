@@ -138,13 +138,15 @@ class ProjectPagination(PageNumberPagination):
 
 class ProjectViewSet(viewsets.ModelViewSet):
     """
-    list:     Return a list of the existing projects.
-    retrieve: Retrieve a project as identified by id.
-    create:   Create a new project and return it.
+    list:           Return a list of the existing projects.
+    retrieve:       Retrieve a project as identified by id.
+    create:         Create a new project and return it.
+    partial_update: Update one or more fields of a project.
+    update:         Full update of project including all required fields.
     """
     queryset = Project.objects.all().order_by('id')
     serializer_class = ProjectSerializer
-    http_method_names = ['get', 'head', 'options', 'post']
+    http_method_names = ['get', 'head', 'options', 'patch', 'post', 'put']
     pagination_class = ProjectPagination
 
 
