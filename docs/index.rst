@@ -14,6 +14,7 @@ Welcome to Turkle's documentation!
    ADMINISTRATION.rst
    DOCKER.rst
    APP.rst
+   API.rst
    REQUESTERS.rst
    TEMPLATE-GUIDE.rst
 
