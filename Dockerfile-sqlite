@@ -15,7 +15,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 COPY turkle /opt/turkle/turkle
 COPY manage.py /opt/turkle/manage.py
-COPY scripts /opt/turkle/scripts
 COPY turkle_site /opt/turkle/turkle_site
 COPY docker-config/create_turkle_admin.sh /opt/turkle/create_turkle_admin.sh
 COPY docker-config/entrypoint.sh /usr/local/bin/entrypoint.sh

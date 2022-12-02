@@ -17,7 +17,6 @@ RUN set -eux; \
 
 COPY turkle /opt/turkle/turkle
 COPY manage.py /opt/turkle/manage.py
-COPY scripts /opt/turkle/scripts
 COPY turkle_site /opt/turkle/turkle_site
 
 COPY docker-config/entrypoint.sh /usr/local/bin/entrypoint.sh
