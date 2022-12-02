@@ -23,12 +23,12 @@ Once a token has been created, it is passed as a header in the request::
 
 Users
 --------
-Listing Users
+Listing users
 `````````````````
 Perform a **get** on `/api/users/`.
 The response is paginated and includes next and previous links to walk the user list.
 
-Creating a User
+Creating a user
 `````````````````
 Perform a **post** on `/api/users/`.
 The payload at a minimum must include username and password::
@@ -41,13 +41,13 @@ The payload at a minimum must include username and password::
     "password": "p@ssw0rd"
   }
 
-Retrieving a User
+Retrieving a user
 `````````````````
 Perform a **get** on `/api/users/{id}/` where id is the user's integer identifier.
 
 To retrieve based on username. perform a **get** on `/api/users/username/{username}/`.
 
-Update a User
+Update a user
 `````````````````
 Perform a **patch** on `/api/users/{id}/` where id is the user's integer identifier.
 The JSON payload is a dictionary of fields to update.
@@ -90,7 +90,7 @@ Listing projects
 Perform a **get** on `/api/projects/`.
 The response is paginated and includes next and previous links to walk the list.
 
-Creating a Project
+Creating a project
 ```````````````````
 Perform a **post** on `/api/projects/`.
 The payload must include the name of the project, the html template, and the template filename::
@@ -107,7 +107,7 @@ Retrieving a project
 `````````````````````
 Perform a **get** on `/api/projects/{id}/` where id is the project's integer identifier.
 
-Update a Project
+Update a project
 `````````````````
 Perform a **patch** on `/api/projects/{id}/` where id is the project's integer identifier.
 The JSON payload is a dictionary of fields to update and can include the html_template.
@@ -119,7 +119,7 @@ Listing batches
 Perform a **get** on `/api/batches/`.
 The response is paginated and includes next and previous links to walk the list.
 
-Creating a Batch
+Creating a batch
 ```````````````````
 Perform a **post** on `/api/batches/`.
 The payload must include the name of the batch, the project identifier,
@@ -138,7 +138,7 @@ Retrieving a batch
 `````````````````````
 Perform a **get** on `/api/batches/{id}/` where id is the batch's integer identifier.
 
-Update a Batch
+Update a batch
 `````````````````
 Perform a **patch** on `/api/batches/{id}/` where id is the batch's integer identifier.
 The JSON payload is a dictionary of fields to update and cannot include the csv data.
@@ -148,7 +148,7 @@ Additional tasks can be added to an existing batch by a **post** to `/api/batche
 The payload is a dictionary with a key of *csv_text*.
 The fields in the CSV data must match the fields in html template of the project.
 
-Batch Status
+Batch status
 `````````````````
 To download the input data for a batch as a CSV file, do a **get** on `/api/batches/{id}/input/`.
 
