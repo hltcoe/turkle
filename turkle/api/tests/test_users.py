@@ -61,6 +61,14 @@ class UsersTests(TurkleAPITestCase):
         self.assertEqual(response.data['first_name'], 'Ted')
         self.assertEqual(response.data['last_name'], 'Roosevelt')
 
+    def test_patch_password(self):
+        url = reverse('user-detail', args=[1])
+        data = {'password': 'qwerty'}
+        response = self.client.patch(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        user = User.objects.get(id=1)
+        self.assertTrue(user.check_password('qwerty'))
+
     def test_put_all_required_fields(self):
         url = reverse('user-detail', args=[1])
         data = {
