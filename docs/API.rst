@@ -59,7 +59,7 @@ Listing groups
 Perform a **get** on `/api/groups/`.
 The response is paginated and includes next and previous links to walk the list.
 
-Creating a Group
+Creating a group
 `````````````````
 Perform a **post** on `/api/groups/`.
 The payload must include the name of the group and a list of user integer identifiers::
@@ -76,6 +76,12 @@ Perform a **get** on `/api/groups/{id}/` where id is the group's integer identif
 To retrieve based on a group name. perform a **get** on `/api/groups/name/{name}/`.
 This will return a list of groups that exactly match that group name.
 It is a list since group names are not required to be unique in Turkle.
+
+Adding users to a group
+```````````````````````````
+Perform a **post** on `/api/groups/{id}/users/` where id is the group's integer identifier.
+
+The payload is a dictionary with a key of *users* which is a list of user integer identifiers.
 
 Projects
 ----------

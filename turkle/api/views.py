@@ -148,6 +148,21 @@ class GroupViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(page, many=True)
         return self.get_paginated_response(serializer.data)
 
+    @action(detail=True, methods=['post'], url_path=r'users', url_name='users')
+    def add_users(self, request, pk):
+        """
+        Add users to a group. Payload is a dictionary with the key 'users' being a list.
+        """
+        queryset = Group.objects.filter(id=pk)
+        group = get_object_or_404(queryset)
+        new_user_ids = request.data.get('users', None)
+        if not new_user_ids:
+            raise serializers.ValidationError({'users': 'This field is required.'})
+        for user_id in new_user_ids:
+            user = User.objects.get(id=user_id)
+            user.groups.add(group.id)
+        return Response(GroupSerializer().to_representation(group))
+
 
 class ProjectPagination(PageNumberPagination):
     """Page number pagination with small page sizes"""

@@ -52,3 +52,14 @@ class GroupsTests(TurkleAPITestCase):
         response = self.client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data['results']), 0)
+
+    def test_add_users(self):
+        group = Group.objects.create(name="Testing")
+        user1 = User.objects.create_user('testuser1', 'password')
+        user2 = User.objects.create_user('testuser2', 'password')
+        url = reverse('group-users', args=[group.id])
+        data = {'users': [user1.id, user2.id]}
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual([g.id for g in User.objects.get(id=user1.id).groups.all()], [group.id])
+        self.assertEqual([g.id for g in User.objects.get(id=user2.id).groups.all()], [group.id])
