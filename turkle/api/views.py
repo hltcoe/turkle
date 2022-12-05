@@ -163,7 +163,7 @@ class GroupViewSet(viewsets.ModelViewSet):
             for user in users:
                 user.groups.add(group.id)
         except User.DoesNotExist:
-            raise serializers.ValidationError({'users': f'Unknown user id in list.'})
+            raise serializers.ValidationError({'users': 'Unknown user id in list.'})
         return Response(GroupSerializer().to_representation(group))
 
 
