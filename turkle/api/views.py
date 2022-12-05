@@ -158,9 +158,12 @@ class GroupViewSet(viewsets.ModelViewSet):
         new_user_ids = request.data.get('users', None)
         if not new_user_ids:
             raise serializers.ValidationError({'users': 'This field is required.'})
-        for user_id in new_user_ids:
-            user = User.objects.get(id=user_id)
-            user.groups.add(group.id)
+        try:
+            users = [User.objects.get(id=user_id) for user_id in new_user_ids]
+            for user in users:
+                user.groups.add(group.id)
+        except User.DoesNotExist:
+            raise serializers.ValidationError({'users': f'Unknown user id in list.'})
         return Response(GroupSerializer().to_representation(group))
 
 

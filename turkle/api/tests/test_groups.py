@@ -63,3 +63,13 @@ class GroupsTests(TurkleAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual([g.id for g in User.objects.get(id=user1.id).groups.all()], [group.id])
         self.assertEqual([g.id for g in User.objects.get(id=user2.id).groups.all()], [group.id])
+
+    def test_add_nonexistent_user(self):
+        group = Group.objects.create(name="Testing")
+        user1 = User.objects.create_user('testuser1', 'password')
+        url = reverse('group-users', args=[group.id])
+        data = {'users': [user1.id, user1.id + 1]}
+        response = self.client.post(url, data, format='json')
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn(b'Unknown user id in list', response.content)
+        self.assertEqual([g.id for g in User.objects.get(id=user1.id).groups.all()], [])
