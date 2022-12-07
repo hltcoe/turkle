@@ -1,7 +1,7 @@
 import io
 
 from django.contrib.auth.models import Group, User
-from django.http import HttpResponse
+from django.http import HttpResponse, Http404
 from django.shortcuts import get_object_or_404
 from rest_framework import serializers, status, viewsets
 from rest_framework.decorators import action
@@ -146,6 +146,8 @@ class GroupViewSet(viewsets.ModelViewSet):
         groups = Group.objects.filter(name=name).order_by('id')
         page = self.paginate_queryset(groups)
         serializer = self.get_serializer(page, many=True)
+        if len(serializer.data) == 0:
+            raise Http404()
         return self.get_paginated_response(serializer.data)
 
     @action(detail=True, methods=['post'], url_path=r'users', url_name='users')

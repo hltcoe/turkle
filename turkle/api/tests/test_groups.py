@@ -50,8 +50,7 @@ class GroupsTests(TurkleAPITestCase):
     def test_retrieve_with_bad_name(self):
         url = reverse('group-name', args=['Not a group'])
         response = self.client.get(url, format='json')
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data['results']), 0)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_add_users(self):
         group = Group.objects.create(name="Testing")
