@@ -234,7 +234,7 @@ class ProjectsTests(TurkleAPITestCase):
 
     def test_list_batches_for_project(self):
         project = Project.objects.create(name='Test')
-        batch = Batch.objects.create(name='Batch Test', project=project)
+        Batch.objects.create(name='Batch Test', project=project)
         url = reverse('project-batches', args=[project.id])
         response = self.client.get(url, format='json')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
