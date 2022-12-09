@@ -187,6 +187,22 @@ class ProjectViewSet(viewsets.ModelViewSet):
     http_method_names = ['get', 'head', 'options', 'patch', 'post', 'put']
     pagination_class = ProjectPagination
 
+    @action(detail=True, url_path=r'batches', url_name='batches')
+    def batches(self, request, pk):
+        """
+        List batches for this project.
+        """
+        batches = Batch.objects.filter(project=pk).order_by('id')
+        page = self.paginate_queryset(batches)
+        # manually construct BatchSerializer here - copied from get_serializer()
+        serializer_class = BatchSerializer
+        kwargs = {'many': True}
+        kwargs.setdefault('context', self.get_serializer_context())
+        serializer = serializer_class(page, **kwargs)
+        if len(serializer.data) == 0:
+            raise Http404()
+        return self.get_paginated_response(serializer.data)
+
 
 class ProjectCustomPermissionsViewSet(viewsets.ViewSet):
     """
