@@ -5,7 +5,7 @@ from django.urls import reverse
 import guardian.shortcuts
 from rest_framework import status
 
-from turkle.models import Project
+from turkle.models import Batch, Project
 
 from . import TurkleAPITestCase
 
@@ -223,3 +223,11 @@ class ProjectsTests(TurkleAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         project = Project.objects.get(id=1)
         self.assertEqual(project.login_required, False)
+
+    def test_list_batches_for_project(self):
+        project = Project.objects.create(name='Test')
+        batch = Batch.objects.create(project=project)
+        url = reverse('project-detail', args=[project.id])
+        response = self.client.get(url, format='json')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(json.loads(response.content)['batches'], [batch.id])

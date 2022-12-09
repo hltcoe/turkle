@@ -233,6 +233,22 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
+class ProjectBatchesField(serializers.ListField):
+    child = serializers.IntegerField()
+
+    def get_attribute(self, project):
+        # Return group instance for to_representation()
+        return project
+
+    def to_representation(self, project):
+        batches = Batch.objects.filter(project__id=project.id)
+        return [batch.id for batch in batches]
+
+    def to_internal_value(self, data):
+        # Returns the list of ids for create() to use
+        return data
+
+
 class ProjectSerializer(serializers.ModelSerializer):
     created_by = serializers.PrimaryKeyRelatedField(
         queryset=User.objects.all(),
@@ -245,13 +261,14 @@ class ProjectSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
     filename = serializers.CharField(required=True)
+    batches = ProjectBatchesField(read_only=True)
 
     class Meta:
         model = Project
         fields = ['id', 'name', 'created_at', 'created_by', 'updated_at', 'updated_by',
                   'active', 'allotted_assignment_time', 'assignments_per_task',
                   'login_required', 'custom_permissions',
-                  'filename', 'html_template']
+                  'filename', 'html_template', 'batches']
 
     def validate(self, attrs):
         # This duplicates model validation as drf doesn't call model clean()
