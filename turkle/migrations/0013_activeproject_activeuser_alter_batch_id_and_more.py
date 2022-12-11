@@ -32,7 +32,7 @@ class Migration(migrations.Migration):
                 'indexes': [],
                 'constraints': [],
             },
-            bases=('cdh.user',),
+            bases=('core.user',),
         ),
         migrations.AlterField(
             model_name='batch',
