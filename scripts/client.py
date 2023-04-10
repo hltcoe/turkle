@@ -196,7 +196,7 @@ class TurkleClient(object):
 
     @staticmethod
     def read_file(filename):
-        with open(filename, "r") as fh:
+        with open(filename, "r", encoding='latin-1') as fh:
             data = fh.read()
             return data
 
