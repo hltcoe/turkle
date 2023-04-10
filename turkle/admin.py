@@ -1198,13 +1198,17 @@ class ViewOnlyAdminMixin:
         return False
 
 
-class TaskAssignmentAdmin(ViewOnlyAdminMixin, admin.ModelAdmin):
+class TaskAssignmentAdmin(admin.ModelAdmin):
     """View for assignments to expire abandoned ones"""
 
     class Media:
         css = {
             'all': ('turkle/css/admin-turkle.css',),
         }
+
+    # this turns off the add button in admin sidebar for task assignments
+    def has_add_permission(self, request):
+        return False
 
     def changelist_view(self, request, extra_context=None):
         num_incomplete_tasks = TaskAssignment.objects.\
