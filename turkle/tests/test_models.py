@@ -742,6 +742,36 @@ class TestProject(django.test.TestCase):
                 html_template=template,
             ).clean()
 
+    def test_getting_group_permissions(self):
+        project = Project()
+        project.custom_permissions = True
+        project.save()
+
+        self.assertEqual(len(project.get_group_custom_permissions()), 0)
+
+        group1 = Group.objects.create(name='testgroup1')
+        group2 = Group.objects.create(name='testgroup2')
+        group3 = Group.objects.create(name='testgroup3')
+        assign_perm('can_work_on', group1, project)
+        assign_perm('can_work_on', group2, project)
+        assign_perm('change_project', group3, project)
+        self.assertEqual(len(project.get_group_custom_permissions()), 2)
+
+    def test_getting_user_permissions(self):
+        project = Project()
+        project.custom_permissions = True
+        project.save()
+
+        self.assertEqual(len(project.get_user_custom_permissions()), 0)
+
+        user1 = User.objects.create_user('testuser1', password='secret')
+        user2 = User.objects.create_user('testuser2', password='secret')
+        user3 = User.objects.create_user('testuser3', password='secret')
+        assign_perm('can_work_on', user1, project)
+        assign_perm('can_work_on', user2, project)
+        assign_perm('change_project', user3, project)
+        self.assertEqual(len(project.get_user_custom_permissions()), 2)
+
 
 class TestActiveProjectManager(django.test.TestCase):
     now = timezone.now()
