@@ -9,7 +9,7 @@ from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
 
 from ..models import Batch, Project
-from .serializers import BatchSerializer, BatchCustomPermissionsSerializer, GroupSerializer,\
+from .serializers import BatchSerializer, BatchCustomPermissionsSerializer, GroupSerializer, \
     ProjectSerializer, ProjectCustomPermissionsSerializer, UserSerializer
 
 """

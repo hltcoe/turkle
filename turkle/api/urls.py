@@ -6,7 +6,7 @@ from rest_framework.renderers import JSONOpenAPIRenderer
 from rest_framework.routers import APIRootView, DefaultRouter
 from rest_framework_nested import routers
 
-from .views import BatchViewSet, BatchCustomPermissionsViewSet, GroupViewSet,\
+from .views import BatchViewSet, BatchCustomPermissionsViewSet, GroupViewSet, \
     ProjectViewSet, ProjectCustomPermissionsViewSet, UserViewSet
 from ..utils import get_site_name
 
