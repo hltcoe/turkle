@@ -1,5 +1,5 @@
-FROM python:3.9-slim-buster
-MAINTAINER Craig Harman <craig@craigharman.net>
+FROM python:3.10-slim-bullseye
+MAINTAINER Cash Costello <cash.costello@gmail.com>
 LABEL Description="Image for running a Turkle interface using sqlite"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -9,9 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 WORKDIR /opt/turkle
 
 COPY requirements.txt /opt/turkle/requirements.txt
-RUN pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir --upgrade -r requirements.txt && \
-    pip install --no-cache-dir gunicorn whitenoise
+RUN pip install --no-cache-dir --upgrade -r requirements.txt gunicorn whitenoise
 
 COPY turkle /opt/turkle/turkle
 COPY manage.py /opt/turkle/manage.py

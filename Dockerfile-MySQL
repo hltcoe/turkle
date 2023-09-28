@@ -1,5 +1,5 @@
-FROM python:3.9-slim-buster
-MAINTAINER Craig Harman <craig@craigharman.net>
+FROM python:3.10-slim-bullseye
+MAINTAINER Cash Costello <cash.costello@gmail.com>
 LABEL Description="Image for running a Turkle interface using MySQL"
 
 WORKDIR /opt/turkle
@@ -7,10 +7,8 @@ COPY requirements.txt /opt/turkle/requirements.txt
 
 RUN set -eux; \
     apt-get update; \
-    apt-get install -y --no-install-recommends cron default-libmysqlclient-dev build-essential; \
-    pip install --no-cache-dir --upgrade pip; \
-    pip install --no-cache-dir --upgrade -r requirements.txt; \
-    pip install --no-cache-dir gunicorn mysqlclient whitenoise; \
+    apt-get install -y --no-install-recommends cron default-libmysqlclient-dev build-essential pkg-config; \
+    pip install --no-cache-dir --upgrade -r requirements.txt gunicorn mysqlclient whitenoise; \
     apt-get remove --purge -y build-essential; \
     apt-get autoremove -y; \
     rm -rf /var/lib/apt/lists/*
