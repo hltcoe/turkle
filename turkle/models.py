@@ -436,7 +436,7 @@ class Batch(TaskAssignmentStatistics, models.Model):
         batch_filename, extension = os.path.splitext(os.path.basename(self.filename))
 
         # We are deviating from Mechanical Turk's naming conventions for results files
-        return "Project-{}_Batch-{}-{}_results{}".format(\
+        return "Project-{}_Batch-{}-{}_results{}".format(
             Project.objects.get(name=self.project).id, self.id, batch_filename, extension)
 
     def create_tasks_from_csv(self, csv_fh):
