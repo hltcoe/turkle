@@ -27,6 +27,7 @@ from django.templatetags.static import static
 from django.urls import path, reverse
 from django.utils import timezone
 from django.utils.html import format_html, format_html_join
+from django.utils.translation import ngettext
 from guardian.admin import GuardedModelAdmin
 from guardian.shortcuts import (assign_perm, get_groups_with_perms, get_users_with_perms,
                                 remove_perm)

@@ -939,6 +939,7 @@ class ActiveProject(Project):
         return self.last_finished_time
     most_recent.admin_order_field = 'last_finished_time'
 
+
 class Bookmark(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE)

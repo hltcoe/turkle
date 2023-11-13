@@ -17,11 +17,12 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.utils.datastructures import MultiValueDictKeyError
 
-from .models import Task, TaskAssignment, Batch, Project, Bookmark, User
+from .models import Task, TaskAssignment, Batch, Project, Bookmark
 
 User = get_user_model()
 
 logger = logging.getLogger(__name__)
+
 
 def handle_db_lock(func):
     """Decorator that catches database lock errors from sqlite"""
@@ -76,8 +77,8 @@ def index(request):
             bookmark_status = query_dict.get('bookmarked') == 'true'
             batch = Batch.objects.get(name=batch_name)
             bookmark, created = Bookmark.objects.get_or_create(
-                user=get_user(request), 
-                batch=batch, 
+                user=get_user(request),
+                batch=batch,
                 defaults={'bookmarked': bookmark_status}
             )
             if not created:
@@ -95,7 +96,7 @@ def index(request):
             """Access batch bookmark status for a user
             """
             bookmark = Bookmark.objects.filter(
-                    user=get_user(request), 
+                    user=get_user(request),
                     batch__name=batch['name']
                 ).values_list('bookmarked', flat=True).first()
             return 'checked' if bookmark else ''
