@@ -5,7 +5,7 @@ import logging
 import urllib
 
 from django.conf import settings
-from django.contrib import messages
+from django.contrib import messages, auth
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection, transaction
@@ -17,12 +17,11 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.utils.datastructures import MultiValueDictKeyError
 
-from .models import Task, TaskAssignment, Batch, Project
+from .models import Task, TaskAssignment, Batch, Project, Bookmark, User
 
 User = get_user_model()
 
 logger = logging.getLogger(__name__)
-
 
 def handle_db_lock(func):
     """Decorator that catches database lock errors from sqlite"""
@@ -39,6 +38,12 @@ def handle_db_lock(func):
                 return redirect(index)
             raise ex
     return wrapper
+
+
+def get_user(request):
+    if not hasattr(request, '_cached_user'):
+        request._cached_user = auth.get_user(request)
+    return request._cached_user
 
 
 def index(request):
@@ -63,21 +68,52 @@ def index(request):
 
     available_task_counts = Batch.available_task_counts_for(batch_query, request.user)
 
+    if request.POST:
+        def process_bookmark(query_dict):
+            """Create or update bookmark status for a batch & user
+            """
+            batch_name = query_dict.get('rowId')
+            bookmark_status = query_dict.get('bookmarked') == 'true'
+            batch = Batch.objects.get(name=batch_name)
+            bookmark, created = Bookmark.objects.get_or_create(
+                user=get_user(request), 
+                batch=batch, 
+                defaults={'bookmarked': bookmark_status}
+            )
+            if not created:
+                bookmark.bookmarked = bookmark_status
+                bookmark.save()
+
+        if request.POST:
+            print(request.POST)
+            if 'bookmarking' in request.POST.get('action'):
+                process_bookmark(request.POST)
+
     batch_rows = []
     for batch in batch_query.values('created_at', 'id', 'name', 'project__name'):
-        total_tasks_available = available_task_counts[batch['id']]
+        def get_bookmark_status(batch):
+            """Access batch bookmark status for a user
+            """
+            bookmark = Bookmark.objects.filter(
+                    user=get_user(request), 
+                    batch__name=batch['name']
+                ).values_list('bookmarked', flat=True).first()
+            return 'checked' if bookmark else ''
 
+        total_tasks_available = available_task_counts[batch['id']]
         if total_tasks_available > 0:
             batch_rows.append({
                 'project_name': batch['project__name'],
                 'batch_name': batch['name'],
                 'batch_published': batch['created_at'],
                 'assignments_available': total_tasks_available,
+                'selected': get_bookmark_status(batch),
                 'preview_next_task_url': reverse('preview_next_task',
                                                  kwargs={'batch_id': batch['id']}),
                 'accept_next_task_url': reverse('accept_next_task',
                                                 kwargs={'batch_id': batch['id']})
             })
+
     return render(request, 'turkle/index.html', {
         'abandoned_assignments': abandoned_assignments,
         'batch_rows': batch_rows
