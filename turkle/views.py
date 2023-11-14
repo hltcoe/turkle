@@ -86,7 +86,6 @@ def index(request):
                 bookmark.save()
 
         if request.POST:
-            print(request.POST)
             if 'bookmarking' in request.POST.get('action'):
                 process_bookmark(request.POST)
 
@@ -101,6 +100,7 @@ def index(request):
                 ).values_list('bookmarked', flat=True).first()
             return 'checked' if bookmark else ''
 
+        bookmark_status = get_bookmark_status(batch) if request.user.is_authenticated else ''
         total_tasks_available = available_task_counts[batch['id']]
         if total_tasks_available > 0:
             batch_rows.append({
@@ -108,7 +108,7 @@ def index(request):
                 'batch_name': batch['name'],
                 'batch_published': batch['created_at'],
                 'assignments_available': total_tasks_available,
-                'selected': get_bookmark_status(batch),
+                'selected': bookmark_status,
                 'preview_next_task_url': reverse('preview_next_task',
                                                  kwargs={'batch_id': batch['id']}),
                 'accept_next_task_url': reverse('accept_next_task',
