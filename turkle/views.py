@@ -99,9 +99,8 @@ def index(request):
                     batch__name=batch['name']
                 ).values_list('bookmarked', flat=True).first()
             return 'checked' if bookmark else ''
-        
-        bookmark_status = get_bookmark_status(batch) if request.user.is_authenticated else ''
 
+        bookmark_status = get_bookmark_status(batch) if request.user.is_authenticated else ''
         total_tasks_available = available_task_counts[batch['id']]
         if total_tasks_available > 0:
             batch_rows.append({
