@@ -85,7 +85,7 @@ def index(request):
                 bookmark.bookmarked = bookmark_status
                 bookmark.save()
 
-        if request.POST:
+        if request.POST.get('action'):
             if 'bookmarking' in request.POST.get('action'):
                 process_bookmark(request.POST)
 
