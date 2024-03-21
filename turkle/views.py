@@ -5,7 +5,7 @@ import logging
 import urllib
 
 from django.conf import settings
-from django.contrib import messages
+from django.contrib import messages, auth
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import connection, transaction
@@ -17,7 +17,7 @@ from django.utils import timezone
 from django.utils.dateparse import parse_date
 from django.utils.datastructures import MultiValueDictKeyError
 
-from .models import Task, TaskAssignment, Batch, Project
+from .models import Task, TaskAssignment, Batch, Project, Bookmark
 
 User = get_user_model()
 
@@ -41,19 +41,25 @@ def handle_db_lock(func):
     return wrapper
 
 
+def get_user(request):
+    if not hasattr(request, '_cached_user'):
+        request._cached_user = auth.get_user(request)
+    return request._cached_user
+
+
 def index(request):
     """
     Security behavior:
     - Anyone can access the page, but the page only shows the user
       information they have access to.
     """
-    abandoned_assignments = []
+    open_assignments = []
     if request.user.is_authenticated:
         for ha in TaskAssignment.objects.filter(assigned_to=request.user)\
                                         .filter(completed=False)\
                                         .filter(task__batch__active=True)\
                                         .filter(task__batch__project__active=True):
-            abandoned_assignments.append({
+            open_assignments.append({
                 'task': ha.task,
                 'task_assignment_id': ha.id
             })
@@ -63,24 +69,59 @@ def index(request):
 
     available_task_counts = Batch.available_task_counts_for(batch_query, request.user)
 
+    if request.POST:
+        def process_bookmark(query_dict):
+            """Create or update bookmark status for a batch & user
+            """
+            batch_name = query_dict.get('rowId')
+            bookmark_status = query_dict.get('bookmarked') != 'true'
+            batch = Batch.objects.get(name=batch_name)
+            bookmark, created = Bookmark.objects.get_or_create(
+                user=get_user(request),
+                batch=batch,
+                defaults={'bookmarked': bookmark_status}
+            )
+            if not created:
+                bookmark.bookmarked = bookmark_status
+                bookmark.save()
+
+        if request.POST.get('action'):
+            if 'bookmarking' in request.POST.get('action'):
+                process_bookmark(request.POST)
+
     batch_rows = []
     for batch in batch_query.values('created_at', 'id', 'name', 'project__name'):
-        total_tasks_available = available_task_counts[batch['id']]
+        if request.user.is_authenticated:
+            user = get_user(request)
+            bookmark = Bookmark.objects.filter(user=user, batch__name=batch['name']).values_list(
+                'bookmarked', 'updated_at').first()
 
+            def format_bookmark(bookmark):
+                return 'checked' if bookmark[0] else ''
+
+            # Simplify the return statement
+            bookmark_status, bookmark_update = (format_bookmark(bookmark), bookmark[1])\
+                if bookmark else ('', batch['created_at'])
+        else:
+            bookmark_status, bookmark_update = '', ''
+        total_tasks_available = available_task_counts[batch['id']]
         if total_tasks_available > 0:
             batch_rows.append({
                 'project_name': batch['project__name'],
                 'batch_name': batch['name'],
                 'batch_published': batch['created_at'],
                 'assignments_available': total_tasks_available,
+                'selected': bookmark_status,
                 'preview_next_task_url': reverse('preview_next_task',
                                                  kwargs={'batch_id': batch['id']}),
                 'accept_next_task_url': reverse('accept_next_task',
-                                                kwargs={'batch_id': batch['id']})
+                                                kwargs={'batch_id': batch['id']}),
+                'updated_at': bookmark_update
             })
+
     return render(request, 'turkle/index.html', {
-        'abandoned_assignments': abandoned_assignments,
-        'batch_rows': batch_rows
+        'open_assignments': open_assignments,
+        'batch_rows': sorted(batch_rows, key=lambda x: x['updated_at'], reverse=True)
     })
 
 

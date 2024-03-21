@@ -413,7 +413,7 @@ class TestIndex(django.test.TestCase):
         self.assertTrue(b'MY_BATCH_NAME' in response.content)
 
 
-class TestIndexAbandonedAssignments(TestCase):
+class TestIndexOpenAssignments(TestCase):
     def setUp(self):
         self.user = User.objects.create_user('testuser', password='secret')
 
@@ -424,7 +424,7 @@ class TestIndexAbandonedAssignments(TestCase):
         self.task = Task(batch=self.batch)
         self.task.save()
 
-    def test_index_abandoned_assignment(self):
+    def test_index_open_assignment(self):
         TaskAssignment(
             assigned_to=self.user,
             completed=False,
@@ -435,10 +435,11 @@ class TestIndexAbandonedAssignments(TestCase):
         client.login(username='testuser', password='secret')
         response = client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(b'You have abandoned' in response.content)
+        self.assertFalse(b'No open assignments. Accept a new task to open an assignment.'
+                         in response.content)
 
-    def test_index_abandoned_assignment_from_inactive_batch(self):
-        # Don't show abandoned tasks from inactive batches
+    def test_index_open_assignment_from_inactive_batch(self):
+        # Don't show open tasks from inactive batches
         TaskAssignment(
             assigned_to=self.user,
             completed=False,
@@ -452,10 +453,10 @@ class TestIndexAbandonedAssignments(TestCase):
         client.login(username='testuser', password='secret')
         response = client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(b'You have abandoned' in response.content)
+        self.assertFalse(b'You have open' in response.content)
 
-    def test_index_abandoned_assignment_from_inactive_project(self):
-        # Don't show abandoned tasks from inactive projects
+    def test_index_open_assignment_from_inactive_project(self):
+        # Don't show open tasks from inactive projects
         TaskAssignment(
             assigned_to=self.user,
             completed=False,
@@ -469,9 +470,9 @@ class TestIndexAbandonedAssignments(TestCase):
         client.login(username='testuser', password='secret')
         response = client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(b'You have abandoned' in response.content)
+        self.assertFalse(b'You have open' in response.content)
 
-    def test_index_no_abandoned_assignments(self):
+    def test_index_no_open_assignments(self):
         TaskAssignment(
             assigned_to=None,
             completed=False,
@@ -482,7 +483,7 @@ class TestIndexAbandonedAssignments(TestCase):
         client.login(username='testuser', password='secret')
         response = client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(b'You have abandoned' in response.content)
+        self.assertFalse(b'You have open' in response.content)
 
 
 class TestTaskAssignment(TestCase):
