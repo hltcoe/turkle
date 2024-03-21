@@ -435,7 +435,8 @@ class TestIndexOpenAssignments(TestCase):
         client.login(username='testuser', password='secret')
         response = client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
-        self.assertFalse(b'No open assignments. Accept a new task to open an assignment.' in response.content)
+        self.assertFalse(b'No open assignments. Accept a new task to open an assignment.'
+                         in response.content)
 
     def test_index_open_assignment_from_inactive_batch(self):
         # Don't show open tasks from inactive batches
