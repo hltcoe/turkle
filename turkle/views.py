@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 import logging
 import urllib
@@ -53,13 +53,13 @@ def index(request):
     - Anyone can access the page, but the page only shows the user
       information they have access to.
     """
-    abandoned_assignments = []
+    open_assignments = []
     if request.user.is_authenticated:
         for ha in TaskAssignment.objects.filter(assigned_to=request.user)\
                                         .filter(completed=False)\
                                         .filter(task__batch__active=True)\
                                         .filter(task__batch__project__active=True):
-            abandoned_assignments.append({
+            open_assignments.append({
                 'task': ha.task,
                 'task_assignment_id': ha.id
             })
@@ -74,7 +74,7 @@ def index(request):
             """Create or update bookmark status for a batch & user
             """
             batch_name = query_dict.get('rowId')
-            bookmark_status = query_dict.get('bookmarked') == 'true'
+            bookmark_status = query_dict.get('bookmarked') != 'true'
             batch = Batch.objects.get(name=batch_name)
             bookmark, created = Bookmark.objects.get_or_create(
                 user=get_user(request),
@@ -85,22 +85,21 @@ def index(request):
                 bookmark.bookmarked = bookmark_status
                 bookmark.save()
 
-        if request.POST:
+        if request.POST.get('action'):
             if 'bookmarking' in request.POST.get('action'):
                 process_bookmark(request.POST)
 
     batch_rows = []
     for batch in batch_query.values('created_at', 'id', 'name', 'project__name'):
-        def get_bookmark_status(batch):
-            """Access batch bookmark status for a user
-            """
-            bookmark = Bookmark.objects.filter(
-                    user=get_user(request),
-                    batch__name=batch['name']
-                ).values_list('bookmarked', flat=True).first()
-            return 'checked' if bookmark else ''
-
-        bookmark_status = get_bookmark_status(batch) if request.user.is_authenticated else ''
+        if request.user.is_authenticated:
+            user = get_user(request)
+            bookmark = Bookmark.objects.filter(user=user, batch__name=batch['name']).values_list('bookmarked', 'updated_at').first()
+            def format_bookmark(bookmark):
+                return 'checked' if bookmark[0] else ''
+            # Simplify the return statement
+            bookmark_status, bookmark_update = (format_bookmark(bookmark), bookmark[1]) if bookmark else ('', batch['created_at'])
+        else:
+            bookmark_status, bookmark_update = '', ''
         total_tasks_available = available_task_counts[batch['id']]
         if total_tasks_available > 0:
             batch_rows.append({
@@ -112,12 +111,13 @@ def index(request):
                 'preview_next_task_url': reverse('preview_next_task',
                                                  kwargs={'batch_id': batch['id']}),
                 'accept_next_task_url': reverse('accept_next_task',
-                                                kwargs={'batch_id': batch['id']})
+                                                kwargs={'batch_id': batch['id']}),
+                'updated_at': bookmark_update
             })
 
     return render(request, 'turkle/index.html', {
-        'abandoned_assignments': abandoned_assignments,
-        'batch_rows': batch_rows
+        'open_assignments': open_assignments,
+        'batch_rows': sorted(batch_rows, key=lambda x: x['updated_at'], reverse=True)
     })
 
 
