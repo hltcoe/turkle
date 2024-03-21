@@ -1,5 +1,5 @@
 from collections import defaultdict
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from functools import wraps
 import logging
 import urllib
@@ -93,11 +93,15 @@ def index(request):
     for batch in batch_query.values('created_at', 'id', 'name', 'project__name'):
         if request.user.is_authenticated:
             user = get_user(request)
-            bookmark = Bookmark.objects.filter(user=user, batch__name=batch['name']).values_list('bookmarked', 'updated_at').first()
+            bookmark = Bookmark.objects.filter(user=user, batch__name=batch['name']).values_list(
+                'bookmarked', 'updated_at').first()
+            
             def format_bookmark(bookmark):
                 return 'checked' if bookmark[0] else ''
+            
             # Simplify the return statement
-            bookmark_status, bookmark_update = (format_bookmark(bookmark), bookmark[1]) if bookmark else ('', batch['created_at'])
+            bookmark_status, bookmark_update = (format_bookmark(bookmark), bookmark[1])\
+                if bookmark else ('', batch['created_at'])
         else:
             bookmark_status, bookmark_update = '', ''
         total_tasks_available = available_task_counts[batch['id']]
