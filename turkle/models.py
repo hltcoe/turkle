@@ -165,7 +165,7 @@ class TaskAssignment(models.Model):
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
 
     @classmethod
-    def expire_all_abandoned(cls):
+    def expire_all_open(cls):
         result = cls.objects.\
             filter(completed=False).\
             filter(expires_at__lt=timezone.now()).\
@@ -944,3 +944,4 @@ class Bookmark(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     batch = models.ForeignKey(Batch, on_delete=models.CASCADE)
     bookmarked = models.BooleanField(default=False)
+    updated_at = models.DateTimeField(auto_now=True)

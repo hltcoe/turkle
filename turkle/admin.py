@@ -1199,7 +1199,7 @@ class ViewOnlyAdminMixin:
 
 
 class TaskAssignmentAdmin(admin.ModelAdmin):
-    """View for assignments to expire abandoned ones"""
+    """View for assignments to expire open ones"""
 
     class Media:
         css = {
@@ -1225,17 +1225,17 @@ class TaskAssignmentAdmin(admin.ModelAdmin):
         return super().changelist_view(request, extra_context)
 
     @staticmethod
-    def expire_abandoned_assignments(request):
-        (total_deleted, _) = TaskAssignment.expire_all_abandoned()
-        messages.info(request, 'All {} abandoned Tasks have been expired'.format(total_deleted))
+    def expire_open_assignments(request):
+        (total_deleted, _) = TaskAssignment.expire_all_open()
+        messages.info(request, 'All {} open Tasks have been expired'.format(total_deleted))
         return redirect(reverse('admin:turkle_taskassignment_changelist'))
 
     def get_urls(self):
         urls = super().get_urls()
         my_urls = [
-            path('expire_abandoned_assignments/',
-                 self.admin_site.admin_view(self.expire_abandoned_assignments),
-                 name='turkle_expire_abandoned_assignments'),
+            path('expire_open_assignments/',
+                 self.admin_site.admin_view(self.expire_open_assignments),
+                 name='turkle_expire_open_assignments'),
         ]
         return my_urls + urls
 

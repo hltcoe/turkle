@@ -5,7 +5,7 @@ import os
 import sys
 import types
 
-DEBUG = False
+DEBUG = True#False
 ALLOWED_HOSTS = ['*']
 X_FRAME_OPTIONS = 'SAMEORIGIN'
 
