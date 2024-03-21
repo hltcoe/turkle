@@ -95,10 +95,10 @@ def index(request):
             user = get_user(request)
             bookmark = Bookmark.objects.filter(user=user, batch__name=batch['name']).values_list(
                 'bookmarked', 'updated_at').first()
-            
+
             def format_bookmark(bookmark):
                 return 'checked' if bookmark[0] else ''
-            
+
             # Simplify the return statement
             bookmark_status, bookmark_update = (format_bookmark(bookmark), bookmark[1])\
                 if bookmark else ('', batch['created_at'])
