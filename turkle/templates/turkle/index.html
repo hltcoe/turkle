@@ -3,34 +3,39 @@
 
 {% block body %}
 {% if batch_rows %}
-<row style="padding: 5pt; width: 100%; height: 25vh;">
+<div style="min-width: 1000pt;">
+<row class="top-tables">
   <div class="column-div">
     <div class="table-alert alert alert-primary" role="alert" style="background-color: transparent;">
-      <h3>Bookmarked</h3>
-      <table class="table-header">
-        <thead>
-          <tr>
-            <th>Project</th>
-            <th>Batch</th>
-            <th>Actions</th>
-            <th></th>
-          </tr>
-        </thead>
-      </table>
-
-      <div class="table-body-container">
-        <table class="table-body" id="bookmarkedTasksTable" >
-          <tbody>               
-          </tbody>
+      <h3><i class="bi bi-bookmark-fill"></i> Bookmarked</h3>
+      <div class="alert alert-info" id="noRowsDiv" style="display: none;">No bookmarked tasks. Toggle the bookmark (<i class="bi bi-bookmark"></i>) for tasks to appear here.</div>
+      <div id="bookmarkedTasks">
+        <table class="table-header">
+          <thead>
+            <tr>
+              <th>Project</th>
+              <th>Batch</th>
+              <th>Actions</th>
+              <th></th>
+            </tr>
+          </thead>
         </table>
+
+        <div class="table-body-container">
+          <table class="table-body" id="bookmarkedTasksTable" >
+            <tbody>               
+            </tbody>
+          </table>
+        </div>
       </div>
+      
     </div>
   </div>
 
   <div class="column-div">
-    <div class="table-alert alert alert-warning" role="alert">
-        <h3>Abandoned Assignments</h3>
-        {% if abandoned_assignments %}
+    <div class="table-alert alert alert-success" role="alert" style="background-color: transparent;">
+        <h3><i class="bi bi-clock-history"> </i>Open Assignments</h3>
+        {% if open_assignments %}
           <table class="table-header">
             <thead>
               <tr>
@@ -44,7 +49,7 @@
           <div class="table-body-container">
               <table class="table-body">
                   <tbody>
-                    {% for aa in abandoned_assignments %}
+                    {% for aa in open_assignments %}
                     <tr>
                       <td>{{ aa.task.batch.project.name }}</td>
                       <td>{{ aa.task.batch.name }}</td>
@@ -65,7 +70,7 @@
               </table>
           </div>
         {% else %}
-          <div class="alert alert-info">No abandoned assignments found.</div>
+          <div class="alert alert-info">No open assignments. Accept a new task to open an assignment.</div>
         {% endif %}
     </div>
   </div>
@@ -129,17 +134,15 @@
     {% endif %}
   {% endif %}
 </div>
+</div>
 
 {% endblock %}
-$(document).ready(function() {
-  $('#example').DataTable();
-});
 
 {% block script %}
 <script   src="https://code.jquery.com/jquery-3.7.1.min.js"   integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="   crossorigin="anonymous"></script>
 <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.js"></script>
 <script>
-
+  
   function updateSecondaryTable() {
       const secondaryTableBody = document.querySelector('#bookmarkedTasksTable tbody');
 
@@ -165,28 +168,25 @@ $(document).ready(function() {
 
   }
 
+  function checkAndToggleNoRowsDiv() {
+    var hasRows = $('#bookmarkedTasksTable tbody tr').length > 0;
+    $('#noRowsDiv').toggle(!hasRows);
+    $('#bookmarkedTasks').toggle(hasRows);
+  }
+
   $(document).ready(function () {
     var table = $('#batchTable').DataTable({
       stateSave: true,
       retrieve: true,
       pageLength : 10,
+      order: [],
       lengthMenu: [[5, 10, 20], [5, 10, 20]],
-      columnDefs: [{"orderable": false, "targets": [5, 6] },
-      {
-        targets: 0,
-        orderData: [0],
-        render: function(data, type, row, meta) {
-            if (type === 'sort') {
-                var value = $(row[meta.col]).find("input").val();
-                return value || 0; 
-            }
-            return data; 
-        }
-      }]
+      columnDefs: [{"orderable": false, "targets": [0, 5, 6] }]
     });
 
     $('.dataTables_length').addClass('bs-select');
     updateSecondaryTable();
+    checkAndToggleNoRowsDiv();
 
   });
 
@@ -250,6 +250,7 @@ $(document).ready(function() {
     });
 
     updateSecondaryTable();
+    checkAndToggleNoRowsDiv();
 
   }
 
