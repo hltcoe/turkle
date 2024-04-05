@@ -7,9 +7,9 @@
 <row class="top-tables">
   <div class="column-div">
     <div class="table-alert alert alert-primary" role="alert" style="background-color: transparent;">
-      <h3><i class="bi bi-bookmark-fill"></i> Bookmarked</h3>
-      <div class="alert alert-info" id="noRowsDiv" style="display: none;">No bookmarked tasks. Toggle the bookmark (<i class="bi bi-bookmark"></i>) for tasks to appear here.</div>
-      <div id="bookmarkedTasks">
+      <h3><i class="bi bi-bookmark-fill"></i> Bookmarks</h3>
+      <div class="alert alert-info" id="noRowsDiv" style="display: none;">No bookmarked batches. Toggle the bookmark (<i class="bi bi-bookmark"></i>) for batches to appear here.</div>
+      <div id="bookmarkedBatches">
         <table class="table-header">
           <thead>
             <tr>
@@ -22,7 +22,7 @@
         </table>
 
         <div class="table-body-container">
-          <table class="table-body" id="bookmarkedTasksTable" >
+          <table class="table-body" id="bookmarkedBatchesTable" >
             <tbody>               
             </tbody>
           </table>
@@ -144,7 +144,7 @@
 <script>
   
   function updateSecondaryTable() {
-      const secondaryTableBody = document.querySelector('#bookmarkedTasksTable tbody');
+      const secondaryTableBody = document.querySelector('#bookmarkedBatchesTable tbody');
 
       secondaryTableBody.innerHTML = '';
 
@@ -169,9 +169,9 @@
   }
 
   function checkAndToggleNoRowsDiv() {
-    var hasRows = $('#bookmarkedTasksTable tbody tr').length > 0;
+    var hasRows = $('#bookmarkedBatchesTable tbody tr').length > 0;
     $('#noRowsDiv').toggle(!hasRows);
-    $('#bookmarkedTasks').toggle(hasRows);
+    $('#bookmarkedBatches').toggle(hasRows);
   }
 
   $(document).ready(function () {
