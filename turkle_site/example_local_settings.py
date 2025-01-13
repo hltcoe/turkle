@@ -110,3 +110,31 @@
 #         },
 #     }
 # }
+
+# Example configuration for SAML authentication
+SAML2_AUTH = {
+    'DEFAULT_NEXT_URL': '/admin/',  # redirect url after login
+    'CREATE_USER': True,  # create user if not already in the database
+    'NEW_USER_PROFILE': {
+        'USER_GROUPS': [],  # The default group name when a new user logs in
+        'ACTIVE_STATUS': True,  # The default active status for new users
+        'STAFF_STATUS': True,  # The staff status for new users
+        'SUPERUSER_STATUS': False,  # The superuser status for new users
+    },
+    'ATTRIBUTES_MAP': {  # Change Email/UserName/FirstName/LastName to corresponding SAML2 userprofile attributes.
+        'email': 'Email',
+        'username': 'UserName',
+        'first_name': 'FirstName',
+        'last_name': 'LastName',
+    },
+    'TRIGGER': {
+        'CREATE_USER': 'path.to.your.new.user.hook.method',
+        'BEFORE_LOGIN': 'path.to.your.login.hook.method',
+    },
+    'ASSERTION_URL': 'https://your-domain.com',  # Custom URL to validate incoming SAML requests against
+    'ENTITY_ID': 'https://your-domain.com/saml2_auth/acs/',  # Populates the Issuer element in authn request
+    'NAME_ID_FORMAT': 'urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress',
+    'USE_JWT': False,  # Set this to True if you are running a Single Page Application (SPA) with Django Rest Framework (DRF)
+    'FRONTEND_URL': 'http://localhost:8000',  # URL of the SPA if you are using one
+    'JWT_EXP': 3600,  # JWT expiration time in seconds
+}
