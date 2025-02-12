@@ -23,6 +23,10 @@ from jsonfield import JSONField
 
 from .utils import get_turkle_template_limit
 
+import grpc
+import sd_services.document_management.documents_pb2 as documents_pb2
+import sd_services.document_management.documents_pb2_grpc as documents_pb2_grpc
+
 User = get_user_model()
 
 logger = logging.getLogger(__name__)
@@ -132,6 +136,18 @@ class Task(models.Model):
     def __str__(self):
         return 'Task id:{}'.format(self.id)
 
+    def seuss_url(self, document_uuid):
+      try:
+        seuss_grpc_location = 'seuss-gruf:9003' if os.environ.get('ENVIRONMENT') != None else '127.0.0.1:9007'
+        channel = grpc.insecure_channel(seuss_grpc_location)
+        client = documents_pb2_grpc.DocumentsStub(channel)
+        request = documents_pb2.GetDocumentsRequest(uuids=[document_uuid], content_disposition='inline')
+        response = client.GetDocuments(request)
+        return response.by_uuid[document_uuid].remote_url
+      except Exception as e:
+        logger.warning("Failed to get url from seuss: %s", e)
+        return None
+
     def populate_html_template(self):
         """Return HTML template for this Task's project, with populated template variables
 
@@ -146,6 +162,14 @@ class Task(models.Model):
                 r'${' + field + r'}',
                 self.input_csv_fields[field]
             )
+
+        # replacing instances of seussUrl(abcd-123) in the html template with temp signed urls
+        seuss_uuids = re.findall(r"seussUrl\(([^\)]+)\)", result)
+        for uuid in seuss_uuids:
+            url = self.seuss_url(uuid)
+            if url != None:
+              result = result.replace(f'seussUrl({uuid})', url)
+
         return result
 
 
