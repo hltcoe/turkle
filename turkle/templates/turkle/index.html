@@ -90,7 +90,9 @@
                 <tr>
                   <td>{{ batch_row.project_name }}</td>
                   <td>{{ batch_row.batch_name }}</td>
-                  <td>{{ batch_row.batch_published }}</td>
+                  <td data-sort="{{ batch_row.batch_published|date:'c' }}">
+                    {{ batch_row.batch_published }}
+                  </td>
                   <td>{{ batch_row.assignments_available }}</td>
                   <td style="white-space: nowrap; width: 1%;">
                     <div style="display: inline-flex; gap: 0.5rem;">
