@@ -52,14 +52,18 @@ Remember the password that you used for the next step.
 
 Clone Turkle code and configure
 ----------------------------------
-We put the source code in /var/www and configure Turkle::
+We put the source code in /srv/turkle, setup permissions and configure Turkle::
 
-    $ cd /var/www
+    $ cd /srv
     $ sudo mkdir turkle
-    $ sudo chown <your user>:<your group> turkle/
+    $ sudo groupadd webapps
+    $ sudo usermod -aG webapps <your user>
+    $ sudo usermod -aG webapps www-data
+    $ sudo chown <your user>:webapps turkle
     $ cd turkle
     $ git clone https://github.com/hltcoe/turkle.git .
-
+    $ sudo find /srv/turkle -type d -exec chmod 2750 {} \;
+    $ sudo find /srv/turkle -type f -exec chmod 640 {} \;
 
 Next, we configure the Turkle app::
 
@@ -68,12 +72,12 @@ Next, we configure the Turkle app::
 
 Use your preferred editor to open local_settings.py and do the following
 
- * Uncomment STATIC_ROOT and set it to /var/www/turkle/static/
+ * Uncomment STATIC_ROOT and set it to /srv/turkle/static/
  * Uncomment the mysql section and set the password
 
 We need to create a python virtual environment::
 
-    $ cd /var/www/turkle
+    $ cd /srv/turkle
     $ python -m venv .venv
     $ source .venv/bin/activate
     $ pip install -U pip wheel
@@ -93,16 +97,16 @@ We have to tell Apache to use wsgi to run Turkle by sudoing your favorite editor
 to update /etc/apache2/sites-available/000-default-le-ssl.conf and adding these
 lines to the VirtualHost configuration::
 
-    DocumentRoot /var/www/turkle
+    DocumentRoot /srv/turkle
 
-    Alias /static /var/www/turkle/static
-    <Directory /var/www/turkle/static>
+    Alias /static /srv/turkle/static
+    <Directory /srv/turkle/static>
         Require all granted
         Options -Indexes -ExecCGI -FollowSymLinks
         AllowOverride None
     </Directory>
 
-    <Directory /var/www/turkle/turkle_site>
+    <Directory /srv/turkle/turkle_site>
         <Files wsgi.py>
             Require all granted
         </Files>
@@ -110,9 +114,9 @@ lines to the VirtualHost configuration::
         AllowOverride None
     </Directory>
 
-    WSGIDaemonProcess turkle python-home=/var/www/turkle/.venv python-path=/var/www/turkle
+    WSGIDaemonProcess turkle python-home=/srv/turkle/.venv python-path=/srv/turkle
     WSGIProcessGroup turkle
-    WSGIScriptAlias / /var/www/turkle/turkle_site/wsgi.py
+    WSGIScriptAlias / /srv/turkle/turkle_site/wsgi.py
 
 Finally, restart the web server and Turkle should be running::
 
@@ -122,5 +126,5 @@ Finally, restart the web server and Turkle should be running::
 
 Not covered
 ----------------------------------
-This guide does not cover setting a mail transfer agent for email support
-or configuring a cron job for regularly creating back-ups.
+This guide does not cover setting email sending or configuring a
+cron job for regularly creating back-ups.
