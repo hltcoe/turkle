@@ -56,7 +56,10 @@ If you want to use Turkle with more than a handful of Workers or host
 Turkle on a public webserver, it is **strongly recommended** that you
 use a scalable webserver and database backend.  Please see the
 documentation of production deployments included in the 
-:doc:`Administration guide <ADMINISTRATION>` in the docs directory.
+:doc:`Administration guide <ADMINISTRATION>`.
+
+If you want instructions for installing Turkle on an Ubuntu
+server, see the :doc:`Quick Start guide <QUICK_START>`.
 
 If you would like to use Turkle in a Docker container, see the 
 :doc:`Docker guide <DOCKER>`.
