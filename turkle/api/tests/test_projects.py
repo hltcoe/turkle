@@ -139,7 +139,7 @@ class ProjectsTests(TurkleAPITestCase):
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         msg = json.loads(response.content)['users'][0]
-        self.assertEquals('User with id 99 does not exist', msg)
+        self.assertEqual('User with id 99 does not exist', msg)
 
     def test_setting_permissions_with_bad_group(self):
         create_project(self.client)
@@ -151,7 +151,7 @@ class ProjectsTests(TurkleAPITestCase):
         response = self.client.post(url, data, format='json')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         msg = json.loads(response.content)['groups'][0]
-        self.assertEquals('Group with id 99 does not exist', msg)
+        self.assertEqual('Group with id 99 does not exist', msg)
 
     def test_adding_permissions(self):
         user1 = User.objects.create_user('testuser1', 'password')
