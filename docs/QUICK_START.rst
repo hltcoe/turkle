@@ -98,12 +98,16 @@ lines to the VirtualHost configuration::
     Alias /static /var/www/turkle/static
     <Directory /var/www/turkle/static>
         Require all granted
+        Options -Indexes -ExecCGI -FollowSymLinks
+        AllowOverride None
     </Directory>
 
     <Directory /var/www/turkle/turkle_site>
         <Files wsgi.py>
             Require all granted
         </Files>
+        Options -Indexes -ExecCGI -FollowSymLinks
+        AllowOverride None
     </Directory>
 
     WSGIDaemonProcess turkle python-home=/var/www/turkle/.venv python-path=/var/www/turkle
