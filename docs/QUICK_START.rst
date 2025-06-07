@@ -119,3 +119,8 @@ Finally, restart the web server and Turkle should be running::
     $ sudo a2enmod wsgi
     $ sudo systemctl restart apache2
 
+
+Not covered
+----------------------------------
+This guide does not cover setting a mail transfer agent for email support
+or configuring a cron job for regularly creating back-ups.
