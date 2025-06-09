@@ -17,20 +17,21 @@ Installing OS packages
 We assume that you have already updated your operating system with the latest updates.
 First, install the web server and the database::
 
-    $ sudo apt install apache2 mysql-server-8.0 libapache2-mod-wsgi-py3
+    $ sudo apt -y install apache2 mysql-server-8.0 libapache2-mod-wsgi-py3
 
 
 Next, we will get SSL working with the web server using Let's Encrypt::
 
-    $ sudo apt install certbot python3-certbot-apache
+    $ sudo apt -y install certbot python3-certbot-apache
     $ sudo a2enmod ssl
+    $ sudo systemctl restart apache2
     $ sudo certbot --apache
 
 You should now be able to hit your web server using https.
 
 Now, we install git and setup all the other python dependencies that we will need::
 
-    $ sudo apt install git build-essential python3-dev libmysqlclient-dev python3.12-venv
+    $ sudo apt -y install git build-essential pkg-config python3-dev libmysqlclient-dev python3.12-venv
 
 
 Configuring the database
@@ -62,6 +63,7 @@ We put the source code in /srv/turkle, setup permissions and configure Turkle::
     $ sudo chown <your user>:webapps turkle
     $ cd turkle
     $ git clone https://github.com/hltcoe/turkle.git .
+    $ sudo chown -R :webapps /srv/turkle
     $ sudo find /srv/turkle -type d -exec chmod 2750 {} \;
     $ sudo find /srv/turkle -type f -exec chmod 640 {} \;
 
@@ -78,7 +80,7 @@ Use your preferred editor to open local_settings.py and do the following
 We need to create a python virtual environment::
 
     $ cd /srv/turkle
-    $ python -m venv .venv
+    $ python3 -m venv .venv
     $ source .venv/bin/activate
     $ pip install -U pip wheel
     $ pip install mysqlclient
