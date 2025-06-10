@@ -49,10 +49,10 @@ Installation
 Turkle works with Python 3.6+.
 
 This Installation section covers the quickest and easiest way to use
-Turkle with a handful of users on your local network by using the
+Turkle with a few users on your local network by using the
 Django development web server with the SQLite database backend.
 
-If you want to use Turkle with more than a handful of Workers or host
+If you want to use Turkle with more than a few users or host
 Turkle on a public webserver, it is **strongly recommended** that you
 use a scalable webserver and database backend.  Please see the
 documentation of production deployments included in the 
@@ -67,6 +67,18 @@ If you would like to use Turkle in a Docker container, see the
 If you would like to add Turkle to an existing Django-based site,
 see the :doc:`Django app <APP>` guide.
 
+
+Download
+-----------
+
+If you want to deploy a stable release of Turkle, download a zip file
+or tarball from `the release page`_. You can also clone this git repository
+and checkout a tag::
+
+    git clone git@github.com:hltcoe/turkle.git
+    git checkout 3.0.0
+
+If you want to use the latest development version, use the main branch.
 
 Dependencies
 ------------
@@ -162,3 +174,4 @@ Release process
  
 .. _Django: https://www.djangoproject.com
 .. _`PEP 8`: https://www.python.org/dev/peps/pep-0008/
+.. _`the release page`: https://github.com/hltcoe/turkle/releases
