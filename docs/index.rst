@@ -11,6 +11,7 @@ Welcome to Turkle's documentation!
    :caption: Contents:
 
    README.rst
+   QUICK_START.rst
    ADMINISTRATION.rst
    DOCKER.rst
    APP.rst
