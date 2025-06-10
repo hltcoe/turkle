@@ -22,7 +22,7 @@ import turkle  # noqa: E402
 # -- Project information -----------------------------------------------------
 
 project = 'Turkle'
-copyright = '2013-2022, HLTCOE'
+copyright = '2013-2025, HLTCOE'
 author = 'HLTCOE'
 
 version = turkle.__version__
