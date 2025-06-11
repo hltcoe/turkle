@@ -58,8 +58,8 @@ use a scalable webserver and database backend.  Please see the
 documentation of production deployments included in the 
 :doc:`Administration guide <ADMINISTRATION>`.
 
-If you want instructions for installing Turkle on an Ubuntu
-server, see the :doc:`Quick Start guide <QUICK_START>`.
+If you want instructions for installing Turkle on an Ubuntu server with a
+production-like setup, see the :doc:`Quick Start guide <QUICK_START>`.
 
 If you would like to use Turkle in a Docker container, see the 
 :doc:`Docker guide <DOCKER>`.
