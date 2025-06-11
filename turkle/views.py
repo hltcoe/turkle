@@ -217,7 +217,8 @@ def task_assignment(request, task_id, task_assignment_id):
                 format(task_assignment.id))
             return redirect(index)
 
-    auto_accept_status = request.session.get('auto_accept_status', False)
+    auto_accept_default = settings.TURKLE_AUTO_ACCEPT_DEFAULT
+    auto_accept_status = request.session.get('auto_accept_status', auto_accept_default)
 
     if request.method == 'GET':
         http_get_params = "?assignmentId={}&hitId={}&workerId={}&urlSubmitTo={}".format(
