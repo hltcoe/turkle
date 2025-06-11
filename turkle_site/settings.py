@@ -157,6 +157,9 @@ META_TAGS = []
 # This requires MTA configuration.
 TURKLE_EMAIL_ENABLED = False
 
+# Whether annotators automatically accept the next task in a batch after submitting
+TURKLE_AUTO_ACCEPT_DEFAULT = True
+
 
 # Docker specific configuration
 
