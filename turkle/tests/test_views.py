@@ -1,6 +1,7 @@
 import django.test
 from django.contrib.auth.models import Group, User
 from django.contrib.messages import get_messages
+from django.http import QueryDict
 from django.test import TestCase
 from django.urls import reverse
 from guardian.shortcuts import assign_perm
@@ -595,6 +596,23 @@ class TestTaskAssignment(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], reverse('accept_next_task',
                                                        kwargs={'batch_id': self.task.batch_id}))
+
+    def test_submit_assignment_with_array_post_input(self):
+        # forms that have multiple fields with the same name such as multiple selects
+        qd = QueryDict(mutable=True)
+        qd['name'] = 'Alice'
+        qd.setlist('hobbies[]', ['climbing', 'running'])
+
+        url = reverse('task_assignment',
+                      kwargs={
+                          'task_id': self.task.id,
+                          'task_assignment_id': self.task_assignment.id
+                      })
+        self.client.post(url, data=qd)
+
+        obj = TaskAssignment.objects.get(id=self.task_assignment.id)
+        self.assertEqual(obj.answers['name'], 'Alice')
+        self.assertEqual(obj.answers['hobbies[]'], ['climbing', 'running'])
 
 
 class TestTaskAssignmentIFrame(TestCase):
