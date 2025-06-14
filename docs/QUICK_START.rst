@@ -80,8 +80,8 @@ Use your preferred editor to open local_settings.py and do the following
 We need to create a python virtual environment::
 
     $ cd /srv/turkle
-    $ python3 -m venv .venv
-    $ source .venv/bin/activate
+    $ python3 -m venv venv
+    $ source venv/bin/activate
     $ pip install -U pip wheel
     $ pip install mysqlclient
     $ pip install -r requirements.txt
@@ -116,7 +116,7 @@ lines to the VirtualHost configuration::
         AllowOverride None
     </Directory>
 
-    WSGIDaemonProcess turkle python-home=/srv/turkle/.venv python-path=/srv/turkle
+    WSGIDaemonProcess turkle python-home=/srv/turkle/venv python-path=/srv/turkle
     WSGIProcessGroup turkle
     WSGIScriptAlias / /srv/turkle/turkle_site/wsgi.py
 
@@ -124,6 +124,24 @@ Finally, restart the web server and Turkle should be running::
 
     $ sudo a2enmod wsgi
     $ sudo systemctl restart apache2
+
+
+Setting Up Task Expiration
+----------------------------
+Task assignments has expiration dates when a task goes back to the pool for
+assignment to another annotator. For this to work, a cronjob has to be
+configured.
+
+Edit the crontab for www-data::
+
+    $ sudo crontab -u www-data -e
+
+
+Then add this line::
+
+    */15 * * * * cd /srv/turkle && /srv/turkle/venv/bin/python manage.py expire_assignments 2>&1 | logger -t turkle-cron
+
+This runs the cronjob every 15 minutes and pipes output to the syslog with the tag turkle-cron.
 
 
 Not covered
