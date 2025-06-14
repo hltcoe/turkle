@@ -160,7 +160,7 @@ Create the directory for the backups::
 
     $ mkdir /srv/turkle/backups
 
- Create a backup script at /srv/turkle/backup.sh with this content::
+Create a backup script at /srv/turkle/backup.sh with this content::
 
     #!/bin/bash
 
