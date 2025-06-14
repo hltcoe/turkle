@@ -80,8 +80,8 @@ Use your preferred editor to open local_settings.py and do the following
 We need to create a python virtual environment::
 
     $ cd /srv/turkle
-    $ python3 -m venv .venv
-    $ source .venv/bin/activate
+    $ python3 -m venv venv
+    $ source venv/bin/activate
     $ pip install -U pip wheel
     $ pip install mysqlclient
     $ pip install -r requirements.txt
@@ -116,7 +116,7 @@ lines to the VirtualHost configuration::
         AllowOverride None
     </Directory>
 
-    WSGIDaemonProcess turkle python-home=/srv/turkle/.venv python-path=/srv/turkle
+    WSGIDaemonProcess turkle python-home=/srv/turkle/venv python-path=/srv/turkle
     WSGIProcessGroup turkle
     WSGIScriptAlias / /srv/turkle/turkle_site/wsgi.py
 
@@ -126,7 +126,74 @@ Finally, restart the web server and Turkle should be running::
     $ sudo systemctl restart apache2
 
 
+Setting Up Task Expiration
+----------------------------
+Task assignments has expiration dates when a task goes back to the pool for
+assignment to another annotator. For this to work, a cronjob has to be
+configured.
+
+Edit the crontab for www-data::
+
+    $ sudo crontab -u www-data -e
+
+
+Then add this line::
+
+    */15 * * * * cd /srv/turkle && /srv/turkle/venv/bin/python manage.py expire_assignments 2>&1 | logger -t turkle-cron
+
+This runs the cronjob every 15 minutes and pipes output to the syslog with the tag turkle-cron.
+
+
+Database Backups
+--------------------
+To use mysqldump to back up the database, create a file at the path /srv/turkle/.my.cnf with this content::
+
+    [client]
+    user=turkleuser
+    password=[your password here]
+
+Set the permissions so that only you can edit and www-data can read::
+
+    $ chmod 640 .my.cnf
+
+Create the directory for the backups::
+
+    $ mkdir /srv/turkle/backups
+
+Create a backup script at /srv/turkle/backup.sh with this content::
+
+    #!/bin/bash
+
+    # Set backup directory and filename
+    BACKUP_DIR="/srv/turkle/backups"
+    DATE=$(date +'%Y-%m-%d')
+    FILENAME="turkle_backup_$DATE.sql"
+    FULL_SQL_PATH="$BACKUP_DIR/$FILENAME"
+    FULL_GZ_PATH="${FULL_SQL_PATH}.gz"
+
+    # MySQL options
+    MYSQL_OPTS="--defaults-file=/srv/turkle/.my.cnf --no-tablespaces"
+    DB_NAME="turkle"
+
+    # Dump the database
+    mysqldump $MYSQL_OPTS "$DB_NAME" > "$FULL_SQL_PATH" && gzip "$FULL_SQL_PATH"
+
+    # Rotate backups: keep only the 30 most recent
+    cd "$BACKUP_DIR" || exit 1
+    ls -1t turkle_backup_*.sql.gz | tail -n +31 | xargs -r rm --
+
+    # log to syslog
+    logger -t turkle-backup "Turkle database backup completed: $(basename "$FULL_GZ_PATH")"
+
+Set the permissions so that www-data can run it::
+
+    $ chmod 750 backup.sh
+
+Finally, register it as a cron job as you did with the assignment expirations but running daily at 2 am:
+
+    0 2 * * * /srv/turkle/backup.sh
+
+
 Not covered
 ----------------------------------
-This guide does not cover setting email sending or configuring a
-cron job for regularly creating back-ups.
+This guide does not cover configuring SMTP for email.
