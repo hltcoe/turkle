@@ -46,7 +46,7 @@ in the docs directory.
 Installation
 ============
 
-Turkle works with Python 3.6+.
+Turkle works with Python 3.8+.
 
 This Installation section covers the quickest and easiest way to use
 Turkle with a few users on your local network by using the

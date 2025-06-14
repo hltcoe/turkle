@@ -7,7 +7,7 @@ import json
 import logging
 import statistics
 
-from djaa_list_filter.admin import AjaxAutocompleteListFilterModelAdmin
+from djaa_list_filter2.admin import AjaxAutocompleteListFilterModelAdmin
 
 from django.contrib import admin, messages
 from django.contrib.admin.templatetags.admin_list import _boolean_icon
