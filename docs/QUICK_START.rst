@@ -144,7 +144,52 @@ Then add this line::
 This runs the cronjob every 15 minutes and pipes output to the syslog with the tag turkle-cron.
 
 
+Database Backups
+--------------------
+To use mysqldump to back up the database, create a file at the path /srv/turkle/.my.cnf with this content::
+
+    [client]
+    user=turkleuser
+    password=[your password here]
+
+Set the permissions so that only you can edit and www-data can read::
+
+    $ chmod 640 .my.cnf
+
+ Create a backup script at /srv/turkle/backup.sh with this content::
+
+    #!/bin/bash
+
+    # Set backup directory and filename
+    BACKUP_DIR="/srv/turkle/backups"
+    DATE=$(date +'%Y-%m-%d')
+    FILENAME="turkle_backup_$DATE.sql"
+    FULL_SQL_PATH="$BACKUP_DIR/$FILENAME"
+    FULL_GZ_PATH="${FULL_SQL_PATH}.gz"
+
+    # MySQL options
+    MYSQL_OPTS="--defaults-file=/srv/turkle/.my.cnf --no-tablespaces"
+    DB_NAME="turkle"
+
+    # Dump the database
+    mysqldump $MYSQL_OPTS "$DB_NAME" > "$FULL_SQL_PATH" && gzip "$FULL_SQL_PATH"
+
+    # Rotate backups: keep only the 30 most recent
+    cd "$BACKUP_DIR" || exit 1
+    ls -1t turkle_backup_*.sql.gz | tail -n +31 | xargs -r rm --
+
+    # log to syslog
+    logger -t turkle-backup "Turkle database backup completed: $(basename "$FULL_GZ_PATH")"
+
+Set the permissions so that www-data can run it::
+
+    $ chmod 750 backup.sh
+
+Finally, register it as a cron job as you did with the assignment expirations but running daily at 2 am:
+
+    0 2 * * * /srv/turkle/backup.sh
+
+
 Not covered
 ----------------------------------
-This guide does not cover setting email sending or configuring a
-cron job for regularly creating back-ups.
+This guide does not cover configuring SMTP for email.
