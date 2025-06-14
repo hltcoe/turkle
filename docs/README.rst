@@ -142,10 +142,13 @@ Developers
 
 Running tests
 -------------
-
-::
+To run all the unit tests::
 
     python manage.py test
+
+An example of running a particular test::
+
+     python manage.py test turkle.tests.test_views.TestTaskAssignment.test_submit_assignment_with_array_post_input
 
 Style Guideline
 ---------------
