@@ -1,7 +1,6 @@
 import django.test
 from django.contrib.auth.models import Group, User
 from django.contrib.messages import get_messages
-from django.http import QueryDict
 from django.test import TestCase
 from django.urls import reverse
 from guardian.shortcuts import assign_perm
