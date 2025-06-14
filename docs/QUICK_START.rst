@@ -156,6 +156,10 @@ Set the permissions so that only you can edit and www-data can read::
 
     $ chmod 640 .my.cnf
 
+Create the directory for the backups::
+
+    $ mkdir /srv/turkle/backups
+
  Create a backup script at /srv/turkle/backup.sh with this content::
 
     #!/bin/bash
