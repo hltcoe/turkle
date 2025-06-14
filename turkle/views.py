@@ -59,7 +59,7 @@ def index(request):
             })
 
     batch_list = Batch.access_permitted_for(request.user)
-    batch_query = Batch.objects.filter(id__in=[b.id for b in batch_list])
+    batch_query = Batch.objects.filter(id__in=[b.id for b in batch_list]).order_by('-created_at')
 
     available_task_counts = Batch.available_task_counts_for(batch_query, request.user)
 
