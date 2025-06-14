@@ -1,6 +1,6 @@
 beautifulsoup4
-Django~=3.2.16
-django-admin-autocomplete-list-filter==1.0.1
+Django~=4.0.10
+django-admin-autocomplete-list-filters2==1.0.2
 django-guardian==2.4.0
 djangorestframework==3.13.1
 drf-nested-routers==0.93.4
