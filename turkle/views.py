@@ -240,7 +240,12 @@ def task_assignment(request, task_id, task_assignment_id):
             },
         )
     else:
-        task_assignment.answers = dict(request.POST.items())
+        # handle multiple items for a single key by looping over POST keys
+        answers = {}
+        for key in request.POST:
+            values = request.POST.getlist(key)
+            answers[key] = values if len(values) > 1 else values[0]
+        task_assignment.answers = answers
         task_assignment.completed = True
         task_assignment.save()
         if request.user.is_authenticated:

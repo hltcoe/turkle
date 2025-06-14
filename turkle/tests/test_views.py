@@ -596,6 +596,24 @@ class TestTaskAssignment(TestCase):
         self.assertEqual(response['Location'], reverse('accept_next_task',
                                                        kwargs={'batch_id': self.task.batch_id}))
 
+    def test_submit_assignment_with_array_post_input(self):
+        # forms that have multiple fields with the same name such as multiselects
+        post_data = {
+            "name": "Alice",
+            "hobbies": ("climbing", "running"),
+        }
+
+        url = reverse('task_assignment',
+                      kwargs={
+                          'task_id': self.task.id,
+                          'task_assignment_id': self.task_assignment.id
+                      })
+        self.client.post(url, data=post_data)
+
+        obj = TaskAssignment.objects.get(id=self.task_assignment.id)
+        self.assertEqual(obj.answers['name'], 'Alice')
+        self.assertEqual(obj.answers['hobbies'], ['climbing', 'running'])
+
 
 class TestTaskAssignmentIFrame(TestCase):
     def setUp(self):
