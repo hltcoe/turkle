@@ -2,75 +2,257 @@
 {% load static %}
 
 {% block body %}
+{% if batch_rows %}
+<div style="min-width: 1000pt;">
+<row class="top-tables">
+  <div class="column-div">
+    <div class="table-alert alert alert-primary" role="alert" style="background-color: transparent;">
+      <h3><i class="bi bi-bookmark-fill"></i> Bookmarks</h3>
+      <div class="alert alert-info" id="noRowsDiv" style="display: none;">No bookmarked batches. Toggle the bookmark (<i class="bi bi-bookmark"></i>) for batches to appear here.</div>
+      <div id="bookmarkedBatches">
+        <table class="table-header">
+          <thead>
+            <tr>
+              <th>Project</th>
+              <th>Batch</th>
+              <th>Actions</th>
+              <th></th>
+            </tr>
+          </thead>
+        </table>
 
-{% if abandoned_assignments %}
-<div class="container-fluid">
-  {% for aa in abandoned_assignments %}
-  <div class="alert alert-warning clearfix" role="alert">
-    <div class="float-left">
-      You have abandoned <b>Task {{ aa.task.id }}</b>
-      from Project <b>{{ aa.task.batch.project.name }}</b>,
-      Batch <b>{{ aa.task.batch.name }}</b>
-    </div>
-
-    <div class="float-right">
-      <div class="inline-form-buttons">
-        <a href="{% url 'task_assignment' aa.task.id aa.task_assignment_id %}" class="btn btn-sm btn-primary">
-          Resume working on Task
-        </a>
-        <form method="post" action="{% url 'return_task_assignment' aa.task.id aa.task_assignment_id %}">
-          {% csrf_token %}
-          <input type="submit" class="btn btn-sm btn-primary" value="Return Task" />
-        </form>
+        <div class="table-body-container">
+          <table class="table-body" id="bookmarkedBatchesTable" >
+            <tbody>               
+            </tbody>
+          </table>
+        </div>
       </div>
+      
     </div>
   </div>
-  {% endfor %}
-</div>
-{% endif %}
+
+  <div class="column-div">
+    <div class="table-alert alert alert-success" role="alert" style="background-color: transparent;">
+        <h3><i class="bi bi-clock-history"> </i>Open Assignments</h3>
+        {% if open_assignments %}
+          <table class="table-header">
+            <thead>
+              <tr>
+                <th>Project</th>
+                <th>Batch</th>
+                <th>Actions</th>
+                <th></th>
+              </tr>
+            </thead>
+          </table>
+          <div class="table-body-container">
+              <table class="table-body">
+                  <tbody>
+                    {% for aa in open_assignments %}
+                    <tr>
+                      <td>{{ aa.task.batch.project.name }}</td>
+                      <td>{{ aa.task.batch.name }}</td>
+                      <td>
+                        <a href="{% url 'task_assignment' aa.task.id aa.task_assignment_id %}" class="btn btn-outline-primary">
+                          Resume Task
+                        </a>
+                      </td>
+                      <td>
+                        <form method="post" action="{% url 'return_task_assignment' aa.task.id aa.task_assignment_id %}" style="display:inline-block;">
+                          {% csrf_token %}
+                          <input type="submit" class="btn btn-outline-primary" value="Return Task" />
+                        </form>
+                      </td>
+                    </tr>
+                  {% endfor %}
+                  </tbody>
+              </table>
+          </div>
+        {% else %}
+          <div class="alert alert-info">No open assignments. Accept a new task to start an assignment.</div>
+        {% endif %}
+    </div>
+  </div>
+</row>
+
 
 {% block content %}
 {% endblock %}
+  <div class="container-fluid content mt-2" style="padding-bottom: 5vh;">
+    <table id="batchTable" class="table table-striped table-bordered table-sm" cellspacing="0" width="100%">
+      <thead>
+        <tr>
+          <th style="width: 2vw;"></th>
+          <th>Project</th>
+          <th>Batch</th>
+          <th>Batch Published</th>
+          <th>Tasks Available</th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for batch_row in batch_rows %}
+        <tr id="{{ batch_row.batch_name }}">
+          <td style="width: 2vw;">
+            <span>
+              <!-- Bookmark icon that will visually represent the checkbox -->
+              <i id="icon_{{ batch_row.batch_name }}" onclick="toggleBookmark('{{ batch_row.batch_name }}')" class="bi {% if batch_row.selected == 'checked' %}bi-bookmark-fill{% else %}bi-bookmark{% endif %}"></i>
 
-<div class="container-fluid content mt-2">
-  {% if batch_rows %}
-  <table class="table table-bordered table-hover">
-    <tr class="thead-dark">
-      <th>Project</th>
-      <th>Batch</th>
-      <th>Batch Published</th>
-      <th>Tasks Available</th>
-      <th></th>
-      <th></th>
-    </tr>
-    {% for batch_row in batch_rows %}
-    <tr>
-      <td>{{ batch_row.project_name }}</td>
-      <td>{{ batch_row.batch_name }}</td>
-      <td>{{ batch_row.batch_published }}</td>
-      <td>{{ batch_row.assignments_available }}</td>
-      <td>
-        <a href="{{ batch_row.preview_next_task_url }}" role="button" class="btn btn-sm btn-primary">
-          Preview next Task
-        </a>
-      </td>
-      <td>
-        <form method="post" action="{{ batch_row.accept_next_task_url }}">
-          {% csrf_token %}
-          <input type="submit" class="btn btn-sm btn-primary" value="Accept next Task" />
-        </form>
-      </td>
-    </tr>
-    {% endfor %}
-  </table>
+              <!-- Hidden input to store the value, assuming 'checked' means the bookmark is active -->
+              <input type="hidden" id="hidden_{{ batch_row.batch_name }}" name="{{ batch_row.batch_name }}" value="{% if batch_row.selected == 'checked' %}1{% else %}0{% endif %}">
+            </span>
+          </td>
+          <td>{{ batch_row.project_name }}</td>
+          <td>{{ batch_row.batch_name }}</td>
+          <td>{{ batch_row.batch_published }}</td>
+          <td>{{ batch_row.assignments_available }}</td>
+          <td>
+            <a href="{{ batch_row.preview_next_task_url }}" role="button" class="btn btn-sm btn-primary">
+              Preview Next Task
+            </a>
+          </td>
+          <td>
+            <form method="post" action="{{ batch_row.accept_next_task_url }}">
+              {% csrf_token %}
+              <input type="submit" class="btn btn-sm btn-primary" value="Accept Next Task" />
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table> 
+  </div>
   {% else %}
-  <h1>No Tasks available at this time</h1>
-  {% if not user.is_authenticated  %}
-  <h4>
-    You may need to <a href="{% url 'login' %}">Login</a> to see available Tasks
-  </h4>
-  {% endif %}
+  <div class="container-fluid content mt-2">
+    <h1>No Tasks available at this time</h1>
+    {% if not user.is_authenticated  %}
+      <h4>
+        You may need to <a href="{% url 'login' %}">Login</a> to see available Tasks
+      </h4>
+    {% endif %}
   {% endif %}
 </div>
+</div>
 
+{% endblock %}
+
+{% block script %}
+<script   src="https://code.jquery.com/jquery-3.7.1.min.js"   integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo="   crossorigin="anonymous"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.js"></script>
+<script>
+  
+  function updateSecondaryTable() {
+      const secondaryTableBody = document.querySelector('#bookmarkedBatchesTable tbody');
+
+      secondaryTableBody.innerHTML = '';
+
+      $('#batchTable').DataTable().rows().every(function () {
+          var row = this.node(); 
+          var $input = $(row).find('input[type="hidden"]'); 
+          if ($input.val() === "1") {
+
+              const originalRow = row.cloneNode(true);
+              const newRow = document.createElement('tr');
+
+              const cellsToCopy = [1, 2, 5, 6]; 
+              cellsToCopy.forEach(index => {
+                  const cell = originalRow.cells[index].cloneNode(true); 
+                  newRow.appendChild(cell); 
+              });
+
+              secondaryTableBody.appendChild(newRow);
+          }
+      });
+
+  }
+
+  function checkAndToggleNoRowsDiv() {
+    var hasRows = $('#bookmarkedBatchesTable tbody tr').length > 0;
+    $('#noRowsDiv').toggle(!hasRows);
+    $('#bookmarkedBatches').toggle(hasRows);
+  }
+
+  $(document).ready(function () {
+    var table = $('#batchTable').DataTable({
+      stateSave: true,
+      retrieve: true,
+      pageLength : 10,
+      order: [],
+      lengthMenu: [[5, 10, 20], [5, 10, 20]],
+      columnDefs: [{"orderable": false, "targets": [0, 5, 6] }]
+    });
+
+    $('.dataTables_length').addClass('bs-select');
+    updateSecondaryTable();
+    checkAndToggleNoRowsDiv();
+
+  });
+
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+  }
+
+  function toggleBookmark(batchName) {
+
+    const hiddenInput = document.getElementById(`hidden_${batchName}`);
+    const iconElement = document.getElementById(`icon_${batchName}`);
+    const isChecked = hiddenInput.value === "1";
+
+    let newIconClass;
+    let newValue;
+
+    if (isChecked) {
+        newValue = "0"; // Update the new value for the hidden input
+        newIconClass = 'bi-bookmark'; // Update the class for the icon
+    } else {
+        newValue = "1"; // Update the new value for the hidden input
+        newIconClass = 'bi-bookmark-fill'; // Update the class for the icon
+    }
+
+    const row = $(hiddenInput).closest('tr');
+    var table = $('#batchTable').DataTable();
+    const rowIndex = table.row(row).index();
+    
+    const newCellHTML = `<td style="width: 2vw;">
+                            <span>
+                                <i id="icon_${batchName}" onclick="toggleBookmark('${batchName}')" class="${newIconClass}"></i>
+                                <input type="hidden" id="hidden_${batchName}" name="${batchName}" value="${newValue}">
+                            </span>
+                          </td>`;
+
+
+    table.cell(rowIndex, 0).data(newCellHTML).draw(false);
+
+    $.ajax({
+      url: "{% url 'index' %}",
+      method: 'POST',
+      headers: {"X-CSRFToken": getCookie("csrftoken")},
+      data: {
+        action: 'bookmarking',
+        rowId: batchName,
+        bookmarked: hiddenInput.value === "1"
+      }
+    });
+
+    updateSecondaryTable();
+    checkAndToggleNoRowsDiv();
+
+  }
+
+</script>
 {% endblock %}

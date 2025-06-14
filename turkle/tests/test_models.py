@@ -1066,7 +1066,7 @@ class TestTaskAssignment(django.test.TestCase):
         self.assertTrue(task.completed)
         self.assertTrue(batch.completed)
 
-    def test_expire_all_abandoned(self):
+    def test_expire_all_open(self):
         t = timezone.now()
         dt = datetime.timedelta(hours=2)
         past = t - dt
@@ -1088,10 +1088,10 @@ class TestTaskAssignment(django.test.TestCase):
         # Bypass TaskAssignment's save(), which updates expires_at
         super(TaskAssignment, ha).save()
         self.assertEqual(TaskAssignment.objects.count(), 1)
-        TaskAssignment.expire_all_abandoned()
+        TaskAssignment.expire_all_open()
         self.assertEqual(TaskAssignment.objects.count(), 0)
 
-    def test_expire_all_abandoned__dont_delete_completed(self):
+    def test_expire_all_open__dont_delete_completed(self):
         t = timezone.now()
         dt = datetime.timedelta(hours=2)
         past = t - dt
@@ -1113,10 +1113,10 @@ class TestTaskAssignment(django.test.TestCase):
         # Bypass TaskAssignment's save(), which updates expires_at
         super(TaskAssignment, ha).save()
         self.assertEqual(TaskAssignment.objects.count(), 1)
-        TaskAssignment.expire_all_abandoned()
+        TaskAssignment.expire_all_open()
         self.assertEqual(TaskAssignment.objects.count(), 1)
 
-    def test_expire_all_abandoned__dont_delete_non_expired(self):
+    def test_expire_all_open__dont_delete_non_expired(self):
         t = timezone.now()
         dt = datetime.timedelta(hours=2)
         future = t + dt
@@ -1138,7 +1138,7 @@ class TestTaskAssignment(django.test.TestCase):
         # Bypass TaskAssignment's save(), which updates expires_at
         super(TaskAssignment, ha).save()
         self.assertEqual(TaskAssignment.objects.count(), 1)
-        TaskAssignment.expire_all_abandoned()
+        TaskAssignment.expire_all_open()
         self.assertEqual(TaskAssignment.objects.count(), 1)
 
     def test_work_time_in_seconds(self):
