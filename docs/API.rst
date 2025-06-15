@@ -10,7 +10,18 @@ In the admin UI, the identifier is included in any URL for that object.
 
 Client
 ----------
-ToDo
+Turkle has an API client that can be installed through pip::
+
+    pip install turkle-client
+
+The client operates similar to git or docker in that it has sub-commands.
+With each call you include the sub-command such as users and then an
+action like list::
+
+    turkle-client users list
+
+Full details on configuring the client is found on `turkle-client GitHub page`_.
+Below are details on the API that are wrapped by the client.
 
 Authentication
 ---------------
@@ -171,3 +182,5 @@ To add additional users and groups to a project's permissions, perform a **post*
   }
 
 To replace the current permissions for a project, perform a **put** on the endpoint.
+
+.. _`turkle-client GitHub page`: https://github.com/hltcoe/turkle-client
