@@ -175,6 +175,9 @@ and this logging configuration::
     }
 
 The log files will be rotated at midnight and deleted after 30 days.
+The last step is to restart Apache::
+
+        $ sudo systemctl restart apache2
 
 Setting Up Task Expiration
 ----------------------------
