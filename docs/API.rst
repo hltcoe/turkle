@@ -32,6 +32,11 @@ Once a token has been created, it is passed as a header in the request::
   headers = {'Authorization': f'TOKEN {token}'}
   resp = requests.get('http://localhost:8000/api/users/', headers=headers)
 
+With curl this looks like this::
+
+   curl -H "Authorization: TOKEN ABCDEF" http://localhost:8000/api/users/
+
+
 Users
 --------
 Listing users
