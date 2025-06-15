@@ -74,3 +74,6 @@ div.task-preview {
 #logout-form button:hover {
   text-decoration: underline;
 }
+.bootstrap-logout-form button {
+  color: #fff;
+}
