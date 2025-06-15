@@ -18,8 +18,8 @@ Turkle's features include:
 - Projects can be configured so that each Task needs to be completed by
   multiple Workers (redundant annotations)
 - An admin GUI for managing Users, Groups, Projects, and Batches of Tasks
-- Scripts to automate the creation of Users, Projects, and Batches of Tasks
-- Docker images using the SQLite and MySQL database backends
+- A RESTful API for managing Users, Groups, Projects, and Batches
+- Docker images using the SQLite or MySQL database backends
 
 Turkle Workflow Overview
 ------------------------
