@@ -126,6 +126,56 @@ Finally, restart the web server and Turkle should be running::
     $ sudo systemctl restart apache2
 
 
+At this point you have a working Turkle installation and can test out the site.
+
+Configuring Logging
+--------------------
+To store and rotate logs of activity from Turkle, follow these steps::
+
+    $ sudo mkdir -p /var/log/turkle
+    $ sudo chown www-data:www-data /var/log/turkle
+    $ sudo chmod 755 /var/log/turkle
+
+The above steps creates the logging directory. Next, edit your local.settings.py file
+and this logging configuration::
+
+    LOG_DIR = '/var/log/turkle'
+    LOGGING = {
+         'version': 1,
+         'disable_existing_loggers': False,
+         'formatters': {
+             'simple': {
+                 'format': '%(asctime)s %(levelname)s: %(message)s',
+                 'datefmt': '%Y-%m-%d %H:%M:%S',
+             },
+         },
+         'handlers': {
+             'file': {
+                 'level': 'INFO',
+                 'class': 'logging.handlers.TimedRotatingFileHandler',
+                 'filename': os.path.join(LOG_DIR, 'turkle.log'),
+                 'formatter': 'simple',
+                 'encoding': 'utf8',
+                 'when': 'midnight',
+                 'backupCount': 30,
+             },
+         },
+         'loggers': {
+             'django': {
+                 'handlers': ['file'],
+                 'level': 'WARNING',
+                 'propagate': True,
+             },
+             'turkle': {
+                 'handlers': ['file'],
+                 'level': 'INFO',
+                 'propagate': True,
+             },
+        }
+    }
+
+The log files will be rotated at midnight and deleted after 30 days.
+
 Setting Up Task Expiration
 ----------------------------
 Task assignments has expiration dates when a task goes back to the pool for
