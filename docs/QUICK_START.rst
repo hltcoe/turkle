@@ -119,6 +119,7 @@ lines to the VirtualHost configuration::
     WSGIDaemonProcess turkle python-home=/srv/turkle/venv python-path=/srv/turkle
     WSGIProcessGroup turkle
     WSGIScriptAlias / /srv/turkle/turkle_site/wsgi.py
+    WSGIPassAuthorization On
 
 Finally, restart the web server and Turkle should be running::
 
