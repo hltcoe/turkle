@@ -135,7 +135,8 @@ To store and rotate logs of activity from Turkle, follow these steps::
 
     $ sudo mkdir -p /var/log/turkle
     $ sudo chown www-data:www-data /var/log/turkle
-    $ sudo chmod 755 /var/log/turkle
+    $ sudo chmod 775 /var/log/turkle
+    $ sudo chmod g+s /var/log/turkle
 
 The above steps creates the logging directory. Next, edit your local.settings.py file
 and this logging configuration::
