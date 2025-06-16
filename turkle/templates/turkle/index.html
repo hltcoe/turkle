@@ -2,6 +2,10 @@
 {% load static %}
 
 {% block body %}
+<script type="module"  src="{% static 'turkle/action-table-2.4.21/index.js' %}"></script>
+<link rel="stylesheet"  href="{% static 'turkle/action-table-2.4.21/action-table.css' %}"/>
+<link rel="stylesheet" href="{% static 'turkle/action-table-2.4.21/action_table_extension.css' %}" />
+<script src="{% static 'turkle/action-table-2.4.21/action_table_extension.js' %}"></script>
 
 {% if abandoned_assignments %}
 <div class="container-fluid">
@@ -34,35 +38,45 @@
 
 <div class="container-fluid content mt-2">
   {% if batch_rows %}
-  <table class="table table-bordered table-hover">
-    <tr class="thead-dark">
-      <th>Project</th>
-      <th>Batch</th>
-      <th>Batch Published</th>
-      <th>Tasks Available</th>
-      <th></th>
-      <th></th>
-    </tr>
-    {% for batch_row in batch_rows %}
-    <tr>
-      <td>{{ batch_row.project_name }}</td>
-      <td>{{ batch_row.batch_name }}</td>
-      <td>{{ batch_row.batch_published }}</td>
-      <td>{{ batch_row.assignments_available }}</td>
-      <td>
-        <a href="{{ batch_row.preview_next_task_url }}" role="button" class="btn btn-sm btn-primary">
-          Preview next Task
-        </a>
-      </td>
-      <td>
-        <form method="post" action="{{ batch_row.accept_next_task_url }}">
-          {% csrf_token %}
-          <input type="submit" class="btn btn-sm btn-primary" value="Accept next Task" />
-        </form>
-      </td>
-    </tr>
-    {% endfor %}
-  </table>
+  <action-table urlparams>
+    <action-table-filters>
+      <action-table-filter-menu name="Project"></action-table-filter-menu>
+      <div><label for="batch-search">Search Batch</label> <input id="batch-search" name="batch" type="search" placeholder="Search" size="14"></div>
+    </action-table-filters>
+    <table class="table table-bordered table-hover">
+      <thead>
+        <tr>
+          <th>Project</th>
+          <th>Batch</th>
+          <th>Batch Published</th>
+          <th>Tasks Available</th>
+          <th no-sort></th>
+          <th no-sort></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for batch_row in batch_rows %}
+        <tr>
+          <td>{{ batch_row.project_name }}</td>
+          <td>{{ batch_row.batch_name }}</td>
+          <td>{{ batch_row.batch_published }}</td>
+          <td>{{ batch_row.assignments_available }}</td>
+          <td>
+            <a href="{{ batch_row.preview_next_task_url }}" role="button" class="btn btn-sm btn-primary">
+              Preview next Task
+            </a>
+          </td>
+          <td>
+            <form method="post" action="{{ batch_row.accept_next_task_url }}">
+              {% csrf_token %}
+              <input type="submit" class="btn btn-sm btn-primary" value="Accept next Task" />
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </action-table>
   {% else %}
   <h1>No Tasks available at this time</h1>
   {% if not user.is_authenticated  %}
