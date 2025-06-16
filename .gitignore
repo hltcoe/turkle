@@ -7,7 +7,7 @@ venv
 .idea
 *.csv
 *.tsv
-logs/
+/logs/
 !examples/*.html
 !examples/*.csv
 !turkle/tests/resources/*.csv
@@ -18,7 +18,7 @@ build/
 _build/
 dist/
 turkle_site/local_settings.py
-static/
-backups/
-backup.sh
+/static/
+/backups/
+/backup.sh
 .my.cnf
