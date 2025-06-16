@@ -170,7 +170,8 @@ class TaskAssignment(models.Model):
             filter(completed=False).\
             filter(expires_at__lt=timezone.now()).\
             delete()
-        logger.info('Expired %i task assignments', result[0])
+        if result[0]:
+            logger.info('Expired %i task assignments', result[0])
         return result
 
     def save(self, *args, **kwargs):
