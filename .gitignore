@@ -1,6 +1,7 @@
 *~
 *.pyc
 venv
+.venv
 *.sqlite3
 .ropeproject
 .idea
@@ -9,11 +10,15 @@ venv
 logs/
 !examples/*.html
 !examples/*.csv
-!hits/tests/resources/*.csv
-!hits/tests/resources/*.html
+!turkle/tests/resources/*.csv
+!turkle/tests/resources/*.html
 .DS_Store
 *.egg-info/
 build/
 _build/
 dist/
 turkle_site/local_settings.py
+static/
+backups/
+backup.sh
+.my.cnf
