@@ -65,8 +65,6 @@ We put the source code in /srv/turkle, setup permissions and configure Turkle::
     $ git clone https://github.com/hltcoe/turkle.git .
     $ sudo chown -R :webapps /srv/turkle
     $ sudo find /srv/turkle -type d -exec chmod 2750 {} \;
-    $ sudo find /srv/turkle -type f -exec chmod 640 {} \;
-    $ git reset .
 
 Next, we configure the Turkle app::
 
