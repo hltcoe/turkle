@@ -62,3 +62,38 @@ div.task-preview {
   background: #fff;
   opacity: 0.8;
 }
+.table-alert{
+  margin-bottom: 0;
+  height: 100%;
+}
+.column-div {
+  float: left;
+  width: 50%;  
+  min-width:500pt;
+  border-radius: 5px;
+  padding: 5pt;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+}
+.table-header, .table-body {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse; 
+}
+
+.table-body-container { 
+  min-height: 80pt;
+  height: 12vh;
+  overflow-y: auto;
+}
+.column-div th, td {
+  text-align: left;
+  padding: 8px;
+}
+.top-tables{
+  height: 25vh;
+  min-height: 175pt;
+  display: block;
+  
+}

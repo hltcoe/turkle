@@ -67,8 +67,8 @@ class TestCancelOrPublishBatch(django.test.TestCase):
         self.assertEqual(str(messages[0]), 'Cannot find Batch with ID 666')
 
 
-class TestExpireAbandonedAssignments(django.test.TestCase):
-    def test_expire_abandoned_assignments(self):
+class TestExpireOpenAssignments(django.test.TestCase):
+    def test_expire_open_assignments(self):
         t = timezone.now()
         dt = datetime.timedelta(hours=2)
         past = t - dt
@@ -94,14 +94,14 @@ class TestExpireAbandonedAssignments(django.test.TestCase):
         User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
         client = django.test.Client()
         client.login(username='admin', password='secret')
-        response = client.get(reverse('admin:turkle_expire_abandoned_assignments'))
+        response = client.get(reverse('admin:turkle_expire_open_assignments'))
         self.assertEqual(response.status_code, 302)
         self.assertEqual(response['Location'], '/admin/turkle/taskassignment/')
         self.assertEqual(TaskAssignment.objects.count(), 0)
         messages = list(get_messages(response.wsgi_request))
         self.assertEqual(len(messages), 1)
         self.assertEqual(str(messages[0]),
-                         'All 1 abandoned Tasks have been expired')
+                         'All 1 open Tasks have been expired')
 
 
 class TestBatchAdmin(django.test.TestCase):
