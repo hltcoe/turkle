@@ -5,5 +5,6 @@ django-guardian==2.4.0
 djangorestframework==3.15.2
 drf-nested-routers==0.94.2
 humanfriendly
+inflection
 jsonfield==3.1.0
 uritemplate
