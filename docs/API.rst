@@ -29,12 +29,12 @@ It requires token-based authentication and tokens can be created per user in the
 Once a token has been created, it is passed as a header in the request::
 
   token = 'ABCDEF'
-  headers = {'Authorization': f'TOKEN {token}'}
+  headers = {'Authorization': f'Token {token}'}
   resp = requests.get('http://localhost:8000/api/users/', headers=headers)
 
 With curl this looks like this::
 
-   curl -H "Authorization: TOKEN ABCDEF" http://localhost:8000/api/users/
+   curl -H "Authorization: Token ABCDEF" http://localhost:8000/api/users/
 
 
 Users
