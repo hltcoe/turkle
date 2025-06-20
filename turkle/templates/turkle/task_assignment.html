@@ -1,53 +1,53 @@
 {% extends "turkle/task_base.html" %}
 {% load static %}
 
-{% block head %}
-{{ block.super }}
-<script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'turkle/jquery.countdown-2.2.0.js' %}"></script>
-<script>
-$(function () {
-  var csrftoken = $("[name=csrfmiddlewaretoken]").val();
+{% block scripts %}
+  {{ block.super }}
+  <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'turkle/jquery.countdown-2.2.0.js' %}"></script>
+  <script>
+  $(function () {
+    var csrftoken = $("[name=csrfmiddlewaretoken]").val();
 
-  function csrfSafeMethod(method) {
-    // these HTTP methods do not require CSRF protection
-    return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
-  }
-  $.ajaxSetup({
-    beforeSend: function(xhr, settings) {
-      if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
-        xhr.setRequestHeader("X-CSRFToken", csrftoken);
-      }
+    function csrfSafeMethod(method) {
+      // these HTTP methods do not require CSRF protection
+      return (/^(GET|HEAD|OPTIONS|TRACE)$/.test(method));
     }
+    $.ajaxSetup({
+      beforeSend: function(xhr, settings) {
+        if (!csrfSafeMethod(settings.type) && !this.crossDomain) {
+          xhr.setRequestHeader("X-CSRFToken", csrftoken);
+        }
+      }
+    });
+
+    $('#update_auto_accept').change(function() {
+      $.post("{% url 'update_auto_accept' %}", {'auto_accept': this.checked});
+    });
+
+    var expirationTime = new Date('{{ task_assignment.expires_at|date:'c' }}');
+    $("#expiration-timer").countdown(expirationTime)
+                          .on('update.countdown', function(event) {
+                            var format = '%I:%M';
+                            // if 3 full days left or more, display as days rather than hours:mins
+                            if (event.offset.totalDays > 2) {
+                              format = "%-D day%!D";
+                            }
+                            $(this).text(event.strftime('Expires in ' + format));
+                          })
+                          .on('finish.countdown', function(event) {
+                            // "Gray out" background of iFrame
+                            $('#iframe_container').css('background', '#000');
+                            $('#task_assignment_iframe').css('background', '#fff')
+                                                       .css('opacity', '0.8');
+                            $('#messages_container').append(
+                              $('<div>').addClass('alert alert-error').attr('role', 'alert')
+                                        .text('Task Assignment has expired'));
+                          });
+
+    $('#task_assignment_iframe').focus();
   });
-
-  $('#update_auto_accept').change(function() {
-    $.post("{% url 'update_auto_accept' %}", {'auto_accept': this.checked});
-  });
-
-  var expirationTime = new Date('{{ task_assignment.expires_at|date:'c' }}');
-  $("#expiration-timer").countdown(expirationTime)
-                        .on('update.countdown', function(event) {
-                          var format = '%I:%M';
-                          // if 3 full days left or more, display as days rather than hours:mins
-                          if (event.offset.totalDays > 2) {
-                            format = "%-D day%!D";
-                          }
-                          $(this).text(event.strftime('Expires in ' + format));
-                        })
-                        .on('finish.countdown', function(event) {
-                          // "Gray out" background of iFrame
-                          $('#iframe_container').css('background', '#000');
-                          $('#task_assignment_iframe').css('background', '#fff')
-                                                     .css('opacity', '0.8');
-                          $('#messages_container').append(
-                            $('<div>').addClass('alert alert-error').attr('role', 'alert')
-                                      .text('Task Assignment has expired'));
-                        });
-
-  $('#task_assignment_iframe').focus();
-});
-</script>
+  </script>
 {% endblock %}
 
 {% block body %}
