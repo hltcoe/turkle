@@ -51,12 +51,12 @@
               <td>{{ batch_row.batch_name }}</td>
               <td>{{ batch_row.batch_published }}</td>
               <td>{{ batch_row.assignments_available }}</td>
-              <td>
+              <td class="px-3 text-nowrap text-center" style="width: 1%;">
                 <a href="{{ batch_row.preview_next_task_url }}" role="button" class="btn btn-sm btn-primary">
                   Preview next Task
                 </a>
               </td>
-              <td>
+              <td class="px-3 text-nowrap text-center" style="width: 1%;">
                 <form method="post" action="{{ batch_row.accept_next_task_url }}">
                   {% csrf_token %}
                   <input type="submit" class="btn btn-sm btn-primary" value="Accept next Task" />
