@@ -27,8 +27,8 @@
     {% block extra_head %}{% endblock %}
   </head>
   <body>
-    <div class="container-fluid header">
-      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid header custom-bg-light">
+      <nav class="navbar navbar-expand-lg navbar-light">
         <a class="navbar-brand" href="{% url 'index' %}" title="Home">{{turkle_site_name}}</a>
         <ul class="navbar-nav mr-auto">
           {% if user.is_staff %}

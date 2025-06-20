@@ -13,6 +13,9 @@ body {
   border-top: 7px solid #373b44;
   border-bottom: 2px solid #373b44;
 }
+.custom-bg-light {
+  background-color: rgba(0,0,0,.05);
+}
 /* --- There are five Django messages alert levels:
        - debug, info, success, warning, error
        We want to map these alert levels to Bootstrap 'alert-*' classes.
