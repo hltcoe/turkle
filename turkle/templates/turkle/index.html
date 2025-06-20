@@ -1,4 +1,30 @@
 {% extends "turkle/base.html" %}
+{% load static %}
+
+{% block styles %}
+  {{ block.super }}
+  <link href="{% static 'turkle/datatables-1.10.24/datatables.bootstrap4.min.css' %}" rel="stylesheet" type="text/css"/>
+{% endblock %}
+
+{% block scripts %}
+  {{ block.super }}
+  <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'turkle/datatables-1.10.24/datatables.min.js' %}"></script>
+  <script>
+    $(document).ready(function () {
+      var table = $('#batchTable').DataTable({
+        paging: false,
+        info: false,
+        stateSave: true,
+        stateSaveParams: function(settings, data) {
+          data.search.search = '';
+        },
+        // when upgrade to DataTable 2, use data tags
+        columnDefs: [{"orderable": false, "targets": [4, 5]}]
+      });
+    });
+  </script>
+{% endblock %}
 
 {% block body %}
 
@@ -34,7 +60,7 @@
   <div class="container-fluid content mt-2">
     {% if batch_rows %}
       <table id="batchTable" class="table table-bordered table-hover table-striped table-sm">
-        <thead class="thead-dark">
+        <thead>
           <tr>
             <th>Project</th>
             <th>Batch</th>
