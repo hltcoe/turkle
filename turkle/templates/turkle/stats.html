@@ -1,14 +1,16 @@
 {% extends "turkle/base.html" %}
 {% load static %}
 
-{% block head %}
+{% block css %}
+  {{ block.super }}
+  <link href="{% static 'turkle/cal-heatmap.css' %}" rel="stylesheet" type="text/css"/>
+{% endblock %}
 
-<link href="{% static 'turkle/cal-heatmap.css' %}" rel="stylesheet" type="text/css"/>
-
-<script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'turkle/d3-3.5.17.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'turkle/cal-heatmap-3.6.2.min.js' %}"></script>
-
+{% block js %}
+  {{ block.super }}
+  <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'turkle/d3-3.5.17.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'turkle/cal-heatmap-3.6.2.min.js' %}"></script>
 <script>
 $(document).ready(function() {
   // Set startDate to include previous 11 months plus all of current month
@@ -41,11 +43,8 @@ $(document).ready(function() {
 {% endblock %}
 
 {% block body %}
-
 <div class="container-fluid mt-5">
-
   <h2>Statistics for {{ full_name }}</h2>
-
   <hr>
 
   <form>

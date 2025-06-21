@@ -1,9 +1,9 @@
 {% extends "turkle/task_base.html" %}
 {% load static %}
 
-{% block head %}
-{{ block.super }}
-<script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
+{% block js %}
+  {{ block.super }}
+  <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
 {% endblock %}
 
 {% block body %}
