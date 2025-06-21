@@ -19,8 +19,9 @@ from django.contrib.auth.models import Group
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import DurationField, ExpressionWrapper, F
-from django.forms import (FileField, FileInput, HiddenInput, IntegerField, Media,
-                          ModelForm, ModelMultipleChoiceField, TextInput, ValidationError, Widget)
+from django.forms import (CharField, FileField, FileInput, HiddenInput, IntegerField, Media,
+                          ModelForm, ModelMultipleChoiceField, Textarea, TextInput,
+                          ValidationError, Widget)
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.templatetags.static import static
@@ -33,8 +34,8 @@ from guardian.shortcuts import (assign_perm, get_groups_with_perms, get_users_wi
                                 remove_perm)
 import humanfriendly
 
-from .models import ActiveUser, ActiveProject, Batch, Project, TaskAssignment
-from .utils import are_anonymous_tasks_allowed, get_turkle_template_limit
+from .models import ActiveUser, ActiveProject, Batch, Project, ProjectTemplate, TaskAssignment
+from .utils import are_anonymous_tasks_allowed, get_turkle_template_limit, process_html_template
 
 User = get_user_model()
 
@@ -788,6 +789,12 @@ class ProjectForm(ModelForm):
         required=False)
 
     template_file_upload = FileField(label='HTML template file', required=False)
+    html_template = CharField(
+        widget=Textarea(attrs={'cols': 80, 'rows': 20}),
+        required=False,
+        label='HTML template text'
+    )
+
     can_work_on_groups = ModelMultipleChoiceField(
         label='Groups that can work on this Project',
         queryset=Group.objects.all(),
@@ -802,8 +809,15 @@ class ProjectForm(ModelForm):
         widget=FilteredSelectMultiple('Worker Users', False),
     )
 
+    class Meta:
+        model = Project
+        fields = '__all__'
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        if self.instance.pk and hasattr(self.instance, 'template'):
+            self.fields['html_template'].initial = self.instance.template.html_template
 
         self.fields['template_file_upload'].widget = CustomButtonFileWidget(attrs={
             'class': 'hidden',
@@ -813,6 +827,14 @@ class ProjectForm(ModelForm):
         # customized admin template file:
         #   turkle/templates/admin/turkle/project/change_form.html
         self.fields['filename'].widget = HiddenInput()
+        self.fields['html_template'].label = 'HTML template text'
+        limit = str(get_turkle_template_limit())
+        self.fields['html_template'].help_text = 'You can edit the template text directly, ' + \
+            'Drag-and-Drop a template file onto this window, ' + \
+            'or use the "Choose File" button below. Maximum size is ' + limit + ' KB.'
+        byte_limit = str(get_turkle_template_limit(True))
+        self.fields['html_template'].widget.attrs['data-parsley-maxlength'] = byte_limit
+        self.fields['html_template'].widget.attrs['data-parsley-group'] = 'html_template'
 
         if not are_anonymous_tasks_allowed():
             # default value of login_required is True
@@ -829,15 +851,6 @@ class ProjectForm(ModelForm):
             'parameter DOES NOT change the number of Assignments per Task for already ' + \
             'published Batches of Tasks.'
         self.fields['custom_permissions'].label = 'Restrict access to specific Groups and/or Users'
-        self.fields['html_template'].label = 'HTML template text'
-        limit = str(get_turkle_template_limit())
-        self.fields['html_template'].help_text = 'You can edit the template text directly, ' + \
-            'Drag-and-Drop a template file onto this window, ' + \
-            'or use the "Choose File" button below. Maximum size is ' + limit + ' KB.'
-        byte_limit = str(get_turkle_template_limit(True))
-        self.fields['html_template'].widget.attrs['data-parsley-maxlength'] = byte_limit
-        self.fields['html_template'].widget.attrs['data-parsley-group'] = 'html_template'
-
         self.fields['active'].help_text = 'Deactivating a Project effectively deactivates ' + \
             'all associated Batches.  Workers can only access a Batch if both the Batch ' + \
             'itself and the associated Project are Active.'
@@ -852,6 +865,15 @@ class ProjectForm(ModelForm):
             for id in get_users_with_perms(self.instance, with_group_users=False).
             values_list('id', flat=True)]
         self.fields['can_work_on_users'].initial = initial_user_ids
+
+    def clean_html_template(self):
+        template = self.cleaned_data.get('html_template', '')
+        if template:
+            # validate and store extract properties for saving to project
+            has_submit_botton, csv_field_names = process_html_template(template)
+            self._pending_has_submit_button = has_submit_botton
+            self._pending_csv_field_names = csv_field_names
+        return template
 
     def clean_allotted_assignment_time(self):
         """Clean 'allotted_assignment_time' form field
@@ -869,6 +891,30 @@ class ProjectForm(ModelForm):
             raise ValidationError('This field is required.')
         else:
             return data
+
+    def save(self, commit=True):
+        project = super().save(commit)
+
+        # set deferred fields extracted in template processing
+        if hasattr(self, '_pending_has_submit_button'):
+            project.html_template_has_submit_button = self._pending_has_submit_button
+        if hasattr(self, '_pending_csv_field_names'):
+            project.fieldnames = self._pending_csv_field_names
+
+        html = self.cleaned_data.get('html_template', '')
+
+        if commit:
+            project.save()
+            if hasattr(project, 'template'):
+                project.template.html_template = html
+                project.template.save()
+            else:
+                ProjectTemplate.objects.create(project=project, html_template=html)
+        else:
+            # Defer saving template until project has been created
+            self._pending_template_html = html
+
+        return project
 
 
 class ProjectAdmin(GuardedModelAdmin, AjaxAutocompleteListFilterModelAdmin):
@@ -1151,6 +1197,12 @@ class ProjectAdmin(GuardedModelAdmin, AjaxAutocompleteListFilterModelAdmin):
             logger.info("User(%i) creating Project(%i) %s", request.user.id, obj.id, obj.name)
         else:
             logger.info("User(%i) updating Project(%i) %s", request.user.id, obj.id, obj.name)
+
+        if hasattr(form, '_pending_template_html'):
+            ProjectTemplate.objects.create(
+                project=obj,
+                html_template=form._pending_template_html
+            )
 
         if 'can_work_on_groups' in form.data:
             existing_groups = set(get_groups_with_perms(obj))

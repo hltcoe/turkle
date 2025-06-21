@@ -3,11 +3,9 @@ import ctypes
 from datetime import timedelta
 import logging
 import os.path
-import re
 import statistics
 import sys
 
-from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
@@ -21,7 +19,6 @@ from guardian.shortcuts import assign_perm, get_group_perms, get_groups_with_per
     get_user_perms, get_users_with_perms
 from jsonfield import JSONField
 
-from .utils import get_turkle_template_limit
 
 User = get_user_model()
 
@@ -438,7 +435,7 @@ class Batch(TaskAssignmentStatistics, models.Model):
 
         # We are deviating from Mechanical Turk's naming conventions for results files
         return "Project-{}_Batch-{}-{}_results{}".format(
-            Project.objects.get(name=self.project).id, self.id, batch_filename, extension)
+            self.project.id, self.id, batch_filename, extension)
 
     def create_tasks_from_csv(self, csv_fh):
         """
@@ -776,7 +773,6 @@ class Project(TaskAssignmentStatistics, models.Model):
                                    on_delete=models.CASCADE, verbose_name='creator')
     custom_permissions = models.BooleanField(default=False)
     filename = models.CharField(max_length=1024, blank=True)
-    html_template = models.TextField()
     html_template_has_submit_button = models.BooleanField(default=False)
     login_required = models.BooleanField(db_index=True, default=True)
     name = models.CharField(max_length=1024)
@@ -787,6 +783,11 @@ class Project(TaskAssignmentStatistics, models.Model):
 
     # Fieldnames are automatically extracted from html_template text
     fieldnames = JSONField(blank=True)
+
+    @property
+    def html_template(self):
+        # used to be a field of this model - now its own table
+        return self.template.html_template if hasattr(self, 'template') else None
 
     def assignments_completed_by(self, user):
         """
@@ -814,30 +815,9 @@ class Project(TaskAssignmentStatistics, models.Model):
     def clean(self):
         # duplicated in ProjectSerializer
         super().clean()
-        if len(self.html_template) > get_turkle_template_limit(True):
-            raise ValidationError({'html_template': 'Template is too large'}, code='invalid')
         if not self.login_required and self.assignments_per_task != 1:
             raise ValidationError('When login is not required to access the Project, ' +
                                   'the number of Assignments per Task must be 1')
-        self.process_template()
-
-    def process_template(self):
-        # duplicated in ProjectSerializer
-        soup = BeautifulSoup(self.html_template, 'html.parser')
-        self.html_template_has_submit_button = bool(soup.select('input[type=submit]'))
-
-        # Extract fieldnames from html_template text, save fieldnames as keys of JSON dict
-        unique_fieldnames = set(re.findall(r'\${(\w+)}', self.html_template))
-        self.fieldnames = dict((fn, True) for fn in unique_fieldnames)
-
-        # Matching mTurk we confirm at least one input, select, or textarea
-        if soup.find('input') is None and soup.find('select') is None \
-                and soup.find('textarea') is None:
-            msg = "Template does not contain any fields for responses. " + \
-                  "Please include at least one field (input, select, or textarea)." + \
-                  "This usually means you are generating HTML with JavaScript." + \
-                  "If so, add an unused hidden input."
-            raise ValidationError({'html_template': msg}, code='invalid')
 
     def get_user_custom_permissions(self):
         """Get users who have a can_work_on permission to the project"""
@@ -904,6 +884,16 @@ class Project(TaskAssignmentStatistics, models.Model):
 
     def __str__(self):
         return self.name
+
+
+class ProjectTemplate(models.Model):
+    project = models.OneToOneField(
+        'Project',
+        related_name='template',
+        on_delete=models.CASCADE,
+        primary_key=True
+    )
+    html_template = models.TextField()
 
 
 class ActiveProjectManager(models.Manager):
