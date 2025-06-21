@@ -24,11 +24,11 @@ and can be pulled down like this::
 The above command line pulls the latest image.
 A full list of versions is available on `Docker Hub`_.
 
-SQLite Docker image
--------------------
+Build SQLite Docker image
+-------------------------
 You can build the SQLite Turkle image using::
 
-    docker build --force-rm -t hltcoe/turkle -f Dockerfile-sqlite .
+    docker build --force-rm -t hltcoe/turkle -f docker/Dockerfile-sqlite .
 
 To launch a Turkle container that maps container port 8080 to Docker
 host port 18080, use::
@@ -41,13 +41,22 @@ The MySQL version of Turkle requires two containers - one for Turkle,
 and the other for MySQL.  This multi-container Docker application is
 configured and controlled by docker-compose.
 
-The multi-container Turkle application can be built and configured
-with the commands::
+To run from the root of the repository, use the ``-f`` option::
 
-    docker-compose build
-    docker-compose up -d
-    docker-compose run turkle python manage.py createsuperuser
+    docker compose -f docker/docker-compose.yaml build
 
+and to run from the docker directory::
+
+    docker compose build
+
+The multi-container Turkle application can be built and configured with the commands::
+
+    docker compose build
+    docker compose up -d
+    docker compose run turkle python manage.py createsuperuser
+
+You'll want to wait a few minutes for the containers to load and the turkle db
+to be initialized before running ``createsuperuser``.
 This will stand up a Turkle server listening on port 8080.
 
 The database files are stored in a Docker volume named turkle_db_data.
@@ -56,13 +65,13 @@ This Docker volume persists across Docker container restarts.
 To upgrade to a newer version of Turkle, shut down the application
 using::
 
-    docker-compose stop
+    docker compose stop
 
 Then build the newest version of the Turkle MySQL Docker image and
 restart the application::
 
-    docker-compose build
-    docker-compose up -d
+    docker compose build
+    docker compose up -d
 
 Any database migrations for the upgraded version of Turkle will be
 automatically applied when the application is brought back up.
@@ -75,7 +84,7 @@ Changing the admin password
 The SQLite Docker container has a super-user named ``admin`` with a
 default password of ``admin``.  For the MySQL Docker container, the
 super-user username and password are set by one of the
-``docker-compose`` commands listed above.
+``docker compose`` commands listed above.
 
 You should change the default admin password for the SQLite Docker
 container by:

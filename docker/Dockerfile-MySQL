@@ -13,15 +13,19 @@ RUN set -eux; \
     apt-get autoremove -y; \
     rm -rf /var/lib/apt/lists/*
 
+COPY docker/resources/wait-for-it.sh docker/resources/entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/wait-for-it.sh /usr/local/bin/entrypoint.sh
+
+COPY docker/resources/turkle.crontab /etc/cron.d/turkle
+RUN chmod 0644 /etc/cron.d/turkle && crontab /etc/cron.d/turkle
+
 COPY turkle /opt/turkle/turkle
 COPY manage.py /opt/turkle/manage.py
 COPY turkle_site /opt/turkle/turkle_site
 
-COPY docker-config/entrypoint.sh /usr/local/bin/entrypoint.sh
-COPY docker-config/turkle.crontab /etc/cron.d/turkle
-RUN crontab /etc/cron.d/turkle
-
 ENV TURKLE_DOCKER=1
+ENV TURKLE_DATABASE_BACKEND=MySQL
+
 RUN python manage.py collectstatic
 
 VOLUME /opt/turkle
