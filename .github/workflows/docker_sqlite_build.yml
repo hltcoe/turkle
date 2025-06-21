@@ -20,5 +20,6 @@ jobs:
       - name: Build Docker image
         uses: docker/build-push-action@v2
         with:
-          file: Dockerfile-sqlite
+          file: docker/Dockerfile-sqlite
+          context: .
           push: false

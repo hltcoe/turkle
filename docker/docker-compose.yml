@@ -1,8 +1,6 @@
-version: '3'
-
 services:
   db:
-    image: mysql:5.7
+    image: mysql:8.0
     command: ['--character-set-server=utf8']
     volumes:
       - db_data:/var/lib/mysql
@@ -14,18 +12,25 @@ services:
       MYSQL_PASSWORD: turklepass
     ports:
       - "3333:3306"
+    healthcheck:
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-psonotsecure" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
 
   turkle:
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     build:
-      context: .
-      dockerfile: Dockerfile-MySQL
+      context: ..
+      dockerfile: docker/Dockerfile-MySQL
     ports:
       - "8080:8080"
     restart: always
     environment:
       TURKLE_DOCKER: 1
+      TURKLE_DATABASE_BACKEND: MySQL
       TURKLE_DB_ENGINE: MySQL
       TURKLE_DB_HOST: db
       TURKLE_DB_USER: turkleuser

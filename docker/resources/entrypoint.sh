@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 printenv > /etc/environment
 
@@ -14,6 +15,11 @@ fi
 
 if [ ! -z $THREADS ]; then
     ADDITIONAL_FLAGS="${ADDITIONAL_FLAGS} --threads=${THREADS}"
+fi
+
+if [ "$TURKLE_DATABASE_BACKEND" = "MySQL" ]; then
+  echo "Waiting for MySQL at $TURKLE_DB_HOST:3306..."
+  wait-for-it.sh "$TURKLE_DB_HOST:3306" --timeout=60 --strict -- echo "MySQL is up"
 fi
 
 python manage.py migrate --noinput
