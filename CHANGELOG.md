@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 ### Added
  - TURKLE_AUTO_ACCPET_DEFAULT setting
+### Fixed
+ - CSV download failure if two projects had the same name
 
 ## [3.0.0] - 2023-09-20
 ### Changed
