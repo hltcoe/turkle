@@ -824,7 +824,8 @@ class Project(TaskAssignmentStatistics, models.Model):
     def process_template(self):
         # duplicated in ProjectSerializer
         soup = BeautifulSoup(self.html_template, 'html.parser')
-        self.html_template_has_submit_button = bool(soup.select('input[type=submit]'))
+        self.html_template_has_submit_button =\
+            bool(soup.select('input[type=submit], button[type=submit]'))
 
         # Extract fieldnames from html_template text, save fieldnames as keys of JSON dict
         unique_fieldnames = set(re.findall(r'\${(\w+)}', self.html_template))

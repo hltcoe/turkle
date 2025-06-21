@@ -304,7 +304,8 @@ class ProjectSerializer(serializers.ModelSerializer):
                       "If so, add an unused hidden input."
                 raise serializers.ValidationError({'html_template': msg})
 
-            attrs['html_template_has_submit_button'] = bool(soup.select('input[type=submit]'))
+            attrs['html_template_has_submit_button'] =\
+                bool(soup.select('input[type=submit], button[type=submit]'))
 
             # Extract fieldnames from html_template text, save fieldnames as keys of JSON dict
             unique_fieldnames = set(re.findall(r'\${(\w+)}', attrs['html_template']))

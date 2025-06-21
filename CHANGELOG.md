@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Fixed docker builds
  - Fixed CSV download failure if two projects had the same name
  - Fixed bug where repeated form field names caused only the last value to be saved
+ - Fixed bug where submit buttons were not detected if using button rather than input
 
 ## [3.0.0] - 2023-09-20
 ### Changed
