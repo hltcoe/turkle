@@ -6,17 +6,16 @@ from rest_framework import status
 from turkle.models import Batch, Project, User
 
 from . import TurkleAPITestCase
+from ...tests.utility import create_project
 
 
 class BatchTests(TurkleAPITestCase):
     def setUp(self):
         super().setUp()
-        self.project, created = Project.objects.get_or_create(
+        self.project = create_project(
             name='Test Project',
-            html_template='<html><label>%{label}</label><input name="ans" type="text"><html>'
+            html_template='<html><label>${label}</label><input name="ans" type="text"><html>'
         )
-        self.project.fieldnames = dict((fn, True) for fn in ['label'])
-        self.project.save()
 
     def test_create(self):
         url = reverse('batch-list')

@@ -1,14 +1,12 @@
 import csv
 import io
-import re
 
-from bs4 import BeautifulSoup
 from django.contrib.auth.models import Group, User
 import guardian.shortcuts
 from rest_framework import serializers
 
-from ..models import Batch, Project
-from ..utils import get_turkle_template_limit
+from ..models import Batch, Project, ProjectTemplate
+from ..utils import process_html_template
 
 
 class IntegerListField(serializers.ListField):
@@ -261,14 +259,41 @@ class ProjectSerializer(serializers.ModelSerializer):
     created_at = serializers.DateTimeField(read_only=True)
     updated_at = serializers.DateTimeField(read_only=True)
     filename = serializers.CharField(required=True)
+    html_template = serializers.CharField(write_only=True, required=False)
     batches = ProjectBatchesField(read_only=True)
 
     class Meta:
         model = Project
         fields = ['id', 'name', 'created_at', 'created_by', 'updated_at', 'updated_by',
                   'active', 'allotted_assignment_time', 'assignments_per_task',
-                  'login_required', 'custom_permissions',
-                  'filename', 'html_template', 'batches']
+                  'login_required', 'custom_permissions', 'html_template',
+                  'filename', 'batches']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # If creating, make html_template required
+        if self.instance is None:
+            self.fields['html_template'].required = True
+
+    def create(self, validated_data):
+        html_template = validated_data.pop('html_template', None)
+        project = super().create(validated_data)
+        ProjectTemplate.objects.create(project=project, html_template=html_template)
+        return project
+
+    def update(self, instance, validated_data):
+        html_template = validated_data.pop('html_template', None)
+        project = super().update(instance, validated_data)
+
+        if html_template is not None:
+            if hasattr(project, 'template'):
+                project.template.html_template = html_template
+                project.template.save()
+            else:
+                ProjectTemplate.objects.create(project=project, html_template=html_template)
+
+        return project
 
     def validate(self, attrs):
         # This duplicates model validation as drf doesn't call model clean()
@@ -290,25 +315,9 @@ class ProjectSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError({'assignments_per_task': msg})
 
         if 'html_template' in attrs:
-            if len(attrs['html_template']) > get_turkle_template_limit(True):
-                raise serializers.ValidationError({'html_template': 'Template is too large'})
-
-            # This code is derived from process_template()
-            # Matching mTurk we confirm at least one input, select, or textarea
-            soup = BeautifulSoup(attrs['html_template'], 'html.parser')
-            if soup.find('input') is None and soup.find('select') is None \
-                    and soup.find('textarea') is None:
-                msg = "Template does not contain any fields for responses. " + \
-                      "Please include at least one field (input, select, or textarea)." + \
-                      "This usually means you are generating HTML with JavaScript." + \
-                      "If so, add an unused hidden input."
-                raise serializers.ValidationError({'html_template': msg})
-
-            attrs['html_template_has_submit_button'] = bool(soup.select('input[type=submit]'))
-
-            # Extract fieldnames from html_template text, save fieldnames as keys of JSON dict
-            unique_fieldnames = set(re.findall(r'\${(\w+)}', attrs['html_template']))
-            attrs['fieldnames'] = dict((fn, True) for fn in unique_fieldnames)
+            has_submit_button, field_names = process_html_template(attrs['html_template'])
+            attrs['html_template_has_submit_button'] = has_submit_button
+            attrs['fieldnames'] = field_names
 
         return attrs
 
