@@ -4,7 +4,7 @@ from django.contrib.messages import get_messages
 from django.test import TestCase
 from django.urls import reverse
 from guardian.shortcuts import assign_perm
-from .utility import save_model
+from .utility import create_project, save_model
 
 from turkle.models import Task, TaskAssignment, Batch, Project
 from turkle.views import parse_date_with_timezone
@@ -69,10 +69,10 @@ class TestAcceptTask(TestCase):
 
 class TestAcceptNextTask(TestCase):
     def setUp(self):
-        self.project = Project.objects.create(
-            login_required=False,
-            html_template='<p>${foo}: ${bar}</p><textarea>',
+        self.project = create_project(
             name='foo',
+            html_template='<p>${foo}: ${bar}</p><textarea>',
+            login_required=False
         )
         self.batch = Batch.objects.create(
             filename='foo.csv',
@@ -208,8 +208,7 @@ class TestAcceptNextTask(TestCase):
 
 class TestDownloadBatchCSV(TestCase):
     def setUp(self):
-        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
-        project.save()
+        project = create_project(name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
 
         self.batch = Batch(project=project, name='foo', filename='foo.csv')
         self.batch.save()
@@ -487,7 +486,7 @@ class TestIndexAbandonedAssignments(TestCase):
 
 class TestTaskAssignment(TestCase):
     def setUp(self):
-        project = Project(login_required=False, name='foo', html_template='<p></p><textarea>')
+        project = create_project(name='foo', html_template='<p></p><textarea>', login_required=False)
         project.save()
         batch = Batch(project=project)
         batch.save()
@@ -647,42 +646,13 @@ class TestTaskAssignmentIFrame(TestCase):
         self.assertTrue('You do not have permission to work on the Task Assignment with ID'
                         in str(messages[0]))
 
-    def test_template_with_submit_button(self):
-        self.project.html_template = \
-            '<input id="my_submit_button" type="submit" value="MySubmit" />'
-        save_model(self.project)
-        self.project.refresh_from_db()
-        self.assertTrue(self.project.html_template_has_submit_button)
-
-        client = django.test.Client()
-        response = client.get(reverse('task_assignment_iframe',
-                                      kwargs={'task_id': self.task.id,
-                                              'task_assignment_id': self.task_assignment.id}))
-        self.assertEqual(response.status_code, 200)
-        self.assertTrue(b'my_submit_button' in response.content)
-        self.assertFalse(b'submitButton' in response.content)
-
-    def test_template_without_submit_button(self):
-        self.project.form = '<input id="foo" type="text" value="MyText" />'
-        self.project.save()
-        self.project.refresh_from_db()
-        self.assertFalse(self.project.html_template_has_submit_button)
-
-        client = django.test.Client()
-        response = client.get(reverse('task_assignment_iframe',
-                                      kwargs={'task_id': self.task.id,
-                                              'task_assignment_id': self.task_assignment.id}))
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(b'my_submit_button' in response.content)
-        self.assertTrue(b'submitButton' in response.content)
-
 
 class TestPreview(TestCase):
     def setUp(self):
-        self.project = Project.objects.create(
+        self.project = create_project(
+            name='foo',
             html_template='<p>${foo}: ${bar}</p><textarea>',
-            login_required=False,
-            name='foo'
+            login_required=False
         )
         self.batch = Batch.objects.create(
             filename='foo.csv',
@@ -771,8 +741,7 @@ class TestPreview(TestCase):
 
 class TestReturnTaskAssignment(TestCase):
     def setUp(self):
-        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
-        project.save()
+        project = create_project(name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
 
         batch = Batch(project=project, name='foo', filename='foo.csv')
         batch.save()

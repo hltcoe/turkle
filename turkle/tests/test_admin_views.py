@@ -6,15 +6,16 @@ from django.contrib.auth.models import Group, User
 from django.contrib.messages import get_messages
 from django.urls import reverse
 from django.utils import timezone
-from .utility import save_model
+from .utility import create_project
 
+from turkle.admin import ProjectForm
 from turkle.models import Batch, Project, Task, TaskAssignment
 
 
 class TestCancelOrPublishBatch(django.test.TestCase):
     def setUp(self):
         User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
-        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
+        project = create_project(name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
         project.save()
         self.batch = Batch(project=project, name='MY_BATCH_NAME', published=False)
         self.batch.save()
@@ -109,8 +110,7 @@ class TestBatchAdmin(django.test.TestCase):
         self.user = User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
 
     def test_batch_add(self):
-        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
-        project.save()
+        project = create_project(name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
 
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
 
@@ -138,8 +138,7 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertEqual(matching_batch.created_by, self.user)
 
     def test_batch_add_csv_with_emoji(self):
-        project = Project(name='foo', html_template='<p>${emoji}: ${more_emoji}</p><textarea>')
-        project.save()
+        project = create_project(name='foo', html_template='<p>${emoji}: ${more_emoji}</p><textarea>')
 
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
 
@@ -170,8 +169,7 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertEqual(tasks[2].input_csv_fields['more_emoji'], '🤭')
 
     def test_batch_add_empty_allotted_assignment_time(self):
-        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
-        project.save()
+        project = create_project(name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
 
         client = django.test.Client()
         client.login(username='admin', password='secret')
@@ -190,8 +188,7 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertTrue(b'This field is required.' in response.content)
 
     def test_batch_add_missing_project(self):
-        project = Project(name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
-        project.save()
+        project = create_project(name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
 
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
 
@@ -210,8 +207,7 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertTrue(b'This field is required' in response.content)
 
     def test_batch_add_missing_file_field(self):
-        project = Project(name='foo', html_template='<p>${emoji}: ${more_emoji}</p><textarea>')
-        project.save()
+        project = create_project(name='foo', html_template='<p>${emoji}: ${more_emoji}</p><textarea>')
 
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
 
@@ -229,8 +225,7 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertTrue(b'This field is required' in response.content)
 
     def test_batch_add_validation_extra_csv_fields(self):
-        project = Project(name='foo', html_template='<p>${f2}</p><textarea>')
-        project.save()
+        project = create_project(name='foo', html_template='<p>${f2}</p><textarea>')
 
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
 
@@ -257,10 +252,10 @@ class TestBatchAdmin(django.test.TestCase):
                         in str(messages[0]))
 
     def test_batch_add_validation_missing_csv_fields(self):
-        project = Project(name='foo', html_template='<p>${f1} ${f2} ${f3}</p><textarea>')
+        project = create_project(name='foo', html_template='<p>${f1} ${f2} ${f3}</p><textarea>')
         project.created_by = self.user
         project.updated_by = self.user
-        save_model(project)
+        project.save()
 
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
 
@@ -281,8 +276,7 @@ class TestBatchAdmin(django.test.TestCase):
         self.assertTrue(b'missing fields' in response.content)
 
     def test_batch_add_validation_variable_fields_per_row(self):
-        project = Project(name='foo', html_template='<p>${f1} ${f2} ${f3}</p><textarea>')
-        project.save()
+        project = create_project(name='foo', html_template='<p>${f1} ${f2} ${f3}</p><textarea>')
 
         self.assertFalse(Batch.objects.filter(name='batch_save').exists())
 
@@ -724,7 +718,7 @@ class TestProjectAdmin(django.test.TestCase):
         self.assertFalse(user_to_remove.has_perm('can_work_on', project))
 
     def test_project_stats_view(self):
-        project = Project.objects.create(
+        project = create_project(
             name='foo', html_template='<p>${foo}: ${bar}</p><textarea>')
         batch_no_tasks = Batch.objects.create(
             project=project, name='No associated tasks', published=True)
@@ -739,6 +733,60 @@ class TestProjectAdmin(django.test.TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTrue(batch_no_tasks.name in str(response.content))
         self.assertTrue(batch_no_completed_tasks.name in str(response.content))
+
+
+class TestProjectForm(django.test.TestCase):
+
+    def setUp(self):
+        self.admin = User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
+
+    def test_html_template_has_submit_button_is_set(self):
+        form_data = {
+            'name': 'Test Project',
+            'html_template': '<p><input id="my_submit_button" type="submit" value="MySubmit" /></p>',
+            'assignments_per_task': 1,
+            'login_required': True,
+            'created_by': self.admin,
+            'updated_by': self.admin
+        }
+
+        form = ProjectForm(data=form_data)
+
+        is_valid = form.is_valid()
+        self.assertTrue(is_valid, form.errors)
+        project = form.save()
+
+        self.assertTrue(project.html_template_has_submit_button)
+
+    def test_html_template_has_submit_button_is_not_set(self):
+        form_data = {
+            'name': 'Test Project',
+            'html_template': '<textarea>',
+            'assignments_per_task': 1,
+            'login_required': True,
+            'created_by': self.admin,
+            'updated_by': self.admin
+        }
+
+        form = ProjectForm(data=form_data)
+        project = form.save()
+
+        self.assertFalse(project.html_template_has_submit_button)
+
+    def test_html_template_no_input(self):
+        form_data = {
+            'name': 'Test Project',
+            'html_template': 'this is a test',
+            'assignments_per_task': 1,
+            'login_required': True,
+            'created_by': self.admin,
+            'updated_by': self.admin
+        }
+
+        form = ProjectForm(data=form_data)
+        self.assertFalse(form.is_valid())
+        self.assertIn('html_template', form.errors)
+        self.assertIn('Template does not contain any fields', form.errors['html_template'][0])
 
 
 class TestReviewBatch(django.test.TestCase):

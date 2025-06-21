@@ -10,7 +10,7 @@ import django.test
 from django.utils import timezone
 from guardian.shortcuts import assign_perm, get_group_perms
 
-from .utility import save_model
+from .utility import create_project, save_model
 from turkle.models import Task, TaskAssignment, Batch, Project, ActiveProject, ActiveProjectManager
 from turkle.utils import get_turkle_template_limit
 
@@ -129,7 +129,7 @@ class TestBatch(django.test.TestCase):
 
     def test_batch_to_csv(self):
         template = '<p>${number} - ${letter}</p><textarea>'
-        project = Project.objects.create(name='test', html_template=template)
+        project = create_project(name='test', html_template=template)
         batch = Batch.objects.create(project=project)
         user = User.objects.create(username='joe')
 
@@ -172,8 +172,7 @@ class TestBatch(django.test.TestCase):
         self.assertTrue(time_string in csv_string)
 
     def test_batch_to_input_csv(self):
-        project = Project(name='test', html_template='<p>${letter}</p><textarea>')
-        project.save()
+        project = create_project(name='test', html_template='<p>${letter}</p><textarea>')
         batch = Batch(project=project)
         batch.save()
 
@@ -205,8 +204,7 @@ class TestBatch(django.test.TestCase):
             self.fail('Unexpected header value: %s' % rows[0])
 
     def test_batch_to_csv_variable_number_of_answers(self):
-        project = Project(name='test', html_template='<p>${letter}</p><textarea>')
-        project.save()
+        project = create_project(name='test', html_template='<p>${letter}</p><textarea>')
         batch = Batch(project=project)
         batch.save()
 
@@ -258,7 +256,7 @@ class TestBatch(django.test.TestCase):
         self.assertTrue(any(['"c","","2","3",""' in row for row in rows[1:]]))
 
     def test_batch_to_csv_partially_completed_task(self):
-        project = Project.objects.create(
+        project = create_project(
             name='test', html_template='<p>${number} - ${letter}</p><textarea>')
         batch = Batch.objects.create(
             assignments_per_task=2,
@@ -303,8 +301,7 @@ class TestBatch(django.test.TestCase):
 
     def test_batch_from_emoji_csv(self):
         template = '<p>${emoji} - ${more_emoji}</p><textarea>'
-        project = Project(name='test', html_template=template)
-        project.save()
+        project = create_project(name='test', html_template=template)
         batch = Batch(project=project)
         batch.save()
 
@@ -358,14 +355,7 @@ class TestBatch(django.test.TestCase):
 
     def test_login_required_validation_1(self):
         # No ValidationError thrown
-        project = Project(
-            name='test',
-            login_required=False,
-            html_template='<textarea>',
-            created_by=self.admin,
-            updated_by=self.admin,
-        )
-        save_model(project)
+        project = create_project(name='test', html_template='<textarea>', login_required=False)
         Batch(
             name='test',
             assignments_per_task=1,
@@ -374,14 +364,7 @@ class TestBatch(django.test.TestCase):
 
     def test_login_required_validation_2(self):
         # No ValidationError thrown
-        project = Project(
-            name='test',
-            login_required=True,
-            html_template='<textarea>',
-            created_by=self.admin,
-            updated_by=self.admin,
-        )
-        save_model(project)
+        project = create_project(name='test', html_template='<textarea>', login_required=True)
         Batch(
             name='test',
             assignments_per_task=2,
@@ -390,13 +373,7 @@ class TestBatch(django.test.TestCase):
 
     def test_login_required_validation_3(self):
         with self.assertRaisesMessage(ValidationError, 'Assignments per Task must be 1'):
-            project = Project(
-                name='test',
-                html_template='<textarea>',
-                created_by=self.admin,
-                updated_by=self.admin,
-            )
-            save_model(project)
+            project = create_project(name='test', html_template='<textarea>', login_required=True)
             Batch(
                 name='test',
                 assignments_per_task=2,
@@ -411,7 +388,7 @@ class TestBatchAvailableTasks(django.test.TestCase):
         self.user = User.objects.create_user('testuser', password='secret')
 
         template = '<p>${number} - ${letter}</p><textarea>'
-        self.project = Project.objects.create(name='test', html_template=template)
+        self.project = create_project(name='test', html_template=template)
 
     def test_available_tasks_for__apt_is_1(self):
         batch = Batch(
@@ -517,7 +494,7 @@ class TestBatchAvailableTasks(django.test.TestCase):
 
 class TestBatchReportFunctions(django.test.TestCase):
     def setUp(self):
-        project = Project.objects.create(name='test')
+        project = create_project(name='test', html_template='<textarea>')
         self.batch = Batch.objects.create(
             assignments_per_task=2,
             project=project,
@@ -662,26 +639,6 @@ class TestProject(django.test.TestCase):
         # project.custom_permissions is False
         self.assertFalse('can_work_on_batch' in get_group_perms(group, batch))
 
-    def test_form_with_submit_button(self):
-        project = Project(
-            name='Test',
-            html_template='<p><input id="my_submit_button" type="submit" value="MySubmit" /></p>'
-        )
-        project.created_by = self.admin
-        project.updated_by = self.admin
-        save_model(project)
-        self.assertTrue(project.html_template_has_submit_button)
-
-    def test_form_without_submit_button(self):
-        project = Project(
-            name='Test',
-            html_template='<p>Quick brown fox</p><textarea>'
-        )
-        project.created_by = self.admin
-        project.updated_by = self.admin
-        save_model(project)
-        self.assertFalse(project.html_template_has_submit_button)
-
     def test_group_permissions(self):
         user = User.objects.create_user('testuser', password='secret')
         group = Group.objects.create(name='testgroup')
@@ -706,7 +663,6 @@ class TestProject(django.test.TestCase):
         Project(
             assignments_per_task=1,
             login_required=False,
-            html_template='<textarea>'
         ).clean()
 
     def test_login_required_validation_2(self):
@@ -714,7 +670,6 @@ class TestProject(django.test.TestCase):
         Project(
             assignments_per_task=2,
             login_required=True,
-            html_template='<textarea>'
         ).clean()
 
     def test_login_required_validation_3(self):
@@ -722,24 +677,6 @@ class TestProject(django.test.TestCase):
             Project(
                 assignments_per_task=2,
                 login_required=False,
-                html_template='<textarea>'
-            ).clean()
-
-    def test_input_field_required(self):
-        msg_part = "Please include at least one field"
-        with self.assertRaisesRegex(ValidationError, msg_part):
-            Project(
-                assignments_per_task=2,
-                login_required=True,
-                html_template='<script>do stuff here</script>'
-            ).clean()
-
-    def test_too_large_template(self):
-        limit = get_turkle_template_limit(True)
-        template = 'a' * limit + '<textarea>'
-        with self.assertRaisesMessage(ValidationError, 'Template is too large'):
-            Project(
-                html_template=template,
             ).clean()
 
     def test_getting_group_permissions(self):
@@ -778,8 +715,7 @@ class TestActiveProjectManager(django.test.TestCase):
 
     @staticmethod
     def create_project_with_assignment(completed, num_assignments=1):
-        project = Project(name='test', html_template='<p>${number}</p><textarea>')
-        project.save()
+        project = create_project(name='test', html_template='<p>${number}</p><textarea>')
         batch = Batch(name='test', project=project)
         batch.save()
         task = Task(batch=batch, input_csv_fields={'number': '1'})
@@ -834,7 +770,7 @@ class TestTask(django.test.TestCase):
         The Task has inputs and answers and refers to the Project form.
         """
         admin = User.objects.create_superuser('admin', 'foo@bar.foo', 'secret')
-        project = Project(name='test', html_template="<p>${foo}</p><textarea>")
+        project = create_project(name='test', html_template="<p>${foo}</p><textarea>")
         project.created_by = admin
         project.updated_by = admin
         save_model(project)
@@ -894,7 +830,7 @@ class TestTask(django.test.TestCase):
             self.task.batch.project.fieldnames
         )
 
-        project = Project(name='test', html_template='<p>${foo} - ${bar}</p><textarea>')
+        project = create_project(name='test', html_template='<p>${foo} - ${bar}</p><textarea>')
         project.clean()
         self.assertEqual(
             {'foo': True, 'bar': True},
@@ -937,7 +873,7 @@ class TestGenerateForm(django.test.TestCase):
         with open('turkle/tests/resources/form_0.html') as f:
             html_template = f.read()
 
-        self.project = Project(name="filepath", html_template=html_template)
+        self.project = create_project(name="filepath", html_template=html_template)
         self.project.save()
         self.batch = Batch(project=self.project)
         self.batch.save()
@@ -976,13 +912,12 @@ class TestGenerateForm(django.test.TestCase):
         self.assertNotEqual(expect, actual)
 
     def test_map_fields_csv_row(self):
-        project = Project(
+        project = create_project(
             name='test',
             html_template="""</select> con relaci&oacute;n a """ +
             """<span style="color: rgb(0, 0, 255);">""" +
             """${tweet0_entity}</span> en este mensaje.</p><textarea>"""
         )
-        project.save()
         batch = Batch(project=project)
         batch.save()
         task = Task(
@@ -1004,8 +939,7 @@ class TestGenerateForm(django.test.TestCase):
 class TestTaskAssignment(django.test.TestCase):
     def test_task_marked_as_completed(self):
         # When assignment_per_task==1, completing 1 Assignment marks Task as complete
-        project = Project(name='test', html_template='<p>${number} - ${letter}</p><textarea>')
-        project.save()
+        project = create_project(name='test', html_template='<p>${number} - ${letter}</p><textarea>')
         batch = Batch(name='test', project=project)
         batch.save()
 
@@ -1032,8 +966,7 @@ class TestTaskAssignment(django.test.TestCase):
 
     def test_task_marked_as_completed_two_way_redundancy(self):
         # When assignment_per_task==2, completing 2 Assignments marks Task as complete
-        project = Project(name='test', html_template='<p>${number} - ${letter}</p><textarea>')
-        project.save()
+        project = create_project(name='test', html_template='<p>${number} - ${letter}</p><textarea>')
         batch = Batch(name='test', project=project)
         batch.assignments_per_task = 2
         batch.save()

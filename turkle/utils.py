@@ -39,7 +39,7 @@ def process_html_template(html_template):
     from bs4 import BeautifulSoup
 
     if len(html_template) > get_turkle_template_limit(True):
-        raise ValidationError({'html_template': 'Template is too large'}, code='invalid')
+        raise ValidationError('Template is too large')
 
     soup = BeautifulSoup(html_template, 'html.parser')
     has_submit_button = bool(soup.select('input[type=submit]'))
@@ -56,6 +56,6 @@ def process_html_template(html_template):
             "This usually means you are generating HTML with JavaScript. "
             "If so, add an unused hidden input."
         )
-        raise ValidationError({'html_template': msg}, code='invalid')
+        raise ValidationError(msg)
 
     return has_submit_button, fieldnames
