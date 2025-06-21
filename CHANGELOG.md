@@ -5,10 +5,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+ - Upgraded to Django 4.2
+ - Made the main batch table sortable
+ - Updated documentation on the API including the client
 ### Added
+ - QuickStart guide for setting up a server
  - TURKLE_AUTO_ACCPET_DEFAULT setting
 ### Fixed
- - CSV download failure if two projects had the same name
+ - Fixed docker builds
+ - Fixed CSV download failure if two projects had the same name
+ - Fixed bug where repeated form field names caused only the last value to be saved
 
 ## [3.0.0] - 2023-09-20
 ### Changed
