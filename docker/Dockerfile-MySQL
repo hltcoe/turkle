@@ -1,6 +1,8 @@
 FROM python:3.10-slim-bullseye
-MAINTAINER Cash Costello <cash.costello@gmail.com>
-LABEL Description="Image for running a Turkle interface using MySQL"
+LABEL org.opencontainers.image.title="Turkle MySQL Image" \
+      org.opencontainers.image.description="Image for running a Turkle instance using MySQL" \
+      org.opencontainers.image.authors="Cash Costello <cash.costello@gmail.com>" \
+      org.opencontainers.image.licenses="BSD-2-Clause"
 
 WORKDIR /opt/turkle
 COPY requirements.txt /opt/turkle/requirements.txt

@@ -1,6 +1,8 @@
 FROM python:3.10-slim-bullseye
-MAINTAINER Cash Costello <cash.costello@gmail.com>
-LABEL Description="Image for running a Turkle interface using sqlite"
+LABEL org.opencontainers.image.title="Turkle SQLite Image" \
+      org.opencontainers.image.description="Image for running a Turkle instance using SQLite" \
+      org.opencontainers.image.authors="Cash Costello <cash.costello@gmail.com>" \
+      org.opencontainers.image.licenses="BSD-2-Clause"
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     cron \
