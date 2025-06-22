@@ -8,3 +8,13 @@
   text-align: right;
   margin-top: 4px;
 }
+/* let iframe expand to fill vertical space */
+.turkle-batch-preview #content-start {
+  display: flex;
+  flex-direction: column;
+}
+.turkle-batch-preview #content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+}
