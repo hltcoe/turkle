@@ -31,4 +31,5 @@ jobs:
         with:
           context: .
           file: docker/Dockerfile-sqlite
-          push:
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
