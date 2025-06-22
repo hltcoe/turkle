@@ -6,6 +6,8 @@
   {{ media.css }}
 {% endblock %}
 
+{% block bodyclass %}turkle-batch-preview{% endblock %}
+
 {% block extrahead %}
 {{ block.super }}
 <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
@@ -75,11 +77,11 @@ $(function () {
   </div>
 </div>
 
-<div class="container-fluid">
+<div class="container-fluid" style="display: flex; flex: 1;">
 
   {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
 
-  <div style="height: 500px;">
+  <div style="flex: 1;">
     <iframe src="{% url 'preview_iframe' first_task_id %}" id="preview_iframe">
     </iframe>
   </div>
