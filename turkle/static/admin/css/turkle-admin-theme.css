@@ -18,3 +18,10 @@
   flex: 1;
   flex-direction: column;
 }
+/* cancel button on review batch page */
+#cancelButton {
+  background: var(--close-button-bg);
+}
+#cancelButton:hover {
+  background: var(--close-button-hover-bg);
+}
