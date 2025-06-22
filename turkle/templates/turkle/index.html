@@ -3,13 +3,13 @@
 
 {% block css %}
   {{ block.super }}
-  <link href="{% static 'turkle/datatables-1.10.24/datatables.bootstrap4.min.css' %}" rel="stylesheet" type="text/css"/>
+  <link href="{% static 'turkle/datatables/datatables.bootstrap4.min.css' %}" rel="stylesheet" type="text/css"/>
 {% endblock %}
 
 {% block js %}
   {{ block.super }}
   <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
-  <script type="text/javascript" src="{% static 'turkle/datatables-1.10.24/datatables.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'turkle/datatables/datatables.min.js' %}"></script>
   <script>
     $(document).ready(function () {
       var table = $('#batchTable').DataTable({
