@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
  - Upgraded to Django 4.2
  - Made the main batch table sortable
  - Updated documentation on the API including the client
+ - Updated theme for admin stats pages
 ### Added
  - QuickStart guide for setting up a server
  - TURKLE_AUTO_ACCPET_DEFAULT setting

@@ -1,13 +1,8 @@
-{% extends "admin/base_bootcamp.html" %}
+{% extends "admin/stats.html" %}
 {% load static %}
 
-{% block header %}
-<script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'turkle/datatables/datatables.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'turkle/d3-3.5.17.min.js' %}"></script>
-<script type="text/javascript" src="{% static 'turkle/cal-heatmap-3.6.2.min.js' %}"></script>
-<link href="{% static 'turkle/datatables/datatables.bootstrap4.min.css' %}" rel="stylesheet" type="text/css"/>
-<link href="{% static 'turkle/cal-heatmap.css' %}" rel="stylesheet" type="text/css"/>
+{% block extrahead %}
+  {{ block.super }}
 <style>
 #activity-calendar-container {
   margin-bottom: 1em;
@@ -54,13 +49,17 @@ $(document).ready(function() {
 </script>
 {% endblock %}
 
-{% block body %}
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">Home</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label='turkle' %}">Turkle</a>
+&rsaquo; <a href="{% url 'admin:turkle_batch_changelist' %}">Batches</a>
+&rsaquo; Stats
+</div>
+{% endblock %}
 
+{% block content %}
 <div class="container mt-2">
-
-  {% if error_message %}<p><strong>{{ error_message }}</strong></p>{% endif %}
-
-  <h2>Batch Statistics</h2>
 
   <div>
     <table class="table table-sm table-bordered thead-light">
@@ -129,12 +128,6 @@ $(document).ready(function() {
         <th>Median Time / Assignment</th>
         <td>{{ batch_median_work_time}}</td>
       </tr>
-      <!--
-      <tr>
-        <th></th>
-        <td></td>
-      </tr>
-      -->
     </table>
   </div>
 
