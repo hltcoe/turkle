@@ -4,15 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [3.1.0] - 2025-06-22
 ### Changed
  - Upgraded to Django 4.2
  - Made the main batch table sortable
- - Updated documentation on the API including the client
+ - Updated documentation on the API including the new client
  - Updated theme for admin stats pages
 ### Added
  - QuickStart guide for setting up a server
- - TURKLE_AUTO_ACCPET_DEFAULT setting
+ - TURKLE_AUTO_ACCEPT_DEFAULT setting for accepting next task in a batch
 ### Fixed
  - Fixed docker builds
  - Fixed CSV download failure if two projects had the same name
