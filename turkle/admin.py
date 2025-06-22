@@ -523,7 +523,10 @@ class BatchAdmin(AjaxAutocompleteListFilterModelAdmin):
             mean_work_time = 'N/A'
             median_work_time = 'N/A'
 
-        return render(request, 'admin/turkle/batch_stats.html', {
+        context = admin.site.each_context(request)
+        context['title'] = f'Stats for Batch: {batch.name}'
+
+        context.update({
             'batch': batch,
             'batch_total_work_time': total_work_time,
             'batch_mean_work_time': mean_work_time,
@@ -533,6 +536,8 @@ class BatchAdmin(AjaxAutocompleteListFilterModelAdmin):
             'unsubmitted_task_assignments': batch.unfinished_task_assignments(),
             'stats_users': stats_users,
         })
+
+        return render(request, 'admin/turkle/batch_stats.html', context)
 
     def cancel_batch(self, request, batch_id):
         try:
@@ -1111,7 +1116,10 @@ class ProjectAdmin(GuardedModelAdmin, AjaxAutocompleteListFilterModelAdmin):
             mean_work_time = 'N/A'
             median_work_time = 'N/A'
 
-        return render(request, 'admin/turkle/project_stats.html', {
+        context = admin.site.each_context(request)
+        context['title'] = f'Stats for Project: {project.name}'
+
+        context.update({
             'project': project,
             'project_total_completed_assignments': len(tasks),
             'project_total_completed_assignments_1_day': tca_1_day,
@@ -1130,6 +1138,8 @@ class ProjectAdmin(GuardedModelAdmin, AjaxAutocompleteListFilterModelAdmin):
             'uncompleted_tas_active_batches': uncompleted_tas_active_batches,
             'uncompleted_tas_inactive_batches': uncompleted_tas_inactive_batches,
         })
+
+        return render(request, 'admin/turkle/project_stats.html', context)
 
     def publish_tasks(self, instance):
         publish_tasks_url = '%s?project=%d' % (

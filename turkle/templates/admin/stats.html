@@ -1,0 +1,12 @@
+{% extends "admin/base_site.html" %}
+{% load static %}
+
+{% block extrahead %}
+  {{ block.super }}
+  <script type="text/javascript" src="{% static 'turkle/jquery-3.3.1.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'turkle/datatables/datatables.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'turkle/d3-3.5.17.min.js' %}"></script>
+  <script type="text/javascript" src="{% static 'turkle/cal-heatmap-3.6.2.min.js' %}"></script>
+  <link href="{% static 'turkle/datatables/datatables.bootstrap4.min.css' %}" rel="stylesheet" type="text/css"/>
+  <link href="{% static 'turkle/cal-heatmap.css' %}" rel="stylesheet" type="text/css"/>
+{% endblock %}
