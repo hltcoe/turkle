@@ -1,0 +1,132 @@
+<!--
+    HTML template example for highlighting spans.
+
+    The span offsets are zero-based.
+    If you highlight the first 6 characters, you will get [0,6].
+    This example does not handle characters that should be escaped.
+    Any real use of this template would require escaping text before inserting in the CSV.
+
+    This template is self-contained with its own css and js,
+    It demonstrates how to use JavaScript to gather interactions from a user and then
+    submit them by writing JSON to a hidden input field.
+
+    The CSV input file should have two columns "attribute" and "text".
+
+    The CSV output file will have columns for Input.attribute, Input.text and Answer.spans
+    in addition to metadata columns.
+-->
+<style>
+  body { font-family: sans-serif; margin: 1.5em; }
+  h2, h3 { margin-top: 0; }
+  .task-box { border: 1px solid #ccc; border-radius: 8px; padding: 16px; }
+  .attr { font-weight: 600; color: #1d4ed8; }
+  #snippet { cursor: text; white-space: pre-wrap; }
+  .highlight { background: #fdff47; } /* yellow */
+  .controls { margin-top: 1.2em; }
+  .btn { padding: 8px 14px; margin-right: .5em; }
+</style>
+
+<!-- Hidden output field (JSON stringified array of [start,end] pairs) -->
+<input type="hidden" id="spans" name="spans" value="[]">
+
+<h2>Highlight all spans that express the attribute below</h2>
+<div class="task-box">
+  <h3>Attribute to highlight</h3>
+  <p class="attr">${attribute}</p>
+
+  <h3>Text</h3>
+  <div id="snippet">${text}</div>
+</div>
+
+<div class="controls">
+  <button type="button" class="btn" id="undoBtn">Undo last span</button>
+  <button type="button" class="btn" id="clearBtn">Clear all</button>
+  <button type="submit" class="btn">Submit</button>
+</div>
+
+<script>
+  (function () {
+    const snippet = document.getElementById('snippet');
+    const spansInput = document.getElementById('spans');
+    const tupleStack = []; // running list of [start, end] offsets
+    const textContent = snippet.textContent; // original plain text
+
+    /* Helpers -------------------------------------------------------------- */
+    // Convert a DOM Range start/end pair to character offsets in original text
+    function rangeToOffsets(range) {
+      function offsetOf(node, offsetInNode) {
+        // Walk all preceding nodes and sum their text lengths
+        let charCount = 0;
+        function walker(n) {
+          if (n === node) {
+            charCount += offsetInNode;
+            return true;
+          }
+          if (n.nodeType === Node.TEXT_NODE) {
+            charCount += n.textContent.length;
+          }
+          for (const child of n.childNodes) {
+            if (walker(child)) return true;
+          }
+        }
+        walker(snippet);
+        return charCount;
+      }
+      return [
+        offsetOf(range.startContainer, range.startOffset),
+        offsetOf(range.endContainer, range.endOffset)
+      ];
+    }
+
+    // Re-render highlights in the snippet from tupleStack
+    function renderHighlights() {
+      // Remove any previous markup
+      snippet.innerHTML = textContent;
+      // Sort tuples so nested highlights render correctly
+      const sorted = [...tupleStack].sort((a, b) => a[0] - b[0]);
+      let resultHTML = '';
+      let pos = 0;
+      sorted.forEach(([s, e]) => {
+        resultHTML += textContent.slice(pos, s) +
+          '<span class="highlight">' +
+          textContent.slice(s, e) +
+          '</span>';
+        pos = e;
+      });
+      resultHTML += textContent.slice(pos);
+      snippet.innerHTML = resultHTML;
+    }
+
+    /* Selection capture ---------------------------------------------------- */
+    snippet.addEventListener('mouseup', () => {
+      const sel = window.getSelection();
+      if (sel.isCollapsed) {
+        return; // empty selection
+      }
+      const range = sel.getRangeAt(0);
+      if (!snippet.contains(range.commonAncestorContainer)) {
+        return; // outside
+      }
+      const [start, end] = rangeToOffsets(range);
+      if (start === end) {
+        return; // nothing highlighted
+      }
+      tupleStack.push([start, end]);
+      spansInput.value = JSON.stringify(tupleStack);
+      renderHighlights();
+      sel.removeAllRanges(); // clear native selection
+    });
+
+    /* Controls ------------------------------------------------------------- */
+    document.getElementById('undoBtn').onclick = function () {
+      tupleStack.pop();
+      spansInput.value = JSON.stringify(tupleStack);
+      renderHighlights();
+    };
+    document.getElementById('clearBtn').onclick = function () {
+      tupleStack.length = 0;
+      spansInput.value = '[]';
+      renderHighlights();
+    };
+  })();
+</script>

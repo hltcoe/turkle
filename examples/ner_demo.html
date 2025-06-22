@@ -1,0 +1,116 @@
+<style>
+  body { font-family: sans-serif; padding: 1em; }
+  .token { padding: 4px 6px; margin: 2px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; display: inline-block; }
+  .token.PER { background-color: #ffd1dc; }
+  .token.ORG { background-color: #cce5ff; }
+  .token.GPE { background-color: #d4edda; }
+  .token.MISC { background-color: #fff3cd; }
+  .tag-btn {
+    margin-right: 0.5em;
+    padding: 6px 12px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background-color: white;
+    cursor: pointer;
+  }
+  .tag-btn.active.PER { background-color: #ffd1dc; }
+  .tag-btn.active.ORG { background-color: #cce5ff; }
+  .tag-btn.active.GPE { background-color: #d4edda; }
+  .tag-btn.active.MISC { background-color: #fff3cd; }
+  .sentence { margin-bottom: 1em; }
+</style>
+
+<input type="hidden" name="annotations" id="annotations" value="[]">
+
+<h2>Label named entities by selecting a tag and clicking tokens</h2>
+
+<div>
+  <button type="button" class="tag-btn" onclick="setTag('PER')">PER</button>
+  <button type="button" class="tag-btn" onclick="setTag('ORG')">ORG</button>
+  <button type="button" class="tag-btn" onclick="setTag('GPE')">GPE</button>
+  <button type="button" class="tag-btn" onclick="setTag('MISC')">MISC</button>
+  <button type="button" class="tag-btn" onclick="undoLast()">Undo</button>
+</div>
+
+<div id="tokenContainer" style="margin-top: 1em;"></div>
+
+<button type="submit" style="margin-top: 1em;">Submit</button>
+
+<script>
+const currentTag = {value: null};
+const actions = [];
+const annotations = [];
+const content = JSON.parse(`${content}`);
+
+function setTag(tag) {
+  currentTag.value = tag;
+
+  // Remove 'active' class from all tag buttons
+  const buttons = document.querySelectorAll('.tag-btn');
+  buttons.forEach(btn => {
+    btn.classList.remove('active', 'PER', 'ORG', 'GPE', 'MISC');
+  });
+
+  // Add 'active' class and tag class to selected button
+  const selectedBtn = [...buttons].find(b => b.textContent === tag);
+  if (selectedBtn) {
+    selectedBtn.classList.add('active', tag);
+  }
+}
+
+function renderTokens() {
+  const container = document.getElementById('tokenContainer');
+  container.innerHTML = '';
+
+  content.forEach((sentence, sentenceIdx) => {
+    const sentenceDiv = document.createElement('div');
+    sentenceDiv.className = 'sentence';
+
+    sentence.forEach((token, tokenIdx) => {
+      const span = document.createElement('span');
+      span.className = 'token';
+      span.innerText = token;
+      span.dataset.sentenceIdx = sentenceIdx;
+      span.dataset.tokenIdx = tokenIdx;
+
+      span.onclick = () => {
+        if (!currentTag.value) {
+          alert("Select a tag type first.");
+          return;
+        }
+
+        span.classList.remove('PER', 'ORG', 'GPE', 'MISC');
+        span.classList.add(currentTag.value);
+
+        annotations.push({
+          sentence: sentenceIdx,
+          token: tokenIdx,
+          tag: currentTag.value
+        });
+
+        actions.push({ element: span, annotation: annotations[annotations.length - 1] });
+        updateHiddenInput();
+      };
+
+      sentenceDiv.appendChild(span);
+    });
+
+    container.appendChild(sentenceDiv);
+  });
+}
+
+function updateHiddenInput() {
+  document.getElementById('annotations').value = JSON.stringify(annotations);
+}
+
+function undoLast() {
+  const last = actions.pop();
+  if (last) {
+    last.element.classList.remove('PER', 'ORG', 'GPE', 'MISC');
+    annotations.pop();
+    updateHiddenInput();
+  }
+}
+
+renderTokens();
+</script>
