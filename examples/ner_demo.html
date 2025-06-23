@@ -4,7 +4,7 @@
   .token.PER { background-color: #ffd1dc; }
   .token.ORG { background-color: #cce5ff; }
   .token.GPE { background-color: #d4edda; }
-  .token.MISC { background-color: #fff3cd; }
+  .token.LOC { background-color: #fff3cd; }
   .tag-btn {
     margin-right: 0.5em;
     padding: 6px 12px;
@@ -16,7 +16,7 @@
   .tag-btn.active.PER { background-color: #ffd1dc; }
   .tag-btn.active.ORG { background-color: #cce5ff; }
   .tag-btn.active.GPE { background-color: #d4edda; }
-  .tag-btn.active.MISC { background-color: #fff3cd; }
+  .tag-btn.active.LOC { background-color: #fff3cd; }
   .sentence { margin-bottom: 1em; }
 </style>
 
@@ -28,7 +28,7 @@
   <button type="button" class="tag-btn" onclick="setTag('PER')">PER</button>
   <button type="button" class="tag-btn" onclick="setTag('ORG')">ORG</button>
   <button type="button" class="tag-btn" onclick="setTag('GPE')">GPE</button>
-  <button type="button" class="tag-btn" onclick="setTag('MISC')">MISC</button>
+  <button type="button" class="tag-btn" onclick="setTag('LOC')">LOC</button>
   <button type="button" class="tag-btn" onclick="undoLast()">Undo</button>
 </div>
 
@@ -48,7 +48,7 @@ function setTag(tag) {
   // Remove 'active' class from all tag buttons
   const buttons = document.querySelectorAll('.tag-btn');
   buttons.forEach(btn => {
-    btn.classList.remove('active', 'PER', 'ORG', 'GPE', 'MISC');
+    btn.classList.remove('active', 'PER', 'ORG', 'GPE', 'LOC');
   });
 
   // Add 'active' class and tag class to selected button
@@ -79,13 +79,14 @@ function renderTokens() {
           return;
         }
 
-        span.classList.remove('PER', 'ORG', 'GPE', 'MISC');
+        span.classList.remove('PER', 'ORG', 'GPE', 'LOC');
         span.classList.add(currentTag.value);
 
         annotations.push({
           sentence: sentenceIdx,
           token: tokenIdx,
-          tag: currentTag.value
+          tag: currentTag.value,
+          text: token
         });
 
         actions.push({ element: span, annotation: annotations[annotations.length - 1] });
@@ -106,7 +107,7 @@ function updateHiddenInput() {
 function undoLast() {
   const last = actions.pop();
   if (last) {
-    last.element.classList.remove('PER', 'ORG', 'GPE', 'MISC');
+    last.element.classList.remove('PER', 'ORG', 'GPE', 'LOC');
     annotations.pop();
     updateHiddenInput();
   }
