@@ -1,3 +1,20 @@
+<!--
+    NER demo template.
+
+    Select the tag type and then click the token.
+
+    This template is self-contained with its own css and js,
+    It demonstrates how to use JavaScript to gather interactions from a user and then
+    submit them by writing JSON to a hidden input field.
+
+    The CSV input file should have a single column called "content".
+    The value of a row should be a JSON encoded list of lists.
+    The outer lists are sentences and the inner lists are tokens.
+
+    The CSV output file will have columns for Input.content and Answer.annotations.
+    The annotations are a JSON encoded list of objects.
+    An object looks like this: {"sentence":0,"token":6,"tag":"GPE","text":"France"}.
+-->
 <style>
   body { font-family: sans-serif; padding: 1em; }
   .token { padding: 4px 6px; margin: 2px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; display: inline-block; }
