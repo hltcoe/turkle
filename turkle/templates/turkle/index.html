@@ -20,7 +20,7 @@
           data.search.search = '';
         },
         // when upgrade to DataTable 2, use data tags
-        columnDefs: [{"orderable": false, "targets": [4, 5]}],
+        columnDefs: [{"orderable": false, "targets": [4]}],
         order: [[2, 'desc']]
       });
     });
@@ -30,69 +30,85 @@
 {% block body %}
 
   {% if abandoned_assignments %}
-    <div class="container-fluid">
-      {% for aa in abandoned_assignments %}
-        <div class="alert alert-warning clearfix" role="alert">
-          <div class="float-left">
-            You have abandoned <b>Task {{ aa.task.id }}</b>
-            from Project <b>{{ aa.task.batch.project.name }}</b>,
-            Batch <b>{{ aa.task.batch.name }}</b>
-          </div>
-
-          <div class="float-right">
-            <div class="inline-form-buttons">
-              <a href="{% url 'task_assignment' aa.task.id aa.task_assignment_id %}" class="btn btn-sm btn-primary">
-                Resume working on Task
-              </a>
-              <form method="post" action="{% url 'return_task_assignment' aa.task.id aa.task_assignment_id %}">
-                {% csrf_token %}
-                <input type="submit" class="btn btn-sm btn-primary" value="Return Task" />
-              </form>
-            </div>
-          </div>
+    <div class="container-fluid mt-2">
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title">Current Task Assignments</h4>
+          <table id="currentTable" class="table table-bordered table-striped table-sm">
+            <thead>
+              <tr>
+                <th>Project</th>
+                <th>Batch</th>
+                <th>Task</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for aa in abandoned_assignments %}
+                <tr>
+                  <td>{{ aa.task.batch.project.name }}</td>
+                  <td>{{ aa.task.batch.name }}</td>
+                  <td>Task {{ aa.task.id }}</td>
+                  <td>
+                    <a href="{% url 'task_assignment' aa.task.id aa.task_assignment_id %}" class="btn btn-primary">
+                      Resume Task
+                    </a>
+                    <form method="post" action="{% url 'return_task_assignment' aa.task.id aa.task_assignment_id %}" style="display:inline-block;">
+                      {% csrf_token %}
+                      <input type="submit" class="btn btn-primary" value="Return Task" />
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
-      {% endfor %}
+      </div>
     </div>
   {% endif %}
 
   {# remove in Turkle 4.0 as unused #}
   {% block content %}{% endblock %}
 
-  <div class="container-fluid content mt-2">
+  <div class="container-fluid content mt-3">
     {% if batch_rows %}
-      <table id="batchTable" class="table table-bordered table-striped table-sm">
-        <thead>
-          <tr>
-            <th>Project</th>
-            <th>Batch</th>
-            <th>Batch Published</th>
-            <th>Tasks Available</th>
-            <th></th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for batch_row in batch_rows %}
-            <tr>
-              <td>{{ batch_row.project_name }}</td>
-              <td>{{ batch_row.batch_name }}</td>
-              <td>{{ batch_row.batch_published }}</td>
-              <td>{{ batch_row.assignments_available }}</td>
-              <td class="px-3 text-nowrap text-center" style="width: 1%;">
-                <a href="{{ batch_row.preview_next_task_url }}" role="button" class="btn btn-sm btn-primary">
-                  Preview next Task
-                </a>
-              </td>
-              <td class="px-3 text-nowrap text-center" style="width: 1%;">
-                <form method="post" action="{{ batch_row.accept_next_task_url }}">
-                  {% csrf_token %}
-                  <input type="submit" class="btn btn-sm btn-primary" value="Accept next Task" />
-                </form>
-              </td>
-            </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+      <div class="card">
+        <div class="card-body">
+          <h4 class="card-title">Available Task Assignments</h4>
+          <table id="batchTable" class="table table-bordered table-striped table-sm">
+            <thead>
+              <tr>
+                <th>Project</th>
+                <th>Batch</th>
+                <th>Batch Published</th>
+                <th>Tasks Available</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for batch_row in batch_rows %}
+                <tr>
+                  <td>{{ batch_row.project_name }}</td>
+                  <td>{{ batch_row.batch_name }}</td>
+                  <td>{{ batch_row.batch_published }}</td>
+                  <td>{{ batch_row.assignments_available }}</td>
+                  <td style="white-space: nowrap; width: 1%;">
+                    <div style="display: inline-flex; gap: 0.5rem;">
+                      <a href="{{ batch_row.preview_next_task_url }}" role="button" class="btn btn-primary">
+                        Preview Task
+                      </a>
+                      <form method="post" action="{{ batch_row.accept_next_task_url }}" style="display: inline-block;">
+                        {% csrf_token %}
+                        <input type="submit" class="btn btn-primary" value="Accept Task" />
+                      </form>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
     {% else %}
       <h1>No Tasks available at this time</h1>
       {% if not user.is_authenticated  %}

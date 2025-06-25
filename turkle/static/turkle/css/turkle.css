@@ -16,6 +16,12 @@ body {
 .custom-bg-light {
   background-color: rgba(0,0,0,.05);
 }
+#currentTable {
+  width: auto;
+}
+#currentTable th {
+  min-width: 150px;
+}
 /* --- There are five Django messages alert levels:
        - debug, info, success, warning, error
        We want to map these alert levels to Bootstrap 'alert-*' classes.
