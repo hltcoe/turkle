@@ -29,7 +29,7 @@
 
 {% block body %}
 
-  {% if abandoned_assignments %}
+  {% if open_assignments %}
     <div class="container-fluid mt-2">
       <div class="card">
         <div class="card-body">
@@ -44,7 +44,7 @@
               </tr>
             </thead>
             <tbody>
-              {% for aa in abandoned_assignments %}
+              {% for aa in open_assignments %}
                 <tr>
                   <td>{{ aa.task.batch.project.name }}</td>
                   <td>{{ aa.task.batch.name }}</td>

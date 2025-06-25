@@ -165,7 +165,8 @@ class TaskAssignment(models.Model):
     updated_at = models.DateTimeField(auto_now=True, db_index=True)
 
     @classmethod
-    def expire_all_abandoned(cls):
+    def expire_all_abandoned_assignments(cls):
+        # incomplete assignments past the deadline
         result = cls.objects.\
             filter(completed=False).\
             filter(expires_at__lt=timezone.now()).\
