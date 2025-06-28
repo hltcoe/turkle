@@ -11,7 +11,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         t0 = datetime.now()
-        (total_deleted, _) = TaskAssignment.expire_all_abandoned()
+        (total_deleted, _) = TaskAssignment.expire_all_abandoned_assignments()
         t = datetime.now()
         dt = (t - t0).total_seconds()
         logging.basicConfig(format="%(asctime)-15s %(message)s", level=logging.INFO)

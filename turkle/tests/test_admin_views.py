@@ -68,7 +68,7 @@ class TestCancelOrPublishBatch(django.test.TestCase):
 
 
 class TestExpireAbandonedAssignments(django.test.TestCase):
-    def test_expire_abandoned_assignments(self):
+    def test_expire_adandoned_assignments(self):
         t = timezone.now()
         dt = datetime.timedelta(hours=2)
         past = t - dt

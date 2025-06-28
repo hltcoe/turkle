@@ -1236,7 +1236,7 @@ class TaskAssignmentAdmin(admin.ModelAdmin):
 
     @staticmethod
     def expire_abandoned_assignments(request):
-        (total_deleted, _) = TaskAssignment.expire_all_abandoned()
+        (total_deleted, _) = TaskAssignment.expire_all_abandoned_assignments()
         messages.info(request, 'All {} abandoned Tasks have been expired'.format(total_deleted))
         return redirect(reverse('admin:turkle_taskassignment_changelist'))
 

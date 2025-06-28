@@ -47,13 +47,13 @@ def index(request):
     - Anyone can access the page, but the page only shows the user
       information they have access to.
     """
-    abandoned_assignments = []
+    open_assignments = []
     if request.user.is_authenticated:
         for ha in TaskAssignment.objects.filter(assigned_to=request.user)\
                                         .filter(completed=False)\
                                         .filter(task__batch__active=True)\
                                         .filter(task__batch__project__active=True):
-            abandoned_assignments.append({
+            open_assignments.append({
                 'task': ha.task,
                 'task_assignment_id': ha.id
             })
@@ -79,7 +79,7 @@ def index(request):
                                                 kwargs={'batch_id': batch['id']})
             })
     return render(request, 'turkle/index.html', {
-        'abandoned_assignments': abandoned_assignments,
+        'open_assignments': open_assignments,
         'batch_rows': batch_rows
     })
 

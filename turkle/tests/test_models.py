@@ -1088,7 +1088,7 @@ class TestTaskAssignment(django.test.TestCase):
         # Bypass TaskAssignment's save(), which updates expires_at
         super(TaskAssignment, ha).save()
         self.assertEqual(TaskAssignment.objects.count(), 1)
-        TaskAssignment.expire_all_abandoned()
+        TaskAssignment.expire_all_abandoned_assignments()
         self.assertEqual(TaskAssignment.objects.count(), 0)
 
     def test_expire_all_abandoned__dont_delete_completed(self):
@@ -1113,7 +1113,7 @@ class TestTaskAssignment(django.test.TestCase):
         # Bypass TaskAssignment's save(), which updates expires_at
         super(TaskAssignment, ha).save()
         self.assertEqual(TaskAssignment.objects.count(), 1)
-        TaskAssignment.expire_all_abandoned()
+        TaskAssignment.expire_all_abandoned_assignments()
         self.assertEqual(TaskAssignment.objects.count(), 1)
 
     def test_expire_all_abandoned__dont_delete_non_expired(self):
@@ -1138,7 +1138,7 @@ class TestTaskAssignment(django.test.TestCase):
         # Bypass TaskAssignment's save(), which updates expires_at
         super(TaskAssignment, ha).save()
         self.assertEqual(TaskAssignment.objects.count(), 1)
-        TaskAssignment.expire_all_abandoned()
+        TaskAssignment.expire_all_abandoned_assignments()
         self.assertEqual(TaskAssignment.objects.count(), 1)
 
     def test_work_time_in_seconds(self):
