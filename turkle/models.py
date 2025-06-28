@@ -11,6 +11,7 @@ from bs4 import BeautifulSoup
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import Count, IntegerField, Max, Q, OuterRef, Prefetch, Subquery
 from django.db.models.functions import Coalesce
@@ -226,13 +227,24 @@ class Batch(TaskAssignmentStatistics, models.Model):
         verbose_name_plural = "Batches"
 
     active = models.BooleanField(db_index=True, default=True)
-    allotted_assignment_time = models.IntegerField(default=24)
-    assignments_per_task = models.IntegerField(default=1, verbose_name='Assignments per Task')
+    allotted_assignment_time = models.IntegerField(
+        default=24,
+        validators=[MinValueValidator(1)]
+    )
+    assignments_per_task = models.IntegerField(
+        default=1,
+        validators=[MinValueValidator(1)],
+        verbose_name='Assignments per Task'
+    )
     completed = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
-                                   related_name='created_batches', on_delete=models.CASCADE,
-                                   verbose_name='creator')
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        related_name='created_batches',
+        on_delete=models.CASCADE,
+        verbose_name='creator'
+    )
     custom_permissions = models.BooleanField(default=False)
     filename = models.CharField(max_length=1024)
     login_required = models.BooleanField(db_index=True, default=True)
@@ -769,12 +781,24 @@ class Project(TaskAssignmentStatistics, models.Model):
         ordering = ['-id']
 
     active = models.BooleanField(db_index=True, default=True)
-    allotted_assignment_time = models.IntegerField(default=24)
-    assignments_per_task = models.IntegerField(db_index=True, default=1)
+    # assignment time is in hours
+    allotted_assignment_time = models.IntegerField(
+        default=24,
+        validators=[MinValueValidator(1)]
+    )
+    assignments_per_task = models.IntegerField(
+        db_index=True,
+        default=1,
+        validators=[MinValueValidator(1)]
+    )
     created_at = models.DateTimeField(auto_now_add=True)
-    created_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
-                                   related_name='created_projects',
-                                   on_delete=models.CASCADE, verbose_name='creator')
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        related_name='created_projects',
+        on_delete=models.CASCADE,
+        verbose_name='creator'
+    )
     custom_permissions = models.BooleanField(default=False)
     filename = models.CharField(max_length=1024, blank=True)
     html_template = models.TextField()
@@ -782,10 +806,12 @@ class Project(TaskAssignmentStatistics, models.Model):
     login_required = models.BooleanField(db_index=True, default=True)
     name = models.CharField(max_length=1024)
     updated_at = models.DateTimeField(auto_now=True)
-    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True,
-                                   related_name='updated_projects',
-                                   on_delete=models.CASCADE)
-
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        related_name='updated_projects',
+        on_delete=models.CASCADE
+    )
     # Fieldnames are automatically extracted from html_template text
     fieldnames = JSONField(blank=True)
 
