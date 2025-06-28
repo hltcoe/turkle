@@ -88,7 +88,7 @@ ROOT_URLCONF = 'turkle_site.urls'
 # Python dotted path to the WSGI application used by Django's runserver.
 WSGI_APPLICATION = 'turkle_site.wsgi.application'
 
-INSTALLED_APPS = (
+INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -109,7 +109,7 @@ INSTALLED_APPS = (
     # 'django.contrib.admindocs',
     'guardian',
     'djaa_list_filter2',
-)
+]
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',  # default
