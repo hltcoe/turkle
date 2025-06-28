@@ -789,7 +789,7 @@ class Project(TaskAssignmentStatistics, models.Model):
     assignments_per_task = models.IntegerField(
         db_index=True,
         default=1,
-        validators = [MinValueValidator(1)]
+        validators=[MinValueValidator(1)]
     )
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(
