@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 
 from .views import (
     accept_task,
@@ -40,4 +40,5 @@ urlpatterns = [
          skip_and_accept_next_task, name='skip_and_accept_next_task'),
     path('batch/<int:batch_id>/accept_next_task/', accept_next_task, name='accept_next_task'),
     path('batch/<int:batch_id>/preview_next_task/', preview_next_task, name='preview_next_task'),
+    path('edit/', include('claim_edit.urls')),
 ]
