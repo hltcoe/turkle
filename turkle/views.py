@@ -256,6 +256,9 @@ def task_assignment(request, task_id, task_assignment_id):
         else:
             logger.info('Anonymous user submitted Task(%i)', task.id)
 
+        if "edit" in request.GET:
+            return redirect(reverse('claim_edit_index'))
+
         if request.session.get('auto_accept_status'):
             return redirect(accept_next_task, task.batch.id)
         else:
